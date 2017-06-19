@@ -4,15 +4,18 @@ import datetime
 import pandas as pd
 import random
 import Queue
-import json
+#import json
+import msgpack
 import threading
 from collections import namedtuple
 
 def _to_obj(str) :
-    return json.loads(str)
+    #return json.loads(str)
+    return  msgpack.loads(str)
 
 def _to_json(obj) :
-    return json.dumps(obj)
+    #return json.dumps(obj)
+    return msgpack.dumps(obj)
 
 def _to_namedtuple(class_name, data):
     try:
@@ -53,11 +56,12 @@ def _to_rowset(class_name, data):
         return data
 
 def _error_to_str(error):
+    print error
     if error:
         if error.has_key('message'):
-            return str(error['error']) + "," + error['message']
+            return str(error['code']) + "," + error['message']
         else:
-            return str(error['error']) + ","
+            return str(error['code']) + ","
     else:
         return ","
 
@@ -140,7 +144,7 @@ class JsonRpcClient :
         self._next_callid += 1
         callid = self._next_callid
         self._callid_lock.release()
-        return self._next_callid
+        return callid
 
     def _recv_run(self):
         heartbeat_time = 0
@@ -250,8 +254,8 @@ class JsonRpcClient :
                     self._waiter_lock.release()
             else:
                 # Notification message
-                if msg.has_key('method') and msg.has_key('result') and self.on_rpc_callback :
-                    self._async_call( lambda: self.on_rpc_callback(msg['method'], msg['result']) )
+                if msg.has_key('method') and msg.has_key('params') and self.on_rpc_callback :
+                    self._async_call( lambda: self.on_rpc_callback(msg['method'], msg['params']) )
                 
         except Exception, e:
             print( "_on_data_arrived:", e)
@@ -259,10 +263,10 @@ class JsonRpcClient :
     
 
     def _send_hearbeat(self):
-        msg = { 'jsonrpc' : '2.0',
+        msg = { #'jsonrpc' : '2.0',
                 'method'  : '.sys.heartbeat',
                 'params'  : { 'time': time.time() },
-                'id'      : str(self.next_callid()) }
+                'id'      : self.next_callid() }
         json_str = _to_json(msg)
         self._send_request(json_str)
 
@@ -278,10 +282,10 @@ class JsonRpcClient :
             self._waiter_lock.release()
             #print time.strftime('%X'), "set q end"
         
-        msg = { 'jsonrpc' : '2.0',
+        msg = { #'jsonrpc' : '2.0',
                 'method'  : method,
                 'params'  : params,
-                'id'      : str(callid) }
+                'id'      : callid }
         json_str = _to_json(msg)
         self._send_request(json_str)
         
@@ -291,7 +295,7 @@ class JsonRpcClient :
             try:
                 r = q.get(timeout = timeout)
                 q.task_done()
-            except Queue.Empty, e:
+            except Queue.Empty as e:
                 #print e
                 r = None
             #print time.strftime('%X'), "q.get done"
@@ -306,7 +310,7 @@ class JsonRpcClient :
                 if r.has_key('error'):
                     ret['error'] = r['error']
 
-            return ret if ret else { 'error': {'error': -1, 'message': "timeout"}}
+            return ret if ret else { 'error': {'code': -1, 'message': "timeout"}}
         else:
             return { 'result': True }
 
@@ -376,6 +380,7 @@ class DataApi:
         self._tqapi = tqapi
         self._data_format = "obj"
         self._on_quote = None
+        self._on_bar = None
 
     def set_format(self, format) :
         self._data_format = format
@@ -384,6 +389,9 @@ class DataApi:
         if method == "dapi.quote" :
             if self._on_quote :
                 self._on_quote(data)
+        elif method == "dapi.bar1m" :
+            if self._on_bar:
+                self._on_bar("1m", data)
 
     def tick(self, code, tradingday = 0) :
         params = {}
@@ -417,6 +425,9 @@ class DataApi:
 
     def set_on_quote(self, func):
         self._on_quote = func
+
+    def set_on_bar(self, func):
+        self._on_bar = func
 
     def subscribe(self, codes):
         """

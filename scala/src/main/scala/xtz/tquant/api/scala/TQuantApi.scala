@@ -3,17 +3,16 @@ package xtz.tquant.api.scala
 import java.lang.reflect.{ParameterizedType, Type}
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include
-import com.fasterxml.jackson.databind.{DeserializationFeature, JavaType, JsonNode, ObjectMapper}
+import com.fasterxml.jackson.databind.{DeserializationFeature, JsonNode, ObjectMapper}
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import xtz.tquant.api.scala.DataApi
-import xtz.tquant.api.scala.TradeApi
-
 import xtz.tquant.api.java.JsonRpc
 
+import scala.collection.mutable
+
 /**
-  * 初始化 TQuantApi
-  * @param addr 服务器地址，取值通常为 tcp://127.0.0.1:10082
+  * 初始化TQuantApi
+  * @param addr 服务器地址，取值通常为 tcp://127.0.0.1:10001
   */
 
 class TQuantApi (addr: String) {
@@ -56,14 +55,14 @@ class TQuantApi (addr: String) {
      *
      * @return
      */
-    def trade_api = _trade_api
+    def trade_api : TradeApi = _trade_api
 
     /**
      *  取交易接口
      *
      * @return
      */
-    def data_api = _data_api
+    def data_api : DataApi = _data_api
 
 }
 
@@ -82,17 +81,17 @@ object JsonHelper {
     def toJson(value: String): JsonNode = mapper.readTree(value)
 
     private [this] def typeReference[T: Manifest] = new TypeReference[T] {
-        override def getType = typeFromManifest(manifest[T])
+        override def getType : Type = typeFromManifest(manifest[T])
     }
 
     private[this] def typeFromManifest(m: Manifest[_]): Type = {
         if (m.typeArguments.isEmpty) {
-            m.erasure
+            m.runtimeClass
         } else{
             new ParameterizedType {
-                def getRawType = m.erasure
-                def getActualTypeArguments = m.typeArguments.map(typeFromManifest).toArray
-                def getOwnerType = null
+                override def getRawType : Type = m.runtimeClass
+                override def getActualTypeArguments : Array[Type] = m.typeArguments.map(typeFromManifest).toArray
+                override def getOwnerType : Type = null
             }
         }
     }
@@ -103,12 +102,12 @@ object JsonHelper {
     }
 
 
-    def erroToString(error: JsonRpc.JsonRpcError) = {
+    def erroToString(error: JsonRpc.JsonRpcError) : String = {
         if (error != null) {
             if (error.message != null )
-                error.error.toString() + "," + error.message
+                error.code.toString + "," + error.message
             else
-                error.error.toString() + ","
+                error.code.toString + ","
         } else {
             ","
         }
@@ -117,10 +116,12 @@ object JsonHelper {
     def extractResult[T: Manifest](cr: JsonRpc.JsonRpcCallResult,  errValue: T = null): (T, String) = {
         try {
             val value =
-                if (cr.result != null )
+                if (cr.result != null ) {
                     JsonHelper.convert[T](cr.result)
+                }
                 else
                     errValue
+
             val message =
                 if ( cr.error != null )
                     erroToString(cr.error)
@@ -128,13 +129,39 @@ object JsonHelper {
                     null
 
             (value, message)
+
+
         } catch {
             case e: Throwable =>
                 e.printStackTrace()
                 (errValue, e.getMessage)
         }
-
     }
+
+    def extractResultMapList(cr: JsonRpc.JsonRpcCallResult): (Map[String, List[_]], String) = {
+        try {
+            val value =
+                if (cr.result != null )
+                    cr.result.asInstanceOf[Map[String, List[_]]]
+                else
+                    null
+
+            val message =
+                if ( cr.error != null )
+                    erroToString(cr.error)
+                else
+                    null
+
+            (value, message)
+
+
+        } catch {
+            case e: Throwable =>
+                e.printStackTrace()
+                (null, e.getMessage)
+        }
+    }
+
 }
 
 class TradeApiImpl (client : JsonRpc.JsonRpcClient) extends TradeApi {
@@ -219,7 +246,7 @@ class TradeApiImpl (client : JsonRpc.JsonRpcClient) extends TradeApi {
         JsonHelper.extractResult[Boolean](r, false)
     }
 
-    def onNotification( event : String, value : Any) = {
+    def onNotification( event : String, value : Any) : Unit = {
 
     }
 }
@@ -231,6 +258,103 @@ class DataApiImpl(client: JsonRpc.JsonRpcClient) extends DataApi {
 
     var callback : Callback = _
 
+    def _convert[T: Manifest](data: Map[String, List[_]], errValue : T = null): T = {
+        try {
+            val size = data.getOrElse("code", null).size
+            val bars = new Array[mutable.HashMap[String, Any]](size)
+            for (i <- 0 until  size) bars(i) = new mutable.HashMap[String, Any]()
+            for ( key <- data.keys) {
+                val values = data(key)
+                var i = 0
+                values.foreach( x=> { bars(i) += key -> x; i+=1} )
+            }
+
+            return errValue //JsonHelper.convert[T](bars)
+        }catch {
+            case t: Throwable =>
+                t.printStackTrace()
+                return errValue
+        }
+    }
+
+//    def _convertTicks(data: Map[String, List[_]]) : Seq[MarketQuote] = {
+//        try {
+//            val size = data.getOrElse("code", null).size
+//            val ticks = new Array[MarketQuote](size)
+//            for (i <- 0 until  size) ticks(i) = new MarketQuote()
+//
+//            for ( (k,v) <- data) {
+//                k match {
+//                    case "code"         => val iter = v.iterator; ticks.foreach( _.code         = iter.next().asInstanceOf[String])
+//                    case  "date"        => val iter = v.iterator; ticks.foreach( _.date         = iter.next().asInstanceOf[Int   ])
+//                    case  "time"        => val iter = v.iterator; ticks.foreach( _.time         = iter.next().asInstanceOf[Int   ])
+//                    case  "trading_day" => val iter = v.iterator; ticks.foreach( _.trading_day  = iter.next().asInstanceOf[Int   ])
+//                    case  "open"        => val iter = v.iterator; ticks.foreach( _.open         = iter.next().asInstanceOf[Double])
+//                    case  "high"        => val iter = v.iterator; ticks.foreach( _.high         = iter.next().asInstanceOf[Double])
+//                    case  "low"         => val iter = v.iterator; ticks.foreach( _.low          = iter.next().asInstanceOf[Double])
+//                    case  "close"       => val iter = v.iterator; ticks.foreach( _.close        = iter.next().asInstanceOf[Double])
+//                    case  "last"        => val iter = v.iterator; ticks.foreach( _.last         = iter.next().asInstanceOf[Double])
+//                    case  "high_limit"  => val iter = v.iterator; ticks.foreach( _.high_limit   = iter.next().asInstanceOf[Double])
+//                    case  "low_limit"   => val iter = v.iterator; ticks.foreach( _.low_limit    = iter.next().asInstanceOf[Double])
+//                    case  "pre_close"   => val iter = v.iterator; ticks.foreach( _.pre_close    = iter.next().asInstanceOf[Double])
+//                    case  "volume"      => val iter = v.iterator; ticks.foreach( _.volume       = iter.next() match { case v:Int => v ; case v:Long => v} )
+//                    case  "turnover"    => val iter = v.iterator; ticks.foreach( _.turnover     = iter.next().asInstanceOf[Double])
+//                    case  "ask1"        => val iter = v.iterator; ticks.foreach( _.ask1         = iter.next().asInstanceOf[Double])
+//                    case  "ask2"        => val iter = v.iterator; ticks.foreach( _.ask2         = iter.next().asInstanceOf[Double])
+//                    case  "ask3"        => val iter = v.iterator; ticks.foreach( _.ask3         = iter.next().asInstanceOf[Double])
+//                    case  "ask4"        => val iter = v.iterator; ticks.foreach( _.ask4         = iter.next().asInstanceOf[Double])
+//                    case  "ask5"        => val iter = v.iterator; ticks.foreach( _.ask5         = iter.next().asInstanceOf[Double])
+//                    case  "ask6"        => val iter = v.iterator; ticks.foreach( _.ask6         = iter.next().asInstanceOf[Double])
+//                    case  "ask7"        => val iter = v.iterator; ticks.foreach( _.ask7         = iter.next().asInstanceOf[Double])
+//                    case  "ask8"        => val iter = v.iterator; ticks.foreach( _.ask8         = iter.next().asInstanceOf[Double])
+//                    case  "ask9"        => val iter = v.iterator; ticks.foreach( _.ask9         = iter.next().asInstanceOf[Double])
+//                    case  "ask10"       => val iter = v.iterator; ticks.foreach( _.ask10        = iter.next().asInstanceOf[Double])
+//                    case  "bid1"        => val iter = v.iterator; ticks.foreach( _.bid1         = iter.next().asInstanceOf[Double])
+//                    case  "bid2"        => val iter = v.iterator; ticks.foreach( _.bid2         = iter.next().asInstanceOf[Double])
+//                    case  "bid3"        => val iter = v.iterator; ticks.foreach( _.bid3         = iter.next().asInstanceOf[Double])
+//                    case  "bid4"        => val iter = v.iterator; ticks.foreach( _.bid4         = iter.next().asInstanceOf[Double])
+//                    case  "bid5"        => val iter = v.iterator; ticks.foreach( _.bid5         = iter.next().asInstanceOf[Double])
+//                    case  "bid6"        => val iter = v.iterator; ticks.foreach( _.bid6         = iter.next().asInstanceOf[Double])
+//                    case  "bid7"        => val iter = v.iterator; ticks.foreach( _.bid7         = iter.next().asInstanceOf[Double])
+//                    case  "bid8"        => val iter = v.iterator; ticks.foreach( _.bid8         = iter.next().asInstanceOf[Double])
+//                    case  "bid9"        => val iter = v.iterator; ticks.foreach( _.bid9         = iter.next().asInstanceOf[Double])
+//                    case  "bid10"       => val iter = v.iterator; ticks.foreach( _.bid10        = iter.next().asInstanceOf[Double])
+//                    case  "ask_vol1"    => val iter = v.iterator; ticks.foreach( _.ask_vol1     = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "ask_vol2"    => val iter = v.iterator; ticks.foreach( _.ask_vol2     = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "ask_vol3"    => val iter = v.iterator; ticks.foreach( _.ask_vol3     = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "ask_vol4"    => val iter = v.iterator; ticks.foreach( _.ask_vol4     = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "ask_vol5"    => val iter = v.iterator; ticks.foreach( _.ask_vol5     = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "ask_vol6"    => val iter = v.iterator; ticks.foreach( _.ask_vol6     = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "ask_vol7"    => val iter = v.iterator; ticks.foreach( _.ask_vol7     = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "ask_vol8"    => val iter = v.iterator; ticks.foreach( _.ask_vol8     = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "ask_vol9"    => val iter = v.iterator; ticks.foreach( _.ask_vol9     = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "ask_vol10"   => val iter = v.iterator; ticks.foreach( _.ask_vol10    = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "bid_vol1"    => val iter = v.iterator; ticks.foreach( _.bid_vol1     = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "bid_vol2"    => val iter = v.iterator; ticks.foreach( _.bid_vol2     = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "bid_vol3"    => val iter = v.iterator; ticks.foreach( _.bid_vol3     = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "bid_vol4"    => val iter = v.iterator; ticks.foreach( _.bid_vol4     = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "bid_vol5"    => val iter = v.iterator; ticks.foreach( _.bid_vol5     = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "bid_vol6"    => val iter = v.iterator; ticks.foreach( _.bid_vol6     = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "bid_vol7"    => val iter = v.iterator; ticks.foreach( _.bid_vol7     = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "bid_vol8"    => val iter = v.iterator; ticks.foreach( _.bid_vol8     = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "bid_vol9"    => val iter = v.iterator; ticks.foreach( _.bid_vol9     = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "bid_vol10"   => val iter = v.iterator; ticks.foreach( _.bid_vol10    = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "settle"      => val iter = v.iterator; ticks.foreach( _.settle       = iter.next().asInstanceOf[Double])
+//                    case  "pre_settle"  => val iter = v.iterator; ticks.foreach( _.pre_settle   = iter.next().asInstanceOf[Double])
+//                    case  "oi"          => val iter = v.iterator; ticks.foreach( _.oi           = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case  "pre_oi"      => val iter = v.iterator; ticks.foreach( _.pre_oi       = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+//                    case _ =>
+//                }
+//            }
+//
+//            return  ticks
+//        } catch {
+//            case t: Throwable =>
+//                t.printStackTrace()
+//                return null
+//        }
+//    }
+
     override
     def tick(code: String, trading_day : Int) : (Seq[MarketQuote], String) = {
         var params = Map[String, Any]( "code" -> code )
@@ -239,7 +363,18 @@ class DataApiImpl(client: JsonRpc.JsonRpcClient) extends DataApi {
 
         val r = client.call("dapi.tst", params, 6000)
 
-        JsonHelper.extractResult[Seq[MarketQuote]](r)
+        val (data, msg) = JsonHelper.extractResultMapList(r)
+
+        if (data == null)
+            return (null, msg)
+
+
+        val ticks = _convert[Seq[MarketQuote]](data)
+        //val ticks = _convertTicks(data)
+        if (ticks != null)
+            return (ticks, "")
+        else
+            return (null, "unknown error")
     }
 
     override
@@ -252,7 +387,15 @@ class DataApiImpl(client: JsonRpc.JsonRpcClient) extends DataApi {
 
         val r = client.call("dapi.tsi", params, 6000)
 
-        JsonHelper.extractResult[Seq[Bar]](r)
+        val (data, msg) = JsonHelper.extractResult[Map[String, List[_]]](r)
+        if (data == null)
+            return (null, msg)
+
+        val bars = _convert[Seq[Bar]](data)
+        if (bars != null)
+            (bars, "")
+        else
+            (null, "unknown error")
     }
 
     override

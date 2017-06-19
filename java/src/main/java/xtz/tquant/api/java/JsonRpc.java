@@ -5,36 +5,35 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import org.zeromq.*;
 
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+//import com.fasterxml.jackson.module.scala.DefaultScalaModule;
+import org.msgpack.jackson.dataformat.MessagePackFactory;
 
 public interface JsonRpc {
 
     @JsonIgnoreProperties
     class JsonRpcError {
-        public int      error;
+        public int      code;
         public String   message;
         public Object   data;
     }
 
     @JsonIgnoreProperties
     class JsonRpcMessage {
-        public String jsonrpc;
         public String method;
         public Object params;
         public Object result;
         public JsonRpcError error;
-        public String id;
+        public int id;
 
         public JsonRpcMessage() {}
 
-        public JsonRpcMessage(String jsonrpc, String method, Object params, String callId) {
-            this.jsonrpc = "2.0";
+        public JsonRpcMessage(String method, Object params, int callId) {
             this.method = method;
             this.params = params;
             this.id     = callId;
@@ -57,7 +56,7 @@ public interface JsonRpc {
         }
 
         private ConcurrentHashMap<Integer, CompletableFuture<JsonRpcCallResult>> wait_result_map =
-            new ConcurrentHashMap<Integer, CompletableFuture<JsonRpcCallResult>>();
+                new ConcurrentHashMap<Integer, CompletableFuture<JsonRpcCallResult>>();
 
         private ZContext ctx = new  ZContext();
 
@@ -65,13 +64,13 @@ public interface JsonRpc {
         private ZMQ.Socket pull_sock;
         private ZMQ.Socket remote_sock;
         private String addr;
-        private String client_id;
+        //private String client_id;
         private volatile boolean should_close = false;
         private long last_heartbeat_rsp_time = 0;
         private boolean connected = false;
 
         private Thread main_thread = new Thread ( new Runnable() { public void run() { mainRun(); } });
-        private ObjectMapper mapper = new ObjectMapper();
+        private ObjectMapper mapper = new ObjectMapper( new MessagePackFactory());
 
         public JsonRpcClient() {
 
@@ -82,6 +81,7 @@ public interface JsonRpc {
             main_thread.start();
             mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
             mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            //mapper.registerModule(new DefaultScalaModule());
         }
 
         private Integer cur_callid = 0;
@@ -111,16 +111,16 @@ public interface JsonRpc {
                     if (items == null) {
                         if (remote_sock != null)
                             items =  new ZMQ.PollItem[]{
-                                new ZMQ.PollItem(pull_sock,   ZMQ.Poller.POLLIN),
-                                new ZMQ.PollItem(remote_sock, ZMQ.Poller.POLLIN)
+                                    new ZMQ.PollItem(pull_sock,   ZMQ.Poller.POLLIN),
+                                    new ZMQ.PollItem(remote_sock, ZMQ.Poller.POLLIN)
                             };
                         else
                             items = new ZMQ.PollItem[]{
-                                new ZMQ.PollItem(pull_sock,   ZMQ.Poller.POLLIN)
+                                    new ZMQ.PollItem(pull_sock,   ZMQ.Poller.POLLIN)
                             };
                     }
 
-                    ZMQ.poll(items, 100);
+                    ZMQ.poll(items, 1000);
 
                     if (items[0].isReadable()) {
                         byte[] cmd = pull_sock.recv();
@@ -128,13 +128,10 @@ public interface JsonRpc {
                         while (pull_sock.hasReceiveMore())
                             data = pull_sock.recv();
 
-//                        System.out.println( "cmd: " + new String(cmd, "UTF-8"));
-//                        if (data!=null)
-//                            System.out.println( "data: " + new String(cmd, "UTF-8"));
-
                         switch (cmd[0]) {
                             case 'S' :
-                                if (data != null) doSend(data);
+                                if (data != null)
+                                    doSend(data);
                                 break;
                             case 'C' :
                                 doConnect();
@@ -150,7 +147,7 @@ public interface JsonRpc {
 
                     if (items.length == 2 && items[1].isReadable()) {
                         doRecv();
-                        if (System.currentTimeMillis() - last_heartbeat_rsp_time > 2000) {
+                        if (System.currentTimeMillis() - last_heartbeat_rsp_time > 10000) {
                             last_heartbeat_rsp_time = System.currentTimeMillis();
                             doSendHeartBeat();
                         }
@@ -169,19 +166,12 @@ public interface JsonRpc {
             }
         }
 
-
         private void doRecv() {
 
             try {
                 byte[] data = this.remote_sock.recv(ZMQ.DONTWAIT);
-
                 if (data == null) return;
-                String json = new String(data, "UTF-8");
-
-//                System.out.println("RECV: " + json);
-
-//                if (!json.contains("id\":\"\""))
-//                    logger.info("RECV " + json)
+                //System.out.println("data size=" + data.length);
 
                 JsonRpcMessage msg = mapper.readValue(data, JsonRpcMessage.class);
 
@@ -195,23 +185,21 @@ public interface JsonRpc {
                     if (this.connected)
                         this.callback.onNotification(msg.method, msg.result);
 
-                } else if (msg.id != null && !msg.id.isEmpty()) {
-
-                    int call_id = Integer.parseInt(msg.id);
+                } else if (msg.id != 0) {
 
                     JsonRpcCallResult result = new JsonRpcCallResult();
                     result.result = msg.result;
                     result.error = msg.error;
 
-                    CompletableFuture<JsonRpcCallResult> future = wait_result_map.getOrDefault(call_id, null);
+                    CompletableFuture<JsonRpcCallResult> future = wait_result_map.getOrDefault(msg.id, null);
                     if (future!=null) {
-                        wait_result_map.remove(call_id);
+                        wait_result_map.remove(msg.id);
                         future.complete(result);
                     }
                 } else {
                     // Notification message
-                    if (msg.method != null && msg.result != null && this.callback != null )
-                        this.callback.onNotification(msg.method, msg.result);
+                    if (msg.method != null && msg.params != null && this.callback != null )
+                        this.callback.onNotification(msg.method, msg.params);
                 }
             } catch (Throwable t){
                 t.printStackTrace();
@@ -256,7 +244,7 @@ public interface JsonRpc {
 
             Map<String, Object> params = new HashMap<String, Object>();
             params.put( "time", System.currentTimeMillis() );
-            JsonRpcMessage msg = new JsonRpcMessage("2.0", ".sys.heartbeat", params,  this.nextCallId().toString());
+            JsonRpcMessage msg = new JsonRpcMessage(".sys.heartbeat", params,  this.nextCallId());
 
             try {
                 byte[] data = mapper.writeValueAsBytes(msg);
@@ -274,7 +262,7 @@ public interface JsonRpc {
             }
         }
 
-        JsonRpcCallResult call(String method, Object params, int timeout) {
+        public JsonRpcCallResult call(String method, Object params, int timeout) {
 
             String err_msg = null;
             try {
@@ -286,7 +274,7 @@ public interface JsonRpc {
                     wait_result_map.put(callId, future);
                 }
 
-                JsonRpcMessage msg = new JsonRpcMessage("2.0", method, params, callId.toString());
+                JsonRpcMessage msg = new JsonRpcMessage(method, params, callId);
 
                 byte[] data = mapper.writeValueAsBytes(msg);
 
@@ -301,11 +289,12 @@ public interface JsonRpc {
 
                 JsonRpcCallResult result = null;
                 result = future.get(timeout, TimeUnit.MILLISECONDS);
-                if (result != null) {
+                if (result == null) {
                     synchronized (wait_result_map) {
                         wait_result_map.remove(callId);
                     }
                 }
+
                 return result;
 
             } catch (JsonProcessingException e) {
@@ -326,7 +315,7 @@ public interface JsonRpc {
 
             result.result = null;
             result.error = new JsonRpcError();
-            result.error.error = -1;
+            result.error.code = -1;
             result.error.message = err_msg;
             result.error.data = null;
 

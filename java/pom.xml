@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>tqc</groupId>
-    <artifactId>client-java</artifactId>
+    <groupId>tquant</groupId>
+    <artifactId>tqc-api-java</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <dependencies>
@@ -26,6 +26,12 @@
             <groupId>org.zeromq</groupId>
             <artifactId>jeromq</artifactId>
             <version>0.3.6</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.msgpack</groupId>
+            <artifactId>jackson-dataformat-msgpack</artifactId>
+            <version>0.8.12</version>
         </dependency>
 
     </dependencies>

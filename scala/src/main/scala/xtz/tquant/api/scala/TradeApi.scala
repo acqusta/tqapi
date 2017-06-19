@@ -179,7 +179,7 @@ trait TradeApi {
      * 下单
      *
      * @param account_id    帐号编号
-     * @param code      证券代码
+     * @param code          证券代码
      * @param price         委托价格
      * @param size          委托数量
      * @param action        委托动作
@@ -196,7 +196,7 @@ trait TradeApi {
      * @param account_id    帐号编号
      * @param code          证券代码
      * @param entrust_no    委托编号
-     * @return 是否成功
+     * @return              是否成功
      */
     def cancelOrder(account_id: String, code: String, entrust_no: String) : (Boolean, String)
 }

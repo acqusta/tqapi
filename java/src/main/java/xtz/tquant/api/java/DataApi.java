@@ -76,8 +76,8 @@ public interface DataApi {
         public long   bid_vol10;
         public double settle;       // 结算价
         public double pre_settle;   // 昨结算价
-        public double oi;           // OpenInterest       未平仓量
-        public double pre_oi;       // Pre-OpenInterest   昨未平仓量
+        public long   oi;           // OpenInterest       未平仓量
+        public long   pre_oi;       // Pre-OpenInterest   昨未平仓量
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -92,9 +92,6 @@ public interface DataApi {
         public double close;             // bar的收盘价
         public long   volume;            // bar的成交量
         public double turnover;          // bar的成交金额
-        public long   total_volume;      // 总成交量
-        public double total_turnover;    // 总成交金额
-        //public double total_oi;
     }
 
     class CallResult<ValueType> {
