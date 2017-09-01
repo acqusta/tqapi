@@ -20,6 +20,7 @@ public class TradeApiImpl implements TradeApi {
     private JavaType positionListClass = null;
     private JavaType tradeListClass = null;
     private ObjectMapper mapper = new ObjectMapper();
+    private Callback callback = null;
 
     public TradeApiImpl(JsonRpc.JsonRpcClient client) {
         this.client = client;
@@ -122,7 +123,7 @@ public class TradeApiImpl implements TradeApi {
     }
 
     @Override
-    public CallResult<String> placeOrder(String account_id, String code, double price, long size, String action) {
+    public CallResult<OrderID> placeOrder(String account_id, String code, double price, long size, String action, int order_id) {
 
         Map<String, Object> params = new HashMap<String, Object>();
         params.put( "account_id", account_id);
@@ -130,11 +131,14 @@ public class TradeApiImpl implements TradeApi {
         params.put( "price", price);
         params.put( "size", size);
         params.put( "action", action);
+        if (order_id != 0)
+            params.put( "order_id", order_id);
 
         JsonRpc.JsonRpcCallResult r = client.call("tapi.place_order", params, 10000);
 
         if (r.result != null) {
-            return new CallResult( (String)r.result, getErrorText(r.error));
+            OrderID id = mapper.convertValue(r.result, OrderID.class);
+            return new CallResult(id, getErrorText(r.error));
         }else {
             return new CallResult<>(null, getErrorText(r.error));
         }
@@ -145,7 +149,7 @@ public class TradeApiImpl implements TradeApi {
         Map<String, Object> params = new HashMap<String, Object>();
         params.put( "account_id", account_id);
         params.put( "entrust_no", entrust_no);
-        params.put( "code",   code);
+        params.put( "code",       code);
 
         JsonRpc.JsonRpcCallResult r = client.call("tapi.cancel_order", params, 10000);
 
@@ -156,8 +160,60 @@ public class TradeApiImpl implements TradeApi {
         }
     }
 
-    public void onNotification(String event, Object value) {
+    @Override
+    public CallResult<Boolean> cancelOrder(String account_id, String code, int order_id) {
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put( "account_id", account_id);
+        params.put( "order_id",   order_id);
+        params.put( "code",       code);
 
+        JsonRpc.JsonRpcCallResult r = client.call("tapi.cancel_order", params, 10000);
+
+        if (r.result != null) {
+            return new CallResult( (Boolean)r.result, getErrorText(r.error));
+        }else {
+            return new CallResult<>(null, getErrorText(r.error));
+        }
+    }
+
+    @Override
+    public CallResult<String> query(String account_id, String command, String params) {
+        Map<String, Object> rpc_params = new HashMap<String, Object>();
+
+
+        if (account_id!=null && !account_id.isEmpty())
+            rpc_params.put("account_id", account_id);
+
+        rpc_params.put("command", command);
+
+        if (params!=null && !params.isEmpty())
+            rpc_params.put( "params",       params);
+
+        JsonRpc.JsonRpcCallResult r = client.call("tapi.common_query", params, 10000);
+
+        if (r.result != null) {
+            return new CallResult( (Boolean)r.result, getErrorText(r.error));
+        }else {
+            return new CallResult<>(null, getErrorText(r.error));
+        }
+    }
+
+    @Override
+    public void setCallback(Callback callback) {
+        this.callback = callback;
+    }
+
+    public void onNotification(String event, Object value) {
+        Callback cb = callback;
+        if ( cb == null) return;
+
+        try {
+            if (event.equals("tapi.order_status_ind"  )) cb.onOrderStatus  (mapper.convertValue(value, Order.class));
+            if (event.equals("tapi.order_trade_ind"   )) cb.onOrderTrade   (mapper.convertValue(value, Trade.class));
+            if (event.equals("tapi.account_status_ind")) cb.onAccountStatus(mapper.convertValue(value, AccountInfo.class));
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
     }
 }
 

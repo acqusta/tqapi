@@ -1,5 +1,6 @@
 package xtz.tquant.api.java;
 
+import xtz.tquant.api.java.impl.JsonRpc;
 import xtz.tquant.api.java.impl.TradeApiImpl;
 import xtz.tquant.api.java.impl.DataApiImpl;
 

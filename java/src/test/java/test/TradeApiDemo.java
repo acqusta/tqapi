@@ -75,16 +75,17 @@ public class TradeApiDemo {
         }
     }
     void testPlaceOrder() {
-        CallResult<String> result = tapi.placeOrder(account_id, "000001.SH", 1.0, 100, "Buy" );
-        System.out.println("entrust_no: " + (result.value!=null ? result.value : "<null>"));
+        CallResult<OrderID> result = tapi.placeOrder(account_id, "000001.SH", 1.0, 100, "Buy", 0 );
+        System.out.println("entrust_no: " + (result.value.entrust_no!=null ? result.value.entrust_no : "<null>"));
+        System.out.println("order_id: " + (result.value.order_id!=null ? result.value.order_id : "<null>"));
         System.out.println("msg: " + (result.msg));
     }
 
     void testCancelOrder() {
-        CallResult<String> placeResult = tapi.placeOrder(account_id, "399001.SZ", 1.0, 100, "Buy" );
+        CallResult<OrderID> placeResult = tapi.placeOrder(account_id, "399001.SZ", 1.0, 100, "Buy", 0 );
         System.out.println("entrust_no: " + (placeResult.value!=null ? placeResult.value : "<null>"));
         System.out.println("msg: " + (placeResult.msg));
-        CallResult<Boolean> result = tapi.cancelOrder(account_id, "399001.SZ", placeResult.value);
+        CallResult<Boolean> result = tapi.cancelOrder(account_id, "399001.SZ", placeResult.value.entrust_no);
         System.out.println("result: " + (result.value!=null ? result.value : "<null>"));
         System.out.println("msg: " + (result.msg));
     }

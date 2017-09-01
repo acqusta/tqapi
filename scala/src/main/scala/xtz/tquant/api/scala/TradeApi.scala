@@ -53,6 +53,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
  */
 object TradeApi {
 
+    trait Callback {
+        def onOrderStatus    (order   : Order)
+        def onOrderTrade     (trade   : Trade)
+        def onAccountStatus  (account : AccountInfo)
+    }
+
     @JsonIgnoreProperties(ignoreUnknown = true)
     case class AccountInfo (
         account_id : String,      // 帐号编号
@@ -90,7 +96,8 @@ object TradeApi {
         entrust_action : String  ,   // 委托动作
         entrust_price  : Double  ,   // 委托价格
         entrust_size   : Long    ,   // 委托数量，单位：股
-        entrust_time   : Long    ,   // 委托时间
+        entrust_date   : Int     ,   // 委托日期
+        entrust_time   : Int     ,   // 委托时间
         fill_price     : Double  ,   // 成交价格
         fill_size      : Long    ,   // 成交数量
         status         : String      // 订单状态：取值: OrderStatus
@@ -130,6 +137,11 @@ object TradeApi {
         margin         : Double     // 保证金
     )
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    case class OrderID (
+       entrust_no       : String,    // 订单委托号
+       order_id         : Int        // 订单自定义ID
+    )
 }
 
 trait TradeApi {
@@ -178,15 +190,22 @@ trait TradeApi {
     /**
      * 下单
      *
+     *  股票通道为同步下单模式，即必须下单成功必须返回委托号 entrust_no。
+     *  CTP交易通道为异步下单模式，下单后立即返回自定义编号order_id。当交易所接受订单，生成委托号好，通过 Callback.onOrderStatus通知
+     *  用户。用户可以通过order_id匹配。如果订单没有被接收，onOrderStatus回调函数中entrust_no为空，状态为Rejected。
+     *  当参数order_id不为0，表示用户自己对订单编号，这时用户必须保证编号的唯一性。如果交易通道不支持order_id，该函数返回错误代码。
+     *
      * @param account_id    帐号编号
      * @param code          证券代码
      * @param price         委托价格
      * @param size          委托数量
      * @param action        委托动作
+     * @param order_id      自定义订单编号
      * @return 委托编号
      */
     def placeOrder(account_id: String, code: String, price : Double, size: Int,
-                   action: String) : (String, String)
+                   action: String,
+                   order_id : Int = 0) : (OrderID, String)
 
     /**
      * 撤单
@@ -198,5 +217,27 @@ trait TradeApi {
      * @param entrust_no    委托编号
      * @return              是否成功
      */
-    def cancelOrder(account_id: String, code: String, entrust_no: String) : (Boolean, String)
+    def cancelOrder(account_id: String, code: String,
+                    entrust_no: String = "",
+                    order_id:  Int = 0) : (Boolean, String)
+
+    /**
+      * 通用查询接口
+      *
+      * 用于查询交易通道特有的信息。如查询 CTP的代码表 command="ctp_codetable".
+      * 返回字符串。
+      *
+      * @param account_id
+      * @param command
+      * @param params
+      * @return
+      */
+
+    def query(account_id: String, command: String, params:String = "") : (String, String)
+    /**
+      * 设置 TradeApi.Callback
+      *
+      * @param callback
+      */
+    def setCallback(callback: Callback)
 }

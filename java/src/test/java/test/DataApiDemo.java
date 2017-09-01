@@ -27,13 +27,6 @@ public class DataApiDemo {
         });
     }
 
-    void test() {
-        testSubscribe();
-        testQuote();
-        testBar();
-        testTick();
-    }
-
     void testQuote() {
 
         try {
@@ -56,7 +49,7 @@ public class DataApiDemo {
     void testBar() {
 
         try {
-            DataApi.CallResult<List<DataApi.Bar>> result = dapi.bar("000001.SH", "1m", 0);
+            DataApi.CallResult<List<DataApi.Bar>> result = dapi.bar("000001.SH", "1m", 0, "");
 
             if ( result.value !=null) {
                 for ( DataApi.Bar bar : result.value) {
@@ -78,7 +71,7 @@ public class DataApiDemo {
         try {
             DataApi.CallResult<List<DataApi.MarketQuote>> result = dapi.tick("000001.SH", 0);
 
-            if ( result.value !=null) {
+            if (result.value != null) {
                 for ( DataApi.MarketQuote q : result.value) {
                     System.out.printf("tick: %s %d %d %.4f %.4f %.4f %.4f %.4f %d %.4f\n",
                             q.code, q.date, q.time,
@@ -86,11 +79,19 @@ public class DataApiDemo {
                             q.last, q.volume, q.turnover);
                 }
             } else {
-                System.out.print("quote error: " + result.msg);
+                System.out.println("quote error: " + result.msg);
             }
         }catch (Throwable t) {
             t.printStackTrace();
         }
+
+        long t = System.currentTimeMillis();
+
+        for ( int i = 0; i < 100; i++)
+            dapi.tick("000001.SH", 0);
+
+        System.out.println("tick time:" + (System.currentTimeMillis() -t ) / 100);
+
     }
     void testSubscribe() {
 
@@ -114,6 +115,12 @@ public class DataApiDemo {
 
     }
 
+    void test() {
+        testSubscribe();
+        testQuote();
+        testBar();
+        testTick();
+    }
 
     public static void main(String[] args) {
 

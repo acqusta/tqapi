@@ -47,13 +47,19 @@ import java.util.List;
  *  time 时间格式
  *      使用整数表示，Hour+minute+second+millisecond
  *          123001234 = "12:30:01.234"
-
+ *
  *  date 日期格式
  *      使用整数表示，year + month + day
  *          20170210 = "2017-02-10"
  *
  */
 public interface TradeApi {
+
+    interface Callback {
+        void onOrderStatus   (Order order);
+        void onOrderTrade    (Trade trade);
+        void onAccountStatus (AccountInfo account);
+    }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     class AccountInfo {
@@ -92,10 +98,12 @@ public interface TradeApi {
         public String entrust_action;   // 委托动作
         public double entrust_price;    // 委托价格
         public long   entrust_size;     // 委托数量，单位：股
-        public long   entrust_time;     // 委托时间
+        public int    entrust_date;     // 委托日期
+        public int    entrust_time;     // 委托时间
         public double fill_price;       // 成交价格
         public long   fill_size;        // 成交数量
         public String status;           // 订单状态：取值: OrderStatus
+        public int    order_id;         // 自定义订单编号
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -108,7 +116,7 @@ public interface TradeApi {
         public String fill_no;          // 成交编号
         public long   fill_size;        // 成交数量
         public double fill_price;       // 成交价格
-        public int    file_date;        // 成交日期
+        public int    fill_date;        // 成交日期
         public int    fill_time;        // 成交时间
     }
 
@@ -130,6 +138,12 @@ public interface TradeApi {
         public double last_price;       // 最新价格
         public double holding_pnl;      // 持仓盈亏
         public double margin;           // 保证金
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    class OrderID {
+        public String entrust_no;       // 订单委托号
+        public String order_id;         // 自定义编号
     }
 
 
@@ -191,17 +205,36 @@ public interface TradeApi {
     /**
      * 下单
      *
+     * 股票通道为同步下单模式，即必须下单成功必须返回委托号 entrust_no。
+     *
+     * CTP交易通道为异步下单模式，下单后立即返回自定义编号order_id。当交易所接受订单，生成委托号好，通过 Callback.onOrderStatus通知
+     * 用户。用户可以通过order_id匹配。如果订单没有被接收，onOrderStatus回调函数中entrust_no为空，状态为Rejected。
+     * 当参数order_id不为0，表示用户自己对订单编号，这时用户必须保证编号的唯一性。如果交易通道不支持order_id，该函数返回错误代码。
+     *
      * @param account_id    帐号编号
-     * @param code      证券代码
+     * @param code          证券代码
      * @param price         委托价格
      * @param size          委托数量
      * @param action        委托动作
-     * @return 委托编号
+     * @param order_id      自定义订单编号，不为0表示有值
+     * @return OrderID      订单ID
      */
-    CallResult<String> placeOrder(String account_id, String code, double price, long size, String action);
+    CallResult<OrderID> placeOrder(String account_id, String code, double price, long size, String action, int order_id);
 
     /**
-     * 撤单
+     * 根据订单号撤单
+     *
+     * security 不能为空
+     *
+     * @param account_id    帐号编号
+     * @param code          证券代码
+     * @param order_id      订单号
+     * @return 是否成功
+     */
+    CallResult<Boolean> cancelOrder(String account_id, String code, int order_id);
+
+    /**
+     * 根据委托号撤单
      *
      * security 不能为空
      *
@@ -211,4 +244,24 @@ public interface TradeApi {
      * @return 是否成功
      */
     CallResult<Boolean> cancelOrder(String account_id, String code, String entrust_no);
+
+
+    /**
+     * 通用查询接口
+     *
+     * 用于查询交易通道特有的信息。如查询 CTP的代码表 command="ctp_codetable".
+     * 返回字符串。
+     *
+     * @param account_id
+     * @param command
+     * @param params
+     * @return
+     */
+    CallResult<String> query(String account_id, String command, String params);
+    /**
+     * 设置 TradeApi.Callback
+     *
+     * @param callback
+     */
+    void setCallback(Callback callback);
 }

@@ -47,11 +47,14 @@ public class DataApiImpl implements DataApi {
     }
 
     @Override
-    public CallResult<List<MarketQuote>> tick(String code, int tradingday) {
+    public CallResult<List<MarketQuote>> tick(String code, int trading_day) {
         Map<String, Object> params = new HashMap<String, Object>();
         params.put( "code", code);
-        if (tradingday > 0 )
-            params.put( "tradingday", tradingday);
+
+        if (trading_day > 0 )
+            params.put( "trading_day", trading_day);
+
+        //params.put("_format", "rowset");
 
         JsonRpc.JsonRpcCallResult r = client.call("dapi.tst", params, 6000);
 
@@ -73,18 +76,25 @@ public class DataApiImpl implements DataApi {
             }
         }
         List<MarketQuote> ticks = mapper.convertValue(list, quoteListClass);
-
+//        List<MarketQuote> ticks = mapper.convertValue(r.result, quoteListClass);
         return new CallResult(ticks, getErrorText(r.error));
     }
 
     @Override
-    public CallResult<List<Bar>> bar(String code, String cycle, int tradingday) {
+    public CallResult<List<Bar>> bar(String code, String cycle, int trading_day, String price_adj) {
         Map<String, Object> params = new HashMap<String, Object>();
         params.put( "code", code);
+
         if (cycle != null && !cycle.isEmpty())
             params.put("cycle", cycle);
-        if (tradingday > 0 )
-            params.put( "tradingday", tradingday);
+
+        if (trading_day > 0 )
+            params.put( "trading_day", trading_day);
+
+        if (price_adj != null & !price_adj.isEmpty())
+            params.put("price_adj", price_adj);
+
+        //params.put("_format", "rowset");
 
         JsonRpc.JsonRpcCallResult r = client.call("dapi.tsi", params, 6000);
 
@@ -106,6 +116,8 @@ public class DataApiImpl implements DataApi {
             }
         }
         List<Bar> bars = mapper.convertValue(list, barListClass);
+
+        //List<Bar> bars = mapper.convertValue(r.result, barListClass);
 
         return new CallResult(bars, getErrorText(r.error));
     }

@@ -64,12 +64,13 @@ public interface JsonRpc {
         private ZMQ.Socket pull_sock;
         private ZMQ.Socket remote_sock;
         private String addr;
-        //private String client_id;
+
         private volatile boolean should_close = false;
         private long last_heartbeat_rsp_time = 0;
         private boolean connected = false;
 
         private Thread main_thread = new Thread ( new Runnable() { public void run() { mainRun(); } });
+
         private ObjectMapper mapper = new ObjectMapper( new MessagePackFactory());
 
         public JsonRpcClient() {
@@ -78,7 +79,10 @@ public interface JsonRpc {
             push_sock.bind("inproc://send_msg");
             pull_sock = ctx.createSocket(ZMQ.PULL);
             pull_sock.connect("inproc://send_msg");
+
+            main_thread.setDaemon(true);
             main_thread.start();
+
             mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
             mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             mapper.registerModule(new DefaultScalaModule());
@@ -234,6 +238,8 @@ public interface JsonRpc {
         }
 
         private void doSend(byte[] data){
+
+            if (this.remote_sock == null) return;
 
             if (!this.remote_sock.send(data, 0)) {
                 //System.out.println("Send failed ");

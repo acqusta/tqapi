@@ -1,2 +1,2 @@
-# tac-api
+# tqc-api
 TQuant Client API

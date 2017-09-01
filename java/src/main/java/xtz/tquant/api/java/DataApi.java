@@ -92,6 +92,7 @@ public interface DataApi {
         public double close;             // bar的收盘价
         public long   volume;            // bar的成交量
         public double turnover;          // bar的成交金额
+        public long   oi;                // 持仓量，日线有效
     }
 
     class CallResult<ValueType> {
@@ -125,9 +126,12 @@ public interface DataApi {
      * @param code          证券代码
      * @param cycle         "1m" 或 "1d"
      * @param trading_day   交易日，对分钟线有意义
+     * @param price_adj     价格复权，取值
+     *                        back -- 后复权
+     *                        forward -- 前复权
      * @return
      */
-    CallResult<List<Bar>> bar (String code, String cycle, int trading_day);
+    CallResult<List<Bar>> bar (String code, String cycle, int trading_day, String price_adj);
 
     /**
      * 取当前的行情快照
@@ -156,7 +160,7 @@ public interface DataApi {
      * @param codes
      * @return
      */
-    CallResult<List<String>>        unsubscribe(String[] codes);
+    CallResult<List<String>> unsubscribe(String[] codes);
 
     /**
      * 设置推送行情的回调函数

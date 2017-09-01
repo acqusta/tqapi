@@ -17,66 +17,66 @@ object DataApi {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    class MarketQuote {
-        var code        : String  = _    // 证券代码
-        var date        : Int     = _    // 行情日期
-        var time        : Int     = _    // 行情时间
-        var trading_day : Int     = _    // 交易日
-        var open        : Double  = _    // 开盘价
-        var high        : Double  = _    // 最高价
-        var low         : Double  = _    // 最低价
-        var close       : Double  = _    // 收盘价
-        var last        : Double  = _    // 最新价
-        var high_limit  : Double  = _    // 涨停价
-        var low_limit   : Double  = _    // 跌停价
-        var pre_close   : Double  = _    // 昨收价
-        var volume      : Long    = _    // 成交量
-        var turnover    : Double  = _    // 成交金额
-        var ask1        : Double  = _    // 卖一价
-        var ask2        : Double  = _
-        var ask3        : Double  = _
-        var ask4        : Double  = _
-        var ask5        : Double  = _
-        var ask6        : Double  = _
-        var ask7        : Double  = _
-        var ask8        : Double  = _
-        var ask9        : Double  = _
-        var ask10       : Double  = _
-        var bid1        : Double  = _    // 买一价
-        var bid2        : Double  = _
-        var bid3        : Double  = _
-        var bid4        : Double  = _
-        var bid5        : Double  = _
-        var bid6        : Double  = _
-        var bid7        : Double  = _
-        var bid8        : Double  = _
-        var bid9        : Double  = _
-        var bid10       : Double  = _
-        var ask_vol1    : Long    = _   // 卖一量
-        var ask_vol2    : Long    = _
-        var ask_vol3    : Long    = _
-        var ask_vol4    : Long    = _
-        var ask_vol5    : Long    = _
-        var ask_vol6    : Long    = _
-        var ask_vol7    : Long    = _
-        var ask_vol8    : Long    = _
-        var ask_vol9    : Long    = _
-        var ask_vol10   : Long    = _
-        var bid_vol1    : Long    = _   // 买一量
-        var bid_vol2    : Long    = _
-        var bid_vol3    : Long    = _
-        var bid_vol4    : Long    = _
-        var bid_vol5    : Long    = _
-        var bid_vol6    : Long    = _
-        var bid_vol7    : Long    = _
-        var bid_vol8    : Long    = _
-        var bid_vol9    : Long    = _
-        var bid_vol10   : Long    = _
-        var settle      : Double  = _   // 结算价
-        var pre_settle  : Double  = _   // 昨结算价
-        var oi          : Long    = _   // OpenInterest       未平仓量
-        var pre_oi      : Long    = _   // Pre-OpenInterest   昨未平仓量
-    }
+    case class MarketQuote (
+        code        : String  ,    // 证券代码
+        date        : Int     ,    // 行情日期
+        time        : Int     ,    // 行情时间
+        trading_day : Int     ,    // 交易日
+        open        : Double  ,    // 开盘价
+        high        : Double  ,    // 最高价
+        low         : Double  ,    // 最低价
+        close       : Double  ,    // 收盘价
+        last        : Double  ,    // 最新价
+        high_limit  : Double  ,    // 涨停价
+        low_limit   : Double  ,    // 跌停价
+        pre_close   : Double  ,    // 昨收价
+        volume      : Long    ,    // 成交量
+        turnover    : Double  ,    // 成交金额
+        ask1        : Double  ,    // 卖一价
+        ask2        : Double  ,
+        ask3        : Double  ,
+        ask4        : Double  ,
+        ask5        : Double  ,
+        ask6        : Double  ,
+        ask7        : Double  ,
+        ask8        : Double  ,
+        ask9        : Double  ,
+        ask10       : Double  ,
+        bid1        : Double  ,    // 买一价
+        bid2        : Double  ,
+        bid3        : Double  ,
+        bid4        : Double  ,
+        bid5        : Double  ,
+        bid6        : Double  ,
+        bid7        : Double  ,
+        bid8        : Double  ,
+        bid9        : Double  ,
+        bid10       : Double  ,
+        ask_vol1    : Long    ,   // 卖一量
+        ask_vol2    : Long    ,
+        ask_vol3    : Long    ,
+        ask_vol4    : Long    ,
+        ask_vol5    : Long    ,
+        ask_vol6    : Long    ,
+        ask_vol7    : Long    ,
+        ask_vol8    : Long    ,
+        ask_vol9    : Long    ,
+        ask_vol10   : Long    ,
+        bid_vol1    : Long    ,   // 买一量
+        bid_vol2    : Long    ,
+        bid_vol3    : Long    ,
+        bid_vol4    : Long    ,
+        bid_vol5    : Long    ,
+        bid_vol6    : Long    ,
+        bid_vol7    : Long    ,
+        bid_vol8    : Long    ,
+        bid_vol9    : Long    ,
+        bid_vol10   : Long    ,
+        settle      : Double  ,   // 结算价
+        pre_settle  : Double  ,   // 昨结算价
+        oi          : Long    ,   // OpenInterest       未平仓量
+        pre_oi      : Long       // Pre-OpenInterest   昨未平仓量
+    )
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     case class Bar (
@@ -89,7 +89,8 @@ object DataApi {
         low             : Double ,  // bar的最低价
         close           : Double ,  // bar的收盘价
         volume          : Long   ,  // bar的成交量
-        turnover        : Double    // bar的成交金额
+        turnover        : Double ,  // bar的成交金额
+        oi              : Long      // 持仓量，日线有效
     )
 }
 
@@ -118,9 +119,13 @@ trait DataApi {
      * @param code          证券代码
      * @param cycle         "1m" 或 "1d"
      * @param trading_day   交易日，对分钟线有意义
-     * @return
+     * @param price_adj     价格复权，取值
+     *                        back -- 后复权
+     *                        forward -- 前复权
+     *
+      * @return
      */
-    def bar (code : String, cycle : String, trading_day: Int) : (Seq[Bar], String)
+    def bar (code : String, cycle : String, trading_day: Int = 0, price_adj : String = "") : (Seq[Bar], String)
 
         /**
      * 取当前的行情快照
