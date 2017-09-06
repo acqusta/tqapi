@@ -71,16 +71,19 @@ object TradeApiDemo extends App{
     }
 
     def testCancelOrder() {
-        val entrust_no = {
-            val (entrust_no, msg)  = tapi.placeOrder(account_id, "399001.SZ", 1.0, 100, "Buy" )
-            println("entrust_no: " + ( if (entrust_no!=null) entrust_no else "<null>") )
+        val order_id = {
+            val (order_id, msg)  = tapi.placeOrder(account_id, "399001.SZ", 1.0, 100, "Buy" )
+            println("order_id: " + ( if (order_id!=null) order_id else "<null>") )
             println("msg: " + msg)
 
-            entrust_no
+            order_id
         }
 
-        if (entrust_no != null) {
-            val (cancel_result, msg) = tapi.cancelOrder(account_id, "399001.SZ", entrust_no)
+        if (order_id != null) {
+            val (cancel_result, msg) = tapi.cancelOrder(account_id, "399001.SZ",
+                entrust_no = order_id.entrust_no,
+                order_id = order_id.order_id)
+
             println("result: " + cancel_result)
             println("msg: " + msg)
         }

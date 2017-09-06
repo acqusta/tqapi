@@ -14,6 +14,7 @@ object DataApi {
 
     trait Callback {
         def onMarketQuote(quote : MarketQuote)
+        def onBar(cycle: String, bar : Bar)
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -90,7 +91,7 @@ object DataApi {
         close           : Double ,  // bar的收盘价
         volume          : Long   ,  // bar的成交量
         turnover        : Double ,  // bar的成交金额
-        oi              : Long      // 持仓量，日线有效
+        oi              : Long      // bar结束时的总// 持仓量
     )
 }
 

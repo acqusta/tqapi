@@ -24,6 +24,11 @@ public class DataApiDemo {
                         q.open, q.high, q.low, q.close,
                         q.last, q.volume, q.turnover);
             }
+
+            @Override
+            public void onBar(String cycle, Bar bar) {
+
+            }
         });
     }
 

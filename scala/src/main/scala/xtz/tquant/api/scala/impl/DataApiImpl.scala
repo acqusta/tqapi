@@ -223,47 +223,49 @@ object DataApiImpl {
     }
 
     def _convertBars(data: Map[String, List[_]]) : Seq[Bar] = {
-            try {
-                val size = data.getOrElse("code", null).size
-                val bars = new Array[Bar_Shadow](size)
-                for (i <- 0 until  size) bars(i) = new Bar_Shadow
+        try {
+            val size = data.getOrElse("code", null).size
+            val bars = new Array[Bar_Shadow](size)
+            for (i <- 0 until  size) bars(i) = new Bar_Shadow
 
-                for ( (k,v) <- data) {
-                    k match {
-                        case  "code"        => val iter = v.iterator; bars.foreach( _.code         = iter.next().asInstanceOf[String])
-                        case  "date"        => val iter = v.iterator; bars.foreach( _.date         = iter.next().asInstanceOf[Int   ])
-                        case  "time"        => val iter = v.iterator; bars.foreach( _.time         = iter.next().asInstanceOf[Int   ])
-                        case  "trading_day" => val iter = v.iterator; bars.foreach( _.trading_day  = iter.next().asInstanceOf[Int   ])
-                        case  "open"        => val iter = v.iterator; bars.foreach( _.open         = iter.next().asInstanceOf[Double])
-                        case  "high"        => val iter = v.iterator; bars.foreach( _.high         = iter.next().asInstanceOf[Double])
-                        case  "low"         => val iter = v.iterator; bars.foreach( _.low          = iter.next().asInstanceOf[Double])
-                        case  "close"       => val iter = v.iterator; bars.foreach( _.close        = iter.next().asInstanceOf[Double])
-                        case  "volume"      => val iter = v.iterator; bars.foreach( _.volume       = iter.next() match { case v:Int => v ; case v:Long => v} )
-                        case  "turnover"    => val iter = v.iterator; bars.foreach( _.turnover     = iter.next().asInstanceOf[Double])
-                        case  "oi"          => val iter = v.iterator; bars.foreach( _.oi           = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
-                        case _ =>
-                    }
+            for ( (k,v) <- data) {
+                k match {
+                    case  "code"        => val iter = v.iterator; bars.foreach( _.code         = iter.next().asInstanceOf[String])
+                    case  "date"        => val iter = v.iterator; bars.foreach( _.date         = iter.next().asInstanceOf[Int   ])
+                    case  "time"        => val iter = v.iterator; bars.foreach( _.time         = iter.next().asInstanceOf[Int   ])
+                    case  "trading_day" => val iter = v.iterator; bars.foreach( _.trading_day  = iter.next().asInstanceOf[Int   ])
+                    case  "open"        => val iter = v.iterator; bars.foreach( _.open         = iter.next().asInstanceOf[Double])
+                    case  "high"        => val iter = v.iterator; bars.foreach( _.high         = iter.next().asInstanceOf[Double])
+                    case  "low"         => val iter = v.iterator; bars.foreach( _.low          = iter.next().asInstanceOf[Double])
+                    case  "close"       => val iter = v.iterator; bars.foreach( _.close        = iter.next().asInstanceOf[Double])
+                    case  "volume"      => val iter = v.iterator; bars.foreach( _.volume       = iter.next() match { case v:Int => v ; case v:Long => v} )
+                    case  "turnover"    => val iter = v.iterator; bars.foreach( _.turnover     = iter.next().asInstanceOf[Double])
+                    case  "oi"          => val iter = v.iterator; bars.foreach( _.oi           = iter.next() match { case v:Int => v ; case v:Long => v} ) //.asInstanceOf[Long  ])
+                    case _ =>
                 }
-
-                bars map { x => Bar(
-                    code         = x.code        ,
-                    date         = x.date        ,
-                    time         = x.time        ,
-                    trading_day  = x.trading_day ,
-                    open         = x.open        ,
-                    high         = x.high        ,
-                    low          = x.low         ,
-                    close        = x.close       ,
-                    volume       = x.volume      ,
-                    turnover     = x.turnover    ,
-                    oi           = x.oi          )
-                }
-            } catch {
-                case t: Throwable =>
-                    t.printStackTrace()
-                    null
             }
+
+            bars map { x => Bar(
+                code         = x.code        ,
+                date         = x.date        ,
+                time         = x.time        ,
+                trading_day  = x.trading_day ,
+                open         = x.open        ,
+                high         = x.high        ,
+                low          = x.low         ,
+                close        = x.close       ,
+                volume       = x.volume      ,
+                turnover     = x.turnover    ,
+                oi           = x.oi          )
+            }
+        } catch {
+            case t: Throwable =>
+                t.printStackTrace()
+                null
         }
+    }
+
+    case class BarInd( cycle : String, bar : Bar)
 }
 
 class DataApiImpl(client: JsonRpc.JsonRpcClient) extends DataApi {
@@ -390,10 +392,15 @@ class DataApiImpl(client: JsonRpc.JsonRpcClient) extends DataApi {
         if (this.callback == null) return
 
         try {
-            if (event.equals("dapi.quote")) {
-                val q = JsonHelper.convert[MarketQuote](value)
-                if (q != null)
-                    this.callback.onMarketQuote(q)
+            event match {
+                case "dapi.quote" =>
+                    val q = JsonHelper.convert[MarketQuote](value)
+                    if (q != null)
+                        this.callback.onMarketQuote(q)
+                case "dapi.bar" =>
+                    val ind = JsonHelper.convert[BarInd](value)
+                    if (ind != null)
+                        this.callback.onBar(ind.cycle, ind.bar)
             }
         } catch {
             case t: Throwable => t.printStackTrace()

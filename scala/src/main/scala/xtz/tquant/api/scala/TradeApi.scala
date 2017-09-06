@@ -61,11 +61,12 @@ object TradeApi {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     case class AccountInfo (
-        account_id : String,      // 帐号编号
-        broker     : String,      // 交易商名称，如招商证券
-        account    : String,      // 交易帐号
-        status     : String,      // 连接状态，取值 Disconnected, Connected, Connecting
-        msg        : String       // 状态信息，如登录失败原因
+        account_id      : String,   // 帐号编号
+        broker          : String,   // 交易商名称，如招商证券
+        account         : String,   // 交易帐号
+        status          : String,   // 连接状态，取值 Disconnected, Connected, Connecting
+        msg             : String,   // 状态信息，如登录失败原因
+        account_type    : String    // 帐号类型，如 stock, ctp
     )
 
     @JsonIgnoreProperties(ignoreUnknown = true)

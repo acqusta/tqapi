@@ -68,6 +68,7 @@ public interface TradeApi {
         public String account;          // 交易帐号
         public String status;           // 连接状态，取值 Disconnected, Connected, Connecting
         public String msg;              // 状态信息，如登录失败原因
+        public String account_type;     // 帐号类型，如 stock, ctp
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

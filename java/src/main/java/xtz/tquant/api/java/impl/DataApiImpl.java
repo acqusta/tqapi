@@ -2,6 +2,7 @@ package xtz.tquant.api.java.impl;
 
 import java.util.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
@@ -191,6 +192,12 @@ public class DataApiImpl implements DataApi {
         this.callback = callback;
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    static class BarInd {
+        public String cycle;
+        public Bar bar;
+    }
+
     public void onNotification(String event, Object value) {
 
         if (this.callback == null) return;
@@ -199,6 +206,10 @@ public class DataApiImpl implements DataApi {
             if (event.equals("dapi.quote")) {
                 MarketQuote q = mapper.convertValue(value, MarketQuote.class);
                 if (q != null) this.callback.onMarketQuote(q);
+            } else if (event.equals("dapi.bar")) {
+                BarInd ind = mapper.convertValue(value, BarInd.class);
+                if (ind != null)
+                    this.callback.onBar(ind.cycle, ind.bar);
             }
         }catch (Throwable t) {
             t.printStackTrace();

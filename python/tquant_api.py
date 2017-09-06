@@ -474,9 +474,9 @@ class DataApi:
         if method == "dapi.quote" :
             if self._on_quote :
                 self._on_quote(data)
-        elif method == "dapi.bar1m" :
+        elif method == "dapi.bar" :
             if self._on_bar:
-                self._on_bar("1m", data)
+                self._on_bar(data["cycle"], data["bar"])
 
     def tick(self, code, trading_day = 0) :
         """Get ticks by code and trading_day. 

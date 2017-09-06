@@ -16,6 +16,8 @@ public interface DataApi {
 
     interface Callback {
         void onMarketQuote(MarketQuote quote);
+
+        void onBar(String cycle, Bar bar);
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -92,7 +94,7 @@ public interface DataApi {
         public double close;             // bar的收盘价
         public long   volume;            // bar的成交量
         public double turnover;          // bar的成交金额
-        public long   oi;                // 持仓量，日线有效
+        public long   oi;                // bar结束时总持仓量
     }
 
     class CallResult<ValueType> {

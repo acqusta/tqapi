@@ -7,7 +7,7 @@ import scala.collection.JavaConverters._
 object DataApiDemo extends App{
 
     val api = new TQuantApi("tcp://127.0.0.1:10001")
-    val dapi = api.data_api
+    val dapi = api.dataApi
 
     def init() {
         dapi.setCallback(new Callback() {
@@ -16,6 +16,10 @@ object DataApiDemo extends App{
                 println("quote: " + q.code + " " + q.date + " " + q.time + " "
                         + q.open + " " + q.high + " " + q.low + " " + q.close + " "
                         + q.last + " " + q.volume)
+            }
+
+            override def onBar(cycle: String, bar: Bar): Unit = {
+
             }
         })
     }
