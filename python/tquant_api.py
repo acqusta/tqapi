@@ -8,11 +8,9 @@ import threading
 from collections import namedtuple
 
 def _to_obj(str) :
-    #return json.loads(str)
     return  msgpack.loads(str)
 
 def _to_json(obj) :
-    #return json.dumps(obj)
     return msgpack.dumps(obj)
 
 def _to_namedtuple(class_name, data):
@@ -54,7 +52,6 @@ def _to_rowset(class_name, data):
         return data
 
 def _error_to_str(error):
-    #print error
     if error:
         if error.has_key('message'):
             return str(error['code']) + "," + error['message']
@@ -72,7 +69,6 @@ def _to_datetime(df):
 def _to_dataframe(cloumset, index_func = None, index_column = None):
     df = pd.DataFrame(cloumset)
     if index_func:
-        #df.index = df.apply(index_func, axis = 1)
         df.index = index_func(df)
         del df.index.name
     elif index_column:
@@ -82,19 +78,21 @@ def _to_dataframe(cloumset, index_func = None, index_column = None):
     return df
 
 def _extract_result2(cr, data_format="obj", index_column=None, class_name="",
-                    to_rowset = False):
+                    to_rowset = False, index=True):
 
     err = _error_to_str(cr['error']) if cr.has_key('error') else None
     if cr.has_key('result'):
         if data_format == "pandas" :
-            if index_column :
-                return (_to_dataframe(cr['result'], None, index_column), err)
-            if 'time' in cr['result']:
-                return (_to_dataframe(cr['result'], _to_datetime), err)
-            elif 'date' in cr['result']:
-                return (_to_dataframe(cr['result'], _to_date), err)
-            else:
-                return (_to_dataframe(cr['result']), err)
+            if index :
+                if index_column :
+                    return (_to_dataframe(cr['result'], None, index_column), err)
+                if 'time' in cr['result']:
+                    return (_to_dataframe(cr['result'], _to_datetime), err)
+                elif 'date' in cr['result']:
+                    return (_to_dataframe(cr['result'], _to_date), err)
+
+            return (_to_dataframe(cr['result']), err)
+
         elif data_format == "obj" and class_name:
             if to_rowset:
                 return (_to_rowset(class_name, cr['result']), err)
@@ -106,9 +104,10 @@ def _extract_result2(cr, data_format="obj", index_column=None, class_name="",
         return (None, err)
 
 def _extract_result(cr, data_format="obj", index_column=None, class_name="",
-                    to_rowset = False,
-                    error_mode="inline"):
-    v, err_msg = _extract_result2(cr, data_format, index_column, class_name, to_rowset)
+                    to_rowset = False,                    
+                    error_mode="inline",
+                    index = True):
+    v, err_msg = _extract_result2(cr, data_format, index_column, class_name, to_rowset, index)
     if error_mode == "exception":
         if v is not None:
             return v
@@ -478,11 +477,14 @@ class DataApi:
             if self._on_bar:
                 self._on_bar(data["cycle"], data["bar"])
 
-    def tick(self, code, trading_day = 0) :
+    def tick(self, code, trading_day = 0, df_index=True) :
         """Get ticks by code and trading_day. 
         
-        trading_day: integer, format yyyyMMdd
-        If trading_day is 0, means current trading day in the server.        
+        trading_day - integer, format yyyyMMdd.
+                      If trading_day is 0, means current trading day in the server.
+
+        df_index    - Whether the dataframe has an index or not.
+
         """
         params = {}
         if trading_day :
@@ -491,9 +493,10 @@ class DataApi:
 
         cr = self._tqapi._call("dapi.tst", params)
         return _extract_result(cr, self._data_format, class_name = "MaketQuote",
-                               error_mode=self._error_mode)#, to_rowset = True)
+                               error_mode = self._error_mode,
+                               df_index = index )
 
-    def bar(self, code, cycle="1m", trading_day = 0, price_adj="") :
+    def bar(self, code, cycle="1m", trading_day = 0, price_adj="", df_index=True) :
         """ Get bar by code, cycle and trading_day
         
         code   - example "000001.SH"
@@ -504,6 +507,8 @@ class DataApi:
         price_adj   - daily price adjust mode, only available for stock.
                   "back"    : keep price of first day same and chang following days' price
                   "forward" : keep price of last day same and change before days' price 
+        df_index    - Whether the dataframe has an index or not.
+                  
         """
         params = { 
             "code"  : code,
@@ -518,7 +523,8 @@ class DataApi:
 
         cr = self._tqapi._call("dapi.tsi", params)
         return _extract_result(cr, self._data_format, class_name="Bar",
-                               error_mode=self._error_mode)#, to_rowset = True)
+                               error_mode=self._error_mode,
+                               index = df_index)
 
 
     def quote(self, code) :
@@ -542,7 +548,7 @@ class DataApi:
             print quote
 
         The argument, quote, of callback is same as function DataApi.quote(code).
-        Please handle quote quickly in callback or the execution of api will be blocked!
+        The processing of quote should be quick,  or the execution of api will be blocked!
         """
         self._on_quote = func
 
@@ -556,9 +562,9 @@ class DataApi:
             print bar
 
         Unlike on_quote, the argument, bar, is only one bar, not the whole bars!
-        Please handle it quickly in callback or the execution of api will be blocked!
-        self._on_bar = func
+        As on_quote, the processing of callback should be quick too.
         """
+        self._on_bar = func
 
     def subscribe(self, codes):
         """Subscribe codes and return all subscribed codes.
@@ -568,7 +574,7 @@ class DataApi:
         codes : "code1,code2,...", example "000001.SH,399001.SZ"
         When codes is empty, return all subscribed codes.        
         """
-        #codes = securities
+
         if type(codes) == tuple or \
            type(codes) == list or \
            type(codes) == set :
@@ -738,24 +744,6 @@ class TradeApi:
 
         return _extract_result(cr, self._data_format, class_name="Position",
                                error_mode=self._error_mode)
-
-#    def buy(self, account_id, code, price, size) :
-#        return self.place_order(account_id, code, price, size, "Buy")
-#
-#    def short(self, account_id, code, price, size) :
-#        return self.place_order(account_id, code, price, size, "Short")
-#
-#    def cover(self, account_id, code, price, size) :
-#        return self.place_order(account_id, code, price, size, "Cover")
-#
-#    def sell(self, account_id, code, price, size) :
-#        return self.place_order(account_id, code, price, size, "Sell")
-#
-#    def cover_today(self, account_id, code, price, size) :
-#        return self.place_order(account_id, code, price, size, "CoverToday")
-#
-#    def sell_today(self, account_id, code, price, size) :
-#        return self.place_order(account_id, code, price, size, "SellToday")
 
     def place_order(self, account_id, code, price, size, action, order_id=None):
         """Place an order and return entrust_no
