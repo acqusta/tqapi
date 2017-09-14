@@ -494,7 +494,7 @@ class DataApi:
         cr = self._tqapi._call("dapi.tst", params)
         return _extract_result(cr, self._data_format, class_name = "MaketQuote",
                                error_mode = self._error_mode,
-                               df_index = index )
+                               index = df_index )
 
     def bar(self, code, cycle="1m", trading_day = 0, price_adj="", df_index=True) :
         """ Get bar by code, cycle and trading_day
