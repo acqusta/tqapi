@@ -47,7 +47,7 @@ TQuant为自用的交易平台。它从各互联网网站抓取行情，整理�
 
 
 ## 编程语言
-tqc-api支持三种编程语言，Python, Java和Scala。使用说明参见源码注释和 [Wiki](wiki)。
+tqc-api支持三种编程语言，Python, Java和Scala。使用说明参见源码注释和 [Wiki](https://github.com/tzxu/tqc-api/wiki)。
 
 
 ## 注意
