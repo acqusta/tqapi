@@ -27,12 +27,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
  *      使用字符串表示订单的委托动作，取值如下：
  *          Buy             股票 买        期货 开 多
  *          Short               -             开  空
- *          Cover               -             平  空
- *          Sell                卖            平  多
- *          CoverToday          -             平今 空
- *          SellToday           -             平今 多
- *          CoverYesterday      -             平昨 空
- *          SellYesterday       -             平昨 多
+ *          Cover               -             平  多
+ *          Sell                卖            平  空
+ *          CoverToday          -             平今 多
+ *          SellToday           -             平今 空
+ *          CoverYesterday      -             平昨 多
+ *          SellYesterday       -             平昨 空
  *
  *      股票只有 Buy, Sell，期货有动作种操作
  *
