@@ -2,7 +2,7 @@
 
 tqc-api是一套股票、期货交易的行情接口和交易接口。它使用TQuant平台提供的互联网服务，适合量化爱好者、私募搭建自己的交易系统。
 
-使用说明参见API源码注释和 [Wiki](wiki)。
+使用说明参见API源码注释和 [Wiki](https://github.com/tzxu/tqc-api/wiki)。
 更多资讯，请关注微信号：tquant。
 
 <img src="weichat_tquant.jpg" width="150" height="150">
