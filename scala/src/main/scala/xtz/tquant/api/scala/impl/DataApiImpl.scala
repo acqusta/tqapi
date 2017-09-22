@@ -431,13 +431,13 @@ class DataApiImpl(client: JsonRpc.JsonRpcClient) extends DataApi {
     }
 
     def onHeartBeat(value : Any): Unit = {
+
         if (this.sub_codes.isEmpty) return
 
         val r = JsonHelper.convert[HeartBeat](value)
 
         if (r.sub_hash == this.sub_hash && this.sub_hash != 0)
             return
-
 
         var params = Map[String, Any]()
         params += "codes" -> sub_codes.mkString(",")
@@ -462,17 +462,18 @@ class DataApiImpl(client: JsonRpc.JsonRpcClient) extends DataApi {
                 case ".sys.heartbeat" =>    onHeartBeat(value)
 
                 case "dapi.quote" =>
-                    if (this.callback == null) {
+                    if (this.callback != null) {
                         val q = JsonHelper.convert[MarketQuote](value)
                         if (q != null)
                             this.callback.onMarketQuote(q)
                     }
                 case "dapi.bar" =>
-                    if (this.callback == null) {
+                    if (this.callback != null) {
                         val ind = JsonHelper.convert[BarInd](value)
                         if (ind != null)
                             this.callback.onBar(ind.cycle, ind.bar)
                     }
+                case _ =>
             }
         } catch {
             case t: Throwable => t.printStackTrace()

@@ -138,6 +138,7 @@ class TradeApiImpl (client : JsonRpc.JsonRpcClient) extends TradeApi {
                 case "tapi.order_status_ind"    => cb.onOrderStatus  (JsonHelper.convert[Order](value))
                 case "tapi.order_trade_ind"     => cb.onOrderTrade   (JsonHelper.convert[Trade](value))
                 case "tapi.account_status_ind"  => cb.onAccountStatus(JsonHelper.convert[AccountInfo](value))
+                case _ =>
             }
         } catch {
             case t : Throwable => println(t.getMessage)
