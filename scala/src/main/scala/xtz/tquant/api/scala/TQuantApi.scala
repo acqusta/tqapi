@@ -25,19 +25,29 @@ class TQuantApi (addr: String) {
         _client.setCallback(
             new JsonRpc.JsonRpcClient.Callback() {
                 override
-                def onConnected() {
+                def onConnected(): Unit = {
+                    _data_api.onConnected()
+                    _trade_api.onConnected()
                 }
 
                 override
                 def onDisconnected() {
+                    _data_api.onDisconnected()
+                    _trade_api.onDisconnected()
                 }
 
                 override
                 def onNotification(event: String , value : Any) {
+
                     if (event.startsWith("tapi.")) {
                         _trade_api.onNotification(event, value)
+
                     } else if (event.startsWith("dapi.")) {
                         _data_api.onNotification(event, value)
+
+                    } else if (event.startsWith(".sys.")) {
+                        _data_api.onNotification(event, value)
+                        _trade_api.onNotification(event, value)
                     }
                 }
             })

@@ -11,6 +11,14 @@ class TradeApiImpl (client : JsonRpc.JsonRpcClient) extends TradeApi {
 
     var callback : Callback = _
 
+    def onConnected() = {
+
+    }
+
+    def onDisconnected() = {
+
+    }
+
     override
     def queryAccountStatus  () : (Seq[AccountInfo], String) = {
 
@@ -62,7 +70,7 @@ class TradeApiImpl (client : JsonRpc.JsonRpcClient) extends TradeApi {
     }
 
     override
-    def placeOrder(account_id: String, code: String, price : Double, size: Int,
+    def placeOrder(account_id: String, code: String, price : Double, size: Long,
                    action: String,
                    order_id: Int) : (OrderID, String) = {
 

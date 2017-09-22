@@ -77,7 +77,7 @@ object DataApiDemo extends App{
 
     def testSubscribe() {
 
-        val codes = Array( "000001.SH", "399001.SZ", "IF1706.CFE")
+        val codes = Array( "000001.SH", "399001.SZ", "rb1801.SHF")
 
         val (sub_codes, msg) = dapi.subscribe(codes)
 
@@ -89,13 +89,20 @@ object DataApiDemo extends App{
         }
 
         try {
-            Thread.sleep(10*1000)
+            while (true) {
+                println("--------------------")
+                var (r, msg) = dapi.subscribe(null)
+                if (r != null) r.foreach { println }
+
+                Thread.sleep(2*1000)
+            }
         } catch {
             case t : Throwable => t.printStackTrace()
         }
     }
 
     init()
+    testSubscribe()
     //testTick()
     testBar()
 }

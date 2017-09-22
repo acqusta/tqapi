@@ -130,6 +130,7 @@ class JsonRpcClient :
         self._last_heartbeat_rsp_time = 0
         self._connected = False
 
+        self.on_connected = None
         self.on_disconnected = None
         self.on_rpc_callback = None
         self._callback_queue = Queue.Queue()
@@ -265,14 +266,15 @@ class JsonRpcClient :
     def _on_data_arrived(self, str):
         try:
             msg = _to_obj(str)
+            #print "RECV", msg
 
             if msg.has_key('method') and msg['method'] == '.sys.heartbeat':
 
                 self._last_heartbeat_rsp_time = time.time()
                 if not self._connected:
                     self._connected = True
-                    if self._on_connected :
-                        self._async_call(self._on_connected)
+                    if self.on_connected :
+                        self._async_call(self.on_connected)
                         
                 if self.on_rpc_callback :
                     self._async_call( lambda: self.on_rpc_callback(msg['method'], msg['result']) )
@@ -372,7 +374,7 @@ class TQuantApi:
         self._remote = JsonRpcClient()
         self._remote.on_rpc_callback = self._on_rpc_callback
         self._remote.on_disconnected = self._on_disconnected
-        self._remote._on_connected   = self._on_connected
+        self._remote.on_connected    = self._on_connected
         self._remote.connect(addr)
 
         self._quote_callback = None
@@ -395,28 +397,35 @@ class TQuantApi:
             self._dapi._on_rpc_callback(method, data)
         elif method.startswith("tapi."):
             self._tapi._on_rpc_callback(method, data)
+        elif method.startswith(".sys."):
+            self._dapi._on_rpc_callback(method, data)
+            self._tapi._on_rpc_callback(method, data)
 
     def _on_disconnected(self):
         #self._do_login(self._account_id, self._password)
         #print "_on_disconnected"
         self._connected = False
         self._has_session = False
+        self._dapi._on_disconnected()
+        self._tapi._on_disconnected()
 
     def _on_connected(self):
         #print "_on_connected"
         self._connected = True
+        self._dapi._on_connected()
+        self._tapi._on_connected()
 
-    def _check_session(self):
-        if not self._connected:
-            return (False, "no connection")
+    # def _check_session(self):
+    #     if not self._connected:
+    #         return (False, "no connection")
 
-        if not self._has_session:
-            return self._do_login()
+    #     if not self._has_session:
+    #         return self._do_login()
 
-        return (True, "")
+    #     return (True, "")
 
-    def _call(self, method, params):
-        return self._remote.call(method, params)
+    def _call(self, method, params, timeout = 6):
+        return self._remote.call(method, params, timeout)
 
     def data_api(self) :
         return self._dapi
@@ -433,6 +442,8 @@ class DataApi:
         self._on_quote = None
         self._on_bar = None
         self._error_mode = "inline"
+        self._sub_codes = set()
+        self._sub_hash = 0
 
     def set_error_mode(self, mode):
         """Set error mode.
@@ -476,6 +487,40 @@ class DataApi:
         elif method == "dapi.bar" :
             if self._on_bar:
                 self._on_bar(data["cycle"], data["bar"])
+        elif method == ".sys.heartbeat" :
+            self._on_heartbeat(data)
+        # else:
+        #     print "unkown method", method
+
+    def _on_heartbeat(self, data):
+        sub_hash = 0
+        if 'sub_hash' in data:
+            sub_hash = data['sub_hash']
+        
+        if not self._sub_codes:
+            return
+
+        if self._sub_hash == sub_hash and sub_hash:
+            return
+
+        t = threading.Thread(target=self._subscribe_again)
+        t.setDaemon(True)
+        t.start()
+
+    def _subscribe_again(self):
+
+        #print "subscribe again:", self._sub_codes, self._sub_hash, sub_hash, data
+        rpc_params = { 'codes' : ','.join(self._sub_codes) }
+        cr = self._tqapi._call("dapi.tsq_sub", rpc_params, timeout=2)
+        r = _extract_result(cr, "", error_mode = "inline")
+        if r[0]:
+            self._sub_hash = r[0]['sub_hash']
+
+    def _on_connected(self):
+        pass
+
+    def _on_disconnected(self):
+        pass
 
     def tick(self, code, trading_day = 0, df_index=True) :
         """Get ticks by code and trading_day. 
@@ -580,11 +625,27 @@ class DataApi:
            type(codes) == set :
            codes = ','.join(codes)
 
+        if codes:
+            codes = codes.strip()
+            for s in codes.split(','):
+                if s :
+                    self._sub_codes.add(s)
 
         rpc_params = { 'codes' : codes }
 
         cr = self._tqapi._call("dapi.tsq_sub", rpc_params)
-        return _extract_result(cr, "", error_mode=self._error_mode)
+        r = _extract_result(cr, "", error_mode=self._error_mode)
+
+        if self._error_mode == "exception":
+            if codes :
+                self._sub_hash = r['sub_hash']
+            r = r['sub_codes']
+        else:
+            if r[0]:
+                if codes :
+                    self._sub_hash = r[0]['sub_hash']
+                r = (r[0]['sub_codes'], r[1])
+        return r
 
     def unsubscribe(self, codes):
         """Unsubscribe cdoes and return all subscribed codes.
@@ -596,12 +657,23 @@ class DataApi:
            type(codes) == set :
            codes = ','.join(codes)
 
+        if codes:
+            for s in codes.split(','):
+                self._sub_codes.remove(s)
 
         rpc_params = { 'codes' : codes }
         
         cr = self._tqapi._call("dapi.tsq_unsub", rpc_params)
-        return _extract_result(cr, "", error_mode=self._error_mode)
+        r = _extract_result(cr, "", error_mode=self._error_mode)
 
+        if self._error_mode == "exception":
+            self._sub_hash = r['sub_hash']
+            r = r['sub_codes']
+        else:
+            if r[0]:
+                self._sub_hash = r[0]['sub_hash']
+                r = (r[0]['sub_codes'], r[1])
+        return r
 
 class TradeApi:
     
@@ -648,6 +720,12 @@ class TradeApi:
         """
         
         self._data_format = format
+
+    def _on_connected(self):
+        pass
+
+    def _on_disconnected(self):
+        pass
 
     def _on_rpc_callback(self, method, data):
         if method == "tapi.order_status_ind":

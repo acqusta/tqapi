@@ -204,7 +204,7 @@ trait TradeApi {
      * @param order_id      自定义订单编号
      * @return 委托编号
      */
-    def placeOrder(account_id: String, code: String, price : Double, size: Int,
+    def placeOrder(account_id: String, code: String, price : Double, size: Long,
                    action: String,
                    order_id : Int = 0) : (OrderID, String)
 

@@ -25,10 +25,14 @@ public class TQuantApi {
                 new JsonRpc.JsonRpcClient.Callback() {
                     @Override
                     public void onConnected() {
+                        data_api.onConnected();
+                        trade_api.onConnected();
                     }
 
                     @Override
                     public void onDisconnected() {
+                        data_api.onDisconnected();
+                        trade_api.onDisconnected();
                     }
 
                     @Override
@@ -37,6 +41,9 @@ public class TQuantApi {
                             trade_api.onNotification(event, value);
                         } else if (event.startsWith("dapi.")) {
                             data_api.onNotification(event, value);
+                        } else if (event.startsWith(".sys.")) {
+                            data_api.onNotification(event, value);
+                            trade_api.onNotification(event, value);
                         }
                     }
                 });

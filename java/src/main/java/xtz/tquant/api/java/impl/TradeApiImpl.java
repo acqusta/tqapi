@@ -45,6 +45,14 @@ public class TradeApiImpl implements TradeApi {
             return "";
     }
 
+    public void onConnected() {
+
+    }
+
+    public void onDisconnected() {
+
+    }
+
     @Override
     public CallResult<List<AccountInfo>> queryAccountStatus() {
 

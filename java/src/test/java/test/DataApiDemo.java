@@ -100,23 +100,33 @@ public class DataApiDemo {
     }
     void testSubscribe() {
 
-        String[] codes = new String[] { "000001.SH", "399001.SZ", "cu1705.SHF", "CF705.CZC", "rb1705.SHF" };
+        {
+            String[] codes = new String[] { "000001.SH", "399001.SZ", "cu1705.SHF", "CF705.CZC", "rb1801.SHF" };
 
-        DataApi.CallResult<List<String>> result = dapi.subscribe(codes);
+            DataApi.CallResult<List<String>> result = dapi.subscribe(codes);
 
-        if (result.value != null) {
-            for ( String s : result.value) {
-                System.out.println("Subscribed: " + s);
+            if (result.value != null) {
+                for ( String s : result.value) {
+                    System.out.println("Subscribed: " + s);
+                }
+            } else {
+                System.out.println("subscribe return error: " + result.msg);
             }
-        } else {
-            System.out.println("subscribe return error: " + result.msg);
         }
-
-//        try {
-//            Thread.sleep(10*1000);
-//        } catch ( Throwable t) {
-//            t.printStackTrace();
-//        }
+        try {
+            while (true) {
+                System.out.println("-------------------------");
+                DataApi.CallResult<List<String>> r = dapi.subscribe(null);
+                if (r.value != null) {
+                    for ( String s : r.value) {
+                        System.out.println("Subscribed: " + s);
+                    }
+                }
+                Thread.sleep(2*1000);
+            }
+        } catch ( Throwable t) {
+            t.printStackTrace();
+        }
 
     }
 

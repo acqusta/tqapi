@@ -179,14 +179,14 @@ public interface JsonRpc {
 
                 JsonRpcMessage msg = mapper.readValue(data, JsonRpcMessage.class);
 
-                if (msg.method != null && msg.method == ".sys.heartbeat") {
+                if (msg.method != null && msg.method.equals(".sys.heartbeat")) {
                     last_heartbeat_rsp_time = System.currentTimeMillis();
                     if ( ! this.connected ) {
                         this.connected = true;
                         if (this.callback != null) this.callback.onConnected();
                     }
 
-                    if (this.connected)
+                    if (this.callback != null)
                         this.callback.onNotification(msg.method, msg.result);
 
                 } else if (msg.id != 0) {

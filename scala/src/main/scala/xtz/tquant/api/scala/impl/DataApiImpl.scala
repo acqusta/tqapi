@@ -1,10 +1,13 @@
 package xtz.tquant.api.scala.impl
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import xtz.tquant.api.java.JsonRpc
 import xtz.tquant.api.scala.DataApi
 import xtz.tquant.api.scala.DataApi.{Bar, MarketQuote}
 
 import scala.collection.mutable
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object DataApiImpl {
 
@@ -266,6 +269,17 @@ object DataApiImpl {
     }
 
     case class BarInd( cycle : String, bar : Bar)
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    case class HeartBeat (
+        sub_hash: Long = 0L
+    )
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    case class SubscribeResult (
+        sub_codes  : Seq[String],
+        sub_hash   : Long
+    )
 }
 
 class DataApiImpl(client: JsonRpc.JsonRpcClient) extends DataApi {
@@ -274,6 +288,16 @@ class DataApiImpl(client: JsonRpc.JsonRpcClient) extends DataApi {
     import DataApiImpl._
 
     var callback : Callback = _
+
+    val sub_codes = mutable.HashSet[String]()
+    var sub_hash = 0L
+
+    def onConnected() = {
+    }
+
+    def onDisconnected() = {
+
+    }
 
     def _convert[T: Manifest](data: Map[String, List[_]], errValue : T = null): T = {
         try {
@@ -357,6 +381,9 @@ class DataApiImpl(client: JsonRpc.JsonRpcClient) extends DataApi {
     override
     def subscribe(codes: Seq[String]) : (Seq[String], String) = {
 
+        if (codes != null && codes.nonEmpty)
+            this.sub_codes ++= codes
+
         var params = Map[String, Any]()
 
         if (codes != null)
@@ -365,11 +392,21 @@ class DataApiImpl(client: JsonRpc.JsonRpcClient) extends DataApi {
             params += "codes" -> ""
 
         val r = client.call("dapi.tsq_sub", params, 6000)
-        JsonHelper.extractResult[Seq[String]](r)
+        val (result, msg) = JsonHelper.extractResult[SubscribeResult](r)
+        if (result != null) {
+            if (codes != null && codes.nonEmpty)
+                this.sub_hash = result.sub_hash
+            (result.sub_codes, msg)
+        } else {
+            (null, msg)
+        }
     }
 
     override
     def unsubscribe(codes: Seq[String]) : (Seq[String], String) = {
+
+        if (codes != null && codes.nonEmpty)
+            this.sub_codes --= codes
 
         var params = Map[String, Any]()
 
@@ -379,7 +416,13 @@ class DataApiImpl(client: JsonRpc.JsonRpcClient) extends DataApi {
             params += "codes" -> ""
 
         val r = client.call("dapi.tsq_unsub", params, 6000)
-        JsonHelper.extractResult[Seq[String]](r)
+        val (result, msg) = JsonHelper.extractResult[SubscribeResult](r)
+        if (result != null) {
+            this.sub_hash = result.sub_hash
+            (result.sub_codes, msg)
+        } else {
+            (null, msg)
+        }
     }
 
     override
@@ -387,20 +430,49 @@ class DataApiImpl(client: JsonRpc.JsonRpcClient) extends DataApi {
         this.callback = callback
     }
 
-    def onNotification(event: String, value : Any) : Unit = {
+    def onHeartBeat(value : Any): Unit = {
+        if (this.sub_codes.isEmpty) return
 
-        if (this.callback == null) return
+        val r = JsonHelper.convert[HeartBeat](value)
+
+        if (r.sub_hash == this.sub_hash && this.sub_hash != 0)
+            return
+
+
+        var params = Map[String, Any]()
+        params += "codes" -> sub_codes.mkString(",")
+
+        Future {
+            //println ("subscribe again: " + sub_codes)
+            val r = client.call("dapi.tsq_sub", params, 2000)
+            val (result, msg) = JsonHelper.extractResult[SubscribeResult](r)
+            if (result != null) {
+                //println("sbuscribe again: ", sub_hash)
+                this.sub_hash = result.sub_hash
+            } else {
+                //println("subscribe error:", msg)
+            }
+        }
+    }
+
+    def onNotification(event: String, value : Any) : Unit = {
 
         try {
             event match {
+                case ".sys.heartbeat" =>    onHeartBeat(value)
+
                 case "dapi.quote" =>
-                    val q = JsonHelper.convert[MarketQuote](value)
-                    if (q != null)
-                        this.callback.onMarketQuote(q)
+                    if (this.callback == null) {
+                        val q = JsonHelper.convert[MarketQuote](value)
+                        if (q != null)
+                            this.callback.onMarketQuote(q)
+                    }
                 case "dapi.bar" =>
-                    val ind = JsonHelper.convert[BarInd](value)
-                    if (ind != null)
-                        this.callback.onBar(ind.cycle, ind.bar)
+                    if (this.callback == null) {
+                        val ind = JsonHelper.convert[BarInd](value)
+                        if (ind != null)
+                            this.callback.onBar(ind.cycle, ind.bar)
+                    }
             }
         } catch {
             case t: Throwable => t.printStackTrace()
