@@ -101,7 +101,7 @@ public class DataApiImpl implements DataApi {
     }
 
     @Override
-    public CallResult<List<Bar>> bar(String code, String cycle, int trading_day, String price_adj) {
+    public CallResult<List<Bar>> bar(String code, String cycle, int trading_day, String price_adj, Boolean align) {
         Map<String, Object> params = new HashMap<String, Object>();
         params.put( "code", code);
 
@@ -114,6 +114,7 @@ public class DataApiImpl implements DataApi {
         if (price_adj != null & !price_adj.isEmpty())
             params.put("price_adj", price_adj);
 
+        params.put("align", align != null && align);
         //params.put("_format", "rowset");
 
         JsonRpc.JsonRpcCallResult r = client.call("dapi.tsi", params, 6000);

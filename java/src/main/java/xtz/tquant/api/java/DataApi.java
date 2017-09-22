@@ -133,7 +133,7 @@ public interface DataApi {
      *                        forward -- 前复权
      * @return
      */
-    CallResult<List<Bar>> bar (String code, String cycle, int trading_day, String price_adj);
+    CallResult<List<Bar>> bar (String code, String cycle, int trading_day, String price_adj, Boolean align);
 
     /**
      * 取当前的行情快照

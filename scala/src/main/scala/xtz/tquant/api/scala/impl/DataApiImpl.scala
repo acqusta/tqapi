@@ -344,8 +344,10 @@ class DataApiImpl(client: JsonRpc.JsonRpcClient) extends DataApi {
     }
 
     override
-    def bar (code : String, cycle : String, trading_day: Int, price_adj: String) : (Seq[Bar], String) = {
+    def bar (code : String, cycle : String, trading_day: Int, price_adj: String, align : Boolean) : (Seq[Bar], String) = {
+
         var params = Map[String, Any]( "code" -> code )
+
         if (cycle != null && cycle.nonEmpty )
             params += "cycle" -> cycle
 
@@ -353,7 +355,9 @@ class DataApiImpl(client: JsonRpc.JsonRpcClient) extends DataApi {
             params += "trading_day" -> trading_day
 
         if (price_adj!=null && price_adj.nonEmpty)
-            params ++ "price_adj" -> price_adj
+            params += "price_adj" -> price_adj
+
+        params += "align" -> (align != null  && align)
 
         val r = client.call("dapi.tsi", params, 6000)
 
