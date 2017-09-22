@@ -438,7 +438,7 @@ class DataApi:
 
     def __init__(self, tqapi):
         self._tqapi = tqapi
-        self._data_format = "obj"
+        self._data_format = "pandas"
         self._on_quote = None
         self._on_bar = None
         self._error_mode = "inline"
@@ -541,7 +541,7 @@ class DataApi:
                                error_mode = self._error_mode,
                                index = df_index )
 
-    def bar(self, code, cycle="1m", trading_day = 0, price_adj="", df_index=True) :
+    def bar(self, code, cycle="1m", trading_day = 0, price_adj="", df_index=True, align=False) :
         """ Get bar by code, cycle and trading_day
         
         code   - example "000001.SH"
@@ -558,6 +558,7 @@ class DataApi:
         params = { 
             "code"  : code,
             "cycle" : cycle,
+            "align" : True if align else False
         }
 
         if trading_day :
@@ -579,7 +580,7 @@ class DataApi:
 
         cr = self._tqapi._call("dapi.tsq_quote", params)
         return _extract_result(cr,
-                "obj" if self._data_format == "pandas" else self._data_format,
+                "" if self._data_format == "pandas" else self._data_format,
                 class_name = "MaketQuote",
                 error_mode=self._error_mode)
 
@@ -679,7 +680,7 @@ class TradeApi:
     
     def __init__(self, tqapi):
         self._tqapi             = tqapi
-        self._data_format       = "obj"
+        self._data_format       = "pandas"
         self._on_order_status   = None
         self._on_order_trade    = None
         self._on_account_status = None
@@ -790,7 +791,7 @@ class TradeApi:
         cr = self._tqapi._call("tapi.query_balance", rpc_params)
 
         return _extract_result(cr,
-            "obj" if self._data_format == "pandas" else self._data_format,
+            "" if self._data_format == "pandas" else self._data_format,
             class_name = "Balance",
             error_mode=self._error_mode)
 
@@ -901,7 +902,7 @@ class TradeApi:
 
         cr = self._tqapi._call("tapi.common_query", rpc_params)
         return _extract_result(cr,             
-            "obj" if self._data_format == "pandas" else self._data_format,
+            "" if self._data_format == "pandas" else self._data_format,
             class_name = "QueryResult",
             error_mode=self._error_mode)
 
