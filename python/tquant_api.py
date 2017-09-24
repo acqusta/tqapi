@@ -444,6 +444,7 @@ class DataApi:
         self._error_mode = "inline"
         self._sub_codes = set()
         self._sub_hash = 0
+        self._subscribing = False
 
     def set_error_mode(self, mode):
         """Set error mode.
@@ -503,18 +504,23 @@ class DataApi:
         if self._sub_hash == sub_hash and sub_hash:
             return
 
-        t = threading.Thread(target=self._subscribe_again)
-        t.setDaemon(True)
-        t.start()
+        if not self._subscribing :
+            self._subscribing = True
+            t = threading.Thread(target=self._subscribe_again)
+            t.setDaemon(True)
+            t.start()
 
     def _subscribe_again(self):
 
-        #print "subscribe again:", self._sub_codes, self._sub_hash, sub_hash, data
-        rpc_params = { 'codes' : ','.join(self._sub_codes) }
-        cr = self._tqapi._call("dapi.tsq_sub", rpc_params, timeout=2)
-        r = _extract_result(cr, "", error_mode = "inline")
-        if r[0]:
-            self._sub_hash = r[0]['sub_hash']
+        try :
+            #print "subscribe again:", self._sub_codes, self._sub_hash, sub_hash, data
+            rpc_params = { 'codes' : ','.join(self._sub_codes) }
+            cr = self._tqapi._call("dapi.tsq_sub", rpc_params, timeout=2)
+            r = _extract_result(cr, "", error_mode = "inline")
+            if r[0]:
+                self._sub_hash = r[0]['sub_hash']
+        finally:
+            self._subscribing = False
 
     def _on_connected(self):
         pass
