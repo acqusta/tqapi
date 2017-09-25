@@ -128,8 +128,10 @@ object TradeApi {
         account_id     : String ,   // 帐号编号
         code           : String ,   // 证券代码
         name           : String ,   // 证券名称
-        current_size   : Long   ,   // 当前数量
-        enable_size    : Long   ,   // 可用（可交易）数量，
+        current_size   : Long   ,   // 当前持仓
+        enable_size    : Long   ,   // 可用（可交易）持仓
+        init_size      : Long   ,   // 初始持仓
+        today_size     : Long   ,   // 今日持仓
         side           : String ,   // 持仓方向，股票的持仓方向为 Long, 期货分 Long, Short
         cost           : Double ,   // 成本
         cost_price     : Double ,   // 成本价格

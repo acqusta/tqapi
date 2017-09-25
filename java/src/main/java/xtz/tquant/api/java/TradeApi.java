@@ -131,8 +131,10 @@ public interface TradeApi {
         public String account_id;       // 帐号编号
         public String code;             // 证券代码
         public String name;             // 证券名称
-        public long   current_size;     // 当前数量
-        public long   enable_size;      // 可用（可交易）数量，
+        public long   current_size;     // 当前持仓
+        public long   enable_size;      // 可用（可交易）持仓
+        public long   init_size;        // 初始持仓
+        public long   today_size;       // 今日持仓
         public String side;             // 持仓方向，股票的持仓方向为 Long, 期货分 Long, Short
         public double cost;             // 成本
         public double cost_price;       // 成本价格

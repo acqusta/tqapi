@@ -54,7 +54,7 @@ public class DataApiDemo {
     void testBar() {
 
         try {
-            DataApi.CallResult<List<DataApi.Bar>> result = dapi.bar("000001.SH", "1m", 0, "");
+            DataApi.CallResult<List<DataApi.Bar>> result = dapi.bar("000001.SH", "1m", 0, "",false);
 
             if ( result.value !=null) {
                 for ( DataApi.Bar bar : result.value) {
