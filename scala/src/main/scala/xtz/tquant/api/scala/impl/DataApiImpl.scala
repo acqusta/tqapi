@@ -357,7 +357,7 @@ class DataApiImpl(client: JsonRpc.JsonRpcClient) extends DataApi {
         if (price_adj!=null && price_adj.nonEmpty)
             params += "price_adj" -> price_adj
 
-        params += "align" -> (align != null  && align)
+        params += "align" -> Option(align).getOrElse(false)
 
         val r = client.call("dapi.tsi", params, 6000)
 

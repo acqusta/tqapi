@@ -126,7 +126,7 @@ trait DataApi {
      *
       * @return
      */
-    def bar (code : String, cycle : String, trading_day: Int = 0, price_adj : String = "", align : Boolean = false) : (Seq[Bar], String)
+    def bar (code : String, cycle : String, trading_day: Int = 0, price_adj : String = "", align : Boolean = true) : (Seq[Bar], String)
 
         /**
      * 取当前的行情快照

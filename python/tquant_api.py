@@ -547,7 +547,7 @@ class DataApi:
                                error_mode = self._error_mode,
                                index = df_index )
 
-    def bar(self, code, cycle="1m", trading_day = 0, price_adj="", df_index=True, align=False) :
+    def bar(self, code, cycle="1m", trading_day = 0, price_adj="", df_index=True, align=True) :
         """ Get bar by code, cycle and trading_day
         
         code   - example "000001.SH"
