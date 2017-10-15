@@ -106,12 +106,27 @@ public interface JsonRpc {
         private void mainRun() {
 
             last_heartbeat_rsp_time = System.currentTimeMillis();
+            long heartbeat_req_time = 0;
 
             ZMQ.PollItem[] items = null;
 
             while (!should_close) {
 
                 try {
+
+                    if (connected) {
+                        if (System.currentTimeMillis() - last_heartbeat_rsp_time > 6000 ) {
+                            this.connected = false;
+                            if (this.callback != null)
+                                callback.onDisconnected();
+                        }
+                    }
+
+                    if (this.remote_sock != null && System.currentTimeMillis() - heartbeat_req_time > 2000) {
+                        heartbeat_req_time = System.currentTimeMillis();
+                        doSendHeartBeat();
+                    }
+
                     if (items == null) {
                         if (remote_sock != null)
                             items =  new ZMQ.PollItem[]{
@@ -151,18 +166,6 @@ public interface JsonRpc {
 
                     if (items.length == 2 && items[1].isReadable()) {
                         doRecv();
-                        if (System.currentTimeMillis() - last_heartbeat_rsp_time > 2000) {
-                            last_heartbeat_rsp_time = System.currentTimeMillis();
-                            doSendHeartBeat();
-                        }
-
-                        if ( connected ) {
-                            if (System.currentTimeMillis() - last_heartbeat_rsp_time > 6000 ) {
-                                this.connected = false;
-                                if (this.callback != null)
-                                    callback.onDisconnected();
-                            }
-                        }
                     }
                 }catch (Throwable t) {
                     t.printStackTrace();
@@ -175,7 +178,6 @@ public interface JsonRpc {
             try {
                 byte[] data = this.remote_sock.recv(ZMQ.DONTWAIT);
                 if (data == null) return;
-                //System.out.println("data size=" + data.length);
 
                 JsonRpcMessage msg = mapper.readValue(data, JsonRpcMessage.class);
 
@@ -313,7 +315,7 @@ public interface JsonRpc {
                 e.printStackTrace();
                 err_msg = e.getMessage();
             } catch (TimeoutException e) {
-                e.printStackTrace();
+                //e.printStackTrace();
                 err_msg = e.getMessage();
             }
 

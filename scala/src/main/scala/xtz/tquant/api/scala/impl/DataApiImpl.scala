@@ -344,7 +344,7 @@ class DataApiImpl(client: JsonRpc.JsonRpcClient) extends DataApi {
     }
 
     override
-    def bar (code : String, cycle : String, trading_day: Int, price_adj: String, align : Boolean) : (Seq[Bar], String) = {
+    def bar(code : String, cycle : String, trading_day: Int, price_adj: String, align : Boolean) : (Seq[Bar], String) = {
 
         var params = Map[String, Any]( "code" -> code )
 

@@ -101,7 +101,8 @@ object TradeApi {
         entrust_time   : Int     ,   // 委托时间
         fill_price     : Double  ,   // 成交价格
         fill_size      : Long    ,   // 成交数量
-        status         : String      // 订单状态：取值: OrderStatus
+        status         : String  ,   // 订单状态：取值: OrderStatus
+        order_id       : Int         // 自定义订单ID
     )
 
     @JsonIgnoreProperties(ignoreUnknown = true)
