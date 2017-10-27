@@ -102,6 +102,7 @@ object TradeApi {
         fill_price     : Double  ,   // 成交价格
         fill_size      : Long    ,   // 成交数量
         status         : String  ,   // 订单状态：取值: OrderStatus
+        status_msg     : String  , // 状态消息
         order_id       : Int         // 自定义订单ID
     )
 
@@ -115,7 +116,7 @@ object TradeApi {
         fill_no        : String  ,  // 成交编号
         fill_size      : Long    ,  // 成交数量
         fill_price     : Double  ,  // 成交价格
-        file_date      : Int     ,  // 成交日期
+        fill_date      : Int     ,  // 成交日期
         fill_time      : Int        // 成交时间
     )
 
