@@ -80,12 +80,23 @@ object TradeApi {
         close_pnl       : Double   // 实现盈亏
     )
 
-    trait OrderStatus {
+    object OrderStatus {
         val New        = "New"
         val Accepted   = "Accepted"
         val Filled     = "Filled"
         val Rejected   = "Rejected"
         val Cancelled  = "Cancelled"
+    }
+
+    object EntrustAction {
+        val Buy             = "Buy"
+        val Short           = "Sell"
+        val Cover           = "Cover"
+        val Sell            = "Sell"
+        val CoverToday      = "CoverToday"
+        val CoverYesterday  = "CoverYesterday"
+        val SellToday       = "SellToday"
+        val SellYesterday   = "SellYesterday"
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -120,7 +131,7 @@ object TradeApi {
         fill_time      : Int        // 成交时间
     )
 
-    trait Side {
+    object Side {
         val Long = "Long"
         val Short = "Short"
     }
