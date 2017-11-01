@@ -3,6 +3,7 @@ package test
 //import java.util.List
 //
 import xtz.tquant.api.scala.TQuantApi
+import xtz.tquant.api.scala.TradeApi.EntrustAction
 
 object TradeApiDemo extends App{
 
@@ -13,6 +14,7 @@ object TradeApiDemo extends App{
     val account_id = "glsc"
 
     def testQueryAccountStatus() {
+
         val (accounts, msg) = tapi.queryAccountStatus()
 
         if ( accounts !=null) {
@@ -65,14 +67,14 @@ object TradeApiDemo extends App{
     }
 
     def testPlaceOrder() {
-        val (entrust_no, msg) = tapi.placeOrder(account_id, "000001.SH", 1.0, 100, "Buy" )
+        val (entrust_no, msg) = tapi.placeOrder(account_id, "000001.SH", 1.0, 100, EntrustAction.Buy)
         println("entrust_no: " + ( if (entrust_no!=null) entrust_no else "<null>") )
         println("msg: " + msg)
     }
 
     def testCancelOrder() {
         val order_id = {
-            val (order_id, msg)  = tapi.placeOrder(account_id, "399001.SZ", 1.0, 100, "Buy" )
+            val (order_id, msg)  = tapi.placeOrder(account_id, "399001.SZ", 1.0, 100, EntrustAction.Buy)
             println("order_id: " + ( if (order_id!=null) order_id else "<null>") )
             println("msg: " + msg)
 

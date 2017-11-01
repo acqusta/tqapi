@@ -82,12 +82,23 @@ public interface TradeApi {
         public double close_pnl;        // 实现盈亏
     }
 
-    class  OrderStatus {
+    class OrderStatus {
         public static String New        = "New";
         public static String Accepted   = "Accepted";
         public static String Filled     = "Filled";
         public static String Rejected   = "Rejected";
         public static String Cancelled  = "Cancelled";
+    }
+
+    class EntrustAction {
+        public static String Buy             = "Buy";
+        public static String Short           = "Sell";
+        public static String Cover           = "Cover";
+        public static String Sell            = "Sell";
+        public static String CoverToday      = "CoverToday";
+        public static String CoverYesterday  = "CoverYesterday";
+        public static String SellToday       = "SellToday";
+        public static String SellYesterday   = "SellYesterday";
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -104,6 +115,7 @@ public interface TradeApi {
         public double fill_price;       // 成交价格
         public long   fill_size;        // 成交数量
         public String status;           // 订单状态：取值: OrderStatus
+        public String status_msg;       // 状态消息
         public int    order_id;         // 自定义订单编号
     }
 
