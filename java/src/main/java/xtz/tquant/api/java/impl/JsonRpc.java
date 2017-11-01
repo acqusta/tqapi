@@ -108,7 +108,7 @@ public interface JsonRpc {
             last_heartbeat_rsp_time = System.currentTimeMillis();
             long heartbeat_req_time = 0;
 
-            ZMQ.PollItem[] items = null;
+            ZMQ.Poller poller = null;
 
             while (!should_close) {
 
@@ -127,21 +127,21 @@ public interface JsonRpc {
                         doSendHeartBeat();
                     }
 
-                    if (items == null) {
-                        if (remote_sock != null)
-                            items =  new ZMQ.PollItem[]{
-                                    new ZMQ.PollItem(pull_sock,   ZMQ.Poller.POLLIN),
-                                    new ZMQ.PollItem(remote_sock, ZMQ.Poller.POLLIN)
-                            };
-                        else
-                            items = new ZMQ.PollItem[]{
-                                    new ZMQ.PollItem(pull_sock,   ZMQ.Poller.POLLIN)
-                            };
+                    if (poller == null) {
+                        if (remote_sock != null) {
+                            poller = ctx.createPoller(2);
+                            poller.register(pull_sock, ZMQ.Poller.POLLIN);
+                            poller.register(remote_sock, ZMQ.Poller.POLLIN);
+                        }
+                        else {
+                            poller = ctx.createPoller(1);
+                            poller.register(pull_sock, ZMQ.Poller.POLLIN);
+                        }
                     }
 
-                    ZMQ.poll(items, 1000);
+                    poller.poll(1000);
 
-                    if (items[0].isReadable()) {
+                    if (poller.pollin(0)) {
                         byte[] cmd = pull_sock.recv();
                         byte[] data = null;
                         while (pull_sock.hasReceiveMore())
@@ -154,7 +154,7 @@ public interface JsonRpc {
                                 break;
                             case 'C' :
                                 doConnect();
-                                items = null;
+                                poller = null;
                                 break;
                             case 'D' :
                                 break;
@@ -162,9 +162,9 @@ public interface JsonRpc {
                                 System.out.println("Unknown command: " + cmd[0]);
                         }
                     }
-                    if (items == null) continue;
+                    if (poller == null) continue;
 
-                    if (items.length == 2 && items[1].isReadable()) {
+                    if (poller.getSize() == 2 && poller.pollin(1)) {
                         doRecv();
                     }
                 }catch (Throwable t) {
