@@ -1,0 +1,9 @@
+project(myutils)
+
+set(SRC 
+    zmq_connection.cpp
+    zmq_connection.h
+    zmq.hpp
+)
+
+add_library(myutils STATIC ${SRC})
