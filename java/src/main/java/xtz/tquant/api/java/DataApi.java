@@ -158,7 +158,7 @@ public interface DataApi {
      *
      * codes为需要取消的列表，返回所有还在订阅的代码。
      * 如果需要取消所有订阅，先通过 subscribe 得到所有列表，然后使用unscribe取消
-
+     *
      * @param codes
      * @return
      */

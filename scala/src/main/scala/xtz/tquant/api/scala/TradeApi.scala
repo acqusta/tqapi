@@ -204,7 +204,7 @@ trait TradeApi {
      * @param account_id
      * @return
      */
-    def queryPosition( account_id : String) : (Seq[Position], String)
+    def queryPositions( account_id : String) : (Seq[Position], String)
 
     /**
      * 下单

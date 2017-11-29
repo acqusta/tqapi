@@ -72,6 +72,7 @@ public class TradeApiImpl implements TradeApi {
     public CallResult<Balance> queryBalance(String account_id) {
 
         Map<String, Object> params = new HashMap<String, Object>();
+        params.put( "account_id", account_id);
 
         JsonRpc.JsonRpcCallResult r = client.call("tapi.query_balance", params, 10000);
 
@@ -115,7 +116,7 @@ public class TradeApiImpl implements TradeApi {
     }
 
     @Override
-    public CallResult<List<Position>> queryPosition(String account_id) {
+    public CallResult<List<Position>> queryPositions(String account_id) {
 
         Map<String, Object> params = new HashMap<String, Object>();
         params.put( "account_id", account_id);

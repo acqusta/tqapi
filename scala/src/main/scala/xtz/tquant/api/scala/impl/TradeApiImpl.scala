@@ -60,7 +60,7 @@ class TradeApiImpl (client : JsonRpc.JsonRpcClient) extends TradeApi {
     }
 
     override
-    def queryPosition(account_id : String) : (Seq[Position], String) = {
+    def queryPositions(account_id : String) : (Seq[Position], String) = {
 
         val params = Map( "account_id" -> account_id)
 

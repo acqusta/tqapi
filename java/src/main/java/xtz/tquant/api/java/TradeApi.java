@@ -218,7 +218,7 @@ public interface TradeApi {
      * @param account_id
      * @return
      */
-    CallResult<List<Position>> queryPosition(String account_id);
+    CallResult<List<Position>> queryPositions(String account_id);
 
     /**
      * 下单
