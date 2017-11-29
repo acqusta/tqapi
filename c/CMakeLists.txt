@@ -27,14 +27,14 @@ if (WIN32)
 
   
   link_directories(
-    D:/cpp/libs/glog-master/${CMAKE_VS_PLATFORM_NAME}/${CMAKE_INT_DIR}
+    D:/cpp/libs/glog-master/bin/vs2013/${CMAKE_VS_PLATFORM_NAME}/${CMAKE_INT_DIR}
     D:/cpp/libs/zeromq-4.1.4/bin/${CMAKE_VS_PLATFORM_NAME}/${CMAKE_INT_DIR}
   )  
 
   set(COMMON_LIB
     libglog_static
     libzmq_static
-    libsodium_static
+#    libsodium_static
 #    getopt
     ws2_32
   )

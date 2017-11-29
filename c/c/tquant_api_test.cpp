@@ -1,3 +1,5 @@
+#include <thread>
+#include <chrono>
 #include <iostream>
 #include <chrono>
 #include "tquant_api.h"
@@ -26,10 +28,8 @@ public:
     }
 };
 
-int main()
+void test_dapi(TQuantApi* api)
 {
-    TQuantApi* api = TQuantApi::create("tcp://127.0.0.1:10001");
-
     const char* code = "rb.SHF";// .CFE";
     vector<string> codes;
     codes.push_back(code);
@@ -46,7 +46,7 @@ int main()
         }
         else {
             cout << "sub error: " << r.msg;
-            return 0;
+            return;
         }
     }
 
@@ -124,6 +124,96 @@ int main()
             << "total date   : " << 15 << endl;
 
     }
+}
+
+
+void test_tapi(TradeApi* tapi)
+{
+    {
+        auto r = tapi->query_account_status();
+        if (r.value) {
+            for (auto & act : *r.value) {
+                cout << act.account_id << "|" << act.account << "|" << act.account_type << "|"
+                    << act.broker << "|" << act.status << "|" << act.msg << endl;
+            }
+        }
+    }
+
+    this_thread::sleep_for(seconds(2));
+
+    {
+        auto r = tapi->query_positions("glsc");
+        if (r.value) {
+            for (auto& pos : *r.value) {
+                cout << "Pos: "
+                    << pos.account_id << "|" << pos.code << "|"
+                    << pos.init_size << "|" << pos.current_size << "|" << pos.enable_size << "|"
+                    << pos.today_size << "|" << pos.frozen_size << "|"
+                    << pos.side << "|" << pos.cost << "|" << pos.cost_price
+                    << pos.last_price << "|" << pos.float_pnl << "|" << pos.close_pnl << "|"
+                    << pos.margin << "|" << pos.commission << endl;
+            }
+        }
+        else {
+            cout << "query_postion error: " << r.msg << endl;
+        }
+    }
+
+    this_thread::sleep_for(seconds(2));
+
+    {
+        auto r = tapi->query_trades("glsc");
+        if (r.value) {
+            for (auto& trd : *r.value) {
+                cout << "Trade: " << trd.account_id << "|" << trd.code << "|" << trd.name << "|"
+                    << trd.entrust_no << "|" << trd.entrust_action << "|" << trd.fill_no << "|"
+                    << trd.fill_size << "|" << trd.fill_price << "|"
+                    << trd.fill_date << "|" << trd.fill_time << endl;
+            }
+        }
+        else {
+            cout << "query_trades error: " << r.msg << endl;
+        }
+    }
+
+    this_thread::sleep_for(seconds(2));
+
+    {
+        auto r = tapi->query_orders("glsc");
+        if (r.value) {
+            for (auto& ord : *r.value) {
+                cout << "Order: " << ord.account_id << "|" << ord.code << "|" << ord.name << "|"
+                    << ord.entrust_no << "|" << ord.entrust_action << "|" << ord.entrust_price << "|"
+                    << ord.entrust_size << "|" << ord.fill_price << "|"
+                    << ord.entrust_date << "|" << ord.entrust_time << "|"
+                    << ord.entrust_date << "|" << ord.entrust_time << "|"
+                    << ord.fill_price << "|" << ord.fill_size << "|"
+                    << ord.status << "|" << ord.status_msg << "|"
+                    << ord.order_id << endl;
+            }
+        }
+        else {
+            cout << "query_orders error: " << r.msg << endl;
+        }
+    }
+
+    {
+        auto r = tapi->place_order("glsc", "000001.SH", 1.0, 1, "Buy", 1);
+        if (r.value) {
+            cout << "place_order result: " << r.value->entrust_no << "," << r.value->order_id << endl;
+        }
+        else {
+            cout << "place_order error: " << r.msg << endl;
+        }
+    }
+
+}
+
+int main()
+{
+    TQuantApi* api = TQuantApi::create("tcp://127.0.0.1:10001");
+
+    test_tapi(api->trade_api());
     getchar();
-    return 0;
+
 }

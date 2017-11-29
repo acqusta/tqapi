@@ -123,9 +123,82 @@ namespace jsonrpc {
 
     };
 
-    static inline bool is_map(msgpack_object& o)  { return o.type == MSGPACK_OBJECT_MAP; }
+    static inline bool is_map(msgpack_object& o)    { return o.type == MSGPACK_OBJECT_MAP; }
 
-    static inline bool get_map_field_int(msgpack_object& o, const char* key, int64_t* v) 
+    static inline bool is_nil(msgpack_object& obj)  {  return obj.type == MSGPACK_OBJECT_NIL;   }
+
+    static inline bool is_bin(msgpack_object& obj)  {   return obj.type == MSGPACK_OBJECT_BIN;  }
+
+    static inline bool is_arr(msgpack_object& obj)  { return obj.type == MSGPACK_OBJECT_ARRAY; }
+
+    static inline bool mp_get(msgpack_object& o, string* v)
+    {
+        if (o.type != MSGPACK_OBJECT_STR) return false;
+        v->assign(o.via.str.ptr, o.via.str.size);
+        return true;
+    }
+
+    static inline bool mp_get(msgpack_object& o, int64_t* v)
+    {
+        if (o.type == MSGPACK_OBJECT_POSITIVE_INTEGER) {
+            *v = o.via.u64;
+            return true;
+        }
+        else if (o.type == MSGPACK_OBJECT_NEGATIVE_INTEGER) {
+            *v = o.via.i64;
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    static inline bool mp_get(msgpack_object& o, int32_t* v)
+    {
+        int64_t v2;
+        if (mp_get(o, &v2)) {
+            *v = (int32_t)v2;
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    static inline bool mp_get(msgpack_object& o, bool* v)
+    {
+        if (o.type == MSGPACK_OBJECT_BOOLEAN) {
+            *v = o.via.boolean;
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    static inline bool mp_get(msgpack_object& o, double* v)
+    {
+        if (o.type == MSGPACK_OBJECT_POSITIVE_INTEGER) {
+            *v = (double)o.via.u64;
+            return true;
+        }
+        else if (o.type == MSGPACK_OBJECT_NEGATIVE_INTEGER) {
+            *v = (double)o.via.i64;
+            return true;
+        }
+        else if (o.type == MSGPACK_OBJECT_FLOAT ||
+                 o.type == MSGPACK_OBJECT_FLOAT32 ||
+                 o.type == MSGPACK_OBJECT_FLOAT64)
+        {
+            *v = o.via.f64;
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    static inline bool get_map_field_int(msgpack_object& o, const char* key, int64_t* v)
     {
         if (!is_map(o)) return false;
 

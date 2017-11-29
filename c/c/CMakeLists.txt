@@ -1,8 +1,11 @@
 project(api_c)
 
 set(SRC
-    tquant_api.cpp
     tquant_api.h
+    impl_tquant_api.h
+    impl_tquant_api.cpp
+    impl_data_api.h
+    impl_trade_api.h
 )
 
 add_library(tquant_api STATIC ${SRC})
