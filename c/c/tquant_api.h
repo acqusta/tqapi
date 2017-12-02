@@ -20,7 +20,10 @@ namespace tquant {  namespace api {
 
         TickDataHolder(const TickDataHolder<T>& t) {
             *this = t;
-            if (t.code) this->code = t._code.c_str();
+            if (t.code){
+                this->_code = t.code;
+                this->code = this->_code.c_str();
+            }
         }
     };
 
@@ -28,6 +31,9 @@ namespace tquant {  namespace api {
     // keep same with tk_schema!
     struct RawMarketQuote{
         const char*     code;
+#if defined(WIN32) && !defined(_WIN64)
+        int32_t         _padding_1;
+#endif
         int32_t         date;
         int32_t         time;
         int64_t         recv_time;
@@ -72,6 +78,9 @@ namespace tquant {  namespace api {
 
     struct RawBar {
         const char*     code;
+#if defined(WIN32) && !defined(_WIN64)
+        int32_t         _padding_1;
+#endif
         int32_t         date;
         int32_t         time;
         int32_t         trading_day;
@@ -88,6 +97,9 @@ namespace tquant {  namespace api {
 
     struct RawDailyBar {
         const char*     code;
+#if defined(WIN32) && !defined(_WIN64)
+        int32_t         _padding_1;
+#endif
         int32_t         date;
         double          open;
         double          high;
@@ -96,9 +108,10 @@ namespace tquant {  namespace api {
         int64_t         volume;
         double          turnover;
         int64_t         oi;
+        double          settle;
+        double          pre_close;
+        double          pre_settle;
         double          _padding;
-        //double        pre_close;
-        //double        pre_settle;
     };
 
     typedef TickDataHolder<RawDailyBar> DailyBar;
@@ -214,7 +227,7 @@ namespace tquant {  namespace api {
         *
         * @param callback
         */
-        virtual void setCallback(DataApi_Callback* callback) = 0;
+        virtual void set_callback(DataApi_Callback* callback) = 0;
     };
 
     // TradeApi

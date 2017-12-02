@@ -8,9 +8,9 @@ set(SRC
     impl_trade_api.h
 )
 
-add_library(tquant_api STATIC ${SRC})
+add_library(tqapi STATIC ${SRC})
 
-target_link_libraries(tquant_api
+target_link_libraries(tqapi
     msgpack
     myutils
     snappy
@@ -20,8 +20,8 @@ target_link_libraries(tquant_api
 set(SRC
     tquant_api_test.cpp
 )
-add_executable(tquant_api_test ${SRC})
+add_executable(tqapi_test ${SRC})
 
-target_link_libraries(tquant_api_test tquant_api)
+target_link_libraries(tqapi_test tqapi)
 
-install(TARGETS tquant_api_test DESTINATION bin)
+install(TARGETS tqapi_test DESTINATION bin)

@@ -37,7 +37,7 @@ void test_dapi(TQuantApi* api)
 
     MyCallback callback;
 
-    api->data_api()->setCallback(&callback);
+    api->data_api()->set_callback(&callback);
 
     {
         auto r = api->data_api()->subscribe(codes);
@@ -63,7 +63,7 @@ void test_dapi(TQuantApi* api)
         }
     }
 
-    if (0) {
+    if (1) {
         auto  r = api->data_api()->daily_bar(code, "forward", true);
         if (r.value) {
             for (auto& b : *r.value)
@@ -213,7 +213,8 @@ int main()
 {
     TQuantApi* api = TQuantApi::create("tcp://127.0.0.1:10001");
 
-    test_tapi(api->trade_api());
+    test_dapi(api);
+    //test_tapi(api->trade_api());
     getchar();
 
 }

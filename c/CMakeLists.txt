@@ -4,6 +4,7 @@ project(tquant_api)
 
 set(CMAKE_INSTALL_PREFIX dist)
 
+
 include_directories(
     lib/
     lib/msgpack/include
@@ -29,7 +30,7 @@ if (WIN32)
   link_directories(
     D:/cpp/libs/glog-master/bin/vs2013/${CMAKE_VS_PLATFORM_NAME}/${CMAKE_INT_DIR}
     D:/cpp/libs/zeromq-4.1.4/bin/${CMAKE_VS_PLATFORM_NAME}/${CMAKE_INT_DIR}
-  )  
+  )
 
   set(COMMON_LIB
     libglog_static
@@ -39,12 +40,15 @@ if (WIN32)
     ws2_32
   )
 
+  set(LIB_PATH bin)
+
 endif()
 
+add_subdirectory(lib/loop)
 add_subdirectory(lib/msgpack)
 add_subdirectory(lib/myutils)
 add_subdirectory(lib/snappy)
 
 add_subdirectory(c)
 #add_subdirectory(jni)
-#add_subdirectory(pyext)
+add_subdirectory(pyext)

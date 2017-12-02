@@ -113,8 +113,6 @@ namespace tquant { namespace api { namespace impl {
             const BinDataHead* bin_head = reinterpret_cast<const BinDataHead*>(rsp->result.via.bin.ptr);
             uint32_t bin_len = rsp->result.via.bin.size;
 
-            int i = sizeof(DailyBar);
-
             if (bin_head->element_size < sizeof(RawDailyBar))
                 return CallResult<vector<DailyBar>>("-1,wrong data format");
 
@@ -138,12 +136,14 @@ namespace tquant { namespace api { namespace impl {
             if (!is_bin(rsp->result))
                 return CallResult<MarketQuote>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
-            const BinDataHead* bin_head = reinterpret_cast<const BinDataHead*>(rsp->result.via.bin.ptr);
+            const char* p = (const char*)(rsp->result.via.bin.ptr);
             uint32_t bin_len = rsp->result.via.bin.size;
 
-            if (bin_head->element_size < sizeof(MarketQuote))
+            int code_len = strlen(p);
+            if ( bin_len < code_len + 1 + sizeof(RawMarketQuote))
                 return CallResult<MarketQuote>("-1,wrong data format");
-            auto quote = make_shared<MarketQuote>(*bin_head->elements<const MarketQuote>());
+
+            auto quote = make_shared<MarketQuote>(*(const RawMarketQuote*)(p+code_len+1), code);
             return CallResult<MarketQuote>(quote);
         }
 
@@ -226,7 +226,7 @@ namespace tquant { namespace api { namespace impl {
             return CallResult<vector<string>>(make_shared <vector<string>>(sub_codes));
         }
 
-        virtual void setCallback(DataApi_Callback* callback) override
+        virtual void set_callback(DataApi_Callback* callback) override
         {
             m_callback = callback;
         }
