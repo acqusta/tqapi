@@ -143,7 +143,7 @@ PyObject* _wrap_dapi_dailybar(PyObject* self, PyObject *args, PyObject* kwargs)
 {
     int64_t h = 0;
     const char* code = nullptr;
-    PyObject* align = false;
+    PyObject* align = nullptr;
     const char* price_adj = nullptr;
 
     if (!PyArg_ParseTuple(args, "LssO",
@@ -281,7 +281,7 @@ static PyObject* convert_ticks(vector<MarketQuote>* ticks)
     import_array1(nullptr);
 
     PyObject* dict = PyDict_New();
-    npy_intp array_len[] = { ticks->size(), 0 };
+    npy_intp array_len[] = { (npy_intp)ticks->size(), 0 };
 
     to_pyarray(dict, ticks, array_len, date          ,  int32_t, NPY_INT    );
     to_pyarray(dict, ticks, array_len, time          ,  int32_t, NPY_INT    );
@@ -357,7 +357,7 @@ static PyObject* convert_bars(vector<Bar>* bars)
     import_array1(nullptr);
 
     PyObject* dict = PyDict_New();
-    npy_intp array_len[] = { bars->size(), 0 };
+    npy_intp array_len[] = { (npy_intp)bars->size(), 0 };
 
     to_pyarray(dict, bars, array_len, date,         int32_t, NPY_INT);
     to_pyarray(dict, bars, array_len, time,         int32_t, NPY_INT);
@@ -406,7 +406,7 @@ static PyObject* convert_dailybars(vector<DailyBar>* bars)
     import_array1(nullptr);
 
     PyObject* dict = PyDict_New();
-    npy_intp array_len[] = { bars->size(), 0 };
+    npy_intp array_len[] = { (npy_intp)bars->size(), 0 };
 
     to_pyarray(dict, bars, array_len, date,         int32_t, NPY_INT);
     to_pyarray(dict, bars, array_len, open,         double,  NPY_DOUBLE);

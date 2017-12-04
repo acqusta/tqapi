@@ -36,7 +36,7 @@ if (WIN32)
     sodium-static
 #    getopt
     ws2_32
-	Iphlpapi
+    Iphlpapi
   )
 
   set(LIB_PATH bin)
