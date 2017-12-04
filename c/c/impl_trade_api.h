@@ -1,9 +1,10 @@
 #ifndef _IMPL_TRADE_API_H
 #define _IMPL_TRADE_API_H
 
+#include "tquant_api.h"
+
 #include "myutils/stringutils.h"
 #include "myutils/jsonrpc.h"
-#include "tquant_api.h"
 #include "impl_tquant_api.h"
 
 namespace tquant { namespace api { namespace impl {
@@ -237,7 +238,7 @@ namespace tquant { namespace api { namespace impl {
             return CallResult<vector<Position>>(positions);
         }
 
-        virtual CallResult<OrderID> place_order(const char* account_id, const char* code, double price, long size, const char* action, int order_id) override
+        virtual CallResult<OrderID> place_order(const char* account_id, const char* code, double price, int64_t size, const char* action, int order_id) override
         {
             MsgPackPacker pk;
             pk.pack_map(6);
@@ -329,17 +330,17 @@ namespace tquant { namespace api { namespace impl {
             if (rpcmsg->method == "tapi.order_status_ind") {
                 auto order = make_shared<Order>();
                 if (convert_orderstatus(rpcmsg->params, order.get()))
-                    m_callback->onOrderStatus(order);
+                    m_callback->on_order_status(order);
             }
             else if (rpcmsg->method == "tapi.order_trade_ind") {
                 auto trade = make_shared<Trade>();
                 if (convert_ordertrade(rpcmsg->params, trade.get()))
-                    m_callback->onOrderTrade(trade);
+                    m_callback->on_order_trade(trade);
             }
             else if (rpcmsg->method == "tapi.account_status_ind") {
                 auto act = make_shared<AccountInfo>();
                 if (convert_account(rpcmsg->params, act.get()))
-                    m_callback->onAccountStatus(act);
+                    m_callback->on_account_status(act);
             }
         }
     };

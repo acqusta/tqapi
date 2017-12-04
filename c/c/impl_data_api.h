@@ -239,7 +239,7 @@ namespace tquant { namespace api { namespace impl {
                 if (!is_bin(rpcmsg->params)) return;
                 const char* code = rpcmsg->params.via.bin.ptr;
                 auto quote = make_shared<MarketQuote>(*(RawMarketQuote*)(code + strlen(code) + 1), code);
-                m_callback->onMarketQuote(quote);
+                m_callback->on_market_quote(quote);
             }
             else if (rpcmsg->method == "dapi.bar") {
                 if (!is_bin(rpcmsg->params)) return;
@@ -248,7 +248,7 @@ namespace tquant { namespace api { namespace impl {
                 const RawBar* rbar = reinterpret_cast<const RawBar*>(code + strlen(code) + 1);
 
                 auto bar = make_shared<Bar>(*rbar, code);
-                m_callback->onBar(cycle, bar);
+                m_callback->on_bar(cycle, bar);
             }
         }
     };

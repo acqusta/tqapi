@@ -8,14 +8,14 @@ set(SRC
     tqapi_py.cpp
     tqapi_py.h
     tqapi.py
-    tqapi_test.py
+    test.py
 )
 
 include_directories( ../c ../lib )
 
 if (WIN32)
   # add_definitions(-DPy_NO_ENABLE_SHARED)
-  if (BUILD_API_WIN64_ONLY)
+  if (BUILD_WIN64)
     include_directories(
       D:/WinPython-64bit-2.7.10.3/python-2.7.10.amd64/include
       D:/WinPython-64bit-2.7.10.3/python-2.7.10.amd64/Lib/site-packages/numpy/core/include

@@ -26,23 +26,23 @@ static PyMethodDef Methods[] = {
     //{ (char *)"tqapi_get_data_api",      (PyCFunction)_wrap_tqapi_get_data_api,     METH_KEYWORDS | METH_VARARGS, NULL },
     //{ (char *)"tqapi_get_trade_api",     (PyCFunction)_wrap_tqapi_get_trade_api,    METH_KEYWORDS | METH_VARARGS, NULL },
 
-    { (char *)"tapi_place_order",        (PyCFunction)_wrap_tapi_place_order,       METH_KEYWORDS | METH_VARARGS, NULL },
-    { (char *)"tapi_cancel_order",       (PyCFunction)_wrap_tapi_cancel_order,      METH_KEYWORDS | METH_VARARGS, NULL },
-    { (char *)"tapi_query_order",        (PyCFunction)_wrap_tapi_query_orders,      METH_KEYWORDS | METH_VARARGS, NULL },
-    { (char *)"tapi_query_trades",       (PyCFunction)_wrap_tapi_query_trades,      METH_KEYWORDS | METH_VARARGS, NULL },
-    { (char *)"tapi_query_positions",    (PyCFunction)_wrap_tapi_query_positions,   METH_KEYWORDS | METH_VARARGS, NULL },
-    { (char *)"tapi_query_balance",      (PyCFunction)_wrap_tapi_query_balance,     METH_KEYWORDS | METH_VARARGS, NULL },
-    { (char *)"tapi_set_callback",       (PyCFunction)_wrap_tapi_set_callback,      METH_KEYWORDS | METH_VARARGS, NULL },
-    { (char *)"tapi_query",              (PyCFunction)_wrap_tapi_query,             METH_KEYWORDS | METH_VARARGS, NULL },
-    { (char *)"tapi_get_account_status", (PyCFunction)_wrap_tapi_get_account_status,METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tapi_place_order",           (PyCFunction)_wrap_tapi_place_order,            METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tapi_cancel_order",          (PyCFunction)_wrap_tapi_cancel_order,           METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tapi_query_orders",          (PyCFunction)_wrap_tapi_query_orders,           METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tapi_query_trades",          (PyCFunction)_wrap_tapi_query_trades,           METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tapi_query_positions",       (PyCFunction)_wrap_tapi_query_positions,        METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tapi_query_balance",         (PyCFunction)_wrap_tapi_query_balance,          METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tapi_set_callback",          (PyCFunction)_wrap_tapi_set_callback,           METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tapi_query",                 (PyCFunction)_wrap_tapi_query,                  METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tapi_query_account_status",  (PyCFunction)_wrap_tapi_query_account_status,   METH_KEYWORDS | METH_VARARGS, NULL },
 
-    { (char *)"dapi_set_callback",       (PyCFunction)_wrap_dapi_set_callback,      METH_KEYWORDS | METH_VARARGS, NULL },
-    { (char *)"dapi_subscribe",          (PyCFunction)_wrap_dapi_subscribe,         METH_KEYWORDS | METH_VARARGS, NULL },
-    { (char *)"dapi_unsubscribe",        (PyCFunction)_wrap_dapi_unsubscribe,       METH_KEYWORDS | METH_VARARGS, NULL },
-    { (char *)"dapi_quote",              (PyCFunction)_wrap_dapi_quote,             METH_KEYWORDS | METH_VARARGS, NULL },
-    { (char *)"dapi_bar",                (PyCFunction)_wrap_dapi_bar,               METH_KEYWORDS | METH_VARARGS, NULL },
-    { (char *)"dapi_tick",               (PyCFunction)_wrap_dapi_tick,              METH_KEYWORDS | METH_VARARGS, NULL },
-    { (char *)"dapi_dailybar",           (PyCFunction)_wrap_dapi_dailybar,          METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"dapi_set_callback",          (PyCFunction)_wrap_dapi_set_callback,           METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"dapi_subscribe",             (PyCFunction)_wrap_dapi_subscribe,              METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"dapi_unsubscribe",           (PyCFunction)_wrap_dapi_unsubscribe,            METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"dapi_quote",                 (PyCFunction)_wrap_dapi_quote,                  METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"dapi_bar",                   (PyCFunction)_wrap_dapi_bar,                    METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"dapi_tick",                  (PyCFunction)_wrap_dapi_tick,                   METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"dapi_dailybar",              (PyCFunction)_wrap_dapi_dailybar,               METH_KEYWORDS | METH_VARARGS, NULL },
     { NULL, NULL, 0, NULL }
 };
 
@@ -74,23 +74,6 @@ PyObject* _wrap_tqapi_destroy(PyObject* self, PyObject *args, PyObject* kwargs)
     }
 
     Py_RETURN_TRUE;
-}
-
-
-// TradeApi_Callback
-void TQuantApiWrap::onOrderStatus(shared_ptr<Order> order)
-{
-
-}
-
-void TQuantApiWrap::onOrderTrade(shared_ptr<Trade> trade)
-{
-
-}
-
-void TQuantApiWrap::onAccountStatus(shared_ptr<AccountInfo> account)
-{
-
 }
 
 

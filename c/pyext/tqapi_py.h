@@ -64,6 +64,11 @@ static inline void dict_set_item(PyObject* obj, const char* key, const char* str
     Py_XDECREF(v);
 }
 
+static inline void dict_set_item(PyObject* obj, const char* key, const string& str)
+{
+    dict_set_item(obj, key, str.c_str());
+}
+
 static inline void dict_set_item(PyObject* obj, const char* key, int32_t value)
 {
     PyObject * v = PyLong_FromLong(value);
@@ -110,13 +115,13 @@ public:
     }
 
     // DataApi_Callback
-    virtual void onMarketQuote(shared_ptr<MarketQuote> quote) override;
-    virtual void onBar(const char* cycle, shared_ptr<Bar> bar) override;
+    virtual void on_market_quote(shared_ptr<MarketQuote> quote) override;
+    virtual void on_bar        (const char* cycle, shared_ptr<Bar> bar) override;
 
     // TradeApi_Callback
-    virtual void onOrderStatus(shared_ptr<Order> order) override;
-    virtual void onOrderTrade(shared_ptr<Trade> trade) override;
-    virtual void onAccountStatus(shared_ptr<AccountInfo> account) override;
+    virtual void on_order_status   (shared_ptr<Order> order) override;
+    virtual void on_order_trade    (shared_ptr<Trade> trade) override;
+    virtual void on_account_status (shared_ptr<AccountInfo> account) override;
 
     DataApi*  data_api()  { return m_api->data_api(); }
     TradeApi* trade_api() { return m_api->trade_api(); }
@@ -128,18 +133,18 @@ public:
 
 PyObject* _wrap_tqapi_create            (PyObject* self, PyObject *args, PyObject* kwargs);
 PyObject* _wrap_tqapi_destroy           (PyObject* self, PyObject *args, PyObject* kwargs);
-PyObject* _wrap_tqapi_get_data_api      (PyObject* self, PyObject *args, PyObject* kwargs);
-PyObject* _wrap_tqapi_get_trade_api     (PyObject* self, PyObject *args, PyObject* kwargs);
+//PyObject* _wrap_tqapi_get_data_api      (PyObject* self, PyObject *args, PyObject* kwargs);
+//PyObject* _wrap_tqapi_get_trade_api     (PyObject* self, PyObject *args, PyObject* kwargs);
 
-PyObject* _wrap_tapi_place_order        (PyObject* self, PyObject *args, PyObject* kwargs);
-PyObject* _wrap_tapi_cancel_order       (PyObject* self, PyObject *args, PyObject* kwargs);
-PyObject* _wrap_tapi_query_orders       (PyObject* self, PyObject *args, PyObject* kwargs);
-PyObject* _wrap_tapi_query_trades       (PyObject* self, PyObject *args, PyObject* kwargs);
-PyObject* _wrap_tapi_query_positions    (PyObject* self, PyObject *args, PyObject* kwargs);
-PyObject* _wrap_tapi_query_balance      (PyObject* self, PyObject *args, PyObject* kwargs);
-PyObject* _wrap_tapi_set_callback       (PyObject* self, PyObject *args, PyObject* kwargs);
-PyObject* _wrap_tapi_query              (PyObject* self, PyObject *args, PyObject* kwargs);
-PyObject* _wrap_tapi_get_account_status (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tapi_place_order            (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tapi_cancel_order           (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tapi_query_orders           (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tapi_query_trades           (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tapi_query_positions        (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tapi_query_balance          (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tapi_set_callback           (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tapi_query                  (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tapi_query_account_status   (PyObject* self, PyObject *args, PyObject* kwargs);
 
 PyObject* _wrap_dapi_set_callback       (PyObject* self, PyObject *args, PyObject* kwargs);
 PyObject* _wrap_dapi_subscribe          (PyObject* self, PyObject *args, PyObject* kwargs);

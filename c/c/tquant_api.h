@@ -127,8 +127,8 @@ namespace tquant {  namespace api {
     */
     class DataApi_Callback {
     public:
-        virtual void onMarketQuote (shared_ptr<MarketQuote> quote) = 0;
-        virtual void onBar         (const char* cycle, shared_ptr<Bar> bar) = 0;
+        virtual void on_market_quote (shared_ptr<MarketQuote> quote) = 0;
+        virtual void on_bar          (const char* cycle, shared_ptr<Bar> bar) = 0;
     };
 
     template<typename T_VALUE>
@@ -343,15 +343,15 @@ namespace tquant {  namespace api {
     };
 
     struct OrderID {
-        string entrust_no;       // 订单委托号
-        string order_id;         // 自定义编号
+        string  entrust_no;       // 订单委托号
+        int32_t order_id;         // 自定义编号
     };
 
     class TradeApi_Callback{
     public:
-        virtual void onOrderStatus  (shared_ptr<Order> order) = 0;
-        virtual void onOrderTrade   (shared_ptr<Trade> trade) = 0;
-        virtual void onAccountStatus(shared_ptr<AccountInfo> account) = 0;
+        virtual void on_order_status  (shared_ptr<Order> order) = 0;
+        virtual void on_order_trade   (shared_ptr<Trade> trade) = 0;
+        virtual void on_account_status(shared_ptr<AccountInfo> account) = 0;
     };
 
     class TradeApi {
@@ -404,8 +404,8 @@ namespace tquant {  namespace api {
         *
         * 股票通道为同步下单模式，即必须下单成功必须返回委托号 entrust_no。
         *
-        * CTP交易通道为异步下单模式，下单后立即返回自定义编号order_id。当交易所接受订单，生成委托号好，通过 Callback.onOrderStatus通知
-        * 用户。用户可以通过order_id匹配。如果订单没有被接收，onOrderStatus回调函数中entrust_no为空，状态为Rejected。
+        * CTP交易通道为异步下单模式，下单后立即返回自定义编号order_id。当交易所接受订单，生成委托号好，通过 Callback.on_order_status通知
+        * 用户。用户可以通过order_id匹配。如果订单没有被接收，on_order_status回调函数中entrust_no为空，状态为Rejected。
         * 当参数order_id不为0，表示用户自己对订单编号，这时用户必须保证编号的唯一性。如果交易通道不支持order_id，该函数返回错误代码。
         *
         * @param account_id    帐号编号
@@ -416,7 +416,7 @@ namespace tquant {  namespace api {
         * @param order_id      自定义订单编号，不为0表示有值
         * @return OrderID      订单ID
         */
-        virtual CallResult<OrderID> place_order(const char* account_id, const char* code, double price, long size, const char* action, int order_id) = 0;
+        virtual CallResult<OrderID> place_order(const char* account_id, const char* code, double price, int64_t size, const char* action, int order_id) = 0;
 
         /**
         * 根据订单号撤单

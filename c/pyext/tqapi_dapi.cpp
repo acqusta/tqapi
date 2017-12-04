@@ -50,7 +50,7 @@ PyObject* _wrap_dapi_subscribe(PyObject* self, PyObject *args, PyObject* kwargs)
         for (auto& c : ss) {
             auto r = wrap->data_api()->quote(c.c_str());
             if (r.value)
-                wrap->onMarketQuote(r.value);
+                wrap->on_market_quote(r.value);
         }
         stringstream ss;
         for (auto& c : *r.value) ss << c << ",";
@@ -194,7 +194,7 @@ PyObject* _wrap_dapi_tick(PyObject* self, PyObject *args, PyObject* kwargs)
 }
 
 // DataApi_Callback
-void TQuantApiWrap::onMarketQuote(shared_ptr<MarketQuote> quote)
+void TQuantApiWrap::on_market_quote(shared_ptr<MarketQuote> quote)
 {
     if (m_dapi_cb.obj == Py_None) return;
 
@@ -206,7 +206,7 @@ void TQuantApiWrap::onMarketQuote(shared_ptr<MarketQuote> quote)
     });
 }
 
-void TQuantApiWrap::onBar(const char* cycle, shared_ptr<Bar> bar)
+void TQuantApiWrap::on_bar(const char* cycle, shared_ptr<Bar> bar)
 {
     if (m_dapi_cb.obj != Py_None) return;
 

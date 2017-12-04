@@ -37,15 +37,15 @@ class TradeApi:
 
     def account_status(self):
         """Get trade account connection status"""
-        return _tqapi.tapi_get_account_status(self._api._handle)
+        return _tqapi.tapi_query_account_status(self._api._handle)
 
     def query_balance(self, account_id):
         """Get balance of one account."""
-        return _tqapi.tapi_query_balance(self._api._handle, account_id)
+        return _tqapi.tapi_query_balance(self._api._handle, str(account_id))
 
     def query_trades(self, account_id):
         """Get trades of one account."""
-        v, msg = _tqapi.tapi_query_trades(self._api._handle, account_id)
+        v, msg = _tqapi.tapi_query_trades(self._api._handle, str(account_id))
         if v is not None:
             return pd.DataFrame(v), msg
         else:
@@ -53,7 +53,7 @@ class TradeApi:
 
     def query_orders(self, account_id):
         """Get orders of one account."""
-        v, msg = _tqapi.tapi_query_orders(self._api._handle, account_id)
+        v, msg = _tqapi.tapi_query_orders(self._api._handle, str(account_id))
         if v is not None:
             return pd.DataFrame(v), msg
         else:
@@ -61,7 +61,7 @@ class TradeApi:
 
     def query_positions(self, account_id):
         """Get positions of one account."""
-        v, msg = _tqapi.tapi_query_positions(self._api._handle, account_id)
+        v, msg = _tqapi.tapi_query_positions(self._api._handle, str(account_id))
         if v is not None:
             return pd.DataFrame(v), msg
         else:
@@ -69,7 +69,8 @@ class TradeApi:
     
     def place_order(self, account_id, code, price, size, action, order_id=0):
         """Place an order and return entrust_no"""
-        return _tqapi.tapi_place_order(self._api._handle, account_id, code, price, size, action, order_id)
+        return _tqapi.tapi_place_order(self._api._handle, str(account_id), str(code),
+                                       float(price), long(size), str(action), int(order_id))
             
     def cancel_order(self, account_id, code, entrust_no="", order_id=0):
         """Canel order"""
@@ -77,9 +78,7 @@ class TradeApi:
 
     def query(self, account_id, command, params=""):
         """common query"""
-        return _tqapi.tapi_query(self._api._handle, account_id, command, params)
-
-
+        return _tqapi.tapi_query(self._api._handle, str(account_id), str(command), str(params))
 
 class DataApi:
     def __init__(self, api):
@@ -99,18 +98,16 @@ class DataApi:
         self._on_bar = func
 
     def subscribe(self, codes) :
-        str = codes
         if type(codes) is tuple or type(codes) is list:
-            str = ",".join(codes)
+            codes = ",".join(codes)
 
-        return _tqapi.dapi_subscribe(self._api._handle, str)
+        return _tqapi.dapi_subscribe(self._api._handle, str(codes))
 
     def unsubscribe(self, codes):
-        str = codes
         if type(codes) is tuple or type(codes) is list:
-            str = ",".join(codes)
+            codes = ",".join(codes)            
 
-        return _tqapi.dapi_unsubscribe(self._api._handle, str)
+        return _tqapi.dapi_unsubscribe(self._api._handle, str(codes))
 
     def _my_callback(self, event, id, data):
         cb = self._callback_map.get(event)
@@ -119,24 +116,24 @@ class DataApi:
 
 
     def quote(self, code):
-        return _tqapi.dapi_quote(self._api._handle, code)
+        return _tqapi.dapi_quote(self._api._handle, str(code))
 
     def bar(self, code, cycle="1m", trading_day=0, align=True):
-        v, msg = _tqapi.dapi_bar(self._api._handle, code, cycle, trading_day, align)
+        v, msg = _tqapi.dapi_bar(self._api._handle, str(code), str(cycle), int(trading_day), bool(align))
         if v:
             return (pd.DataFrame(v), msg)
         else:
             return (v, msg)
 
     def dailybar(self, code, price_adj="", align=True):
-        v, msg = _tqapi.dapi_dailybar(self._api._handle, code, price_adj, align)
+        v, msg = _tqapi.dapi_dailybar(self._api._handle, str(code), str(price_adj), bool(align))
         if v:
             return (pd.DataFrame(v), msg)
         else:
             return (v, msg)
 
     def tick(self, code, trading_day=0):
-        v, msg = _tqapi.dapi_tick(self._api._handle, code, trading_day)
+        v, msg = _tqapi.dapi_tick(self._api._handle, str(code), int(trading_day))
         if v:
             return (pd.DataFrame(v), msg)
         else:

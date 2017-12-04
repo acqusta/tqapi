@@ -13,7 +13,7 @@
 #include <string>
 #include <thread>
 #include <msgpack.h>
-#include <zmq.hpp>
+#include "myutils/zmq.hpp"
 
 namespace jsonrpc {
 
