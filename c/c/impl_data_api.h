@@ -4,8 +4,8 @@
 
 namespace tquant { namespace api { namespace impl {
 
-    using namespace ::jsonrpc;
     using namespace ::tquant::api;
+    using namespace ::mprpc;
 
     class DataApiImpl;
     class TradeApiImpl;
@@ -28,12 +28,12 @@ namespace tquant { namespace api { namespace impl {
     };
 
     class DataApiImpl : public DataApi {
-        JsonRpcClient*        m_client;
+        mprpc::MpRpcClient*   m_client;
         unordered_set<string> m_sub_codes;
         uint64_t              m_sub_hash;
         DataApi_Callback*     m_callback;
     public:
-        DataApiImpl(JsonRpcClient* client) 
+        DataApiImpl(mprpc::MpRpcClient* client) 
             : m_client(client)
             , m_sub_hash(0)
             , m_callback(nullptr)
@@ -44,7 +44,7 @@ namespace tquant { namespace api { namespace impl {
 
         virtual CallResult<vector<MarketQuote>> tick(const char* code, int trading_day) override
         {
-            MsgPackPacker pk;
+            mprpc::MsgPackPacker pk;
             pk.pack_map(3);
             pk.pack_map_item("code", code);
             pk.pack_map_item("trading_day", trading_day);
@@ -231,7 +231,7 @@ namespace tquant { namespace api { namespace impl {
             m_callback = callback;
         }
 
-        void on_notification(shared_ptr<JsonRpcMessage> rpcmsg)
+        void on_notification(shared_ptr<mprpc::MpRpcMessage> rpcmsg)
         {
             if (!m_callback) return;
 

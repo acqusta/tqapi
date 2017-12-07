@@ -11,10 +11,11 @@ set(SRC
 add_library(tqapi STATIC ${SRC})
 
 target_link_libraries(tqapi
-    msgpack
-    myutils
-    snappy
-    ${COMMON_LIB}
+  myutils
+  msgpack
+  snappy
+  glog-static
+  ${COMMON_LIB}
 )
 
 set(SRC

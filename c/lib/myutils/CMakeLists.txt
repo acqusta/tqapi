@@ -1,13 +1,19 @@
 project(myutils)
 
 set(SRC 
-    zmq_connection.cpp
-    zmq_connection.h
-    zmq.hpp
-    jsonrpc.cpp
-    jsonrpc.h
+  mprpc.cpp
+  mprpc.h
+  mprpc_socket.cpp
+  mprpc_socket.cpp~
+  mprpc_socket.h
+  socket_connection.cpp
+  socket_connection.h
+  socketutils.h
+  stringutils.h
 )
 
 include_directories( . )
 
 add_library(myutils STATIC ${SRC})
+
+target_link_libraries(myutils msgpack glog-static)

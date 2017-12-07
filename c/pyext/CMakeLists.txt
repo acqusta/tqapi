@@ -11,7 +11,10 @@ set(SRC
     test.py
 )
 
-include_directories( ../c ../lib )
+include_directories(
+  ../c
+  ../lib
+  )
 
 if (WIN32)
   # add_definitions(-DPy_NO_ENABLE_SHARED)
@@ -44,18 +47,6 @@ else()
   set(EXTRA_LIBS python2.7 dl)
 endif()
 
-include_directories(
-    .
-    ../
-    ${DEPS_DIR}
-    ${DEPS_DIR}/zmq
-    )
-
-link_directories(
-  ${DEPS_DIR}/x1/linux64
-)
-
-
 add_library(tqapi_py SHARED ${SRC})
 
 target_link_libraries(tqapi_py
@@ -72,6 +63,7 @@ target_compile_definitions( tqapi_py_test PRIVATE BUILD_API_TEST=1)
 target_link_libraries(tqapi_py_test
     tqapi
     loop
+    zmq-static
     ${COMMON_LIB}
     ${EXTRA_LIBS}
 )

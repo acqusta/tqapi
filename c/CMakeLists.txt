@@ -11,15 +11,18 @@ include_directories(
     lib/msgpack/include
 )
 
+add_definitions(
+  -DGOOGLE_GLOG_DLL_DECL=
+  -DGLOG_NO_ABBREVIATED_SEVERITIES
+  -DZMQ_STATIC
+  )
+
 if (WIN32)
   add_definitions(
     -D_CRT_SECURE_NO_WARNINGS
     -D_WINSOCK_DEPRECATED_NO_WARNINGS
 #    -Dsnprintf=_snprintf
     -DNOMINMAX
-    -DGOOGLE_GLOG_DLL_DECL=
-    -DGLOG_NO_ABBREVIATED_SEVERITIES
-    -DZMQ_STATIC
   )
 
   include_directories(  
@@ -34,15 +37,41 @@ if (WIN32)
     glog-static
     libzmq-static
     sodium-static
-#    getopt
     ws2_32
     Iphlpapi
-  )
+    )
 
+  set(BIN_PATH bin)
   set(LIB_PATH bin)
+  
+else()
+
+  add_definitions( -fPIC --std=c++11)
+
+  set(FRAMEWORK_DIR ${CMAKE_SOURCE_DIR}/../../tq-framework/build/dist)
+
+  include_directories(
+    lib
+    lib/msgpack/include
+    c
+    ${FRAMEWORK_DIR}/include
+    )
+
+  link_directories(${FRAMEWORK_DIR}/lib)
+
+  set(COMMON_LIB
+    glog-static
+    zmq-static
+    sodium-static
+    )
+
+  set(BIN_PATH bin)
+  set(LIB_PATH lib)
 
 endif()
 
+#add_subdirectory(lib/glog-master)
+#add_subdirectory(lib/zeromq-4.2.1)
 add_subdirectory(lib/loop)
 add_subdirectory(lib/msgpack)
 add_subdirectory(lib/myutils)

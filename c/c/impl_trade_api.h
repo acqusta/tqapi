@@ -4,13 +4,13 @@
 #include "tquant_api.h"
 
 #include "myutils/stringutils.h"
-#include "myutils/jsonrpc.h"
+#include "myutils/mprpc.h"
 #include "impl_tquant_api.h"
 
 namespace tquant { namespace api { namespace impl {
 
-    using namespace ::jsonrpc;
     using namespace ::tquant::api;
+    using namespace ::mprpc;            
 
     static inline bool convert_orderstatus(msgpack_object& obj, Order* order)
     {
@@ -83,12 +83,12 @@ namespace tquant { namespace api { namespace impl {
     }
 
     class TradeApiImpl : public TradeApi {
-        JsonRpcClient*        m_client;
+        MpRpcClient*        m_client;
         unordered_set<string> m_sub_codes;
         uint64_t              m_sub_hash;
         TradeApi_Callback*    m_callback;
     public:
-        TradeApiImpl(JsonRpcClient* client)
+        TradeApiImpl(MpRpcClient* client)
             : m_client(client)
             , m_sub_hash(0)
             , m_callback(nullptr)
@@ -323,7 +323,7 @@ namespace tquant { namespace api { namespace impl {
         }
 
 
-        void on_notification(shared_ptr<JsonRpcMessage> rpcmsg)
+        void on_notification(shared_ptr<MpRpcMessage> rpcmsg)
         {
             if (!m_callback) return;
 
