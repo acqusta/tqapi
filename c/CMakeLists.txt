@@ -57,7 +57,7 @@ else()
 
   link_directories(${FRAMEWORK_DIR}/lib)
 
-  set(COMMON_LIB    )
+  set(COMMON_LIB pthread )
 
   set(BIN_PATH bin)
   set(LIB_PATH lib)

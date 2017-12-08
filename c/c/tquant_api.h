@@ -255,22 +255,22 @@ namespace tquant {  namespace api {
     };
 
     //struct OrderStatus {
-        static const char* OS_New       = "New";
-        static const char* OS_Accepted  = "Accepted";
-        static const char* OS_Filled    = "Filled";
-        static const char* OS_Rejected  = "Rejected";
-        static const char* OS_Cancelled = "Cancelled";
+#define OS_New        "New"
+#define OS_Accepted   "Accepted"
+#define OS_Filled     "Filled"
+#define OS_Rejected   "Rejected"
+#define OS_Cancelled  "Cancelled"
     //}
 
     //class EntrustAction {
-        static const char* EA_Buy            = "Buy";
-        static const char* EA_Short          = "Sell";
-        static const char* EA_Cover          = "Cover";
-        static const char* EA_Sell           = "Sell";
-        static const char* EA_CoverToday     = "CoverToday";
-        static const char* EA_CoverYesterday = "CoverYesterday";
-        static const char* EA_SellToday      = "SellToday";
-        static const char* EA_SellYesterday  = "SellYesterday";
+#define EA_Buy             "Buy"
+#define EA_Short           "Sell"
+#define EA_Cover           "Cover"
+#define EA_Sell            "Sell"
+#define EA_CoverToday      "CoverToday"
+#define EA_CoverYesterday  "CoverYesterday"
+#define EA_SellToday       "SellToday"
+#define EA_SellYesterday   "SellYesterday"
     //}
 
     struct Order {
@@ -312,8 +312,8 @@ namespace tquant {  namespace api {
     };
 
     // Side {
-    static const char* SD_Long  = "Long";
-    static const char* SD_Short = "Short";
+#define SD_Long "Long"
+#define D_Short "Short"
     //}
 
     struct Position {

@@ -67,19 +67,19 @@ target_link_libraries(tqapi_py_test
     ${EXTRA_LIBS}
 )
 
-install(TARGETS tqapi_py DESTINATION ${LIB_PATH})
+install(TARGETS tqapi_py DESTINATION py/tquant)
 
-install(FILES tqapi.py DESTINATION ${LIB_PATH})
+install(FILES tqapi.py __init__.py DESTINATION py/tquant)
 
 if (UNIX)
   install(FILES
     ${PROJECT_BINARY_DIR}/libtqapi_py.so
-    DESTINATION ${LIB_PATH}
+    DESTINATION py/tquant
     RENAME _tqapi.so)
 else()
   install(FILES
     ${PROJECT_BINARY_DIR}/../${CMAKE_INSTALL_PREFIX}/bin/tqapi_py.dll
-    DESTINATION ${LIB_PATH}
+    DESTINATION py/tquant
     RENAME _tqapi.pyd)
 endif()
 

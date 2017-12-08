@@ -78,25 +78,30 @@ include_dirs = [
     np.get_include()
 ]
 
-module = Extension('tqapi._tqapi',
+if OSNAME=="Windows":
+    libraries = ['msgpack', 'ws2_32']
+else:
+    libraries = ['msgpack']
+
+module = Extension('tquant._tqapi',
                    define_macros = define_macros,
-                   include_dirs = include_dirs,
-                   libraries = [ 'msgpack', 'ws2_32'],
-                   library_dirs = [],
+                   include_dirs  = include_dirs,
+                   libraries     = libraries,
+                   library_dirs  =  [],
                    #install_requires = ['numpy'],
-                   sources = sources)
+                   sources      = sources)
 
 if OSNAME == "Windows":
     module.extra_compile_args = ['/MT']
 else:
-    module.extra_compile_args = ['-std=c++11','']
+    module.extra_compile_args = ['--std=c++11' ]
     
 
 #export MACOSX_DEPLOYMENT_TARGET=10.10
 
-setup(packages = [ 'tqapi' ],
-      package_dir = { 'tqapi' : 'pyext'},
+setup(packages = [ 'tquant' ],
+      package_dir = { 'tquant' : 'pyext'},
       libraries = [ msgpack ],
-      name = 'tqapi',
-      version = '1.0',
+      name = 'tquant',
+      version = '0.1',
       ext_modules = [module])

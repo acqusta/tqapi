@@ -7,6 +7,7 @@
 #include <chrono>
 #include <stdint.h>
 #include <string>
+#include <string.h>
 #include "myutils/stringutils.h"
 
 // On Windows the default value of FD_SETSIZE is 64.
@@ -21,6 +22,8 @@
 #endif
 
 #ifndef _WIN32
+
+#include <unistd.h>
 
 typedef int SOCKET;
 #define INVALID_SOCKET -1

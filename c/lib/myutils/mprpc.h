@@ -12,6 +12,7 @@
 #include <thread>
 #include <msgpack.h>
 #include <unordered_map>
+#include <vector>
 #include "myutils/connection.h"
 
 namespace mprpc {
