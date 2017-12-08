@@ -43,6 +43,12 @@ else()
 
   include_directories(
     /usr/include/python2.7
+    #    /Users/terryxu/anaconda/lib/python2.7/site-packages/
+    /Users/terryxu/anaconda/include/python2.7
+    /Users/terryxu/anaconda/lib/python2.7/site-packages/numpy/core/include
+    )
+  link_directories(
+    /Users/terryxu/anaconda/lib
     )
   set(EXTRA_LIBS python2.7 dl)
 endif()

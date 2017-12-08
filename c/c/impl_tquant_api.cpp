@@ -33,15 +33,16 @@ namespace tquant { namespace api { namespace impl {
             delete m_client;
         }
 
-        virtual TradeApi* trade_api() { return m_tapi; }
+        virtual TradeApi* trade_api() override { return m_tapi; }
 
-        virtual DataApi*  data_api()  { return m_dapi; }
+        virtual DataApi*  data_api() override  { return m_dapi; }
 
-        virtual void on_connected() {}
+        virtual void on_connected() override {}
 
-        virtual void on_disconnected() {}
+        virtual void on_disconnected() override {}
 
-        virtual void on_notification(shared_ptr<MpRpcMessage> rpcmsg) {
+        virtual void on_notification(shared_ptr<MpRpcMessage> rpcmsg) override
+        {
             if (strncmp(rpcmsg->method.c_str(), "dapi.", 5) == 0) {
                 m_dapi->on_notification(rpcmsg);
             }
@@ -53,7 +54,8 @@ namespace tquant { namespace api { namespace impl {
                 m_tapi->on_notification(rpcmsg);
             }
         }
-        virtual void on_call_result(int callid, shared_ptr<MpRpcMessage> cr) {}
+        virtual void on_call_result(int callid, shared_ptr<MpRpcMessage> cr) override
+        {}
     private:
         MpRpcClient*  m_client;
         DataApiImpl*    m_dapi;

@@ -42,8 +42,8 @@ void SocketConnection::main_run()
             }
         }
 
-        fd_set rset, wset;
-        int r = myutils::select(m_socket, &rset, &wset);
+        fd_set rset;
+        int r = myutils::select(m_socket, &rset, nullptr);
         if (r > 0) {
             if (FD_ISSET(m_socket, &rset))
                 do_recv();

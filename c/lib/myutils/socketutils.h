@@ -7,7 +7,6 @@
 #include <chrono>
 #include <stdint.h>
 #include <string>
-#include <string.h>
 #include "myutils/stringutils.h"
 
 // On Windows the default value of FD_SETSIZE is 64.
@@ -134,11 +133,11 @@ namespace myutils {
 
     static int select(SOCKET socket, fd_set* rset, fd_set* wset)
     {
-        FD_ZERO(rset);
-        FD_ZERO(wset);
+        if (rset) FD_ZERO(rset);
+        if (wset) FD_ZERO(wset);
 
-        FD_SET(socket, rset);
-        FD_SET(socket, wset);
+        if (rset) FD_SET(socket, rset);
+        if (wset) FD_SET(socket, wset);
 
         struct timeval tv;
         tv.tv_sec = 0;

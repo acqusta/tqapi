@@ -68,7 +68,7 @@ namespace tquant { namespace api { namespace impl {
             return CallResult<vector<MarketQuote>>(ticks);
         }
 
-        virtual CallResult<vector<Bar>> bar(const char* code, const char* cycle, int trading_day, bool align)
+        virtual CallResult<vector<Bar>> bar(const char* code, const char* cycle, int trading_day, bool align) override
         {
             MsgPackPacker pk;
             pk.pack_map(5);

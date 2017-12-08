@@ -291,7 +291,7 @@ namespace tquant { namespace api { namespace impl {
             }
         }
 
-        virtual CallResult<bool> cancel_order(const char* account_id, const char* code, const char* entrust_no)
+        virtual CallResult<bool> cancel_order(const char* account_id, const char* code, const char* entrust_no) override
         {
             MsgPackPacker pk;
             pk.pack_map(3);
@@ -312,7 +312,7 @@ namespace tquant { namespace api { namespace impl {
             }
         }
 
-        virtual CallResult<string> query(const char* account_id, const char* command, const char* params)
+        virtual CallResult<string> query(const char* account_id, const char* command, const char* params) override
         {
             return CallResult<string>("-1,to be implemented");
         }

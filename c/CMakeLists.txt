@@ -7,8 +7,8 @@ option(BUILD_WIN64 "Build Win64" ON)
 set(CMAKE_INSTALL_PREFIX dist)
 
 include_directories(
-    lib/
-    lib/msgpack/include
+  lib/
+  lib/msgpack/include
 )
 
 add_definitions(
@@ -23,18 +23,9 @@ if (WIN32)
     -D_WINSOCK_DEPRECATED_NO_WARNINGS
 #    -Dsnprintf=_snprintf
     -DNOMINMAX
-  )
-
-#  include_directories(  
-#    d:/cpp/tq-framework/include
-#  )
-#  
-#  link_directories(
-#    d:/cpp/tq-framework/lib/${CMAKE_VS_PLATFORM_NAME}/${CMAKE_INT_DIR}
-#  )
+    )
 
   set(COMMON_LIB
-#    glog-static
     ws2_32
     Iphlpapi
     )
@@ -44,7 +35,10 @@ if (WIN32)
   
 else()
 
-  add_definitions( -fPIC --std=c++11)
+  add_definitions(-fPIC )
+
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -std=c99")
 
   set(FRAMEWORK_DIR ${CMAKE_SOURCE_DIR}/../../tq-framework/build/dist)
 
