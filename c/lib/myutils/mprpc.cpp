@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <glog/logging.h>
 
 #include "mprpc.h"
 #include "snappy/snappy.h"
@@ -238,11 +237,7 @@ namespace mprpc {
         pk.pack_map_item    ("method", method);
         pk.pack_map_item_obj("params", params, params_size);
 
-        stringstream ss;
-        ss << "S" << string(pk.sb.data, pk.sb.size);
-        string cmd = ss.str();
-
-        m_conn->send(cmd);
+        m_conn->send(pk.sb.data, pk.sb.size);
         return callid;
     }
 
@@ -274,10 +269,7 @@ namespace mprpc {
         pk.pack_map_item    ("method", method);
         pk.pack_map_item_obj("params", params, params_size);
 
-        stringstream ss;
-        ss << "S" << string(pk.sb.data, pk.sb.size);
-        string cmd = ss.str();
-        m_conn->send(cmd);
+        m_conn->send(pk.sb.data, pk.sb.size);
 
         if (!timeout)
             return nullptr;
@@ -313,198 +305,10 @@ namespace mprpc {
     }
 
 
-    //ZmqMpRpcServer::ZmqMpRpcServer(MpRpcServer* server) :
-    //    m_server(server),
-    //    m_remote_sock(nullptr),
-    //    m_should_exit(false),
-    //    m_connected(false)
-    //{
-    //    m_pull_sock = new zmq::socket_t(m_zmq_ctx, ZMQ_PULL);
-    //    m_pull_sock->bind("inproc://pull_sock");
-    //    m_push_sock = new zmq::socket_t(m_zmq_ctx, ZMQ_PUSH);
-    //    m_push_sock->connect("inproc://pull_sock");
-
-    //    m_main_thread = new thread(&ZmqMpRpcServer::main_run, this);
-    //}
-
-    //ZmqMpRpcServer::~ZmqMpRpcServer()
-    //{
-    //    m_should_exit = true;
-
-    //    m_main_thread->join();
-
-    //    delete m_main_thread;
-
-    //    delete m_pull_sock;
-    //    delete m_push_sock;
-    //    if (m_remote_sock) delete m_remote_sock;
-    //}
-
-    //bool ZmqMpRpcServer::listen(const string& addr)
-    //{
-    //    if (addr.empty() || m_remote_sock) return false;
-
-    //    m_addr = addr;
-
-    //    m_push_sock->send("L",1);
-    //    return true;
-    //}
-
-    //void ZmqMpRpcServer::do_listen()
-    //{
-    //    if (m_remote_sock) return;
-
-    //    try {
-    //        VLOG(1) << "JsonRpc listen at " << m_addr;
-    //        m_remote_sock = new zmq::socket_t(m_zmq_ctx, ZMQ_ROUTER);
-    //        m_remote_sock->setsockopt(ZMQ_RCVTIMEO, 2000);
-    //        m_remote_sock->setsockopt(ZMQ_SNDTIMEO, 2000);
-    //        m_remote_sock->setsockopt(ZMQ_LINGER, 0);
-    //        m_remote_sock->bind(m_addr);
-    //    }
-    //    catch (...) {
-    //        LOG(FATAL) << "Listen error: " << ::zmq_strerror(::zmq_errno());
-    //    }
-    //}
-
-    //void ZmqMpRpcServer::close()
-    //{
-    //    m_push_sock->send("C", 1);
-    //}
-
-    //void ZmqMpRpcServer::main_run()
-    //{
-    //    zmq_pollitem_t items[2];
-    //    memset(items, 0, sizeof(items));
-    //    int items_count = 1;
-    //    items[0].socket = (void*)*m_pull_sock;
-    //    items[0].events = ZMQ_POLLIN;
-
-    //    while (!m_should_exit) {
-
-    //        if (m_remote_sock && items_count == 1) {
-    //            items[1].socket = (void*)*m_remote_sock;
-    //            items[1].events = ZMQ_POLLIN;
-    //            items_count = 2;
-    //        }
-
-    //        zmq::poll(items, items_count, 100);
-
-    //        if (items[0].revents & ZMQ_POLLIN) {
-    //            zmq::message_t msg1, msg2;
-    //            if (m_pull_sock->recv(&msg1)) {
-    //                if (msg1.more() && m_pull_sock->recv(&msg2)) {
-    //                    if (m_remote_sock)
-    //                        do_send(string((const char*)msg1.data(), msg1.size()), msg2);
-    //                }
-    //                else {
-    //                    const char* p = (const char*)msg1.data();
-    //                    switch (p[0]){
-    //                    case 'L':   do_listen(); break;
-    //                    case 'C':   break;
-    //                    }
-    //                }
-    //            }
-    //        }
-
-    //        if (items_count == 2 && items[1].revents & ZMQ_POLLIN) {
-    //            do_recv();
-    //        }
-    //    }
-
-    //}
-
-    //void ZmqMpRpcServer::do_send(const string& client, zmq::message_t& data)
-    //{
-    //    //VLOG(1) << "Send " << string((const char*)data.data(), data.size());
-    //    //VLOG(1) << "Send size=" << data.size();
-
-    //    auto it = m_client_map.find(client);
-    //    if (it == m_client_map.end())
-    //        return;
-    //    try {
-    //        auto& conn = it->second;
-    //        m_remote_sock->send(conn->m_addr.c_str(), conn->m_addr.size(), ZMQ_SNDMORE);
-    //        m_remote_sock->send(data);
-    //    }
-    //    catch (exception& e) {
-    //        LOG(ERROR) << "do_send failed: " << e.what();
-    //    }
-    //}
-
-    ////void ZmqMpRpcServer::do_send(const string& id, const char* data, size_t size)
-    ////{
-    ////    auto it = m_client_map.find(id);
-    ////    if (it == m_client_map.end())
-    ////        return;
-    ////    try {
-    ////        auto& conn = it->second;
-    ////        m_remote_sock->send(conn->m_addr.c_str(), conn->m_addr.size(), ZMQ_SNDMORE);
-    ////        m_remote_sock->send(data, size);
-    ////    }
-    ////    catch (exception& e) {
-    ////        LOG(ERROR) << "do_send failed: " << e.what();
-    ////    }
-    ////}
-
-    //void ZmqMpRpcServer::do_recv()
-    //{
-    //    zmq::message_t addr, body;
-
-    //    if (!m_remote_sock->recv(&addr, ZMQ_DONTWAIT)) return;
-    //    if (!addr.more() || !m_remote_sock->recv(&body, ZMQ_DONTWAIT)) return;
-
-    //    //VLOG(1) << "Recv " << string((const char*)addr.data(), addr.size()) << "," << string((const char*)body.data(), body.size());
-    //    //VLOG(1) << "Recv size =" << body.size();
-
-    //    string id;
-    //    string addr_str((const char*)addr.data(), addr.size());
-    //    const char* p = strchr(addr_str.c_str(), '$');
-    //    if (p)
-    //        id = string(addr_str.c_str(), p - 1);
-    //    else
-    //        id = addr_str;
-
-    //    shared_ptr<ZmqMpRpcServer_Connection> conn;
-    //    auto it = m_client_map.find(id);
-    //    if (it != m_client_map.end()) {
-    //        it->second->set_addr(addr_str);
-    //        conn = it->second;
-    //    }
-    //    else {
-    //        conn = make_shared<ZmqMpRpcServer_Connection > (id, addr_str, this);
-    //        m_client_map[id] = conn;
-    //    }
-
-    //    this->m_server->on_recv(conn, (const char*)body.data(), body.size());
-    //}
-
-    //bool ZmqMpRpcServer::send(const string& id, const char* data, size_t size)
-    //{
-    //    unique_lock<mutex> lock(m_send_lock);
-    //    if (size < 20000) {
-    //        m_push_sock->send(id.c_str(), id.size(), ZMQ_SNDMORE);
-    //        m_push_sock->send(data, size);
-    //    }
-    //    else {
-    //        size_t len = snappy::MaxCompressedLength(size);
-    //        char* buf = new char[5 + len];
-    //        buf[0] = 'S';
-    //        *(uint32_t*)(buf + 1) = size;
-    //        snappy::RawCompress(data, size, buf + 5, &len);
-    //        m_push_sock->send(id.c_str(), id.size(), ZMQ_SNDMORE);
-    //        m_push_sock->send(buf, len + 5);
-    //        delete[] buf;
-    //    }
-
-    //    return true;
-    //}
-
     void MpRpcServer::on_recv(shared_ptr<ClientConnection> connection, const char* data, size_t size)
     {
         auto rpcmsg = MpRpcMessage::parse(data, size);
         if (!rpcmsg ||
-            //rpcmsg->jsonrpc != "2.0" ||
             rpcmsg->id == 0 ||
             rpcmsg->method.empty())
         {
@@ -530,9 +334,21 @@ namespace mprpc {
         }
     }
 
-    bool MpRpcServer::send(shared_ptr<ClientConnection> connection, const void* data, size_t len)
+    bool MpRpcServer::send(shared_ptr<ClientConnection> connection, const void* data, size_t size)
     {
-        return connection->send((const char*)data, len);
+        if (size < 20000) {
+            return connection->send((const char*)data, size);
+        }
+        else {
+            size_t len = snappy::MaxCompressedLength(size);
+            char* buf = new char[5 + len];
+            buf[0] = 'S';
+            *(uint32_t*)(buf + 1) = (uint32_t)size;
+            snappy::RawCompress((const char*)data, size, buf + 5, &len);
+            bool r = connection->send (buf, len + 5);
+            delete[] buf;
+            return r;
+        }
     }
 
     void MpRpcServer::on_close(shared_ptr<ClientConnection> connection)

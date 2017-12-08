@@ -1,5 +1,3 @@
-#include <glog/logging.h>
-
 #include "tqapi_py.h"
 #include "tquant_api.h"
 

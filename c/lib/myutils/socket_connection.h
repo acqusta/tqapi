@@ -6,20 +6,7 @@
 #include <thread>
 #include <mutex>
 #include "connection.h"
-
-#ifndef _WIN32
-
-typedef int SOCKET;
-
-#define INVALID_SOCKET -1
-#define closesocket ::close
-#define WSAGetLastError() errno
-
-#else
-
-typedef int socklen_t;
-
-#endif
+#include "socketutils.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -44,6 +31,7 @@ private:
     bool do_connect();
     void do_recv();
     void do_send_heartbeat();
+    void do_close(const char* reason=nullptr);
 
     void asyncall(function<void()>);
 
@@ -56,7 +44,7 @@ private:
     volatile bool               m_should_exit;
     bool                        m_connected;
     string                      m_buf;
-    int32_t                     m_pkg_size;
+    int32_t                     m_pkt_size;
     int32_t                     m_recv_size;
 };
 

@@ -63,7 +63,6 @@ target_compile_definitions( tqapi_py_test PRIVATE BUILD_API_TEST=1)
 target_link_libraries(tqapi_py_test
     tqapi
     loop
-    zmq-static
     ${COMMON_LIB}
     ${EXTRA_LIBS}
 )

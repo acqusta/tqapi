@@ -25,18 +25,16 @@ if (WIN32)
     -DNOMINMAX
   )
 
-  include_directories(  
-    d:/cpp/tq-framework/include
-  )
-  
-  link_directories(
-    d:/cpp/tq-framework/lib/${CMAKE_VS_PLATFORM_NAME}/${CMAKE_INT_DIR}
-  )
+#  include_directories(  
+#    d:/cpp/tq-framework/include
+#  )
+#  
+#  link_directories(
+#    d:/cpp/tq-framework/lib/${CMAKE_VS_PLATFORM_NAME}/${CMAKE_INT_DIR}
+#  )
 
   set(COMMON_LIB
-    glog-static
-    libzmq-static
-    sodium-static
+#    glog-static
     ws2_32
     Iphlpapi
     )
@@ -59,19 +57,13 @@ else()
 
   link_directories(${FRAMEWORK_DIR}/lib)
 
-  set(COMMON_LIB
-    glog-static
-    zmq-static
-    sodium-static
-    )
+  set(COMMON_LIB    )
 
   set(BIN_PATH bin)
   set(LIB_PATH lib)
 
 endif()
 
-#add_subdirectory(lib/glog-master)
-#add_subdirectory(lib/zeromq-4.2.1)
 add_subdirectory(lib/loop)
 add_subdirectory(lib/msgpack)
 add_subdirectory(lib/myutils)

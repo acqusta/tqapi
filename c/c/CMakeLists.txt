@@ -14,12 +14,11 @@ target_link_libraries(tqapi
   myutils
   msgpack
   snappy
-  glog-static
   ${COMMON_LIB}
 )
 
 set(SRC
-    tquant_api_test.cpp
+  tquant_api_test.cpp
 )
 add_executable(tqapi_test ${SRC})
 

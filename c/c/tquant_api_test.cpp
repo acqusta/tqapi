@@ -40,13 +40,16 @@ void test_dapi(TQuantApi* api)
     api->data_api()->set_callback(&callback);
 
     {
-        auto r = api->data_api()->subscribe(codes);
-        if (r.value) {
-            for (string code : *r.value) cout << "sub code: " << code << endl;
-        }
-        else {
-            cout << "sub error: " << r.msg;
-            return;
+        for (int i = 0; i < 100; i++) {
+            auto r = api->data_api()->subscribe(codes);
+            if (r.value) {
+                for (string code : *r.value) cout << "sub code: " << code << endl;
+                break;
+            }
+            else {
+                cout << "sub error: " << r.msg << endl;
+                continue;
+            }
         }
     }
 
@@ -72,11 +75,11 @@ void test_dapi(TQuantApi* api)
                 << b.volume << "," << b.turnover << "," << b.oi << endl;
         }
         else {
-            cout << "bar error: " << r.msg;
+            cout << "bar error: " << r.msg << endl;
         }
     }
 
-    if (0) {
+    if (1) {
         auto r = api->data_api()->tick(code, 0);
         if (r.value) {
             for (auto& t : *r.value)

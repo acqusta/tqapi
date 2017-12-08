@@ -4,6 +4,7 @@
 #include "myutils/stringutils.h"
 #include "myutils/mprpc.h"
 #include "myutils/socket_connection.h"
+#include "myutils/socketutils.h"
 #include "impl_tquant_api.h"
 #include "impl_data_api.h"
 #include "impl_trade_api.h"
@@ -65,6 +66,13 @@ namespace tquant { namespace api {
 
     TQuantApi* TQuantApi::create(const char* addr)
     {
+#ifdef _WIN32
+        static bool inited = false;
+        if (!inited) {
+            inited = true;
+            myutils::init_winsock2();
+        }
+#endif
         return new impl::TQuantApiImpl(addr);
     }
 
