@@ -7,6 +7,7 @@ class Connection_Callback {
 public:
     virtual void on_recv(const char* data, size_t size) = 0;
     virtual void on_idle() = 0;
+    virtual void on_conn_status(bool connected) = 0;
 };
 
 class Connection {

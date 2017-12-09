@@ -5,6 +5,7 @@ set(SRC
   mprpc.h
   socket_connection.cpp
   socket_connection.h
+  socketutils.cpp
   socketutils.h
   stringutils.h
 )

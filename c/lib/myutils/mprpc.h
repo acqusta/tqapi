@@ -410,6 +410,7 @@ namespace mprpc {
         // Connection_Callback
         virtual void on_recv(const char* data, size_t size) override;
         virtual void on_idle() override;
+        virtual void on_conn_status(bool connected) override;
 
     private:
         string                      m_addr;

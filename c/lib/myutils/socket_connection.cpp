@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <string>
 #include <memory>
 #include <thread>
@@ -14,7 +15,12 @@ SocketConnection::SocketConnection()
     , m_callback(nullptr)
     , m_should_exit(false)
     , m_connected(false)
+    , m_send_count(0)
 {
+    bool r = myutils::create_cmd_sock_pair(&m_cmd_server, &m_cmd_client);
+    if (!r)
+        throw runtime_error("creat_cmd_sock_pair failed");
+
     m_main_thread = new thread(&SocketConnection::main_run, this);
 }
 
@@ -35,19 +41,45 @@ void SocketConnection::main_run()
     auto idle_time = system_clock::now();
     while (!m_should_exit) {
 
-        if (m_socket == INVALID_SOCKET) {
-            if (!do_connect()) {
-                this_thread::sleep_for(seconds(1));
-                continue;
-            }
+        fd_set rset, wset;
+        FD_ZERO(&rset);
+        FD_ZERO(&wset);
+
+        SOCKET high_sock = 0;
+        if (m_socket != INVALID_SOCKET) {
+            FD_SET(m_socket, &rset);
+            if (m_send_count)
+                FD_SET(m_socket, &wset);
+            high_sock = max(high_sock, m_socket);
         }
 
-        fd_set rset;
-        int r = myutils::select(m_socket, &rset, nullptr);
-        if (r > 0) {
+        FD_SET(m_cmd_server, &rset);
+        high_sock = max(m_cmd_server, m_socket);
+
+        struct timeval tv;
+        tv.tv_sec = 0;
+        tv.tv_usec = 100 * 1000;
+
+        int r = ::select((int)high_sock + 1, &rset, &wset, NULL, &tv);
+        if (r == -1 || r == 0)
+            continue;
+
+        if (FD_ISSET(m_cmd_server, &rset)) {
+            char buf[16];
+            ::recv(m_cmd_server, buf, 16, 0);
+        }
+
+        if (m_socket != INVALID_SOCKET) {
             if (FD_ISSET(m_socket, &rset))
                 do_recv();
+
+            if (FD_ISSET(m_socket, &wset))
+                do_send();
         }
+        else {
+            do_connect();
+        }
+
         auto now = system_clock::now();
         if (now < idle_time || now - idle_time > milliseconds(200)){
             idle_time = now;
@@ -59,7 +91,6 @@ void SocketConnection::main_run()
 void SocketConnection::do_close(const char* reason)
 {
     if (reason) {
-        //LOG(ERROR) << "close socket: " << reason << "," << WSAGetLastError();
         std::cerr << "close socket: " << reason << "," << WSAGetLastError();
     }
     if (m_socket == INVALID_SOCKET) return;
@@ -68,6 +99,8 @@ void SocketConnection::do_close(const char* reason)
     m_socket = INVALID_SOCKET;
     m_recv_size = 0;
     m_pkt_size = 0;
+
+    if (m_callback) m_callback->on_conn_status(false);
 }
 
 void SocketConnection::do_recv()
@@ -84,7 +117,7 @@ void SocketConnection::do_recv()
             m_recv_size = 0;
             m_pkt_size = pkt_size;
 
-            if (m_buf.size() < pkt_size) m_buf.resize(pkt_size);
+            if (m_recv_buf.size() < pkt_size) m_recv_buf.resize(pkt_size);
         }
         else if (is_EWOURLDBLOCK(r)) {
             //return;
@@ -94,11 +127,11 @@ void SocketConnection::do_recv()
         }
     }
     else {
-        int r = recv(m_socket, (char*)m_buf.c_str() + m_recv_size, m_pkt_size - m_recv_size, 0);
+        int r = recv(m_socket, (char*)m_recv_buf.c_str() + m_recv_size, m_pkt_size - m_recv_size, 0);
         if (r > 0) {
             m_recv_size += r;
             if (m_recv_size == m_pkt_size) {
-                this->m_callback->on_recv(m_buf.c_str(), m_pkt_size);
+                this->m_callback->on_recv(m_recv_buf.c_str(), m_pkt_size);
                 m_recv_size = 0;
                 m_pkt_size = 0;
             }
@@ -116,6 +149,9 @@ bool SocketConnection::connect(const string& addr, Connection_Callback* callback
 {
     m_callback = callback;
     m_addr = make_shared<string>(addr);
+
+    char buf[1] = { 'C' };
+    ::send(m_cmd_client, buf, 1, 0);
 
     return true;
 }
@@ -139,14 +175,23 @@ bool SocketConnection::do_connect()
     int port = atoi(ss[1].c_str());
 
     SOCKET sock = myutils::connect_socket(ip.c_str(), port);
-    if (sock != INVALID_SOCKET) {
-        if (myutils::check_connect(sock, 2))
-            m_socket = sock;
-        else
-            closesocket(sock);
-    }
+    if (sock != INVALID_SOCKET && myutils::check_connect(sock, 2)) {
+        m_socket = sock;
+        if (m_callback) m_callback->on_conn_status(true);
 
-    return m_socket != INVALID_SOCKET;
+        {
+            unique_lock<mutex> lock(m_send_lock);
+            if (m_send_list.size() > 0 && m_send_list.front()->send_len) {
+                m_send_list.pop_front();
+                m_send_count--;
+            }
+        }
+
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 void SocketConnection::close()
@@ -154,29 +199,52 @@ void SocketConnection::close()
     m_should_exit = true;
 }
 
-static inline bool try_send(SOCKET sock, const char* data, size_t size)
-{
-    for (int i = 0; i < 5; i++) {
-        int r = ::send(sock, data, size, 0);
-        if (r == size) return true;
-        if (r == -1 && is_EWOURLDBLOCK(r)) continue;
-        break;
-    }
-    return false;
-}
-
 void SocketConnection::send(const char* data, size_t size)
 {
-    unique_lock<mutex> lock(m_send_lock);
-    
-    if (m_socket != INVALID_SOCKET) {
+    int32_t len = (int32_t)size;
 
-        int32_t len = (int32_t)size;
-        if (!try_send(m_socket, (const char*)&len, 4) ||
-            !try_send(m_socket, data, size))
-        {
-            do_close("send error");
+    auto pkt = make_shared<SendPkt>(4 + size);
+    char* p = (char*)pkt->buf.c_str();
+    ::memcpy(p, (const char*)&len, 4);
+    ::memcpy(p + 4, data, size);
+
+    {
+        unique_lock<mutex> lock(m_send_lock);
+        m_send_list.push_back(pkt);
+        m_send_count++;
+
+        char buf[1] = { 'S' };
+        ::send(m_cmd_client, buf, 1, 0);
+    }    
+}
+
+void SocketConnection::do_send()
+{
+    if (!m_send_count) return;
+
+    shared_ptr<SendPkt> pkt;
+    {
+        unique_lock<mutex> lock(m_send_lock);
+        if (m_send_list.size() != 0)
+            pkt = m_send_list.front();
+    }
+    if (!pkt) return;
+
+    size_t left_len = pkt->buf.size() - pkt->send_len;
+    int r = ::send(m_socket, (char*)pkt->buf.c_str() + pkt->send_len, (int)left_len, 0);
+    if (r > 0) {
+        pkt->send_len += r;
+        if (pkt->send_len == pkt->buf.size()) {
+            unique_lock<mutex> lock(m_send_lock);
+            m_send_list.pop_front();
+            m_send_count--;
         }
+    }
+    else if (is_EWOURLDBLOCK(r)) {
+        return;
+    }
+    else {
+        this->do_close("send error");
     }
 }
 

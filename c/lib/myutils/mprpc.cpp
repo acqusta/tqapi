@@ -158,7 +158,7 @@ namespace mprpc {
     void MpRpcClient::on_idle()
     {
         auto now = system_clock::now();
-        if (now - m_last_hb_time > seconds(1)) {
+        if (now - m_last_hb_time > seconds(2)) {
             m_last_hb_time = now;
             do_send_heartbeat();
         }
@@ -168,6 +168,17 @@ namespace mprpc {
                 m_connected = false;
                 if (m_callback)  call_callback(bind(&MpRpcClient_Callback::on_disconnected, m_callback));
             }
+        }
+    }
+
+    void MpRpcClient::on_conn_status(bool connected)
+    {
+        m_connected = connected;
+        if (m_callback) {
+            if (connected)
+                call_callback(bind(&MpRpcClient_Callback::on_connected, m_callback));
+            else
+                call_callback(bind(&MpRpcClient_Callback::on_disconnected, m_callback));
         }
     }
 

@@ -143,7 +143,7 @@ PyObject* _wrap_tapi_place_order(PyObject* self, PyObject *args, PyObject* kwarg
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
 
     auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
-    auto r = wrap->trade_api()->place_order(account_id, code, price, size, action, order_id);
+    auto r = wrap->trade_api()->place_order(account_id, code, price, size, action, (int32_t)order_id);
 
     if (r.value) {
         auto ordid = PyDict_New();
@@ -171,7 +171,7 @@ PyObject* _wrap_tapi_cancel_order(PyObject* self, PyObject *args, PyObject* kwar
     auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
     CallResult<bool> r("");
     if (order_id)
-        r = wrap->trade_api()->cancel_order(account_id, code, order_id);
+        r = wrap->trade_api()->cancel_order(account_id, code, (int32_t)order_id);
     else if (strlen(entrust_no))
         r = wrap->trade_api()->cancel_order(account_id, code, entrust_no);
     else

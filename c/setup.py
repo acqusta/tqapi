@@ -56,6 +56,7 @@ sources = [
     "lib/snappy/snappy.cc",
     "lib/myutils/mprpc.cpp",
     "lib/myutils/socket_connection.cpp",
+    "lib/myutils/socketutils.cpp",
     "lib/loop/RunLoop.cpp",
     "lib/loop/MessageLoop.cpp",
     "pyext/tqapi_tapi.cpp",
