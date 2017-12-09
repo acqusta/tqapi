@@ -73,7 +73,8 @@ void SocketConnection::main_run()
             if (FD_ISSET(m_socket, &rset))
                 do_recv();
 
-            if (FD_ISSET(m_socket, &wset))
+            // do_recv maybe close socket!
+            if (m_socket!= INVALID_SOCKET && FD_ISSET(m_socket, &wset))
                 do_send();
         }
         else {
@@ -90,17 +91,16 @@ void SocketConnection::main_run()
 
 void SocketConnection::do_close(const char* reason)
 {
-    if (reason) {
-        std::cerr << "close socket: " << reason << "," << WSAGetLastError();
+    if (reason)
+        std::cerr << "close socket: " << reason << "," << WSAGetLastError() << std::endl;
+
+    if (m_socket != INVALID_SOCKET) {
+        closesocket(m_socket);
+        m_socket = INVALID_SOCKET;
+        m_recv_size = 0;
+        m_pkt_size = 0;
+        if (m_callback) m_callback->on_conn_status(false);
     }
-    if (m_socket == INVALID_SOCKET) return;
-
-    closesocket(m_socket);
-    m_socket = INVALID_SOCKET;
-    m_recv_size = 0;
-    m_pkt_size = 0;
-
-    if (m_callback) m_callback->on_conn_status(false);
 }
 
 void SocketConnection::do_recv()

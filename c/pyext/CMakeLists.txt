@@ -77,14 +77,19 @@ install(TARGETS tqapi_py DESTINATION py/tquant)
 
 install(FILES tqapi.py __init__.py DESTINATION py/tquant)
 
-if (UNIX)
+if (APPLE)
   install(FILES
-    ${PROJECT_BINARY_DIR}/libtqapi_py.so
+    ${PROJECT_BINARY_DIR}/../${CMAKE_INSTALL_PREFIX}/py/tquant/libtqapi_py.dylib
+    DESTINATION py/tquant
+    RENAME _tqapi.so)
+elseif (UNIX)
+  install(FILES
+    ${PROJECT_BINARY_DIR}/../${CMAKE_INSTALL_PREFIX}/py/tquant/libtqapi_py.so
     DESTINATION py/tquant
     RENAME _tqapi.so)
 else()
   install(FILES
-    ${PROJECT_BINARY_DIR}/../${CMAKE_INSTALL_PREFIX}/bin/tqapi_py.dll
+    ${PROJECT_BINARY_DIR}/../${CMAKE_INSTALL_PREFIX}/py/tquant/tqapi_py.dll
     DESTINATION py/tquant
     RENAME _tqapi.pyd)
 endif()
