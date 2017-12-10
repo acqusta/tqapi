@@ -1,5 +1,5 @@
-from distutils.core import setup, Extension
-
+#from distutils.core import setup, Extension
+from setuptools import setup, Extension
 import numpy as np
 import os
 
@@ -82,7 +82,7 @@ setup(packages = [ 'tquant' ],
       libraries = [ msgpack ],
       ext_modules = [module],
       name = 'tquant',
-      version = '0.1',
+      version = '0.1.1',
       description="Acqusta quantitative trading tools",
       author = "Xu Tiezhu",
       author_email = 'xutiezhu@gmail.com',

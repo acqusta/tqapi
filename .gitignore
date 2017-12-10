@@ -3,3 +3,8 @@ python/tquant_api.pyc
 c/build
 *~
 c/MANIFEST
+c/dist
+c/tquant.egg-info
+*.whl
+c/x64
+c/win32
