@@ -153,7 +153,7 @@ PyObject* _wrap_dapi_dailybar(PyObject* self, PyObject *args, PyObject* kwargs)
     }
 
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
-    if (!code || strlen(code)) return Py_BuildValue("Os", Py_None, "empty code");
+    if (!code || !strlen(code)) return Py_BuildValue("Os", Py_None, "empty code");
     if (!price_adj) return Py_BuildValue("Os", Py_None, "null price_adj");
 
     auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
