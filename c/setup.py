@@ -8,6 +8,9 @@ if hasattr(os, 'uname'):
 else:
     OSNAME = 'Windows'
 
+if OSNAME == 'Darwin':
+    os.environ['MACOSX_DEPLOYMENT_TARGET'] = '10.9'
+    
 msgpack = ( 'msgpack',
     {
         'sources' : [
@@ -22,31 +25,6 @@ msgpack = ( 'msgpack',
             'lib/msgpack/include'
         ]
     })
-
-
-# glog
-
-glog = ( 'glog', {
-    'sources' : [
-        "lib/glog-master/src/logging.cc",
-        "lib/glog-master/src/raw_logging.cc",
-        "lib/glog-master/src/utilities.cc",
-        "lib/glog-master/src/vlog_is_on.cc",
-        "lib/glog-master/src/symbolize.cc",
-        "lib/glog-master/src/demangle.cc",
-        "lib/glog-master/src/signalhandler.cc"
-    ],
-    'define_macros' : [
-        ('GOOGLE_GLOG_DLL_DECL', ''),
-        ('GLOG_NO_ABBREVIATED_SEVERITIES',''),
-        ('HAVE_CONFIG_H', '1')
-    ],
-    'include_dirs' : [
-        'lib/glog-master/tq',
-        'lib/glog-master/tq/osx',
-        'lib/glog-master/src'
-    ]
-})
 
 
 sources = [
@@ -89,8 +67,7 @@ module = Extension('tquant._tqapi',
                    include_dirs  = include_dirs,
                    libraries     = libraries,
                    library_dirs  =  [],
-                   #install_requires = ['numpy'],
-                   sources      = sources)
+                   sources       = sources)
 
 if OSNAME == "Windows":
     module.extra_compile_args = ['/MT']
@@ -103,6 +80,13 @@ else:
 setup(packages = [ 'tquant' ],
       package_dir = { 'tquant' : 'pyext'},
       libraries = [ msgpack ],
+      ext_modules = [module],
       name = 'tquant',
       version = '0.1',
-      ext_modules = [module])
+      description="Acqusta quantitative trading tools",
+      author = "Xu Tiezhu",
+      author_email = 'xutiezhu@gmail.com',
+      url = 'https://github.com/acqusta/tqc-api'
+)
+
+
