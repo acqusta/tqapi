@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <chrono>
 #include <stdint.h>
+#include <string.h>
 #include <string>
 #include "myutils/stringutils.h"
 

@@ -4,6 +4,7 @@
 #include <thread>
 #include <mutex>
 #include <iostream>
+#include <string.h>
 #include "myutils/socket_connection.h"
 #include "myutils/socketutils.h"
 #include "myutils/stringutils.h"
