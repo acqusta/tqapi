@@ -177,6 +177,11 @@ bool SocketConnection::do_connect()
 
     SOCKET sock = myutils::connect_socket(ip.c_str(), port);
     if (sock != INVALID_SOCKET && myutils::check_connect(sock, 2)) {
+        int recv_buf_size = 1*1024*1024;
+        int send_buf_size = 1*1024*1024;
+        setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (const char*)&recv_buf_size, sizeof(int));
+        setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (const char*)&send_buf_size, sizeof(int));
+
         m_socket = sock;
         if (m_callback) m_callback->on_conn_status(true);
 
