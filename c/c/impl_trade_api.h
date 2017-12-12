@@ -125,7 +125,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map_item("account_id", account_id);
 
             auto rsp = m_client->call("tapi.query_balance", pk.sb.data, pk.sb.size);
-            if (!is_arr(rsp->result))
+            if (is_nil(rsp->result))
                 return CallResult<Balance>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
             if (!is_map(rsp->result)) return CallResult<Balance>("-1,wrong data format");
