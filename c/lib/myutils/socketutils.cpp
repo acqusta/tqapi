@@ -59,15 +59,15 @@ namespace myutils {
         return *(uint32_t*)h->h_addr;
     }
 
-    SOCKET connect_socket(const char* ip_addr, int port)
+    SOCKET connect_socket(const char* ip_or_host, int port)
     {
         sockaddr_in addr;
         memset(&addr, 0, sizeof(addr));
         addr.sin_family = AF_INET;
         addr.sin_port = htons(port);
-        addr.sin_addr.s_addr = inet_addr(ip_addr);
+        addr.sin_addr.s_addr = inet_addr(ip_or_host);
         if (addr.sin_addr.s_addr == INADDR_NONE) {
-            addr.sin_addr.s_addr = resolve_name(ip_addr);
+            addr.sin_addr.s_addr = resolve_name(ip_or_host);
             if (addr.sin_addr.s_addr == INADDR_NONE)
                 return INVALID_SOCKET;
         }
@@ -101,7 +101,7 @@ namespace myutils {
 
         struct timeval tv;
         tv.tv_sec = 0;
-        tv.tv_usec = 100 * 1000;
+        tv.tv_usec = 500 * 1000;
 
         int high_sock = (int)socket;
         return ::select(high_sock + 1, rset, wset, NULL, &tv);

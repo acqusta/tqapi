@@ -59,8 +59,7 @@ void SocketConnection::main_run()
 
         struct timeval tv;
         tv.tv_sec = 0;
-        tv.tv_usec = 100 * 1000;
-
+        tv.tv_usec = 500 * 1000;
         int r = ::select((int)high_sock + 1, &rset, &wset, NULL, &tv);
         if (r == -1 || r == 0)
             continue;
