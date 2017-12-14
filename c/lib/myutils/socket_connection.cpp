@@ -117,7 +117,7 @@ void SocketConnection::do_recv()
             m_recv_size = 0;
             m_pkt_size = pkt_size;
 
-            if (m_recv_buf.size() < pkt_size) m_recv_buf.resize(pkt_size);
+            if (m_recv_buf.size() < (size_t)pkt_size) m_recv_buf.resize(pkt_size);
         }
         else if (is_EWOURLDBLOCK(r)) {
             //return;

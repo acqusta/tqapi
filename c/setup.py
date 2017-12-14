@@ -71,6 +71,7 @@ module = Extension('tquant._tqapi',
 
 if OSNAME == "Windows":
     module.extra_compile_args = ['/MT']
+    msgpack[1]['extra_compile_args'] = ['/MT']
 else:
     module.extra_compile_args = ['--std=c++11' ]
     

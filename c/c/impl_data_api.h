@@ -56,7 +56,7 @@ namespace tquant { namespace api { namespace impl {
                 return CallResult<vector<MarketQuote>>(builld_errmsg(rsp->err_code, rsp->err_msg));
             
             const BinDataHead* bin_head = reinterpret_cast<const BinDataHead*>(rsp->result.via.bin.ptr);
-            uint32_t bin_len = rsp->result.via.bin.size;
+            //uint32_t bin_len = rsp->result.via.bin.size;
 
             if (bin_head->element_size < sizeof(RawMarketQuote))
                 return CallResult<vector<MarketQuote>>("-1,wrong data format");
@@ -84,7 +84,7 @@ namespace tquant { namespace api { namespace impl {
                 return CallResult<vector<Bar>>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
             const BinDataHead* bin_head = reinterpret_cast<const BinDataHead*>(rsp->result.via.bin.ptr);
-            uint32_t bin_len = rsp->result.via.bin.size;
+            //uint32_t bin_len = rsp->result.via.bin.size;
 
             if (bin_head->element_size < sizeof(RawBar))
                 return CallResult<vector<Bar>>("-1,wrong data format");
@@ -112,7 +112,7 @@ namespace tquant { namespace api { namespace impl {
                 return CallResult<vector<DailyBar>>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
             const BinDataHead* bin_head = reinterpret_cast<const BinDataHead*>(rsp->result.via.bin.ptr);
-            uint32_t bin_len = rsp->result.via.bin.size;
+            //uint32_t bin_len = rsp->result.via.bin.size;
 
             if (bin_head->element_size < sizeof(RawDailyBar))
                 return CallResult<vector<DailyBar>>("-1,wrong data format");

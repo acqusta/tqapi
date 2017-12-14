@@ -9,7 +9,7 @@ void call_callback(PyObject* callback, const char* evt, PyObject* data)
 
     PyObject* result = PyObject_CallObject(callback, arg);
 
-    if (PyErr_Occurred != nullptr) {
+    if (PyErr_Occurred() != nullptr) {
         PyErr_Print();
         PyErr_Clear();
     }
@@ -79,7 +79,7 @@ PyMODINIT_FUNC API_EXPORT init_tqapi(void)
 {
     PyEval_InitThreads();
 
-    PyObject* m = Py_InitModule("_tqapi", Methods);
+    Py_InitModule("_tqapi", Methods);
 }
 
 

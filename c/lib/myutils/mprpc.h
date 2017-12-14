@@ -248,8 +248,8 @@ namespace mprpc {
         string _recv_data;
 
         MpRpcMessage()
-            : id(0)
-            , err_code(0)
+            : err_code(0)
+            , id(0)
         {
             msgpack_zone_init(&mp_zone, 2048);
             params.type = MSGPACK_OBJECT_NIL;

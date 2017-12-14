@@ -324,7 +324,7 @@ static PyObject* convert_ticks(vector<MarketQuote>* ticks)
 
     // TODO: 1 don't return code, 2. only create one object for each code
     std::vector<PyObject*> code(ticks->size());
-    for (int k = 0; k < ticks->size(); k++)
+    for (size_t k = 0; k < ticks->size(); k++)
         code[k] = PyString_FromString(ticks->at(k).code);
     PyObject* py_code = PyArray_SimpleNew(1, array_len, NPY_OBJECT);
     memcpy(PyArray_DATA((PyArrayObject*)py_code), &code[0], sizeof(PyObject*)*code.size());
@@ -372,7 +372,7 @@ static PyObject* convert_bars(vector<Bar>* bars)
 
     // TODO: 1 don't return code, 2. only create one object for each code
     std::vector<PyObject*> code(bars->size());
-    for (int k = 0; k < bars->size(); k++)
+    for (size_t k = 0; k < bars->size(); k++)
         code[k] = PyString_FromString(bars->at(k).code);
     PyObject* py_code = PyArray_SimpleNew(1, array_len, NPY_OBJECT);
     memcpy(PyArray_DATA((PyArrayObject*)py_code), &code[0], sizeof(PyObject*)*code.size());
@@ -422,7 +422,7 @@ static PyObject* convert_dailybars(vector<DailyBar>* bars)
 
     // TODO: 1 don't return code, 2. only create one object for each code
     std::vector<PyObject*> code(bars->size());
-    for (int k = 0; k < bars->size(); k++)
+    for (size_t k = 0; k < bars->size(); k++)
         code[k] = PyString_FromString(bars->at(k).code);
     PyObject* py_code = PyArray_SimpleNew(1, array_len, NPY_OBJECT);
     memcpy(PyArray_DATA((PyArrayObject*)py_code), &code[0], sizeof(PyObject*)*code.size());
