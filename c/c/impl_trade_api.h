@@ -72,12 +72,12 @@ namespace tquant { namespace api { namespace impl {
     {
         if (!is_map(obj)) return false;
 
-        get_map_field_str(obj, "account_id",   &act->account_id);
-        get_map_field_str(obj, "broker",       &act->broker);
-        get_map_field_str(obj, "account",      &act->account);
-        get_map_field_str(obj, "status",       &act->status);
-        get_map_field_str(obj, "msg",          &act->msg);
-        get_map_field_str(obj, "account_type", &act->account_type);
+        mp_map_get(obj, "account_id",   &act->account_id);
+        mp_map_get(obj, "broker",       &act->broker);
+        mp_map_get(obj, "account",      &act->account);
+        mp_map_get(obj, "status",       &act->status);
+        mp_map_get(obj, "msg",          &act->msg);
+        mp_map_get(obj, "account_type", &act->account_type);
 
         return true;
     }
@@ -131,13 +131,13 @@ namespace tquant { namespace api { namespace impl {
             if (!is_map(rsp->result)) return CallResult<Balance>("-1,wrong data format");
             
             auto bal = make_shared<Balance>();
-            get_map_field_str    (rsp->result, "account_id",    &bal->account_id);
-            get_map_field_str    (rsp->result, "fund_account",  &bal->fund_account);
-            get_map_field_double (rsp->result, "init_balance",  &bal->init_balance);
-            get_map_field_double (rsp->result, "enable_balance",&bal->enable_balance);
-            get_map_field_double (rsp->result, "margin",        &bal->margin);
-            get_map_field_double (rsp->result, "float_pnl",     &bal->float_pnl);
-            get_map_field_double (rsp->result, "close_pnl",     &bal->close_pnl);
+            mp_map_get (rsp->result, "account_id",    &bal->account_id);
+            mp_map_get (rsp->result, "fund_account",  &bal->fund_account);
+            mp_map_get (rsp->result, "init_balance",  &bal->init_balance);
+            mp_map_get (rsp->result, "enable_balance",&bal->enable_balance);
+            mp_map_get (rsp->result, "margin",        &bal->margin);
+            mp_map_get (rsp->result, "float_pnl",     &bal->float_pnl);
+            mp_map_get (rsp->result, "close_pnl",     &bal->close_pnl);
 
             return CallResult<Balance>(bal);
         }

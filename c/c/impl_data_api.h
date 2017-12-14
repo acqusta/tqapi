@@ -32,6 +32,7 @@ namespace tquant { namespace api { namespace impl {
         unordered_set<string> m_sub_codes;
         uint64_t              m_sub_hash;
         DataApi_Callback*     m_callback;
+        mutex                 m_mtx;
     public:
         DataApiImpl(mprpc::MpRpcClient* client) 
             : m_client(client)
@@ -147,6 +148,45 @@ namespace tquant { namespace api { namespace impl {
             return CallResult<MarketQuote>(quote);
         }
 
+        CallResult<vector<string>> update_subscribe_result(msgpack_object& result)
+        {
+            unique_lock<mutex> lock(m_mtx);
+
+            if (!is_map(result))
+                return CallResult<vector<string>>("-1,wrong data format");
+
+            string new_codes;
+            mp_map_get(result, "sub_hash", (int64_t*)&m_sub_hash);
+            mp_map_get(result, "sub_codes", &new_codes);
+
+            vector<string> sub_codes;
+            split(new_codes, ",", &sub_codes);
+
+            m_sub_codes.clear();
+            for (auto& s : sub_codes) m_sub_codes.insert(s);
+
+            return CallResult<vector<string>>(make_shared <vector<string>>(sub_codes));
+        }
+
+        void subscribe_again()
+        {
+            unique_lock<mutex> lock(m_mtx);
+            stringstream ss;
+            for (auto it = m_sub_codes.begin(); it != m_sub_codes.end(); it++) {
+                if (it != m_sub_codes.end())
+                    ss << *it << ",";
+                else
+                    ss << *it;
+            }
+
+            MsgPackPacker pk;
+            pk.pack_map(2);
+            pk.pack_map_item("codes", ss.str());
+            pk.pack_map_item("want_bin_fmt", true);
+
+            m_client->call("dapi.tsq_sub", pk.sb.data, pk.sb.size, 0);
+        }
+
         virtual CallResult<vector<string>> subscribe(const vector<string>& codes) override
         {
             stringstream ss;
@@ -166,20 +206,7 @@ namespace tquant { namespace api { namespace impl {
             if (is_nil(rsp->result))
                 return CallResult<vector<string>>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
-            if (!is_map(rsp->result))
-                return CallResult<vector<string>>("-1,wrong data format");
-            
-            string new_codes;
-            get_map_field_int(rsp->result, "sub_hash", (int64_t*)&m_sub_hash);
-            get_map_field_str(rsp->result, "sub_codes", &new_codes);
-
-            vector<string> sub_codes;
-            split(new_codes, ",", &sub_codes);
-
-            m_sub_codes.clear();
-            for (auto& s : sub_codes) m_sub_codes.insert(s);
-
-            return CallResult<vector<string>>(make_shared <vector<string>>(sub_codes));
+            return update_subscribe_result(rsp->result);
         }
 
         virtual CallResult<vector<string>> unsubscribe(const vector<string>& codes) override
@@ -213,17 +240,7 @@ namespace tquant { namespace api { namespace impl {
             if (!is_map(rsp->result))
                 return CallResult<vector<string>>("-1,wrong data format");
 
-            string new_codes;
-            get_map_field_int(rsp->result, "sub_hash", (int64_t*)&m_sub_hash);
-            get_map_field_str(rsp->result, "sub_codes", &new_codes);
-
-            vector<string> sub_codes;
-            split(new_codes, ",", &sub_codes);
-
-            m_sub_codes.clear();
-            for (auto& s : sub_codes) m_sub_codes.insert(s);
-
-            return CallResult<vector<string>>(make_shared <vector<string>>(sub_codes));
+            return update_subscribe_result(rsp->result);
         }
 
         virtual void set_callback(DataApi_Callback* callback) override
@@ -236,7 +253,7 @@ namespace tquant { namespace api { namespace impl {
             if (!m_callback) return;
 
             if (rpcmsg->method == "dapi.quote") {
-                if (!is_bin(rpcmsg->params)) return;
+                if (!is_bin(rpcmsg->params)) return;                
                 const char* code = rpcmsg->params.via.bin.ptr;
                 auto quote = make_shared<MarketQuote>(*(RawMarketQuote*)(code + strlen(code) + 1), code);
                 m_callback->on_market_quote(quote);
@@ -249,6 +266,21 @@ namespace tquant { namespace api { namespace impl {
 
                 auto bar = make_shared<Bar>(*rbar, code);
                 m_callback->on_bar(cycle, bar);
+            }
+            else if (rpcmsg->method == ".sys.heartbeat") {
+
+                if (!is_map(rpcmsg->result)) return;
+                uint64_t sub_hash = 0;
+                if (mp_map_get(rpcmsg->result, "sub_hash", &sub_hash)) {
+                    
+                    //std::cout << ".sys.heartbeat " << sub_hash << "," << m_sub_hash << endl;
+                    if (sub_hash != m_sub_hash && m_sub_codes.size()) {
+                        subscribe_again();
+                    }
+                }
+            }
+            else if (rpcmsg->method == "dapi.tsq_sub") {
+                update_subscribe_result(rpcmsg->result);
             }
         }
     };

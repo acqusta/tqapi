@@ -153,6 +153,11 @@ namespace mprpc {
         }
     }
 
+    static inline bool mp_get(msgpack_object& o, uint64_t* v)
+    {
+        return mp_get(o, (int64_t*)v);
+    }
+    
     static inline bool mp_get(msgpack_object& o, int32_t* v)
     {
         int64_t v2;
@@ -163,6 +168,11 @@ namespace mprpc {
         else {
             return false;
         }
+    }
+
+    static inline bool mp_get(msgpack_object& o, uint32_t* v)
+    {
+        return mp_get(o, (uint32_t*)v);
     }
 
     static inline bool mp_get(msgpack_object& o, bool* v)
@@ -198,7 +208,8 @@ namespace mprpc {
         }
     }
 
-    static inline bool get_map_field_int(msgpack_object& o, const char* key, int64_t* v)
+    template<typename T>
+    static inline bool mp_map_get(msgpack_object& o, const char* key, T* v)
     {
         if (!is_map(o)) return false;
 
@@ -207,131 +218,9 @@ namespace mprpc {
         for (; p < p_end; p++) {
             if (p->key.type != MSGPACK_OBJECT_STR) continue;
             string str(p->key.via.str.ptr, p->key.via.str.size);
-            if (str  == key){
-                if (p->val.type == MSGPACK_OBJECT_POSITIVE_INTEGER) {
-                    *v = p->val.via.u64;
-                    return true;
-                }
-                else if (p->val.type == MSGPACK_OBJECT_NEGATIVE_INTEGER) {
-                    *v = p->val.via.i64;
-                    return true;
-                }
-                else {
-                    return false;
-                }
-            }
+            if (str == key)
+                return mp_get(p->val, v);
         }
-
-        return false;
-    }
-
-    static inline bool get_map_field_bool(msgpack_object& o, const char* key, bool* v)
-    {
-        if (!is_map(o)) return false;
-
-        msgpack_object_kv* p = o.via.map.ptr;
-        msgpack_object_kv* p_end = p + o.via.map.size;
-        for (; p < p_end; p++) {
-            if (p->key.type != MSGPACK_OBJECT_STR) continue;
-            string str(p->key.via.str.ptr, p->key.via.str.size);
-            if (str == key){
-                if (p->val.type == MSGPACK_OBJECT_BOOLEAN) {
-                    *v = p->val.via.boolean;
-                    return true;
-                }
-                else {
-                    return false;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    static inline bool get_map_field_str(msgpack_object& o, const char* key, string* v)
-    {
-        if (!is_map(o)) return false;
-
-        msgpack_object_kv* p = o.via.map.ptr;
-        msgpack_object_kv* p_end = p + o.via.map.size;
-        for (; p < p_end; p++) {
-            if (p->key.type != MSGPACK_OBJECT_STR) continue;
-            string str(p->key.via.str.ptr, p->key.via.str.size);
-            if (str == key){
-                if (p->val.type == MSGPACK_OBJECT_STR) {
-                    v->assign(p->val.via.str.ptr, p->val.via.str.size);
-                    return true;
-                }
-                else {
-                    return false;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    static inline bool get_map_field_double(msgpack_object& o, const char* key, double* v)
-    {
-        if (!is_map(o)) return false;
-
-        msgpack_object_kv* p = o.via.map.ptr;
-        msgpack_object_kv* p_end = p + o.via.map.size;
-        for (; p < p_end; p++) {
-            if (p->key.type != MSGPACK_OBJECT_STR) continue;
-            string str(p->key.via.str.ptr, p->key.via.str.size);
-            if (str == key) {
-                if (p->val.type == MSGPACK_OBJECT_FLOAT ||
-                    p->val.type == MSGPACK_OBJECT_FLOAT32 ||
-                    p->val.type == MSGPACK_OBJECT_FLOAT64 )
-                {
-                    *v = p->val.via.f64;
-                    return true;
-                }
-                else if (p->val.type == MSGPACK_OBJECT_POSITIVE_INTEGER) {
-                    *v = (double)p->val.via.u64;
-                    return true;
-                }
-                else if (p->val.type == MSGPACK_OBJECT_NEGATIVE_INTEGER) {
-                    *v = (double)p->val.via.i64;
-                    return true;
-                }
-                else {
-                    return false;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    static inline bool get_map_field_str_array(msgpack_object& o, const char* key, vector<string>* v)
-    {
-        if (!is_map(o)) return false;
-
-        msgpack_object_kv* p = o.via.map.ptr;
-        msgpack_object_kv* p_end = p + o.via.map.size;
-
-        for (; p < p_end; p++) {
-            if (p->key.type != MSGPACK_OBJECT_STR) continue;
-
-            string str(p->key.via.str.ptr, p->key.via.str.size);
-            if (str != key) continue;
-
-            if (p->val.type == MSGPACK_OBJECT_ARRAY) {
-                msgpack_object* tmp = p->val.via.array.ptr;
-                for (uint32_t n = 0; n < p->val.via.array.size; n++, tmp++)
-                {
-                    if (tmp->type == MSGPACK_OBJECT_STR)
-                        v->push_back(string(p->val.via.str.ptr, p->val.via.str.size));
-                }
-                return true;
-            }
-            else {
-                return false;
-            }
-        }
-
         return false;
     }
 

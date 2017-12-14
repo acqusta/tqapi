@@ -56,10 +56,10 @@ endif()
 add_library(tqapi_py SHARED ${SRC})
 
 target_link_libraries(tqapi_py
-    tqapi
-    loop
-    ${COMMON_LIB}
-    ${EXTRA_LIBS}
+  tqapi
+  loop
+  ${COMMON_LIB}
+  ${EXTRA_LIBS}
 )
 
 add_executable(tqapi_py_test ${SRC})
@@ -67,13 +67,16 @@ add_executable(tqapi_py_test ${SRC})
 target_compile_definitions( tqapi_py_test PRIVATE BUILD_API_TEST=1)
 
 target_link_libraries(tqapi_py_test
-    tqapi
-    loop
-    ${COMMON_LIB}
-    ${EXTRA_LIBS}
+  tqapi
+  loop
+  ${COMMON_LIB}
+  ${EXTRA_LIBS}
 )
 
-install(TARGETS tqapi_py DESTINATION py/tquant)
+install(TARGETS tqapi_py
+  RUNTIME DESTINATION py/tquant
+  LIBRARY DESTINATION py/tquant
+  )
 
 install(FILES tqapi.py __init__.py DESTINATION py/tquant)
 
