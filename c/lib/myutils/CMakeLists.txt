@@ -1,11 +1,8 @@
 project(myutils)
 
 set(SRC 
-  ipc_connection.cpp
-  ipc_connection.h
   mprpc.cpp
   mprpc.h
-  shm_queue.cpp
   shm_queue.h
   socket_connection.cpp
   socket_connection.h
@@ -16,10 +13,17 @@ set(SRC
   filemapping.h
   misc.cpp
   misc.h
-)
+  )
+
+if (WIN32)
+  list(APPEND SRC
+    ipc_connection.cpp
+    ipc_connection.h
+    )
+endif()
 
 include_directories( . )
 
 add_library(myutils STATIC ${SRC})
 
-target_link_libraries(myutils msgpack loop)
+#target_link_libraries(myutils msgpack loop)

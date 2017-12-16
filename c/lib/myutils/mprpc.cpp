@@ -87,7 +87,6 @@ namespace mprpc {
                 }
 #endif
             }
-
             return rpcmsg;
         }
         catch (exception& e) {
@@ -336,7 +335,10 @@ namespace mprpc {
 
     bool MpRpcServer::send(shared_ptr<ClientConnection> connection, const void* data, size_t size)
     {
-        if (size < 20000) {
+        if (1 || size < 20000) {
+            if (size > 1024 * 1024) {
+                size = size;
+            }
             return connection->send((const char*)data, size);
         }
         else {

@@ -221,21 +221,25 @@ bool FileMapping::open_shmem(const string& name, bool read_only)
 #include <stdint.h>
 #include <string>
 #include <assert.h>
-#include "glog/logging.h"
+#include <iostream>
+//#include "glog/logging.h"
 
 #include "filemapping.h"
 
 using namespace std;
+using namespace myutils;
 
-bool FileMapping::create(const string& filename, uint32_t filesize)
+bool FileMapping::create_file(const string& filename, uint32_t filesize)
 {
+    m_id = filename;
     int fd = ::open(filename.c_str(), O_CREAT | O_RDWR, S_IRWXU);
     if ( fd == -1) {
-        VLOG(1) <<"Can't create " << filename <<", error=" << strerror(errno);
+        //VLOG(1) <<"Can't create " << filename <<", error=" << strerror(errno);
         return false;
     }
-    fchmod(fd, S_IRUSR | S_IWUSR);
 
+    fchmod(fd, S_IRUSR | S_IWUSR);
+    
     char* buf = new char[filesize];
     write(fd, buf, filesize);
     delete[] buf;
@@ -243,11 +247,9 @@ bool FileMapping::create(const string& filename, uint32_t filesize)
     char* p = (char*)mmap(nullptr, filesize, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
     if ( p == (char*)-1) {
         ::close(fd);
-        LOG(FATAL) <<"mmap failed: " << filename <<", error=" << strerror(errno);
+        //LOG(FATAL) <<"mmap failed: " << filename <<", error=" << strerror(errno);
         return false;
     }
-
-    //LOG(INFO) << "create filemapping " << filename <<", " << filesize;
 
     m_pMapAddress = p;
     m_fd = fd;
@@ -256,22 +258,23 @@ bool FileMapping::create(const string& filename, uint32_t filesize)
     return true;
 }
 
-bool FileMapping::open(const string& filename, bool read_only)
+bool FileMapping::open_file(const string& filename, bool read_only)
 {
+    m_id = filename;
     struct stat st;
     if (stat(filename.c_str(), &st)) {
-        LOG(ERROR) <<"Can't stat " << filename <<", error=" << strerror(errno);
+        // LOG(ERROR) <<"Can't stat " << filename <<", error=" << strerror(errno);
         return false;     
     }
     if (st.st_size == 0) {
-        LOG(ERROR) <<"Wrong file size " << filename <<", size=" << st.st_size;
+        // LOG(ERROR) <<"Wrong file size " << filename <<", size=" << st.st_size;
         return false;
     }
 
     int flag = read_only? O_RDONLY : O_RDWR;
     int fd = ::open(filename.c_str(), flag);
     if ( fd == -1) {
-        LOG(ERROR) <<"Can't open " << filename <<", error=" << strerror(errno);
+        // LOG(ERROR) <<"Can't open " << filename <<", error=" << strerror(errno);
         return false;
     }
 
@@ -282,12 +285,13 @@ bool FileMapping::open(const string& filename, bool read_only)
 
     m_pMapAddress = (char*)mmap(nullptr, st.st_size, prot, MAP_SHARED, fd, 0);
     if (!m_pMapAddress) {
-        LOG(ERROR) <<"mmap failed: " << filename <<", error=" << strerror(errno);
+        // LOG(ERROR) <<"mmap failed: " << filename <<", error=" << strerror(errno);
         ::close(fd);
         return false;
     }
 
-    CHECK(st.st_size < UINT32_MAX) << "Only support 4G memory file";
+    //CHECK(st.st_size < UINT32_MAX) << "Only support 4G memory file";
+    assert(st.st_size < UINT32_MAX);// << "Only support 4G memory file";
     m_fd = fd;
     m_filesize = static_cast<uint32_t>(st.st_size);
 

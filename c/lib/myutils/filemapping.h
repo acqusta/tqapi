@@ -39,10 +39,6 @@ namespace myutils {
 
         bool open_shmem(const string& name, bool read_only);
 
-        //bool create(const string& filename, const string& name, uint32_t filesize);
-        //
-        //bool open(const string& filename, const string& name, bool read_only);
-
         void close() {
             if (m_pMapAddress) {
                 UnmapViewOfFile(m_pMapAddress);
@@ -96,20 +92,32 @@ namespace myutils {
             close();
         }
 
-        bool create(const string& filename, uint32_t filesize);
-
-        bool open(const string& filename, bool read_only);
+        bool create_file  (const string& filename, uint32_t filesize);
+        bool create_shmem (const string& name, uint32_t filesize);
+        bool open_file    (const string& filename, bool read_only);
+        bool open_shmem   (const string& name, bool read_only);
 
         void close();
 
         bool is_attached() {
             return m_pMapAddress != nullptr;
         }
+
+        inline char* addr() {
+            return m_pMapAddress;
+        }
+
+        inline int size() {
+            return m_filesize;
+        }
+
+        string id() { return m_id; }
+
+    private:        
         char*       m_pMapAddress;
         uint32_t    m_filesize;
-
-    private:
         int         m_fd;
+        string      m_id;
 
     };
 

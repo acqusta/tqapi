@@ -1,6 +1,8 @@
 #ifndef _MYUTILS_IPC_CONNECTION_H
 #define _MYUTILS_IPC_CONNECTION_H
 
+#ifdef _WIN32
+
 #include <atomic>
 #include <list>
 #include <string>
@@ -113,5 +115,7 @@ namespace myutils {
     };
 
 }
+
+#endif
 
 #endif
