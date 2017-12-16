@@ -19,7 +19,7 @@ namespace loop {
         }
 
         virtual ~MsgLoopRun() {
-            close();
+            close_loop();
         }
 
         MessageLoop& msg_loop() { return m_msg_loop; }
@@ -29,7 +29,7 @@ namespace loop {
             delete m_thread;
             m_thread = nullptr;
         }
-        void close() {
+        void close_loop () {
             if (m_thread) {
                 m_msg_loop.PostTask(bind(&loop::MessageLoop::QuitNow, &m_msg_loop));
                 if (m_thread->joinable())

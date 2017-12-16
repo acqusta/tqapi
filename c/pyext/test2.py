@@ -8,7 +8,7 @@ tapi = tqapi.trade_api()
 dapi.bar('000001.SH', '1m')
 
 def print_quote(q):
-    print "quote:", q['code'], q['date'], q['time'], q['last'], q['volume'], q['ask1'], q['ask2']
+    print "quote:", q['code'], q['date'], q['time'], q['last'], q['volume'], q['ask1'], q['bid1']
 
 def on_quote(q):
     print_quote(q)

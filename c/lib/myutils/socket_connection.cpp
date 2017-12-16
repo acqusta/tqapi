@@ -120,13 +120,15 @@ void SocketConnection::do_recv()
             if (m_recv_buf.size() < (size_t)pkt_size) m_recv_buf.resize(pkt_size);
         }
         else if (is_EWOURLDBLOCK(r)) {
-            //return;
+            return;
         }
         else {
             do_close("recv error");
+            return;
         }
     }
-    else {
+
+    if (m_pkt_size) {
         int r = recv(m_socket, (char*)m_recv_buf.c_str() + m_recv_size, m_pkt_size - m_recv_size, 0);
         if (r > 0) {
             m_recv_size += r;

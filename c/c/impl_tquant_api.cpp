@@ -4,6 +4,7 @@
 #include "myutils/stringutils.h"
 #include "myutils/mprpc.h"
 #include "myutils/socket_connection.h"
+#include "myutils/ipc_connection.h"
 #include "myutils/socketutils.h"
 #include "impl_tquant_api.h"
 #include "impl_data_api.h"
@@ -13,16 +14,28 @@ namespace tquant { namespace api { namespace impl {
 
     using namespace ::mprpc;
     using namespace ::tquant::api;
-
+    using namespace ::myutils;
 
     class TQuantApiImpl : public TQuantApi, public MpRpcClient_Callback {
         friend DataApiImpl;
         friend TradeApiImpl;
     public:
         TQuantApiImpl(const char* addr) {
-            auto conn = make_shared<SocketConnection>();
-            m_client = new MpRpcClient(conn);
-            m_client->connect(addr, this);
+            if (strncmp(addr, "tcp://", 6) == 0) {
+                auto conn = make_shared<SocketConnection>();
+                m_client = new MpRpcClient(conn);
+                m_client->connect(addr, this);
+            }
+            else if (strncmp(addr, "ipc://", 6) == 0) {
+                auto conn = make_shared<IpcConnection>();
+                m_client = new MpRpcClient(conn);
+                m_client->connect(addr, this);
+
+            }
+            else {
+                throw std::runtime_error("unknown addr");
+            }
+
             m_dapi = new DataApiImpl(this->m_client);
             m_tapi = new TradeApiImpl(this->m_client);
         }

@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <thread>
 #include <chrono>
 #include <iostream>
@@ -105,7 +106,7 @@ void test_dapi(TQuantApi* api)
 
     if (1) {
         auto begin_time = system_clock::now();
-        int total_count = 0;
+        size_t total_count = 0;
         int dates[] = {
             20171106, 20171107, 20171108, 20171109, 20171110,
             20171113, 20171114, 20171115, 20171116, 20171117,
@@ -209,15 +210,93 @@ void test_tapi(TradeApi* tapi)
             cout << "place_order error: " << r.msg << endl;
         }
     }
+}
+
+void perf_test(DataApi* dapi)
+{
+    auto r = dapi->quote("000001.SH");
+    //assert(r.value);
+
+    {
+        int count = 3000;
+        auto begin_time = system_clock::now();
+        for (int i = 0; i < count; i++) {
+            auto r = dapi->quote("000001.SH");
+            if (!r.value) {
+                std::cout << "quote error: " << r.msg << endl;
+            }
+        }
+
+        int ms = duration_cast<milliseconds>(system_clock::now() - begin_time).count();
+        cout << (ms*1.0/count) << endl;
+    }
+    {
+        int count = 3000;
+        auto begin_time = system_clock::now();
+        for (int i = 0; i < count; i++)
+            dapi->quote("");
+
+        int ms = duration_cast<milliseconds>(system_clock::now() - begin_time).count();
+        cout << (ms*1.0 / count) << endl;
+    }
+}
+
+void perf_test2(DataApi* dapi)
+{
+    const char* code = "rb.SHF";
+    vector<string> codes = { code };
+    dapi->subscribe(codes);
+    while (true) {
+        auto r = dapi->quote(code);
+        if (r.value) break;
+        cout << "quote failed: " << r.msg << endl;
+        this_thread::sleep_for(seconds(1));
+    }
+
+    auto begin_time = system_clock::now();
+    int total_count = 0;
+    auto bars = dapi->daily_bar(code, "", true);
+    int date_count = 0;
+    assert(bars.value);
+    for (auto& bar : *bars.value) {
+        if (bar.date < 20170401) continue;
+
+        //auto ticks = dapi->bar(code, "1m", bar.date, false);
+
+        if (bar.date > 20170601) break;
+        auto ticks = dapi->tick(code, bar.date);
+
+        //cout << bar.date << endl;
+
+        if (ticks.value)
+            total_count += ticks.value->size();
+        else
+            cout << "tick error: " << code << "," << bar.date << ": " << ticks.msg << endl;
+        date_count++;
+    }
+
+    size_t used_time = duration_cast<microseconds>(system_clock::now() - begin_time).count();
+    cout << "used time    : " << used_time << endl
+        << "total records: " << total_count << endl
+        << "total date   : " << date_count << endl
+        << "time per day : " << (used_time / date_count) / 1000.0 << endl;
 
 }
 
 int main()
 {
-    TQuantApi* api = TQuantApi::create("tcp://127.0.0.1:10001");
+    const char* addr = "tcp://127.0.0.1:10001";
+    //const char* addr = "ipc://tqc_10001";
 
-    test_dapi(api);
+    std::cout << addr << endl;
+    TQuantApi* api = TQuantApi::create(addr);
+
+    //perf_test(api->data_api());
+    perf_test2(api->data_api());
+
+    //test_dapi(api);
     //test_tapi(api->trade_api());
     getchar();
 
 }
+;

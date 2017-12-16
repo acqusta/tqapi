@@ -79,13 +79,15 @@ namespace mprpc {
                                     send_time = p->val.via.u64;
                             }
                         }
-                        LOG(INFO) << "rsp_time: " << rpcmsg->method << " "
+                        std::cout << "rsp_time: " << rpcmsg->method << " "
                             << (send_time - recv_time) << " "
-                            << time_point_cast<microseconds>(system_clock::now()).time_since_epoch().count() - recv_time;
+                            << time_point_cast<microseconds>(system_clock::now()).time_since_epoch().count() - recv_time
+                            << endl;
                     }
                 }
 #endif
             }
+
             return rpcmsg;
         }
         catch (exception& e) {
@@ -93,21 +95,6 @@ namespace mprpc {
             return nullptr;
         }
     }
-
-
-    //static int my_rand()
-    //{
-    //    static std::default_random_engine         g_generator;
-    //    static std::uniform_int_distribution<int> g_distribution(1000000, INT32_MAX);;
-    //    static bool inited = false;
-    //    if (!inited) {
-    //        inited = true;
-    //        int32_t seed = system_clock::now().time_since_epoch().count() % INT32_MAX;
-    //        g_generator.seed(seed);
-    //    }
-
-    //    return g_distribution(g_generator);
-    //}
 
     MpRpcClient::MpRpcClient(shared_ptr<Connection> conn)
         : m_conn(conn)
@@ -187,6 +174,8 @@ namespace mprpc {
         try {
             shared_ptr<MpRpcMessage> rpcmsg = MpRpcMessage::parse(data, size);
             if (!rpcmsg) return;
+
+            rpcmsg->recv_time = system_clock::now();
 
             if (rpcmsg->method == ".sys.heartbeat") {
                 m_last_hb_rsp_time = system_clock::now();
@@ -351,13 +340,31 @@ namespace mprpc {
             return connection->send((const char*)data, size);
         }
         else {
+            static uint64_t time1;
+            static uint64_t time2;
+            static uint64_t count;
+            auto begin_time = system_clock::now();
+
             size_t len = snappy::MaxCompressedLength(size);
             char* buf = new char[5 + len];
             buf[0] = 'S';
             *(uint32_t*)(buf + 1) = (uint32_t)size;
             snappy::RawCompress((const char*)data, size, buf + 5, &len);
+
+            time1 += duration_cast<microseconds>(system_clock::now() - begin_time).count();
+
             bool r = connection->send (buf, len + 5);
             delete[] buf;
+
+            time2 += duration_cast<microseconds>(system_clock::now() - begin_time).count();
+
+            count++;
+            if (count == 20) {
+                std::cout << "send time: " << (time1 / count) << "," << (time2 / count) << endl;
+                time1 = time2 = 0;
+                count = 0;
+            }
+
             return r;
         }
     }

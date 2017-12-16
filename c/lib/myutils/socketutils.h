@@ -6,9 +6,7 @@
 #include <stdint.h>
 #include <string>
 
-// On Windows the default value of FD_SETSIZE is 64.
 #ifdef _WIN32
-# define FD_SETSIZE 1024
 # include <WinSock2.h>
 #else
 # include <sys/socket.h>
@@ -51,7 +49,7 @@ namespace myutils {
     void init_winsock2();
 #endif
 
-    void set_socket_nonblock(SOCKET socket);
+    void set_socket_nonblock(SOCKET socket, bool nonblock);
 
     uint32_t resolve_name(const string& name);
 

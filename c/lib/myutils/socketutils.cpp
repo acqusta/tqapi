@@ -31,10 +31,10 @@ namespace myutils {
     }
 #endif
 
-    void set_socket_nonblock(SOCKET socket)//, bool nonblock)
+    void set_socket_nonblock(SOCKET socket, bool nonblock)
     {
     #ifdef _WIN32
-        unsigned long nNonBlocking = 1;
+        unsigned long nNonBlocking = nonblock ? 1 : 0;
         if (ioctlsocket(socket, FIONBIO, &nNonBlocking) == SOCKET_ERROR)
             assert(false);
     #else
@@ -76,7 +76,7 @@ namespace myutils {
         if (s == INVALID_SOCKET)
             return false;
 
-        set_socket_nonblock(s);
+        set_socket_nonblock(s, true);
 
         int r = connect(s, (sockaddr*)&addr, sizeof(addr));
         if (r == 0 || is_EWOURLDBLOCK(r)) {
@@ -193,7 +193,7 @@ namespace myutils {
             return false;
         }
 
-        myutils::set_socket_nonblock(*server);
+        myutils::set_socket_nonblock(*server, true);
         closesocket(sock);
 
         return true;
