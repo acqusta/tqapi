@@ -333,19 +333,19 @@ namespace mprpc {
         }
     }
 
-    bool MpRpcServer::send(shared_ptr<ClientConnection> connection, const void* data, size_t size)
+    bool MpRpcServer::send(shared_ptr<ClientConnection> conn, const void* data, size_t size)
     {
-        if (1 || size < 20000) {
+        if (size < conn->max_raw_size()) {
             if (size > 1024 * 1024) {
                 size = size;
             }
-            return connection->send((const char*)data, size);
+            return conn->send((const char*)data, size);
         }
         else {
-            static uint64_t time1;
-            static uint64_t time2;
-            static uint64_t count;
-            auto begin_time = system_clock::now();
+            //static uint64_t time1;
+            //static uint64_t time2;
+            //static uint64_t count;
+            //auto begin_time = system_clock::now();
 
             size_t len = snappy::MaxCompressedLength(size);
             char* buf = new char[5 + len];
@@ -353,19 +353,19 @@ namespace mprpc {
             *(uint32_t*)(buf + 1) = (uint32_t)size;
             snappy::RawCompress((const char*)data, size, buf + 5, &len);
 
-            time1 += duration_cast<microseconds>(system_clock::now() - begin_time).count();
+            //time1 += duration_cast<microseconds>(system_clock::now() - begin_time).count();
 
-            bool r = connection->send (buf, len + 5);
+            bool r = conn->send (buf, len + 5);
             delete[] buf;
 
-            time2 += duration_cast<microseconds>(system_clock::now() - begin_time).count();
+            //time2 += duration_cast<microseconds>(system_clock::now() - begin_time).count();
 
-            count++;
-            if (count == 20) {
-                std::cout << "send time: " << (time1 / count) << "," << (time2 / count) << endl;
-                time1 = time2 = 0;
-                count = 0;
-            }
+            //count++;
+            //if (count == 20) {
+            //    std::cout << "send time: " << (time1 / count) << "," << (time2 / count) << endl;
+            //    time1 = time2 = 0;
+            //    count = 0;
+            //}
 
             return r;
         }

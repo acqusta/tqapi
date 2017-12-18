@@ -245,8 +245,8 @@ void perf_test2(DataApi* dapi)
 {
     const char* code = "rb.SHF";
     vector<string> codes = { code };
-    dapi->subscribe(codes);
     while (true) {
+        dapi->subscribe(codes);
         auto r = dapi->quote(code);
         if (r.value) break;
         cout << "quote failed: " << r.msg << endl;
@@ -285,8 +285,8 @@ void perf_test2(DataApi* dapi)
 
 int main()
 {
-    const char* addr = "tcp://127.0.0.1:10001";
-    //const char* addr = "ipc://tqc_10001";
+    //const char* addr = "tcp://127.0.0.1:10001";
+    const char* addr = "ipc://tqc_10001";
 
     std::cout << addr << endl;
     TQuantApi* api = TQuantApi::create(addr);

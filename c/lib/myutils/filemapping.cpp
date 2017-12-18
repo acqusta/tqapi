@@ -51,14 +51,6 @@ bool FileMapping::create_file(const string& filename,  uint32_t filesize)
     DWORD dwSysGran = SysInfo.dwAllocationGranularity;
     filesize = ((filesize + dwSysGran - 1) / dwSysGran) * dwSysGran;
 
-    //SECURITY_DESCRIPTOR secu_desc;
-    //::InitializeSecurityDescriptor(&secu_desc, SECURITY_DESCRIPTOR_REVISION);
-    //::SetSecurityDescriptorDacl(&secu_desc, TRUE, NULL, FALSE);
-    //SECURITY_ATTRIBUTES secu_attr;
-    //secu_attr.nLength = sizeof(SECURITY_ATTRIBUTES);
-    //secu_attr.bInheritHandle = FALSE;
-    //secu_attr.lpSecurityDescriptor = &secu_desc;
-
     m_hMapFile = CreateFileMapping(m_hFile,         // current file handle
         NULL, //&secu_attr,                         // default security
         PAGE_READWRITE,                             // read/write permission
@@ -92,6 +84,11 @@ bool FileMapping::create_shmem(const string& name, uint32_t filesize)
 
     m_id = name;
     m_filesize = filesize;
+
+    SYSTEM_INFO SysInfo;
+    GetSystemInfo(&SysInfo);
+    DWORD dwSysGran = SysInfo.dwAllocationGranularity;
+    filesize = ((filesize + dwSysGran - 1) / dwSysGran) * dwSysGran;
 
     m_hMapFile = CreateFileMapping(INVALID_HANDLE_VALUE,         // current file handle
         NULL, //&secu_attr,                                       // default security
@@ -179,20 +176,24 @@ bool FileMapping::open_file(const string& filename, bool read_only)
 }
 
 
-bool FileMapping::open_shmem(const string& name, bool read_only)
+bool FileMapping::open_shmem(const string& name, uint32_t filesize, bool read_only)
 {
     close();
 
     m_id = name;
-    // FIXME
-    m_filesize = 30 * 1023 * 1024;
+    m_filesize = filesize;
+
+    SYSTEM_INFO SysInfo;
+    GetSystemInfo(&SysInfo);
+    DWORD dwSysGran = SysInfo.dwAllocationGranularity;
+    filesize = ((filesize + dwSysGran - 1) / dwSysGran) * dwSysGran;
 
     m_hMapFile = OpenFileMapping(FILE_MAP_ALL_ACCESS,
         NULL,
         name.c_str());
 
     if (m_hMapFile == NULL) {
-        std::cout << "OpenFileMapping failed: " << ConvertErrorCodeToString(GetLastError());
+        //std::cout << "OpenFileMapping failed: " << ConvertErrorCodeToString(GetLastError());
         return false;
     }
     // Map the view and test the results.
@@ -200,7 +201,7 @@ bool FileMapping::open_shmem(const string& name, bool read_only)
         read_only ? FILE_MAP_READ : FILE_MAP_ALL_ACCESS, // read/write
         0,
         0,
-        m_filesize);
+        filesize);
 
     if (m_pMapAddress == NULL) {
         //LOG(ERROR) << "MapViewOfFile failed: " << GetLastError();

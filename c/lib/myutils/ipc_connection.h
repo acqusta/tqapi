@@ -20,35 +20,22 @@ namespace myutils {
     using namespace std;
     using namespace std::chrono;
 
-
-    class Pipe {
-    public:
-        bool connect(const string& name);
-        bool listen(const string& name);
-
-        int32_t  recv(char* buf, int32_t size);
-        int32_t  send(const char* data, int32_t size);
-
-    private:
-#ifdef _WIN32
-        HANDLE m_hPipe;
-#endif
-    };
+//    class Pipe {
+//    public:
+//        bool connect(const string& name);
+//        bool listen(const string& name);
+//
+//        int32_t  recv(char* buf, int32_t size);
+//        int32_t  send(const char* data, int32_t size);
+//
+//    private:
+//#ifdef _WIN32
+//        HANDLE m_hPipe;
+//#endif
+//    };
 
     class IpcConnection : public Connection, public loop::MsgLoopRun {
     public:
-
-        static const int MSGID_DATA_ARRIVED = 1;
-        static const int MSGID_CONNECT_REQ = 2;
-        static const int MSGID_CONNECT_RSP = 3;
-        static const int MSGID_HEARTBEAT_REQ = 4;
-        static const int MSGID_HEARTBEAT_RSP = 5;
-
-        struct ServerMsg {
-            int32_t msg_size;
-            int32_t msg_id;
-        };
-
         struct ShmemHead {
             int32_t send_size;
             int32_t send_offset;
@@ -56,7 +43,13 @@ namespace myutils {
             int32_t recv_offset;
         };
 
-        struct ConnectReq : ServerMsg {
+        struct ConnectionInfo {
+            atomic<uint64_t> client_id;          // 0 means no connection;
+            atomic<uint64_t> client_update_time; // client update time
+            atomic<uint64_t> svr_update_time;    // server check time
+            atomic<int32_t > req;
+            atomic<int32_t > rsp;
+            atomic<int32_t > dead_flag;
             char shmem_name[128];
 #ifdef _WIN32
             char evt_send[128];
@@ -64,16 +57,11 @@ namespace myutils {
 #endif
         };
 
-        struct ConnectRsp : ServerMsg {
-            int32_t conn_id;
-        };
-
-        struct HeartBeatReq : ServerMsg {
-            char client_shmem_name[128];
-        };
-
-        struct HeartBeatRsp : ServerMsg {
-            int32_t conn_id;
+        struct ConnectionSlotInfo {
+            int64_t slot_count;
+            int64_t slot_size;          // Size of ConnectionInfo
+            char evt_conn[128];
+            ConnectionInfo slots[20];
         };
 
         IpcConnection();
@@ -87,14 +75,12 @@ namespace myutils {
         virtual void send(const std::string& data) override;
 
     private:
-        void main_run();
-        void do_send();
         bool do_connect();
         void do_recv();
-        void do_send_heartbeat();
         void do_close();
-
         void recv_run();
+        void clear_data();
+        void check_connection();
 
     private:
         string                      m_addr;
@@ -102,12 +88,14 @@ namespace myutils {
         Connection_Callback*        m_callback;
         volatile bool               m_should_exit;
         bool                        m_connected;
-        int32_t                     m_conn_id;
-        myutils::FileMapping*       m_shmem;
+        uint64_t                    m_my_id;
+        myutils::FileMapping*       m_my_shmem;
+        myutils::FileMapping*       m_svr_shmem;
         ShmemQueue*                 m_recv_queue;
         ShmemQueue*                 m_send_queue;
-        Pipe*                       m_pipe;
         thread*                     m_recv_thread;
+        ConnectionSlotInfo*         m_slot_info;
+        ConnectionInfo*             m_conn;
 #ifdef _WIN32
         HANDLE m_hSendEvt;
         HANDLE m_hRecvEvt;

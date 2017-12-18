@@ -14,6 +14,7 @@ target_link_libraries(tqapi
   myutils
   msgpack
   snappy
+  loop
   ${COMMON_LIB}
 )
 

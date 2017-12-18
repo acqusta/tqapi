@@ -322,6 +322,7 @@ namespace mprpc {
     public:
         virtual ~ClientConnection() {}
         virtual string id() = 0;
+        virtual int max_raw_size() = 0;
         virtual bool send(const char* data, size_t size) = 0;
     };
 

@@ -37,7 +37,7 @@ namespace myutils {
 
         bool create_shmem(const string& name, uint32_t filesize);
 
-        bool open_shmem(const string& name, bool read_only);
+        bool open_shmem(const string& name, uint32_t filesize, bool read_only);
 
         void close() {
             if (m_pMapAddress) {

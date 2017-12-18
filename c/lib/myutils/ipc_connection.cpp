@@ -12,53 +12,25 @@
 
 using namespace myutils;
 
-bool Pipe::connect(const string& name)
+static inline uint64_t get_now_ms()
 {
-    m_hPipe = CreateFileA(
-        name.c_str(),
-        GENERIC_READ | GENERIC_WRITE,
-        0,
-        NULL,
-        OPEN_EXISTING,
-        0,
-        NULL);
-    return (m_hPipe != INVALID_HANDLE_VALUE);
+    return time_point_cast<milliseconds>(system_clock::now()).time_since_epoch().count();
 }
-
-
-int32_t  Pipe::recv(char* buf, int32_t size)
-{
-    if (m_hPipe != INVALID_HANDLE_VALUE) {
-        DWORD read_len = 0;
-        if (ReadFile(m_hPipe, buf, size, &read_len, 0))
-            return read_len;
-    }
-    return -1;
-}
-
-
-int32_t Pipe::send(const char* data, int32_t size)
-{
-    if (m_hPipe != INVALID_HANDLE_VALUE) {
-        DWORD read_len = 0;
-        if (WriteFile(m_hPipe, data, size, &read_len, 0))
-            return read_len;
-    }
-    return -1;
-}
-
 
 IpcConnection::IpcConnection()
     : m_callback(nullptr)
     , m_should_exit(false)
     , m_connected(false)
-    , m_conn_id(0)
-    , m_shmem(nullptr)
+    , m_my_id(0)
+    , m_my_shmem(nullptr)
+    , m_svr_shmem(nullptr)
     , m_recv_queue(nullptr)
     , m_send_queue(nullptr)
-    , m_pipe(nullptr)
     , m_recv_thread(nullptr)
+    , m_slot_info(nullptr)
+    , m_conn(nullptr)
 {
+    m_msg_loop.PostDelayedTask(bind(&IpcConnection::check_connection, this), 500);
 }
 
 IpcConnection::~IpcConnection()
@@ -66,47 +38,24 @@ IpcConnection::~IpcConnection()
     close();
 }
 
-void IpcConnection::do_close()
-{
-    m_connected = false;
-
-    if (m_callback) m_callback->on_conn_status(false);
-}
-
 void IpcConnection::recv_run()
 {
-#ifndef _WIN32
-    char buf[1024];
-
     while (!m_should_exit) {
-        if (!m_pipe) break;
-        int r = m_pipe->recv(buf, 4, 1000);
-        if (r == 0) continue;
-        if (r != 4) break;
-        uint32_t pkt_size = *(uint32_t*)buf;
-        if (pkt_size > 1024) break;
-        r = m_pipe->recv(buf, pkt_size, 1000);
-        if (r != pkt_size) break;
+        if (m_conn->client_id != m_my_id)  break;
+        if (get_now_ms() - m_conn->svr_update_time > 2000) break;
 
-        ServerMsg* msg = (ServerMsg*)buf;
-        if (msg->msg_id == MSGID_DATA_ARRIVED)
-            msg_loop().PostTask(bind(&IpcConnection::do_recv, this)); break;
-    }
-#else
-    while (!m_should_exit) {
-        switch(WaitForSingleObject(m_hRecvEvt, 1000)) {
+        switch(WaitForSingleObject(m_hRecvEvt, 100)) {
         case WAIT_OBJECT_0:
             ResetEvent(m_hRecvEvt);
             msg_loop().PostTask(bind(&IpcConnection::do_recv, this)); 
             break;
         case WAIT_TIMEOUT:
-            continue;
+            m_conn->client_update_time = get_now_ms();
             break;
         default:
             break;
         }
     }
-#endif
     
     msg_loop().PostTask([this]() {
         if (m_connected) {
@@ -135,9 +84,8 @@ void IpcConnection::do_recv()
         }
     }
 
-    if (m_recv_queue->poll(&data, &size)) {
+    if (m_recv_queue->poll(&data, &size))
         m_msg_loop.PostTask(bind(&IpcConnection::do_recv, this));
-    }
 }
 
 bool IpcConnection::connect(const string& addr, Connection_Callback* callback)
@@ -161,7 +109,49 @@ bool IpcConnection::connect(const string& addr, Connection_Callback* callback)
 
 void IpcConnection::reconnect()
 {
-    //msg_loop().PostTask(bind(&IpcConnection::do_connect, this));
+}
+
+
+void IpcConnection::clear_data()
+{
+    if (m_recv_thread) {
+        m_should_exit = true;
+        m_recv_thread->join();
+        delete m_recv_thread;
+        m_recv_thread = nullptr;
+    }
+
+    if (m_my_shmem) {
+        delete m_my_shmem;
+        m_my_shmem = nullptr;
+    }
+
+    if (m_svr_shmem) {
+        delete m_svr_shmem;
+        m_svr_shmem = nullptr;
+    }
+
+    m_send_queue = nullptr;
+    m_recv_queue = nullptr;
+    m_slot_info = nullptr;
+    m_conn = nullptr;
+
+    if (m_hRecvEvt != nullptr) {
+        CloseHandle(m_hRecvEvt);
+        m_hRecvEvt = nullptr;
+    }
+
+    if (m_hSendEvt != nullptr) {
+        CloseHandle(m_hSendEvt);
+        m_hSendEvt = nullptr;
+    }
+}
+
+void IpcConnection::check_connection()
+{
+    if (!m_connected) do_connect();
+
+    m_msg_loop.PostDelayedTask(bind(&IpcConnection::check_connection, this), 500);
 }
 
 bool IpcConnection::do_connect() 
@@ -170,116 +160,123 @@ bool IpcConnection::do_connect()
 
     if (m_addr.empty()) return false;
 
-    if (m_recv_thread) {
-        m_should_exit = true;
-    }
+    clear_data();
 
-    if (m_pipe) {
-        delete m_pipe;
-        m_pipe = nullptr;
-    }
-    if (m_shmem) {
-        delete m_shmem;
-        m_shmem = nullptr;
-    }
-    
-    string addr = m_addr.substr(6);
-#ifdef _WIN32
-    addr = string("\\\\.\\pipe\\") + addr;
-#endif
-    Pipe* pipe = new Pipe;
-    char buf[1024];
+    //std::cout << "connect to " << m_addr << endl;
+
     do {
-        m_shmem = new myutils::FileMapping();
-        int id = myutils::random();
-        sprintf(buf, "shm%d", id);
-        if (!m_shmem->create_shmem(buf, 30 * 1024 * 1024)) {
-            delete m_shmem;
-            m_shmem = nullptr;
+        string addr = string("shm_tqc_v1_") + m_addr.substr(6);
+        m_svr_shmem = new myutils::FileMapping();
+        if (!m_svr_shmem) break;
+        if (!m_svr_shmem->open_shmem(addr, sizeof(ConnectionSlotInfo), false)) {
+            //std::cerr << "can't open shmem " << addr << endl;
             break;
         }
 
-        ConnectReq req;
-        memset(&req, 0, sizeof(req));
-        req.msg_size = sizeof(req);
-        req.msg_id = MSGID_CONNECT_REQ;
-        strcpy(req.shmem_name, m_shmem->id().c_str());
+        m_slot_info = (ConnectionSlotInfo*)m_svr_shmem->addr();
+        if (m_slot_info->slot_size != sizeof(ConnectionInfo)) break;
+
+        m_my_id = myutils::random();
+        //std::cout << "Set my id: " << m_my_id << endl;
+
+        for (int i = 0; i < m_slot_info->slot_count; i++) {
+            auto slot = m_slot_info->slots + i;
+            uint64_t exp = 0;
+            if (slot->client_id.compare_exchange_strong(exp, m_my_id)) {
+                //std::cout << "Find empty slot " << i << endl;
+                m_conn = slot;
+                break;
+            }
+        }
+    
+        if (!m_conn) {
+            //std::cerr << "Can't find empty slot!" << endl;
+            break;
+        }
+
+        {
+            char buf[100];
+            sprintf(buf, "shm_%ud", (uint32_t)m_my_id);
+
+            m_my_shmem = new myutils::FileMapping();
+            if (!m_my_shmem->create_shmem(buf, 30 * 1024 * 1024))
+                break;
+            strcpy(m_conn->shmem_name, m_my_shmem->id().c_str());
+        }
+
 #ifdef _WIN32
-        sprintf(req.evt_send, "Global\\ipc_evt_send_%d", id);
-        sprintf(req.evt_recv, "Global\\ipc_evt_recv_%d", id);
+        sprintf(m_conn->evt_send, "ipc_evt_send_%ud", (uint32_t)m_my_id);
+        sprintf(m_conn->evt_recv, "ipc_evt_recv_%ud", (uint32_t)m_my_id);
 #endif
 
-        ShmemHead* head = (ShmemHead*)m_shmem->addr();
+        ShmemHead* head = (ShmemHead*)m_my_shmem->addr();
         head->recv_size   = 2 * 1024 * 1024 - sizeof(ShmemHead);
         head->recv_offset = sizeof(ShmemHead);
         head->send_size   = 28 * 1024 * 1024;
         head->send_offset = 2 * 1024 * 1024;
 
         // different between client and server
-
-        m_send_queue = (ShmemQueue*)(m_shmem->addr() + head->recv_offset);
+        m_send_queue = (ShmemQueue*)(m_my_shmem->addr() + head->recv_offset);
         m_send_queue->init(head->recv_size);
-        m_recv_queue = (ShmemQueue*)(m_shmem->addr() + head->send_offset);
+        m_recv_queue = (ShmemQueue*)(m_my_shmem->addr() + head->send_offset);
         m_recv_queue->init(head->send_size);
 
-        SECURITY_DESCRIPTOR secu_desc;
-        ::InitializeSecurityDescriptor(&secu_desc, SECURITY_DESCRIPTOR_REVISION);
-        ::SetSecurityDescriptorDacl(&secu_desc, TRUE, NULL, FALSE);
-        SECURITY_ATTRIBUTES secu_attr;
-        secu_attr.nLength = sizeof(SECURITY_ATTRIBUTES);
-        secu_attr.bInheritHandle = FALSE;
-        secu_attr.lpSecurityDescriptor = &secu_desc;
-
+#ifdef _WIN32
         // different between client and server
-        m_hRecvEvt = CreateEventA(&secu_attr, TRUE, FALSE, req.evt_send);
-        m_hSendEvt = CreateEventA(&secu_attr, TRUE, FALSE, req.evt_recv);
-
-        if (!pipe->connect(addr)) break;
-        if (!pipe->send((const char*)&req, sizeof(req))) {
-            delete pipe;
-            return false;
+        m_hRecvEvt = CreateEventA(NULL, TRUE, FALSE, m_conn->evt_send);
+        m_hSendEvt = CreateEventA(NULL, TRUE, FALSE, m_conn->evt_recv);
+#endif
+        {
+            uint64_t exp = 0;
+            if (!m_conn->client_update_time.compare_exchange_strong(exp, get_now_ms())) {
+                //std::cerr << "update_time is not zero" << endl;
+                break;
+            }
         }
 
-        if (pipe->recv(buf, sizeof(ConnectRsp)) != sizeof(ConnectRsp)) break;
-        ConnectRsp* rsp = (ConnectRsp*)buf;
-        if (rsp->msg_id != MSGID_CONNECT_RSP) break;
+        {
+            int32_t exp = 0;
+            if (!m_conn->req.compare_exchange_strong(exp, 1)) break;
 
-        m_conn_id = rsp->conn_id;
+            HANDLE hConnEvt = OpenEventA(EVENT_ALL_ACCESS, FALSE, m_slot_info->evt_conn);
+            if (hConnEvt == INVALID_HANDLE_VALUE) break;
+            SetEvent(hConnEvt);
+        }
+
+        {
+            auto begin_time = system_clock::now();
+            while (duration_cast<milliseconds>(system_clock::now() - begin_time).count() < 200) {
+                if (m_conn->rsp) break;
+            }
+            if (m_conn->rsp != 1) {
+                //std::cerr << "wrong rsp " << m_conn->rsp << endl;
+                break;
+            }
+        }
+
+        //std::cout << "Connected\n";
+
         m_connected = true;
-        if (m_callback) m_callback->on_conn_status(true);
 
-        m_pipe = pipe;
+        m_should_exit = false;
         m_recv_thread = new thread(bind(&IpcConnection::recv_run, this));
 
+        // connected
+        if (m_callback) m_callback->on_conn_status(true);
+
         return true;
+
     } while (false);
 
-    if (pipe) delete pipe;
+    clear_data();
+
     return false;
 }
 
 void IpcConnection::close()
 {   
     close_loop();
-    m_should_exit = true;
-    if (m_recv_thread) {
-        m_recv_thread->join();
-        m_recv_thread = nullptr;
-    }
-#ifndef _WIN32
-    if (m_pipe) {
-        delete m_pipe;
-        m_pipe = nullptr;
-    }
-#endif
-
-    m_recv_queue = nullptr;
-    m_send_queue = nullptr;
-
-    if (m_shmem) {
-        delete m_shmem;
-        m_shmem = nullptr;
-    }
+    clear_data();
 }
 
 
