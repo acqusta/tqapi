@@ -1,3 +1,4 @@
+#ifdef _WIN32
 #include <assert.h>
 #include <algorithm>
 #include <string>
@@ -303,3 +304,4 @@ void IpcConnection::send(const char* data, size_t size)
         }
     }
 }
+#endif
