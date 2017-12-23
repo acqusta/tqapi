@@ -246,17 +246,15 @@ bool FileMapping::create_file(const string& filename, uint32_t filesize)
     delete[] buf;
 
     char* p = (char*)mmap(nullptr, filesize, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-    if ( p == (char*)-1) {
+    if (p != MAP_FAILED) {
+        m_pMapAddress = p;
+        m_fd = fd;
+        m_filesize = filesize;
+        return true;
+    } else {
         ::close(fd);
-        //LOG(FATAL) <<"mmap failed: " << filename <<", error=" << strerror(errno);
         return false;
     }
-
-    m_pMapAddress = p;
-    m_fd = fd;
-    m_filesize = filesize;
-
-    return true;
 }
 
 bool FileMapping::open_file(const string& filename, bool read_only)
@@ -279,24 +277,88 @@ bool FileMapping::open_file(const string& filename, bool read_only)
         return false;
     }
 
-    //LOG(INFO) << "open filemapping " << filename << ", " << st.st_size
-    //          << " " << (read_only?"READONLY" : "WRITABLE");
-
     int prot = read_only ? PROT_READ : (PROT_READ|PROT_WRITE);
-
-    m_pMapAddress = (char*)mmap(nullptr, st.st_size, prot, MAP_SHARED, fd, 0);
-    if (!m_pMapAddress) {
-        // LOG(ERROR) <<"mmap failed: " << filename <<", error=" << strerror(errno);
+    char * p  = (char*)mmap(nullptr, st.st_size, prot, MAP_SHARED, fd, 0);
+    if (p != MAP_FAILED) {
+        m_pMapAddress = p;
+        assert(st.st_size < UINT32_MAX);// << "Only support 4G memory file";
+        m_fd = fd;
+        m_filesize = static_cast<uint32_t>(st.st_size);
+        return true;
+    } else {
         ::close(fd);
         return false;
     }
+}
 
-    //CHECK(st.st_size < UINT32_MAX) << "Only support 4G memory file";
-    assert(st.st_size < UINT32_MAX);// << "Only support 4G memory file";
-    m_fd = fd;
-    m_filesize = static_cast<uint32_t>(st.st_size);
+bool FileMapping::create_shmem (const string& name, uint32_t filesize)
+{
+    //std::cout <<"create_shmem: " << name << "," << filesize << endl;
 
-    return true;
+    m_id = name;
+    int fd = shm_open(name.c_str(), O_CREAT | O_EXCL | O_RDWR, 0666);
+    if (fd == -1) {
+        //std::cout << "shm_open error: " << name << "," << strerror(errno) << "\n";
+        return false;
+    }
+
+    int ret = ftruncate(fd, filesize);
+    if (ret) {
+        //std::cout << "ftruncat error: " << strerror(errno) << endl;
+        ::close(fd);
+        shm_unlink(name.c_str());
+        return false;
+    }
+
+    int proto = PROT_READ | PROT_WRITE;
+    char * p  = (char*)mmap(nullptr, filesize, proto, MAP_SHARED, fd, 0);
+    if (p != MAP_FAILED) {
+        m_pMapAddress = p;
+        m_fd = fd;
+        m_filesize = filesize;
+        //shm_unlink(name.c_str());
+        return true;
+    } else {
+        //std::cout << "mmap error: " << fd <<"," << strerror(errno) << endl;
+        ::close(fd);
+        shm_unlink(name.c_str());
+        return false;
+    }
+}
+
+bool FileMapping::open_shmem(const string& name, uint32_t filesize, bool read_only)
+{
+    //std::cout <<"open_shmem: " << name << "," << filesize << endl;
+
+    m_id = name;
+    int fd = shm_open(name.c_str(), O_RDWR, 0666);
+    if (-1 == fd) {
+        //std::cout << "shm_open error: " << name << "," << strerror(errno) << "\n";
+        return false;
+    }
+
+    // int ret = ftruncate(fd, filesize);
+    // if (ret) {
+    //     std::cout << "ftruncat error: " << strerror(errno) << endl;
+    //     ::close(fd);
+    //     //shm_unlink(name.c_str());
+    //     return false;
+    // }
+    
+    int proto = read_only ? PROT_READ : (PROT_READ|PROT_WRITE);
+    char * p  = (char*)mmap(nullptr, filesize, proto, MAP_SHARED, fd, 0);
+    if (p != MAP_FAILED) {
+        m_pMapAddress = p;
+        m_fd = fd;
+        m_filesize = filesize;
+        return true;
+    } else {
+        //std::cout << "mmap error: " << name << "," << strerror(errno) << "\n"
+        //          << filesize << "," << fd << endl;
+        
+        ::close(fd);
+        return false;
+    }
 }
 
 void FileMapping::close()

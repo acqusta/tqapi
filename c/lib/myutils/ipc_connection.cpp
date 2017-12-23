@@ -6,6 +6,8 @@
 #include <mutex>
 #include <iostream>
 #include <string.h>
+#include <time.h>
+#include <sys/time.h>
 #include "myutils/misc.h"
 #include "myutils/ipc_connection.h"
 #include "myutils/stringutils.h"
@@ -15,6 +17,167 @@ using namespace myutils;
 static inline uint64_t get_now_ms()
 {
     return time_point_cast<milliseconds>(system_clock::now()).time_since_epoch().count();
+}
+
+SharedSemaphore::SharedSemaphore()
+#ifdef _WIN32
+    : m_hEvent(nullptr)
+#else
+    : m_cond(nullptr)
+    , m_mtx(nullptr)
+      //: m_sem(nullptr)
+#endif
+{
+}
+
+SharedSemaphore::~SharedSemaphore()
+{
+#ifdef _WIN32
+    if (m_hEvent) CloseHandle(m_hEvent);
+#else
+    //sem_close(m_sem);
+#endif
+}
+
+SharedSemaphore*  SharedSemaphore::create(const char* name)
+{
+#ifdef _WIN32
+    HANDLE hEvent  = CreateEventA(NULL, TRUE, FALSE, m_conn->sem_send);
+    if (hEvent != nullptr) {
+        auto ret = new ShareSemaphore();
+        ret->m_hEvent = hEvent;
+        return ret;
+    } else {
+        return nullptr;
+    }
+#else
+    // m_sem = sem_open(name, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0);
+    // if (m_sem) {
+    //     return true;
+    // } else {
+    //     cout << "sem_open error: " << strerror(errno) << endl;
+    //     return false;
+    // }
+
+    auto sem = new SharedSemaphore();
+    
+    sem->m_cond = (pthread_cond_t *)name;
+    sem->m_mtx  = (pthread_mutex_t*)(sem->m_cond + 1);
+
+    pthread_condattr_t cond_shared_attr;  
+    pthread_condattr_init (&cond_shared_attr);  
+    pthread_condattr_setpshared (&cond_shared_attr, PTHREAD_PROCESS_SHARED);
+    pthread_cond_init (sem->m_cond, &cond_shared_attr);  
+
+    pthread_mutexattr_t mutex_shared_attr;  
+    pthread_mutexattr_init (&mutex_shared_attr);  
+    pthread_mutexattr_setpshared (&mutex_shared_attr, PTHREAD_PROCESS_SHARED);
+   
+    pthread_mutex_init (sem->m_mtx, &mutex_shared_attr);
+
+    return sem;
+#endif
+}
+
+SharedSemaphore* SharedSemaphore::open(const char* name)
+{
+#ifdef _WIN32
+    
+    auto hEvent = OpenEventA(EVENT_ALL_ACCESS, FALSE, name);
+    if (hEvent != nullptr) {
+        auto sem = new SharedSemaphore();
+        sem->m_hEvent = hEvent;
+        return sem;
+    } else {
+        return nullptr;
+    }
+#else
+    // m_sem = sem_open(name, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0);
+    // if (m_sem) {
+    //     return true;
+    // } else {
+    //     cout << "sem_open error: " << strerror(errno) << endl;
+    //     return false;
+    // }
+    auto sem = new SharedSemaphore();
+    sem->m_cond = (pthread_cond_t *)name;
+    sem->m_mtx  = (pthread_mutex_t*)(sem->m_cond + 1);
+    return sem;
+#endif
+}
+
+//  1 -- got
+//  0 -- timeout
+// -1 -- error
+int SharedSemaphore::timed_wait(int timeout_ms)
+{
+#ifdef _WIN32
+    switch(WaitForSingleObject(m_hEvent, timeout_ms)){
+    case WAIT_OBJECT_0:
+        ResetEvent(m_hEvent);
+        return 1;
+    case WAIT_TIMEOUT:
+        return 0;
+    default:
+        return -1;
+    }
+#else
+    // if (!m_sem) return -1;
+
+    // struct timespec ts;
+
+    // if ( clock_gettime(CLOCK_REALTIME,&ts ) < 0 )
+    //     return -1;
+
+    // ts.tv_sec  += timeout_ms / 1000;
+    // ts.tv_nsec += (timeout_ms % 1000) * 1000000;
+
+    // //#define NSECTOSEC    1000000000 
+    // ts.tv_sec += ts.tv_nsec / NSECTOSEC;
+    // ts.tv_nsec = ts.tv_nsec % NSECTOSEC;
+
+    // sem_timedwait(m_sem, &ts);
+
+    struct timeval now;
+    struct timespec outtime;
+
+    pthread_mutex_lock(m_mtx);
+    gettimeofday(&now, NULL);
+    memset(&outtime, 0, sizeof(outtime));
+    outtime.tv_sec  = now.tv_sec + timeout_ms/1000;
+    outtime.tv_nsec = now.tv_usec * 1000 + (timeout_ms%1000) * 1000000;
+    outtime.tv_sec  += outtime.tv_nsec / 1000000000;
+    outtime.tv_nsec %= 1000000000;
+
+    int r = pthread_cond_timedwait(m_cond, m_mtx, &outtime);
+    //int r = pthread_cond_wait(m_cond, m_mtx);
+    pthread_mutex_unlock (m_mtx);
+
+    // if (r) {
+    //     std::cout << "pthread_cond_timedwait return : " << r << "," << strerror(r) << endl
+    //               << outtime.tv_sec << "," << outtime.tv_nsec
+    //               << hex << "," << m_cond << "," << m_mtx << endl;
+    // }
+    switch(r) {
+    case 0:            return 1;
+    case ETIMEDOUT:    return 0;
+    default:           return -1;
+    }
+#endif
+}
+
+//  1 -- got
+//  0 -- timeout
+// -1 -- error
+bool SharedSemaphore::post()
+{
+#ifdef _WIN32
+    if (m_hEvent) SetEvent(m_hEvent);
+#else
+    //if (m_sem) sem_post(m_sem);
+    pthread_cond_signal(m_cond);
+#endif
+    return true;
 }
 
 IpcConnection::IpcConnection()
@@ -44,12 +207,12 @@ void IpcConnection::recv_run()
         if (m_conn->client_id != m_my_id)  break;
         if (get_now_ms() - m_conn->svr_update_time > 2000) break;
 
-        switch(WaitForSingleObject(m_hRecvEvt, 100)) {
-        case WAIT_OBJECT_0:
-            ResetEvent(m_hRecvEvt);
+
+        switch (m_sem_recv->timed_wait(100)){
+        case 1:
             msg_loop().PostTask(bind(&IpcConnection::do_recv, this)); 
             break;
-        case WAIT_TIMEOUT:
+        case 0:
             m_conn->client_update_time = get_now_ms();
             break;
         default:
@@ -136,14 +299,14 @@ void IpcConnection::clear_data()
     m_slot_info = nullptr;
     m_conn = nullptr;
 
-    if (m_hRecvEvt != nullptr) {
-        CloseHandle(m_hRecvEvt);
-        m_hRecvEvt = nullptr;
+    if (m_sem_recv) {
+        delete m_sem_recv;
+        m_sem_recv = nullptr;
     }
 
-    if (m_hSendEvt != nullptr) {
-        CloseHandle(m_hSendEvt);
-        m_hSendEvt = nullptr;
+    if (m_sem_send) {
+        delete m_sem_send;
+        m_sem_send = nullptr;
     }
 }
 
@@ -162,8 +325,6 @@ bool IpcConnection::do_connect()
 
     clear_data();
 
-    //std::cout << "connect to " << m_addr << endl;
-
     do {
         string addr = string("shm_tqc_v1_") + m_addr.substr(6);
         m_svr_shmem = new myutils::FileMapping();
@@ -177,7 +338,6 @@ bool IpcConnection::do_connect()
         if (m_slot_info->slot_size != sizeof(ConnectionInfo)) break;
 
         m_my_id = myutils::random();
-        //std::cout << "Set my id: " << m_my_id << endl;
 
         for (int i = 0; i < m_slot_info->slot_count; i++) {
             auto slot = m_slot_info->slots + i;
@@ -204,10 +364,12 @@ bool IpcConnection::do_connect()
             strcpy(m_conn->shmem_name, m_my_shmem->id().c_str());
         }
 
-#ifdef _WIN32
-        sprintf(m_conn->evt_send, "ipc_evt_send_%ud", (uint32_t)m_my_id);
-        sprintf(m_conn->evt_recv, "ipc_evt_recv_%ud", (uint32_t)m_my_id);
+#ifndef _WIN32        
+        sprintf(m_conn->sem_send, "ipc_sem_send_%ud", (uint32_t)m_my_id);
+        sprintf(m_conn->sem_recv, "ipc_sem_recv_%ud", (uint32_t)m_my_id);
 #endif
+        m_sem_recv = SharedSemaphore::create(m_conn->sem_send);
+        m_sem_send = SharedSemaphore::create(m_conn->sem_recv);
 
         ShmemHead* head = (ShmemHead*)m_my_shmem->addr();
         head->recv_size   = 2 * 1024 * 1024 - sizeof(ShmemHead);
@@ -221,11 +383,6 @@ bool IpcConnection::do_connect()
         m_recv_queue = (ShmemQueue*)(m_my_shmem->addr() + head->send_offset);
         m_recv_queue->init(head->send_size);
 
-#ifdef _WIN32
-        // different between client and server
-        m_hRecvEvt = CreateEventA(NULL, TRUE, FALSE, m_conn->evt_send);
-        m_hSendEvt = CreateEventA(NULL, TRUE, FALSE, m_conn->evt_recv);
-#endif
         {
             uint64_t exp = 0;
             if (!m_conn->client_update_time.compare_exchange_strong(exp, get_now_ms())) {
@@ -237,10 +394,13 @@ bool IpcConnection::do_connect()
         {
             int32_t exp = 0;
             if (!m_conn->req.compare_exchange_strong(exp, 1)) break;
-
-            HANDLE hConnEvt = OpenEventA(EVENT_ALL_ACCESS, FALSE, m_slot_info->evt_conn);
-            if (hConnEvt == INVALID_HANDLE_VALUE) break;
-            SetEvent(hConnEvt);
+        }
+        auto sem = SharedSemaphore::open(m_slot_info->sem_conn);
+        if (sem) {
+            sem->post();
+            delete sem;
+        } else {
+            break;
         }
 
         {
@@ -290,7 +450,7 @@ void IpcConnection::send(const char* data, size_t size)
     unique_lock<mutex> lock(m_send_mtx);
     if (m_connected && m_send_queue) {
         if (m_send_queue->push(data, size)) {
-            SetEvent(m_hSendEvt);
+            m_sem_send->post();
         }
         else {
             msg_loop().PostTask([this]() {

@@ -13,14 +13,9 @@ set(SRC
   filemapping.h
   misc.cpp
   misc.h
+  ipc_connection.cpp
+  ipc_connection.h
   )
-
-if (WIN32)
-  list(APPEND SRC
-    ipc_connection.cpp
-    ipc_connection.h
-    )
-endif()
 
 include_directories( . )
 

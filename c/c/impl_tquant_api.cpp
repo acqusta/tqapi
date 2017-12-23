@@ -26,13 +26,11 @@ namespace tquant { namespace api { namespace impl {
                 m_client = new MpRpcClient(conn);
                 m_client->connect(addr, this);
             }
-#ifdef _WIN32
             else if (strncmp(addr, "ipc://", 6) == 0) {
                 auto conn = make_shared<IpcConnection>();
                 m_client = new MpRpcClient(conn);
                 m_client->connect(addr, this);
             }
-#endif
             else {
                 throw std::runtime_error("unknown addr");
             }

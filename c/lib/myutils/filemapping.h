@@ -93,9 +93,10 @@ namespace myutils {
         }
 
         bool create_file  (const string& filename, uint32_t filesize);
-        bool create_shmem (const string& name, uint32_t filesize);
         bool open_file    (const string& filename, bool read_only);
-        bool open_shmem   (const string& name, bool read_only);
+
+        bool create_shmem (const string& name,     uint32_t filesize);
+        bool open_shmem   (const string& name,     uint32_t filesize, bool read_only);
 
         void close();
 
