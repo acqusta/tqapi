@@ -1,12 +1,13 @@
 #ifdef _WIN32
 
-#include <stdint.h>
-#include <string>
-#include <stdio.h>
-#include <vector>
-#include <assert.h>
 #include <algorithm>
+#include <assert.h>
 #include <iostream>
+#include <limits>
+#include <stdint.h>
+#include <stdio.h>
+#include <string>
+#include <vector>
 
 #include "filemapping.h"
 

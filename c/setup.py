@@ -32,6 +32,9 @@ sources = [
     "lib/snappy/snappy-c.cc",
     "lib/snappy/snappy-sinksource.cc",
     "lib/snappy/snappy.cc",
+    "lib/myutils/filemapping.cpp",
+    "lib/myutils/ipc_connection.cpp",
+    "lib/myutils/misc.cpp",
     "lib/myutils/mprpc.cpp",
     "lib/myutils/socket_connection.cpp",
     "lib/myutils/socketutils.cpp",
@@ -70,8 +73,8 @@ module = Extension('tquant._tqapi',
                    sources       = sources)
 
 if OSNAME == "Windows":
-    module.extra_compile_args = ['/MT']
-    msgpack[1]['extra_compile_args'] = ['/MT']
+    module.extra_compile_args = ['/MT', '/DNOMINMAX']
+    msgpack[1]['cflags'] = ['/MT']
 else:
     module.extra_compile_args = ['--std=c++11' ]
     
@@ -83,7 +86,7 @@ setup(packages = [ 'tquant' ],
       libraries = [ msgpack ],
       ext_modules = [module],
       name = 'tquant',
-      version = '0.1.3',
+      version = '0.1.4',
       description="Acqusta quantitative trading tools",
       author = "Xu Tiezhu",
       author_email = 'xutiezhu@gmail.com',

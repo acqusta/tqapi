@@ -463,3 +463,4 @@ void IpcConnection::send(const char* data, size_t size)
         }
     }
 }
+
