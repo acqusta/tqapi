@@ -336,9 +336,6 @@ namespace mprpc {
     bool MpRpcServer::send(shared_ptr<ClientConnection> conn, const void* data, size_t size)
     {
         if (size < conn->max_raw_size()) {
-            if (size > 1024 * 1024) {
-                size = size;
-            }
             return conn->send((const char*)data, size);
         }
         else {

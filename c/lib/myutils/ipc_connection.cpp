@@ -25,7 +25,6 @@ SharedSemaphore::SharedSemaphore()
 #else
     : m_cond(nullptr)
     , m_mtx(nullptr)
-      //: m_sem(nullptr)
 #endif
 {
 }
@@ -34,8 +33,6 @@ SharedSemaphore::~SharedSemaphore()
 {
 #ifdef _WIN32
     if (m_hEvent) CloseHandle(m_hEvent);
-#else
-    //sem_close(m_sem);
 #endif
 }
 
@@ -51,14 +48,6 @@ SharedSemaphore*  SharedSemaphore::create(const char* name)
         return nullptr;
     }
 #else
-    // m_sem = sem_open(name, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0);
-    // if (m_sem) {
-    //     return true;
-    // } else {
-    //     cout << "sem_open error: " << strerror(errno) << endl;
-    //     return false;
-    // }
-
     auto sem = new SharedSemaphore();
     
     sem->m_cond = (pthread_cond_t *)name;
@@ -92,13 +81,6 @@ SharedSemaphore* SharedSemaphore::open(const char* name)
         return nullptr;
     }
 #else
-    // m_sem = sem_open(name, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR, 0);
-    // if (m_sem) {
-    //     return true;
-    // } else {
-    //     cout << "sem_open error: " << strerror(errno) << endl;
-    //     return false;
-    // }
     auto sem = new SharedSemaphore();
     sem->m_cond = (pthread_cond_t *)name;
     sem->m_mtx  = (pthread_mutex_t*)(sem->m_cond + 1);
@@ -122,22 +104,6 @@ int SharedSemaphore::timed_wait(int timeout_ms)
         return -1;
     }
 #else
-    // if (!m_sem) return -1;
-
-    // struct timespec ts;
-
-    // if ( clock_gettime(CLOCK_REALTIME,&ts ) < 0 )
-    //     return -1;
-
-    // ts.tv_sec  += timeout_ms / 1000;
-    // ts.tv_nsec += (timeout_ms % 1000) * 1000000;
-
-    // //#define NSECTOSEC    1000000000 
-    // ts.tv_sec += ts.tv_nsec / NSECTOSEC;
-    // ts.tv_nsec = ts.tv_nsec % NSECTOSEC;
-
-    // sem_timedwait(m_sem, &ts);
-
     struct timeval now;
     struct timespec outtime;
 
@@ -150,14 +116,8 @@ int SharedSemaphore::timed_wait(int timeout_ms)
     outtime.tv_nsec %= 1000000000;
 
     int r = pthread_cond_timedwait(m_cond, m_mtx, &outtime);
-    //int r = pthread_cond_wait(m_cond, m_mtx);
     pthread_mutex_unlock (m_mtx);
 
-    // if (r) {
-    //     std::cout << "pthread_cond_timedwait return : " << r << "," << strerror(r) << endl
-    //               << outtime.tv_sec << "," << outtime.tv_nsec
-    //               << hex << "," << m_cond << "," << m_mtx << endl;
-    // }
     switch(r) {
     case 0:            return 1;
     case ETIMEDOUT:    return 0;
@@ -172,12 +132,20 @@ int SharedSemaphore::timed_wait(int timeout_ms)
 bool SharedSemaphore::post()
 {
 #ifdef _WIN32
-    if (m_hEvent) SetEvent(m_hEvent);
+    if (m_hEvent) {
+        SetEvent(m_hEvent);
+        return true;
+    } else {
+        return false;
+    }
 #else
-    //if (m_sem) sem_post(m_sem);
-    pthread_cond_signal(m_cond);
+    if (m_cond) {
+        pthread_cond_signal(m_cond);
+        return true;
+    } else {
+        return false;
+    }
 #endif
-    return true;
 }
 
 IpcConnection::IpcConnection()
@@ -192,6 +160,8 @@ IpcConnection::IpcConnection()
     , m_recv_thread(nullptr)
     , m_slot_info(nullptr)
     , m_conn(nullptr)
+    , m_sem_send(nullptr)
+    , m_sem_recv(nullptr)
 {
     m_msg_loop.PostDelayedTask(bind(&IpcConnection::check_connection, this), 500);
 }
@@ -206,7 +176,6 @@ void IpcConnection::recv_run()
     while (!m_should_exit) {
         if (m_conn->client_id != m_my_id)  break;
         if (get_now_ms() - m_conn->svr_update_time > 2000) break;
-
 
         switch (m_sem_recv->timed_wait(100)){
         case 1:
@@ -255,7 +224,6 @@ bool IpcConnection::connect(const string& addr, Connection_Callback* callback)
 {
     mutex mtx;
     condition_variable cv;
-
     unique_lock<mutex> lock(mtx);
 
     m_msg_loop.PostTask([this, &cv, addr, callback]() {
@@ -408,13 +376,9 @@ bool IpcConnection::do_connect()
             while (duration_cast<milliseconds>(system_clock::now() - begin_time).count() < 200) {
                 if (m_conn->rsp) break;
             }
-            if (m_conn->rsp != 1) {
-                //std::cerr << "wrong rsp " << m_conn->rsp << endl;
+            if (m_conn->rsp != 1)
                 break;
-            }
         }
-
-        //std::cout << "Connected\n";
 
         m_connected = true;
 

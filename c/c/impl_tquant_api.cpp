@@ -21,6 +21,7 @@ namespace tquant { namespace api { namespace impl {
         friend TradeApiImpl;
     public:
         TQuantApiImpl(const char* addr) {
+
             if (strncmp(addr, "tcp://", 6) == 0) {
                 auto conn = make_shared<SocketConnection>();
                 m_client = new MpRpcClient(conn);

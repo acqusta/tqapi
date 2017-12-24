@@ -8,8 +8,7 @@
 #include <thread>
 #include <mutex>
 #ifndef _WIN32
-//#include <semaphore.h>
-#include <pthread.h>
+# include <pthread.h>
 #endif
 #include "myutils/connection.h"
 #include "myutils/filemapping.h"
@@ -40,9 +39,8 @@ namespace myutils {
 #ifdef _WIN32
         HANDLE m_hEvent;
 #else
-        pthread_cond_t*   m_cond;
+        pthread_cond_t*  m_cond;
         pthread_mutex_t* m_mtx;
-        //sem_t* m_sem;
 #endif
     };
 
@@ -68,9 +66,9 @@ namespace myutils {
         };
 
         struct ConnectionSlotInfo {
-            int64_t slot_count;
-            int64_t slot_size;          // Size of ConnectionInfo
-            char    sem_conn[128];
+            int64_t        slot_count;
+            int64_t        slot_size;          // Size of ConnectionInfo
+            char           sem_conn[128];
             ConnectionInfo slots[20];
         };
 
