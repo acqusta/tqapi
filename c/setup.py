@@ -62,6 +62,10 @@ include_dirs = [
 
 if OSNAME=="Windows":
     libraries = ['msgpack', 'ws2_32']
+
+elif OSNAME=="Linux":
+    libraries = ['msgpack', 'rt']
+
 else:
     libraries = ['msgpack']
 

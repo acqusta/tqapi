@@ -21,4 +21,8 @@ include_directories( . )
 
 add_library(myutils STATIC ${SRC})
 
-#target_link_libraries(myutils msgpack loop)
+if (UNIX)
+  if (NOT APPLE) 
+    target_link_libraries(myutils rt)
+  endif()
+endif()

@@ -51,7 +51,11 @@ else()
 
   link_directories(${FRAMEWORK_DIR}/lib)
 
-  set(COMMON_LIB pthread )
+  if (APPLE)
+    set(COMMON_LIB pthread )
+  else()
+    set(COMMON_LIB pthread rt)
+  endif()
 
   set(BIN_PATH bin)
   set(LIB_PATH lib)

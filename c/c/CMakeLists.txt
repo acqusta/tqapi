@@ -21,6 +21,7 @@ target_link_libraries(tqapi
 set(SRC
   tquant_api_test.cpp
 )
+
 add_executable(tqapi_test ${SRC})
 
 target_link_libraries(tqapi_test tqapi)

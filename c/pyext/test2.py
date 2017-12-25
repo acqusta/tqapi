@@ -1,7 +1,8 @@
 import tquant as tq
 import time
 
-tqapi = tq.TQuantApi('tcp://127.0.0.1:10001')
+#tqapi = tq.TQuantApi('tcp://127.0.0.1:10001')
+tqapi = tq.TQuantApi('ipc://tqc_10001')
 dapi = tqapi.data_api()
 tapi = tqapi.trade_api()
 
