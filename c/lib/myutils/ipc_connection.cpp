@@ -7,7 +7,9 @@
 #include <iostream>
 #include <string.h>
 #include <time.h>
-#include <sys/time.h>
+#ifndef _WIN32
+# include <sys/time.h>
+#endif
 #include "myutils/misc.h"
 #include "myutils/ipc_connection.h"
 #include "myutils/stringutils.h"
@@ -39,11 +41,11 @@ SharedSemaphore::~SharedSemaphore()
 SharedSemaphore*  SharedSemaphore::create(const char* name)
 {
 #ifdef _WIN32
-    HANDLE hEvent  = CreateEventA(NULL, TRUE, FALSE, m_conn->sem_send);
+    HANDLE hEvent  = CreateEventA(NULL, TRUE, FALSE, name);
     if (hEvent != nullptr) {
-        auto ret = new ShareSemaphore();
-        ret->m_hEvent = hEvent;
-        return ret;
+        auto sem = new SharedSemaphore();
+        sem->m_hEvent = hEvent;
+        return sem;
     } else {
         return nullptr;
     }
@@ -324,7 +326,7 @@ bool IpcConnection::do_connect()
 
         {
             char buf[100];
-            sprintf(buf, "shm_%ud", (uint32_t)m_my_id);
+            sprintf(buf, "shm_%u", (uint32_t)m_my_id);
 
             m_my_shmem = new myutils::FileMapping();
             if (!m_my_shmem->create_shmem(buf, 30 * 1024 * 1024))
@@ -332,7 +334,7 @@ bool IpcConnection::do_connect()
             strcpy(m_conn->shmem_name, m_my_shmem->id().c_str());
         }
 
-#ifndef _WIN32        
+#ifdef _WIN32        
         sprintf(m_conn->sem_send, "ipc_sem_send_%ud", (uint32_t)m_my_id);
         sprintf(m_conn->sem_recv, "ipc_sem_recv_%ud", (uint32_t)m_my_id);
 #endif
@@ -363,6 +365,7 @@ bool IpcConnection::do_connect()
             int32_t exp = 0;
             if (!m_conn->req.compare_exchange_strong(exp, 1)) break;
         }
+
         auto sem = SharedSemaphore::open(m_slot_info->sem_conn);
         if (sem) {
             sem->post();

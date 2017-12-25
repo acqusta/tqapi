@@ -8,7 +8,8 @@
 #include <thread>
 #include <mutex>
 #ifndef _WIN32
-# include <pthread.h>
+//#include <semaphore.h>
+#include <pthread.h>
 #endif
 #include "myutils/connection.h"
 #include "myutils/filemapping.h"
