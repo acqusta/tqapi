@@ -1,18 +1,19 @@
 package test;
 
-import java.util.List;
+import com.acqusta.tquant.api.TQuantApi;
+import com.acqusta.tquant.api.TradeApi;
+import com.acqusta.tquant.api.TradeApi.*;
 
-import xtz.tquant.api.java.TQuantApi;
-import xtz.tquant.api.java.TradeApi;
-import xtz.tquant.api.java.TradeApi.*;
-
-public class TradeApiDemo {
+public class TradeApiDemo{
 
     TQuantApi api = new TQuantApi("tcp://127.0.0.1:10001");
 
     TradeApi tapi = api.getTradeApi();
 
     String account_id = "glsc";
+
+    public TradeApiDemo() throws Exception {
+    }
 
     void test() {
         testQueryAccountStatus();
@@ -24,11 +25,14 @@ public class TradeApiDemo {
     }
 
     void testQueryAccountStatus() {
-        TradeApi.CallResult<List<AccountInfo>> result = tapi.queryAccountStatus();
+        TradeApi.CallResult<AccountInfo[]> result = tapi.queryAccountStatus();
 
         if ( result.value !=null) {
             for (TradeApi.AccountInfo act : result.value) {
                 System.out.println(act.account_id + "," + act.broker + "," + act.account + "," + act.status + "," + act.msg);
+                TradeApi.CallResult<Balance> r = tapi.queryBalance(act.account_id);
+                if (r.value!=null)
+                    System.out.println("Bal: " + r.value.fund_account + "," + r.value.init_balance + "," + r.value.enable_balance);
             }
         } else {
             System.out.println("queryAccount failed: " + result.msg);
@@ -36,7 +40,7 @@ public class TradeApiDemo {
     }
 
     void testQueryPosition() {
-        TradeApi.CallResult<List<Position>> result = tapi.queryPosition(account_id);
+        TradeApi.CallResult<Position[]> result = tapi.queryPositions(account_id);
 
         if ( result.value !=null) {
             for (Position pos : result.value) {
@@ -48,13 +52,14 @@ public class TradeApiDemo {
     }
 
     void testQueryOrder() {
-        TradeApi.CallResult<List<Order>> result = tapi.queryOrders(account_id);
+        TradeApi.CallResult<Order[]> result = tapi.queryOrders(account_id);
 
         if ( result.value !=null) {
             for (Order ord : result.value) {
                 System.out.println("Order " + ord.account_id + "," + ord.code + "," + ord.name + ","
                         + ord.entrust_action + "," + ord.entrust_price + "," + ord.entrust_size + ","
-                        + ord.fill_price + "," + ord.fill_size + "," + ord.status);
+                        + ord.fill_price + "," + ord.fill_size
+                        + "," + ord.status);
             }
         } else {
             System.out.println("queryPosition failed: " + result.msg);
@@ -62,7 +67,7 @@ public class TradeApiDemo {
     }
 
     void testQueryTrade() {
-        TradeApi.CallResult<List<Trade>> result = tapi.queryTrades(account_id);
+        TradeApi.CallResult<Trade[]> result = tapi.queryTrades(account_id);
 
         if ( result.value !=null) {
             for (Trade trade : result.value) {
@@ -76,21 +81,29 @@ public class TradeApiDemo {
     }
     void testPlaceOrder() {
         CallResult<OrderID> result = tapi.placeOrder(account_id, "000001.SH", 1.0, 100, EntrustAction.Buy, 0 );
-        System.out.println("entrust_no: " + (result.value.entrust_no!=null ? result.value.entrust_no : "<null>"));
-        System.out.println("order_id: " + (result.value.order_id!=null ? result.value.order_id : "<null>"));
-        System.out.println("msg: " + (result.msg));
+        if (result.value != null) {
+            System.out.println("entrust_no: " + (result.value.entrust_no!=null ? result.value.entrust_no : "<null>"));
+            System.out.println("order_id: " + result.value.order_id);
+        } else {
+            System.out.println("msg: " + (result.msg));
+        }
     }
 
     void testCancelOrder() {
         CallResult<OrderID> placeResult = tapi.placeOrder(account_id, "399001.SZ", 1.0, 100, EntrustAction.Buy, 0 );
-        System.out.println("entrust_no: " + (placeResult.value!=null ? placeResult.value : "<null>"));
-        System.out.println("msg: " + (placeResult.msg));
+        if (placeResult.value != null) {
+            System.out.println("entrust_no: " + (placeResult.value!=null ? placeResult.value : "<null>"));
+        } else {
+            System.out.println("msg: " + (placeResult.msg));
+        }
         CallResult<Boolean> result = tapi.cancelOrder(account_id, "399001.SZ", placeResult.value.entrust_no);
-        System.out.println("result: " + (result.value!=null ? result.value : "<null>"));
-        System.out.println("msg: " + (result.msg));
+        if (result.value != null)
+            System.out.println("result: " + (result.value!=null ? result.value : "<null>"));
+        else
+            System.out.println("msg: " + (result.msg));
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
 
         new TradeApiDemo().test();
     }

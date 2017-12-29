@@ -1,19 +1,18 @@
 package test;
 
-import java.util.List;
-
-import xtz.tquant.api.java.TQuantApi;
-import xtz.tquant.api.java.DataApi;
-import xtz.tquant.api.java.DataApi.*;
+import com.acqusta.tquant.api.TQuantApi;
+import com.acqusta.tquant.api.DataApi;
+import com.acqusta.tquant.api.DataApi.*;
 
 public class DataApiDemo {
 
-    TQuantApi api = null;
-    DataApi dapi = null;
+    private TQuantApi api = null;
+    private DataApi dapi = null;
 
-    DataApiDemo() {
+    DataApiDemo() throws Exception {
 
-        api = new TQuantApi("tcp://127.0.0.1:10001");
+        //api = new TQuantApi("tcp://127.0.0.1:10001");
+        api = new TQuantApi("ipc://tqc_10001");
         dapi = api.getDataApi();
 
         dapi.setCallback(new Callback() {
@@ -27,7 +26,10 @@ public class DataApiDemo {
 
             @Override
             public void onBar(String cycle, Bar bar) {
-
+                System.out.printf("bar: %s %d %d %.4f %.4f %.4f %.4f %.4f %d %.4f %d\n",
+                        bar.code, bar.date, bar.time,
+                        bar.open, bar.high, bar.low, bar.close,
+                        bar.volume, bar.turnover, bar.oi);
             }
         });
     }
@@ -35,7 +37,7 @@ public class DataApiDemo {
     void testQuote() {
 
         try {
-            DataApi.CallResult<DataApi.MarketQuote> result = dapi.quote("000001.SH");
+            DataApi.CallResult<DataApi.MarketQuote> result = dapi.getQuote("000001.SH");
 
             if ( result.value !=null) {
                 DataApi.MarketQuote q = result.value;
@@ -54,7 +56,7 @@ public class DataApiDemo {
     void testBar() {
 
         try {
-            DataApi.CallResult<List<DataApi.Bar>> result = dapi.bar("000001.SH", "1m", 0, "",false);
+            DataApi.CallResult<DataApi.Bar[]> result = dapi.getBar("000001.SH", "1m", 0, false);
 
             if ( result.value !=null) {
                 for ( DataApi.Bar bar : result.value) {
@@ -74,7 +76,7 @@ public class DataApiDemo {
     void testTick() {
 
         try {
-            DataApi.CallResult<List<DataApi.MarketQuote>> result = dapi.tick("000001.SH", 0);
+            DataApi.CallResult<DataApi.MarketQuote[]> result = dapi.getTick("000001.SH", 0);
 
             if (result.value != null) {
                 for ( DataApi.MarketQuote q : result.value) {
@@ -93,17 +95,19 @@ public class DataApiDemo {
         long t = System.currentTimeMillis();
 
         for ( int i = 0; i < 100; i++)
-            dapi.tick("000001.SH", 0);
+            dapi.getTick("000001.SH", 0);
 
         System.out.println("tick time:" + (System.currentTimeMillis() -t ) / 100);
-
     }
+
     void testSubscribe() {
 
         {
-            String[] codes = new String[] { "000001.SH", "399001.SZ", "cu1705.SHF", "CF705.CZC", "rb1801.SHF" };
+            String[] codes = new String[] {
+                    "000001.SH", "399001.SZ", "cu1705.SHF",
+                    "CF705.CZC", "rb1801.SHF", "000999.SH" };
 
-            DataApi.CallResult<List<String>> result = dapi.subscribe(codes);
+            DataApi.CallResult<String[]> result = dapi.subscribe(codes);
 
             if (result.value != null) {
                 for ( String s : result.value) {
@@ -116,13 +120,14 @@ public class DataApiDemo {
         try {
             while (true) {
                 System.out.println("-------------------------");
-                DataApi.CallResult<List<String>> r = dapi.subscribe(null);
+                DataApi.CallResult<String[]> r = dapi.subscribe(null);
                 if (r.value != null) {
                     for ( String s : r.value) {
                         System.out.println("Subscribed: " + s);
                     }
                 }
                 Thread.sleep(2*1000);
+                System.gc();
             }
         } catch ( Throwable t) {
             t.printStackTrace();
@@ -130,14 +135,71 @@ public class DataApiDemo {
 
     }
 
-    void test() {
-        testSubscribe();
-        testQuote();
-        testBar();
-        testTick();
+    void testPerf() {
+        try {
+            CallResult<DailyBar[]> r = dapi.getDailyBar("rb.SHF", "", true);
+            long begin_time = System.currentTimeMillis();
+            int count  = 0;
+            int dates = 0;
+            for (DailyBar bar : r.value) {
+                if (true) { //bar.date > 20171001) {
+                    dates += 1;
+                    DataApi.CallResult<DataApi.MarketQuote[]> result = dapi.getTick("rb.SHF", bar.date);
+                    if (result.value != null) {
+                        count += result.value.length;
+                    } else {
+                        System.out.println("error: " + bar.date + "," + result.msg);
+                    }
+                }
+            }
+
+            long end_time = System.currentTimeMillis();
+
+            System.out.println("used time    : " +  (end_time - begin_time));
+            System.out.println("count        : " + count);
+            System.out.println("count per day: " + (count / dates));
+            System.out.println("time per day : " + (end_time-begin_time)/dates);
+
+        }catch (Throwable t) {
+            t.printStackTrace();
+        }
     }
 
-    public static void main(String[] args) {
+    void testPerf2() {
+        try {
+            dapi.getQuote("000001.SH");
+            long begin_time = System.currentTimeMillis();
+            int count  = 0;
+            int dates = 0;
+            for( int i =0; i < 10000; i++) {
+                CallResult<MarketQuote> r = dapi.getQuote("000001.SH");
+                if (r.value != null) {
+                    count += 1;//result.value.length;
+                } else {
+                    System.out.println("error: " + r.msg);
+                }
+            }
+
+            long end_time = System.currentTimeMillis();
+
+            System.out.println("used time    : " + (end_time - begin_time));
+            System.out.println("time per call : " + (end_time - begin_time)/10000.0);
+
+        }catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
+
+    void test() {
+//        testSubscribe();
+//        testQuote();
+//        testBar();
+//        testTick();
+//        testPerf();
+        testPerf2();
+    }
+
+    public static void main(String[] args)  throws Exception {
 
         new DataApiDemo().test();
     }

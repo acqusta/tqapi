@@ -1,74 +1,43 @@
-cmake_minimum_required(VERSION 2.8)
+project(api_c)
 
-project(tquant_api)
-
-option(BUILD_WIN64 "Build Win64" ON)
-
-set(CMAKE_INSTALL_PREFIX dist)
-
-include_directories(
-  lib/
-  lib/msgpack/include
+set(SRC
+    tquant_api.h
+    impl_tquant_api.h
+    impl_tquant_api.cpp
+    impl_data_api.h
+    impl_trade_api.h
 )
 
-add_definitions(
-  -DGOOGLE_GLOG_DLL_DECL=
-  -DGLOG_NO_ABBREVIATED_SEVERITIES
-  -DZMQ_STATIC
-  )
+add_library(tqapi-static STATIC ${SRC})
 
-if (WIN32)
-  add_definitions(
-    -D_CRT_SECURE_NO_WARNINGS
-    -D_WINSOCK_DEPRECATED_NO_WARNINGS
-#    -Dsnprintf=_snprintf
-    -DNOMINMAX
-	-DMSGPACK_DLLEXPORT=
-#	/MT
-    )
+target_link_libraries(tqapi-static
+  myutils
+  msgpack
+  snappy
+  loop
+  ${COMMON_LIB}
+)
 
-  set(COMMON_LIB
-    ws2_32
-    Iphlpapi
-    )
+add_library(tqapi SHARED ${SRC})
 
-  set(BIN_PATH bin)
-  set(LIB_PATH bin)
-  
-else()
+target_link_libraries(tqapi
+  myutils
+  msgpack
+  snappy
+  loop
+  ${COMMON_LIB}
+)
 
-  add_definitions(-fPIC )
+set(SRC
+  tquant_api_test.cpp
+)
 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-  set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -std=c99")
+add_executable(tqapi_test ${SRC})
 
-  set(FRAMEWORK_DIR ${CMAKE_SOURCE_DIR}/../../tq-framework/build/dist)
+target_link_libraries(tqapi_test tqapi-static)
 
-  include_directories(
-    lib
-    lib/msgpack/include
-    c
-    ${FRAMEWORK_DIR}/include
-    )
+install(TARGETS tqapi_test DESTINATION bin)
 
-  link_directories(${FRAMEWORK_DIR}/lib)
+install(TARGETS tqapi DESTINATION cpp)
 
-  if (APPLE)
-    set(COMMON_LIB pthread )
-  else()
-    set(COMMON_LIB pthread rt)
-  endif()
-
-  set(BIN_PATH bin)
-  set(LIB_PATH lib)
-
-endif()
-
-add_subdirectory(lib/loop)
-add_subdirectory(lib/msgpack)
-add_subdirectory(lib/myutils)
-add_subdirectory(lib/snappy)
-
-add_subdirectory(c)
-add_subdirectory(java)
-add_subdirectory(pyext)
+install(FILES tquant_api.h DESTINATION cpp)

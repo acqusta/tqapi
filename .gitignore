@@ -1,12 +1,12 @@
 
 python/tquant_api.pyc
-c/build
+build
 *~
-c/MANIFEST
-c/dist
-c/tquant.egg-info
+MANIFEST
+dist
+tquant.egg-info
 *.whl
-c/x64
-c/win32
-c/java/.project
-c/java/tquant-api.iml
+x64
+win32
+java/.project
+java/tquant-api.iml
