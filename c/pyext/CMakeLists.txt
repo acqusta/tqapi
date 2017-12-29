@@ -3,13 +3,13 @@ cmake_minimum_required(VERSION 2.8)
 project(tqapi_pyext)
 
 set(SRC
-    tqapi_dapi.cpp
-    tqapi_tapi.cpp
-    tqapi_py.cpp
-    tqapi_py.h
-    tqapi.py
-    test.py
-)
+  tqapi_dapi.cpp
+  tqapi_tapi.cpp
+  tqapi_py.cpp
+  tqapi_py.h
+  tqapi.py
+  test.py
+  )
 
 include_directories(
   ../c
@@ -35,6 +35,7 @@ if (WIN32)
       D:/python2.7-win32/libs
       )
   endif()
+
   set(EXTRA_LIBS python27)
 
 else()
@@ -43,7 +44,6 @@ else()
 
   include_directories(
     /usr/include/python2.7
-    #    /Users/terryxu/anaconda/lib/python2.7/site-packages/
     /Users/terryxu/anaconda/include/python2.7
     /Users/terryxu/anaconda/lib/python2.7/site-packages/numpy/core/include
     )
@@ -56,7 +56,7 @@ endif()
 add_library(tqapi_py SHARED ${SRC})
 
 target_link_libraries(tqapi_py
-  tqapi
+  tqapi-static
   loop
   ${COMMON_LIB}
   ${EXTRA_LIBS}

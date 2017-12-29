@@ -24,6 +24,6 @@ set(SRC
 
 add_library(tqapi_jni SHARED ${SRC})
 
-target_link_libraries(tqapi_jni tqapi)
+target_link_libraries(tqapi_jni tqapi-static)
 
 install(TARGETS tqapi_jni RUNTIME LIBRARY DESTINATION java)
