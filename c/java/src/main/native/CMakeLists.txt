@@ -1,12 +1,16 @@
 project(tqapi_jni)
 
 include_directories(
-  jvm_inc
-  jvm_inc/win32
   .
   ../../../../c
   ../../../../lib
   )
+
+if (WIN32)
+  include_directories(jvm_inc/win32)
+else()
+  include_directories(jvm_inc/unix)
+endif()
 
 set(SRC
   tqapi_jni.h
@@ -19,4 +23,7 @@ set(SRC
   )
 
 add_library(tqapi_jni SHARED ${SRC})
+
 target_link_libraries(tqapi_jni tqapi)
+
+install(TARGETS tqapi_jni RUNTIME LIBRARY DESTINATION java)

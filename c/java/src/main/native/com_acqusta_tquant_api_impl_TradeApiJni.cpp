@@ -283,7 +283,7 @@ JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_placeOrde
             return 0;
         }
 
-        return env->CallStaticObjectMethod(wrap->help_cls, wrap->createOrderID, r.value->entrust_no, r.value->order_id);
+        return env->CallStaticObjectMethod(wrap->help_cls, wrap->createOrderID, r.value->entrust_no.c_str(), r.value->order_id);
     }
     catch (const exception& e) {
         throwJavaException(env, "exception: %s", e.what());

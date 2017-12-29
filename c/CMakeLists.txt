@@ -70,5 +70,5 @@ add_subdirectory(lib/myutils)
 add_subdirectory(lib/snappy)
 
 add_subdirectory(c)
-add_subdirectory(java/src/main/native)
+add_subdirectory(java)
 add_subdirectory(pyext)

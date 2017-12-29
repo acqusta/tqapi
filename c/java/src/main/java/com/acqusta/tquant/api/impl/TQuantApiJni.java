@@ -6,7 +6,8 @@ import com.acqusta.tquant.api.TradeApi;
 public class TQuantApiJni {
 
     static {
-        System.load("D:\\work\\github\\tqc-api\\c\\build\\java\\src\\main\\native\\Release\\tqapi_jni.dll");
+        //System.load("D:\\work\\github\\tqc-api\\c\\build\\java\\src\\main\\native\\Release\\tqapi_jni.dll");
+        System.load("/Users/terryxu/work/tquant/tqc-api/c/build/dist/java/libtqapi_jni.dylib");
     }
 
     public static native long create(String addr) throws Exception;

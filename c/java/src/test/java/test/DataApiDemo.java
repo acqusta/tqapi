@@ -142,7 +142,7 @@ public class DataApiDemo {
             int count  = 0;
             int dates = 0;
             for (DailyBar bar : r.value) {
-                if (bar.date > 20171001) {
+                if (true) { //bar.date > 20171001) {
                     dates += 1;
                     DataApi.CallResult<DataApi.MarketQuote[]> result = dapi.getTick("rb.SHF", bar.date);
                     if (result.value != null) {
@@ -165,12 +165,38 @@ public class DataApiDemo {
         }
     }
 
+    void testPerf2() {
+        try {
+            dapi.getQuote("000001.SH");
+            long begin_time = System.currentTimeMillis();
+            int count  = 0;
+            int dates = 0;
+            for( int i =0; i < 10000; i++) {
+                CallResult<MarketQuote> r = dapi.getQuote("000001.SH");
+                if (r.value != null) {
+                    count += 1;//result.value.length;
+                } else {
+                    System.out.println("error: " + r.msg);
+                }
+            }
+
+            long end_time = System.currentTimeMillis();
+
+            System.out.println("used time    : " + (end_time - begin_time));
+            System.out.println("time per call : " + (end_time - begin_time)/10000.0);
+
+        }catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
+
     void test() {
-        testSubscribe();
+//        testSubscribe();
 //        testQuote();
 //        testBar();
 //        testTick();
 //        testPerf();
+        testPerf2();
     }
 
     public static void main(String[] args)  throws Exception {
