@@ -1,6 +1,6 @@
-# tqc-api
+# tqapi
 
-tqc-api是一套股票、期货交易的行情接口和交易接口。它使用TQuant平台提供的互联网服务，适合量化爱好者、私募搭建自己的交易系统。
+tqapi是acqusta.com的量化交易平台TQuant的客户端API。它通过TQuant平台提供的互联网服务，提供行情和交易接口。适合量化爱好者、私募搭建自己的交易系统。
 
 使用说明参见API源码注释和 [Wiki](https://github.com/tzxu/tqc-api/wiki)。
 更多资讯，请关注微信号：tquant。
@@ -9,11 +9,11 @@ tqc-api是一套股票、期货交易的行情接口和交易接口。它使用T
 
 ## 特点
 
-* 实时推送行情
+* 实时推送行情，支持Sina等互联网Level 1行情、CTP期货行情
 * 快速获取历史数据，包括tick, 分钟线，日线
 * 交易接口统一，同时支持股票和期货
 * 订单状态、成交回报实时通知
-* 支持Pyhon, Java, Scala, JavaScript等编程语言
+* 支持C++, Pyhon, Java, Scala, JavaScript等编程语言
 * 支持 Windows, Linux, OSX三种平台，在Mac上也可以进行交易和研究
 * API源码开放，用户策略安全可靠
 
@@ -24,7 +24,8 @@ tqc-api是一套股票、期货交易的行情接口和交易接口。它使用T
 | 函数            | 功能                |
 | ------------- | ----------------- |
 | quote()       | 取最新行情             |
-| bar()         | 取K线，支持实时和历史K线     |
+| bar()         | 取分钟K线，支持实时和历史K线 |
+| daily_bar(）  | 取日线 |
 | tick()        | 取tick数据，支持实时和历史数据 |
 | subscribe()   | 订阅行情              |
 | unsubscribe() | 取消订阅              |
@@ -57,7 +58,7 @@ tqc-api是一套股票、期货交易的行情接口和交易接口。它使用T
 | callback          | 回调函数 |
 
 ## TQC 客户端
-使用tqc-api，用户必须在自己电脑上运行服务程序tqc。该程序负责用户登录、数据加速，并在10001端口提供tqc-api服务。tqc下载地址： [TQuant](http://tquant.oicp.net/tqc)。
+用户需要在自己电脑上运行客户端程序tqc。该程序负责用户登录、数据加速，并提供tqapi服务。tqc下载地址： [TQuant](http://www.acqusta.com/download/tqc)。
 
 > 目前只发布了Windows版本。如有需要Linux和Max版本，可以通过微信联系。
 
