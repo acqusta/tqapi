@@ -126,7 +126,10 @@ void test_dapi(TQuantApi* api)
         cout << "used time    : " << duration_cast<milliseconds>(system_clock::now() - begin_time).count() << endl
             << "total records: " << total_count << endl
             << "total date   : " << 15 << endl;
+    }
 
+    while (true) {
+        this_thread::sleep_for(seconds(1));
     }
 }
 
@@ -292,9 +295,9 @@ int main()
     TQuantApi* api = TQuantApi::create(addr);
 
     //perf_test(api->data_api());
-    perf_test2(api->data_api());
+    //perf_test2(api->data_api());
 
-    //test_dapi(api);
+    test_dapi(api);
     //test_tapi(api->trade_api());
     getchar();
 

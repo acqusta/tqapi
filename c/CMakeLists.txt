@@ -23,6 +23,8 @@ if (WIN32)
     -D_WINSOCK_DEPRECATED_NO_WARNINGS
 #    -Dsnprintf=_snprintf
     -DNOMINMAX
+	-DMSGPACK_DLLEXPORT=
+#	/MT
     )
 
   set(COMMON_LIB
@@ -68,5 +70,5 @@ add_subdirectory(lib/myutils)
 add_subdirectory(lib/snappy)
 
 add_subdirectory(c)
-#add_subdirectory(jni)
+add_subdirectory(java/src/main/native)
 add_subdirectory(pyext)

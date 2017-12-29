@@ -8,3 +8,5 @@ c/tquant.egg-info
 *.whl
 c/x64
 c/win32
+c/java/.project
+c/java/tquant-api.iml

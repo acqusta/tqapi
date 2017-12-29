@@ -1,0 +1,8 @@
+/bin/
+/target/
+/project/project
+/project/target
+.cache-main
+.idea
+target
+out
