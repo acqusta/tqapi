@@ -67,7 +67,7 @@ add_executable(tqapi_py_test ${SRC})
 target_compile_definitions( tqapi_py_test PRIVATE BUILD_API_TEST=1)
 
 target_link_libraries(tqapi_py_test
-  tqapi
+  tqapi-static
   loop
   ${COMMON_LIB}
   ${EXTRA_LIBS}
