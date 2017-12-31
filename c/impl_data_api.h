@@ -33,11 +33,13 @@ namespace tquant { namespace api { namespace impl {
         uint64_t              m_sub_hash;
         DataApi_Callback*     m_callback;
         mutex                 m_mtx;
+        string                m_source;
     public:
-        DataApiImpl(mprpc::MpRpcClient* client) 
+        DataApiImpl(mprpc::MpRpcClient* client, const string& source) 
             : m_client(client)
             , m_sub_hash(0)
             , m_callback(nullptr)
+            , m_source(source)
         {}
 
         virtual ~DataApiImpl() override
@@ -46,10 +48,11 @@ namespace tquant { namespace api { namespace impl {
         virtual CallResult<vector<MarketQuote>> tick(const char* code, int trading_day) override
         {
             mprpc::MsgPackPacker pk;
-            pk.pack_map(3);
-            pk.pack_map_item("code", code);
+            pk.pack_map(4);
+            pk.pack_map_item("code",        code);
             pk.pack_map_item("trading_day", trading_day);
-            pk.pack_map_item("_format", "bin");
+            pk.pack_map_item("_format",     "bin");
+            pk.pack_map_item("source",       m_source);
 
             auto rsp = m_client->call("dapi.tst", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
@@ -72,12 +75,13 @@ namespace tquant { namespace api { namespace impl {
         virtual CallResult<vector<Bar>> bar(const char* code, const char* cycle, int trading_day, bool align) override
         {
             MsgPackPacker pk;
-            pk.pack_map(5);
+            pk.pack_map(6);
             pk.pack_map_item("code",        code);
             pk.pack_map_item("cycle",       cycle);
             pk.pack_map_item("trading_day", trading_day);
             pk.pack_map_item("align",       align);
             pk.pack_map_item("_format",     "bin");
+            pk.pack_map_item("source",      m_source);
 
             auto rsp = m_client->call("dapi.tsi", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
@@ -100,12 +104,13 @@ namespace tquant { namespace api { namespace impl {
         virtual CallResult<vector<DailyBar>> daily_bar(const char* code, const char* price_adj, bool align) override
         {
             MsgPackPacker pk;
-            pk.pack_map(5);
+            pk.pack_map(6);
             pk.pack_map_item("code",        code);
             pk.pack_map_item("cycle",       "1d");
             pk.pack_map_item("price_adj",   price_adj);
             pk.pack_map_item("align",       align);
             pk.pack_map_item("_format",     "bin");
+            pk.pack_map_item("source",       m_source);
 
             auto rsp = m_client->call("dapi.tsi", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
@@ -129,9 +134,10 @@ namespace tquant { namespace api { namespace impl {
         virtual CallResult<MarketQuote> quote(const char* code) override
         {
             MsgPackPacker pk;
-            pk.pack_map(2);
-            pk.pack_map_item("code", code);
+            pk.pack_map(3);
+            pk.pack_map_item("code",    code);
             pk.pack_map_item("_format", "bin");
+            pk.pack_map_item("source",  m_source);
 
             auto rsp = m_client->call("dapi.tsq_quote", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
@@ -180,9 +186,10 @@ namespace tquant { namespace api { namespace impl {
             }
 
             MsgPackPacker pk;
-            pk.pack_map(2);
-            pk.pack_map_item("codes", ss.str());
+            pk.pack_map(3);
+            pk.pack_map_item("codes",        ss.str());
             pk.pack_map_item("want_bin_fmt", true);
+            pk.pack_map_item("source",       m_source);
 
             m_client->call("dapi.tsq_sub", pk.sb.data, pk.sb.size, 0);
         }
@@ -198,9 +205,10 @@ namespace tquant { namespace api { namespace impl {
             }
 
             MsgPackPacker pk;
-            pk.pack_map(2);
+            pk.pack_map(3);
             pk.pack_map_item ("codes",        ss.str());
             pk.pack_map_item ("want_bin_fmt", true);
+            pk.pack_map_item("source",        m_source);
 
             auto rsp = m_client->call("dapi.tsq_sub", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
@@ -229,9 +237,10 @@ namespace tquant { namespace api { namespace impl {
             }
 
             MsgPackPacker pk;
-            pk.pack_map(2);
+            pk.pack_map(3);
             pk.pack_map_item("codes",        ss.str());
             pk.pack_map_item("want_bin_fmt", true);
+            pk.pack_map_item("source",       m_source);
 
             auto rsp = m_client->call("dapi.tsq_unsub", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
