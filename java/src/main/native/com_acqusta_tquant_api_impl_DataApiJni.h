@@ -10,50 +10,50 @@ extern "C" {
 /*
  * Class:     com_acqusta_tquant_api_impl_DataApiJni
  * Method:    getTick
- * Signature: (JLjava/lang/String;I)[Lcom/acqusta/tquant/api/DataApi/MarketQuote;
+ * Signature: (JLjava/lang/String;ILjava/lang/String;)[Lcom/acqusta/tquant/api/DataApi/MarketQuote;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getTick
-  (JNIEnv *, jclass, jlong, jstring, jint);
+  (JNIEnv *, jclass, jlong, jstring, jint, jstring);
 
 /*
  * Class:     com_acqusta_tquant_api_impl_DataApiJni
  * Method:    getBar
- * Signature: (JLjava/lang/String;Ljava/lang/String;IZ)[Lcom/acqusta/tquant/api/DataApi/Bar;
+ * Signature: (JLjava/lang/String;Ljava/lang/String;IZLjava/lang/String;)[Lcom/acqusta/tquant/api/DataApi/Bar;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getBar
-  (JNIEnv *, jclass, jlong, jstring, jstring, jint, jboolean);
+  (JNIEnv *, jclass, jlong, jstring, jstring, jint, jboolean, jstring);
 
 /*
  * Class:     com_acqusta_tquant_api_impl_DataApiJni
  * Method:    getDailyBar
- * Signature: (JLjava/lang/String;Ljava/lang/String;Z)[Lcom/acqusta/tquant/api/DataApi/DailyBar;
+ * Signature: (JLjava/lang/String;Ljava/lang/String;ZLjava/lang/String;)[Lcom/acqusta/tquant/api/DataApi/DailyBar;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getDailyBar
-  (JNIEnv *, jclass, jlong, jstring, jstring, jboolean);
+  (JNIEnv *, jclass, jlong, jstring, jstring, jboolean, jstring);
 
 /*
  * Class:     com_acqusta_tquant_api_impl_DataApiJni
  * Method:    getQuote
- * Signature: (JLjava/lang/String;)Lcom/acqusta/tquant/api/DataApi/MarketQuote;
+ * Signature: (JLjava/lang/String;Ljava/lang/String;)Lcom/acqusta/tquant/api/DataApi/MarketQuote;
  */
 JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getQuote
-  (JNIEnv *, jclass, jlong, jstring);
+  (JNIEnv *, jclass, jlong, jstring, jstring);
 
 /*
  * Class:     com_acqusta_tquant_api_impl_DataApiJni
  * Method:    subscribe
- * Signature: (J[Ljava/lang/String;)[Ljava/lang/String;
+ * Signature: (J[Ljava/lang/String;Ljava/lang/String;)[Ljava/lang/String;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_subscribe
-  (JNIEnv *, jclass, jlong, jobjectArray);
+  (JNIEnv *, jclass, jlong, jobjectArray, jstring);
 
 /*
  * Class:     com_acqusta_tquant_api_impl_DataApiJni
  * Method:    unsubscribe
- * Signature: (J[Ljava/lang/String;)[Ljava/lang/String;
+ * Signature: (J[Ljava/lang/String;Ljava/lang/String;)[Ljava/lang/String;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_unsubscribe
-  (JNIEnv *, jclass, jlong, jobjectArray);
+  (JNIEnv *, jclass, jlong, jobjectArray, jstring);
 
 /*
  * Class:     com_acqusta_tquant_api_impl_DataApiJni

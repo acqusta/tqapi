@@ -93,7 +93,7 @@ jobject convert_bar(JNIEnv* env, jclass help_cls, jmethodID createBar, tquant::a
  * Signature: (JLjava/lang/String;I)[Lcom/acqusta/tquant/api/DataApi/MarketQuote;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getTick
-(JNIEnv * env, jclass cls, jlong h, jstring code, jint trading_day)
+(JNIEnv * env, jclass cls, jlong h, jstring code, jint trading_day, jstring source)
 {
     auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
     if (!wrap) {
@@ -102,8 +102,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getTi
     }
 
     try {
-        std::string s_code = get_string(env, code);
-        auto r = wrap->api->data_api()->tick(s_code.c_str(), trading_day);
+        string s_code = get_string(env, code);
+        string s_source = get_string(env, source);
+        auto r = wrap->api->data_api()->tick(s_code.c_str(), trading_day, s_source.c_str());
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -130,7 +131,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getTi
  * Signature: (JLjava/lang/String;Ljava/lang/String;IZ)[Lcom/acqusta/tquant/api/DataApi/Bar;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getBar
-  (JNIEnv *env, jclass cls, jlong h, jstring code, jstring cycle, jint trading_day, jboolean align)
+  (JNIEnv *env, jclass cls, jlong h, jstring code, jstring cycle, jint trading_day, jboolean align, jstring source)
 {
     auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
     if (!wrap) {
@@ -141,7 +142,8 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getBa
     try {
         std::string s_code = get_string(env, code);
         std::string s_cycle = get_string(env, cycle);
-        auto r = wrap->api->data_api()->bar(s_code.c_str(), s_cycle.c_str(), trading_day, align!=0);
+        string s_source = get_string(env, source);
+        auto r = wrap->api->data_api()->bar(s_code.c_str(), s_cycle.c_str(), trading_day, align!=0, s_source.c_str());
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -169,7 +171,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getBa
  * Signature: (JLjava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;)[Lcom/acqusta/tquant/api/DataApi/DailyBar;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getDailyBar
-  (JNIEnv *env, jclass cls, jlong h, jstring code, jstring price_adj, jboolean align)
+  (JNIEnv *env, jclass cls, jlong h, jstring code, jstring price_adj, jboolean align, jstring source)
 {
     auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
     if (!wrap) {
@@ -180,7 +182,8 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getDa
     try {
         std::string s_code      = get_string(env, code);
         std::string s_price_adj = get_string(env, price_adj);
-        auto r = wrap->api->data_api()->daily_bar(s_code.c_str(), s_price_adj.c_str(), align != 0);
+        string s_source         = get_string(env, source);
+        auto r = wrap->api->data_api()->daily_bar(s_code.c_str(), s_price_adj.c_str(), align != 0, s_source.c_str());
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -222,7 +225,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getDa
  * Signature: (JLjava/lang/String;)[Lcom/acqusta/tquant/api/DataApi/MarketQuote;
  */
 JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getQuote
-  (JNIEnv * env, jclass cls, jlong h, jstring code)
+  (JNIEnv * env, jclass cls, jlong h, jstring code, jstring source)
 {
     auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
     if (!wrap) {
@@ -232,7 +235,8 @@ JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getQuote
 
     try {
         std::string s_code = get_string(env, code);
-        auto r = wrap->api->data_api()->quote(s_code.c_str());
+        string s_source = get_string(env, source);
+        auto r = wrap->api->data_api()->quote(s_code.c_str(), s_source.c_str());
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -253,7 +257,7 @@ JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getQuote
  * Signature: (J[Ljava/lang/String;)[Ljava/lang/String;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_subscribe
-  (JNIEnv * env, jclass cls, jlong h, jobjectArray codes)
+  (JNIEnv * env, jclass cls, jlong h, jobjectArray codes, jstring source)
 {
     auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
     if (!wrap) {
@@ -270,7 +274,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_subsc
                 env->DeleteLocalRef(tmp);
             }
         }
-        auto r = wrap->api->data_api()->subscribe(s_codes);
+        string s_source = get_string(env, source);
+
+        auto r = wrap->api->data_api()->subscribe(s_codes, s_source.c_str());
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return nullptr;
@@ -304,7 +310,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_subsc
  * Signature: (J[Ljava/lang/String;)[Ljava/lang/String;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_unsubscribe
-  (JNIEnv * env, jclass cls, jlong h, jobjectArray codes)
+  (JNIEnv * env, jclass cls, jlong h, jobjectArray codes, jstring source)
 {
     auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
     if (!wrap) {
@@ -321,7 +327,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_unsub
                 env->DeleteLocalRef(tmp);
             }
         }
-        auto r = wrap->api->data_api()->unsubscribe(s_codes);
+        string s_source = get_string(env, source);
+
+        auto r = wrap->api->data_api()->unsubscribe(s_codes, s_source.c_str());
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return nullptr;
@@ -377,14 +385,6 @@ JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_setCallback
         if (!onBar) {
             throwJavaException(env, "No onBar in Callback");
             return;
-        }
-        auto r = wrap->api->data_api()->quote("000001.SH");
-        if (r.value) {
-            auto q = convert_quote(env, wrap->help_cls, wrap->createMarketQuote, r.value.get());
-            env->CallVoidMethod(callback, onMarketQuote, q);
-        }
-        else {
-            env->CallVoidMethod(new_callback_class, onMarketQuote, nullptr);
         }
 
         callback = env->NewGlobalRef(callback);

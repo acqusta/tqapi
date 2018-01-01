@@ -59,17 +59,17 @@ class TradeApiJni {
 
 class DataApiJni {
 
-    static native DataApi.MarketQuote[] getTick(long handle, String code, int trading_day);
+    static native DataApi.MarketQuote[] getTick(long handle, String code, int trading_day, String source);
 
-    static native DataApi.Bar[] getBar (long handle, String code, String cycle, int trading_day, boolean align);
+    static native DataApi.Bar[] getBar (long handle, String code, String cycle, int trading_day, boolean align, String source);
 
-    static native DataApi.DailyBar[] getDailyBar (long handle, String code, String price_adj, boolean align);
+    static native DataApi.DailyBar[] getDailyBar (long handle, String code, String price_adj, boolean align, String source);
 
-    static native DataApi.MarketQuote getQuote (long handle, String code);
+    static native DataApi.MarketQuote getQuote (long handle, String code, String source);
 
-    static native String[] subscribe(long handle, String[] codes);
+    static native String[] subscribe(long handle, String[] codes, String source);
 
-    static native String[] unsubscribe(long handle, String[] codes);
+    static native String[] unsubscribe(long handle, String[] codes, String source);
 
     static native void setCallback(long handle, DataApi.Callback callback);
 }

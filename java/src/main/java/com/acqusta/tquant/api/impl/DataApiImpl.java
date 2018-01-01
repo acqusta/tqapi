@@ -2,6 +2,8 @@ package com.acqusta.tquant.api.impl;
 
 import com.acqusta.tquant.api.DataApi;
 
+import javax.xml.transform.Source;
+
 public class DataApiImpl implements DataApi {
 
     private TQuantApiJni tqapi;
@@ -13,54 +15,54 @@ public class DataApiImpl implements DataApi {
     }
     
     @Override
-    public CallResult<MarketQuote[]> getTick(String code, int trading_day) {
+    public CallResult<MarketQuote[]> getTick(String code, int trading_day, String source) {
         try {
-            return new CallResult(DataApiJni.getTick(handle, code, trading_day), "");
+            return new CallResult(DataApiJni.getTick(handle, code, trading_day, source), "");
         }catch (Exception e) {
             return new CallResult(null, e.getMessage());
         }
     }
 
     @Override
-    public CallResult<DailyBar[]> getDailyBar (String code, String price_adj, Boolean align) {
+    public CallResult<DailyBar[]> getDailyBar (String code, String price_adj, Boolean align, String source) {
         try {
-            return new CallResult(DataApiJni.getDailyBar(handle, code, price_adj, align), "");
+            return new CallResult(DataApiJni.getDailyBar(handle, code, price_adj, align, source), "");
         }catch (Exception e) {
             return new CallResult(null, e.getMessage());
         }
     }
 
     @Override
-    public CallResult<Bar[]> getBar(String code, String cycle, int trading_day, Boolean align) {
+    public CallResult<Bar[]> getBar(String code, String cycle, int trading_day, Boolean align, String source) {
         try {
-            return new CallResult(DataApiJni.getBar(handle, code,  cycle, trading_day, align), "");
+            return new CallResult(DataApiJni.getBar(handle, code,  cycle, trading_day, align, source), "");
         }catch (Exception e) {
             return new CallResult(null, e.getMessage());
         }
     }
 
     @Override
-    public CallResult<MarketQuote> getQuote(String code) {
+    public CallResult<MarketQuote> getQuote(String code, String source) {
         try {
-            return new CallResult(DataApiJni.getQuote(handle, code), "");
+            return new CallResult(DataApiJni.getQuote(handle, code, source), "");
         }catch (Exception e) {
             return new CallResult(null, e.getMessage());
         }
     }
 
     @Override
-    public CallResult<String[]> subscribe(String[] codes) {
+    public CallResult<String[]> subscribe(String[] codes, String source) {
         try {
-            return new CallResult(DataApiJni.subscribe(handle, codes), "");
+            return new CallResult(DataApiJni.subscribe(handle, codes, source), "");
         }catch (Exception e) {
             return new CallResult(null, e.getMessage());
         }
     }
 
     @Override
-    public CallResult<String[]> unsubscribe(String[] codes) {
+    public CallResult<String[]> unsubscribe(String[] codes, String source) {
         try {
-            return new CallResult(DataApiJni.unsubscribe(handle, codes), "");
+            return new CallResult(DataApiJni.unsubscribe(handle, codes, source), "");
         }catch (Exception e) {
             return new CallResult(null, e.getMessage());
         }

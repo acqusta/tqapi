@@ -21,6 +21,7 @@ namespace tquant { namespace api { namespace impl {
         friend TradeApiImpl;
     public:
         TQuantApiImpl(const char* params) {
+#if 0
             const char* p = strchr(params, '?');
             string addr;
             string source;
@@ -40,6 +41,9 @@ namespace tquant { namespace api { namespace impl {
             else {
                 addr = params;
             }
+#else
+            string addr = params;
+#endif
 
             if (strncmp(addr.c_str(), "tcp://", 6) == 0) {
                 auto conn = make_shared<SocketConnection>();
@@ -55,7 +59,7 @@ namespace tquant { namespace api { namespace impl {
                 throw std::runtime_error("unknown addr");
             }
 
-            m_dapi = new DataApiImpl(this->m_client, source);
+            m_dapi = new DataApiImpl(this->m_client);
             m_tapi = new TradeApiImpl(this->m_client);
         }
 

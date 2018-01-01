@@ -27,32 +27,36 @@ namespace tquant { namespace api { namespace impl {
         }
     };
 
+    struct SubInfo {
+        unordered_set<string> codes;
+        uint64_t              hash_code;
+
+        SubInfo() : hash_code(0)
+        {}
+    };
     class DataApiImpl : public DataApi {
         mprpc::MpRpcClient*   m_client;
-        unordered_set<string> m_sub_codes;
-        uint64_t              m_sub_hash;
         DataApi_Callback*     m_callback;
         mutex                 m_mtx;
-        string                m_source;
+        //string                m_source;
+        unordered_map<string, SubInfo> m_sub_info_map;
     public:
-        DataApiImpl(mprpc::MpRpcClient* client, const string& source) 
+        DataApiImpl(mprpc::MpRpcClient* client) 
             : m_client(client)
-            , m_sub_hash(0)
             , m_callback(nullptr)
-            , m_source(source)
         {}
 
         virtual ~DataApiImpl() override
         {}
 
-        virtual CallResult<vector<MarketQuote>> tick(const char* code, int trading_day) override
+        virtual CallResult<vector<MarketQuote>> tick(const char* code, int trading_day, const char* source = nullptr) override
         {
             mprpc::MsgPackPacker pk;
             pk.pack_map(4);
             pk.pack_map_item("code",        code);
             pk.pack_map_item("trading_day", trading_day);
             pk.pack_map_item("_format",     "bin");
-            pk.pack_map_item("source",       m_source);
+            pk.pack_map_item("source",      source ? source : "");
 
             auto rsp = m_client->call("dapi.tst", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
@@ -72,7 +76,7 @@ namespace tquant { namespace api { namespace impl {
             return CallResult<vector<MarketQuote>>(ticks);
         }
 
-        virtual CallResult<vector<Bar>> bar(const char* code, const char* cycle, int trading_day, bool align) override
+        virtual CallResult<vector<Bar>> bar(const char* code, const char* cycle, int trading_day, bool align, const char* source = nullptr) override
         {
             MsgPackPacker pk;
             pk.pack_map(6);
@@ -81,7 +85,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map_item("trading_day", trading_day);
             pk.pack_map_item("align",       align);
             pk.pack_map_item("_format",     "bin");
-            pk.pack_map_item("source",      m_source);
+            pk.pack_map_item("source",      source ? source : "");
 
             auto rsp = m_client->call("dapi.tsi", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
@@ -101,7 +105,7 @@ namespace tquant { namespace api { namespace impl {
             return CallResult<vector<Bar>>(bars);
         }
 
-        virtual CallResult<vector<DailyBar>> daily_bar(const char* code, const char* price_adj, bool align) override
+        virtual CallResult<vector<DailyBar>> daily_bar(const char* code, const char* price_adj, bool align, const char* source = nullptr) override
         {
             MsgPackPacker pk;
             pk.pack_map(6);
@@ -110,7 +114,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map_item("price_adj",   price_adj);
             pk.pack_map_item("align",       align);
             pk.pack_map_item("_format",     "bin");
-            pk.pack_map_item("source",       m_source);
+            pk.pack_map_item("source",       source ? source : "");
 
             auto rsp = m_client->call("dapi.tsi", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
@@ -131,13 +135,13 @@ namespace tquant { namespace api { namespace impl {
             return CallResult<vector<DailyBar>>(bars);
         }
 
-        virtual CallResult<MarketQuote> quote(const char* code) override
+        virtual CallResult<MarketQuote> quote(const char* code, const char* source = nullptr) override
         {
             MsgPackPacker pk;
             pk.pack_map(3);
             pk.pack_map_item("code",    code);
             pk.pack_map_item("_format", "bin");
-            pk.pack_map_item("source",  m_source);
+            pk.pack_map_item("source",  source ? source : "");
 
             auto rsp = m_client->call("dapi.tsq_quote", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
@@ -146,7 +150,7 @@ namespace tquant { namespace api { namespace impl {
             const char* p = (const char*)(rsp->result.via.bin.ptr);
             uint32_t bin_len = rsp->result.via.bin.size;
 
-            int code_len = strlen(p);
+            size_t code_len = strlen(p);
             if ( bin_len < code_len + 1 + sizeof(RawMarketQuote))
                 return CallResult<MarketQuote>("-1,wrong data format");
 
@@ -162,14 +166,21 @@ namespace tquant { namespace api { namespace impl {
                 return CallResult<vector<string>>("-1,wrong data format");
 
             string new_codes;
-            mp_map_get(result, "sub_hash", (int64_t*)&m_sub_hash);
+            string source;
+            uint64_t sub_hash;
+            mp_map_get(result, "sub_hash", (int64_t*)&sub_hash);
             mp_map_get(result, "sub_codes", &new_codes);
+            mp_map_get(result, "source",    &source);
 
             vector<string> sub_codes;
             split(new_codes, ",", &sub_codes);
 
-            m_sub_codes.clear();
-            for (auto& s : sub_codes) m_sub_codes.insert(s);
+            if (source.size()) {
+                auto si = &m_sub_info_map[source];
+                si->codes.clear();
+                for (auto& s : sub_codes) si->codes.insert(s);
+                si->hash_code = sub_hash;
+            }
 
             return CallResult<vector<string>>(make_shared <vector<string>>(sub_codes));
         }
@@ -177,24 +188,30 @@ namespace tquant { namespace api { namespace impl {
         void subscribe_again()
         {
             unique_lock<mutex> lock(m_mtx);
-            stringstream ss;
-            for (auto it = m_sub_codes.begin(); it != m_sub_codes.end(); it++) {
-                if (it != m_sub_codes.end())
-                    ss << *it << ",";
-                else
-                    ss << *it;
+
+            for (auto& e : m_sub_info_map) {
+                auto si = &e.second;
+                if (si->codes.empty()) continue;
+
+                stringstream ss;
+                for (auto it = si->codes.begin(); it != si->codes.end(); it++) {
+                    if (it != si->codes.end())
+                        ss << *it << ",";
+                    else
+                        ss << *it;
+                }
+
+                MsgPackPacker pk;
+                pk.pack_map(3);
+                pk.pack_map_item("codes",        ss.str());
+                pk.pack_map_item("want_bin_fmt", true);
+                pk.pack_map_item("source",       e.first);
+
+                m_client->call("dapi.tsq_sub", pk.sb.data, pk.sb.size, 0);
             }
-
-            MsgPackPacker pk;
-            pk.pack_map(3);
-            pk.pack_map_item("codes",        ss.str());
-            pk.pack_map_item("want_bin_fmt", true);
-            pk.pack_map_item("source",       m_source);
-
-            m_client->call("dapi.tsq_sub", pk.sb.data, pk.sb.size, 0);
         }
 
-        virtual CallResult<vector<string>> subscribe(const vector<string>& codes) override
+        virtual CallResult<vector<string>> subscribe(const vector<string>& codes, const char* source = nullptr) override
         {
             stringstream ss;
             for (size_t i = 0; i < codes.size(); i++) {
@@ -208,7 +225,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map(3);
             pk.pack_map_item ("codes",        ss.str());
             pk.pack_map_item ("want_bin_fmt", true);
-            pk.pack_map_item("source",        m_source);
+            pk.pack_map_item("source",        source ? source : "");
 
             auto rsp = m_client->call("dapi.tsq_sub", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
@@ -217,16 +234,12 @@ namespace tquant { namespace api { namespace impl {
             return update_subscribe_result(rsp->result);
         }
 
-        virtual CallResult<vector<string>> unsubscribe(const vector<string>& codes) override
+        virtual CallResult<vector<string>> unsubscribe(const vector<string>& codes, const char* source = nullptr) override
         {
             MsgPackPacker pk_codes;
             pk_codes.pack_array(codes.size());
-            for (auto & code : codes) {
+            for (auto & code : codes)
                 pk_codes.pack_string(code);
-                auto it = m_sub_codes.find(code);
-                if (it != m_sub_codes.end())
-                    m_sub_codes.erase(it);
-            }
 
             stringstream ss;
             for (size_t i = 0; i < codes.size(); i++) {
@@ -240,7 +253,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map(3);
             pk.pack_map_item("codes",        ss.str());
             pk.pack_map_item("want_bin_fmt", true);
-            pk.pack_map_item("source",       m_source);
+            pk.pack_map_item("source",       source ? source : "");
 
             auto rsp = m_client->call("dapi.tsq_unsub", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
@@ -280,12 +293,30 @@ namespace tquant { namespace api { namespace impl {
 
                 if (!is_map(rpcmsg->result)) return;
                 uint64_t sub_hash = 0;
-                if (mp_map_get(rpcmsg->result, "sub_hash", &sub_hash)) {
-                    
-                    //std::cout << ".sys.heartbeat " << sub_hash << "," << m_sub_hash << endl;
-                    if (sub_hash != m_sub_hash && m_sub_codes.size()) {
-                        subscribe_again();
+                msgpack_object sub_info;
+                if (mp_map_get(rpcmsg->result, "sub_info", &sub_info)) {
+                    unordered_map<string, uint64_t> new_sub_info;
+                    if (is_arr(sub_info)) {
+                        for (uint32_t i = 0; i < sub_info.via.array.size; i++) {
+                            msgpack_object* tmp = sub_info.via.array.ptr + i;
+                            if (!is_map(*tmp)) continue;
+                            string source;
+                            uint64_t sub_hash = 0;
+                            mp_map_get(*tmp, "source",   &source);
+                            mp_map_get(*tmp, "sub_hash", &sub_hash);
+                            if (source.size())
+                                new_sub_info[source] = sub_hash;
+                        }
                     }
+
+                    bool mismatch = false;
+                    for (auto & e : m_sub_info_map) {
+                        if (new_sub_info[e.first] != e.second.hash_code) {
+                            mismatch = true;
+                            break;
+                        }
+                    }
+                    if (mismatch) subscribe_again();
                 }
             }
             else if (rpcmsg->method == "dapi.tsq_sub") {

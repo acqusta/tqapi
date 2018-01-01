@@ -159,7 +159,7 @@ namespace tquant {  namespace api {
         * @param trading_day
         * @return
         */
-        virtual CallResult<vector<MarketQuote>> tick(const char* code, int trading_day) = 0;
+        virtual CallResult<vector<MarketQuote>> tick(const char* code, int trading_day, const char* source = nullptr) = 0;
 
         /**
         * 取某个代码的Bar
@@ -173,7 +173,7 @@ namespace tquant {  namespace api {
         * @param align         是否对齐
         * @return
         */
-        virtual CallResult<vector<Bar>> bar(const char* code, const char* cycle, int trading_day, bool align) = 0;
+        virtual CallResult<vector<Bar>> bar(const char* code, const char* cycle, int trading_day, bool align, const char* source = nullptr) = 0;
 
         /**
         * 取某个代码的日线
@@ -189,7 +189,7 @@ namespace tquant {  namespace api {
         * @param align         是否对齐
         * @return
         */
-        virtual CallResult<vector<DailyBar>> daily_bar(const char* code, const char* price_adj, bool align) = 0;
+        virtual CallResult<vector<DailyBar>> daily_bar(const char* code, const char* price_adj, bool align, const char* source = nullptr) = 0;
 
         /**
         * 取当前的行情快照
@@ -197,7 +197,7 @@ namespace tquant {  namespace api {
         * @param code
         * @return
         */
-        virtual CallResult<MarketQuote> quote(const char* code) = 0;
+        virtual CallResult<MarketQuote> quote(const char* code, const char* source = nullptr) = 0;
 
         /**
         * 订阅行情
@@ -207,7 +207,7 @@ namespace tquant {  namespace api {
         * @param codes
         * @return 所有已经订阅的代码
         */
-        virtual CallResult<vector<string>> subscribe(const vector<string>& codes) = 0;
+        virtual CallResult<vector<string>> subscribe(const vector<string>& codes, const char* source = nullptr) = 0;
 
         /**
         * 取消订阅
@@ -218,7 +218,7 @@ namespace tquant {  namespace api {
         * @param codes
         * @return
         */
-        virtual CallResult<vector<string>> unsubscribe(const vector<string>& codes) = 0;
+        virtual CallResult<vector<string>> unsubscribe(const vector<string>& codes, const char* source = nullptr) = 0;
 
         /**
         * 设置推送行情的回调函数

@@ -122,9 +122,10 @@ public interface DataApi {
      *
      * @param code
      * @param trading_day
+     * @param source
      * @return
      */
-    CallResult<MarketQuote[]> getTick(String code, int trading_day);
+    CallResult<MarketQuote[]> getTick(String code, int trading_day, String source);
 
     /**
      * 取某个代码的Bar
@@ -135,9 +136,10 @@ public interface DataApi {
      * @param code          证券代码
      * @param cycle         "1m" 或 "1d"
      * @param trading_day   交易日，对分钟线有意义
+     * @param source
      * @return
      */
-    CallResult<Bar[]> getBar (String code, String cycle, int trading_day, Boolean align);
+    CallResult<Bar[]> getBar (String code, String cycle, int trading_day, Boolean align, String source);
 
     /**
      * 取某个代码的DailyBar
@@ -146,17 +148,19 @@ public interface DataApi {
      * @param price_adj     价格复权，取值
      *                        back -- 后复权
      *                        forward -- 前复权
+     * @param source
      * @return
      */
-    CallResult<DailyBar[]> getDailyBar (String code, String price_adj, Boolean align);
+    CallResult<DailyBar[]> getDailyBar (String code, String price_adj, Boolean align, String source);
 
     /**
      * 取当前的行情快照
      *
      * @param code
+     * @param source
      * @return
      */
-    CallResult<MarketQuote> getQuote (String code);
+    CallResult<MarketQuote> getQuote (String code, String source);
 
     /**
      * 订阅行情
@@ -164,9 +168,10 @@ public interface DataApi {
      * codes为新增的订阅列表，返回所有已经订阅的代码,包括新增的列表。如果codes为空，可以返回已订阅列表。
      *
      * @param codes
+     * @param source
      * @return 所有已经订阅的代码
      */
-    CallResult<String[]> subscribe(String[] codes);
+    CallResult<String[]> subscribe(String[] codes, String source);
 
     /**
      * 取消订阅
@@ -175,9 +180,10 @@ public interface DataApi {
      * 如果需要取消所有订阅，先通过 subscribe 得到所有列表，然后使用unscribe取消
      *
      * @param codes
+     * @param source
      * @return
      */
-    CallResult<String[]> unsubscribe(String[] codes);
+    CallResult<String[]> unsubscribe(String[] codes, String source);
 
     /**
      * 设置推送行情的回调函数

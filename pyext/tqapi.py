@@ -97,17 +97,17 @@ class DataApi:
         """Set on_bar callback"""
         self._on_bar = func
 
-    def subscribe(self, codes) :
+    def subscribe(self, codes, source=None) :
         if type(codes) is tuple or type(codes) is list:
             codes = ",".join(codes)
 
-        return _tqapi.dapi_subscribe(self._api._handle, str(codes))
+        return _tqapi.dapi_subscribe(self._api._handle, str(codes), str(source) if source else "" )
 
-    def unsubscribe(self, codes):
+    def unsubscribe(self, codes, source=None):
         if type(codes) is tuple or type(codes) is list:
             codes = ",".join(codes)            
 
-        return _tqapi.dapi_unsubscribe(self._api._handle, str(codes))
+        return _tqapi.dapi_unsubscribe(self._api._handle, str(codes), str(source) if source else "")
 
     def _my_callback(self, event, id, data):
         cb = self._callback_map.get(event)
@@ -115,25 +115,25 @@ class DataApi:
             cb(id, data)
 
 
-    def quote(self, code):
-        return _tqapi.dapi_quote(self._api._handle, str(code))
+    def quote(self, code, source=None):
+        return _tqapi.dapi_quote(self._api._handle, str(code), str(source) if source else "")
 
-    def bar(self, code, cycle="1m", trading_day=0, align=True):
-        v, msg = _tqapi.dapi_bar(self._api._handle, str(code), str(cycle), int(trading_day), bool(align))
+    def bar(self, code, cycle="1m", trading_day=0, align=True, source=None):
+        v, msg = _tqapi.dapi_bar(self._api._handle, str(code), str(cycle), int(trading_day), bool(align), str(source) if source else "")
         if v:
             return (pd.DataFrame(v), msg)
         else:
             return (v, msg)
 
-    def dailybar(self, code, price_adj="", align=True):
-        v, msg = _tqapi.dapi_dailybar(self._api._handle, str(code), str(price_adj), bool(align))
+    def dailybar(self, code, price_adj="", align=True, source=None):
+        v, msg = _tqapi.dapi_dailybar(self._api._handle, str(code), str(price_adj), bool(align), str(source) if source else "")
         if v:
             return (pd.DataFrame(v), msg)
         else:
             return (v, msg)
 
-    def tick(self, code, trading_day=0):
-        v, msg = _tqapi.dapi_tick(self._api._handle, str(code), int(trading_day))
+    def tick(self, code, trading_day=0, source=None):
+        v, msg = _tqapi.dapi_tick(self._api._handle, str(code), int(trading_day), str(source) if source else "")
         if v:
             return (pd.DataFrame(v), msg)
         else:

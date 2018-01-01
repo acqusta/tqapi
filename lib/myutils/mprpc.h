@@ -208,6 +208,12 @@ namespace mprpc {
         }
     }
 
+    static inline bool mp_get(msgpack_object& o, msgpack_object* v)
+    {
+        *v = o;
+        return true;
+    }
+
     template<typename T>
     static inline bool mp_map_get(msgpack_object& o, const char* key, T* v)
     {

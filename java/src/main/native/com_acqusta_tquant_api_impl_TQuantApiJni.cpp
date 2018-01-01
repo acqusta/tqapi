@@ -17,6 +17,7 @@ void throwJavaException(JNIEnv* env, const char* fmt, ...)
 
 string get_string(JNIEnv* env, jstring str)
 {
+    if (!str) return "";
     const char* s = env->GetStringUTFChars(str, nullptr);
     if (!s)
         return string();
