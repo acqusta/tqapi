@@ -189,7 +189,7 @@ PyObject* _wrap_dapi_tick(PyObject* self, PyObject *args, PyObject* kwargs)
     if (!code || strlen(code)==0) return Py_BuildValue("Os", Py_None, "empty code");
 
     auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
-    auto r = wrap->data_api()->tick(code, trading_day);
+    auto r = wrap->data_api()->tick(code, trading_day, source);
 
     if (r.value) {
         return Py_BuildValue("NO", convert_ticks(r.value.get()), Py_None);

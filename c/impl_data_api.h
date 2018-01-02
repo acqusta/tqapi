@@ -272,25 +272,24 @@ namespace tquant { namespace api { namespace impl {
 
         void on_notification(shared_ptr<mprpc::MpRpcMessage> rpcmsg)
         {
-            if (!m_callback) return;
-
             if (rpcmsg->method == "dapi.quote") {
-                if (!is_bin(rpcmsg->params)) return;                
-                const char* code = rpcmsg->params.via.bin.ptr;
-                auto quote = make_shared<MarketQuote>(*(RawMarketQuote*)(code + strlen(code) + 1), code);
-                m_callback->on_market_quote(quote);
+                if (m_callback && is_bin(rpcmsg->params)) {
+                    const char* code = rpcmsg->params.via.bin.ptr;
+                    auto quote = make_shared<MarketQuote>(*(RawMarketQuote*)(code + strlen(code) + 1), code);
+                    m_callback->on_market_quote(quote);
+                }
             }
             else if (rpcmsg->method == "dapi.bar") {
-                if (!is_bin(rpcmsg->params)) return;
-                const char* cycle = rpcmsg->params.via.bin.ptr;
-                const char* code = cycle + strlen(cycle) + 1;
-                const RawBar* rbar = reinterpret_cast<const RawBar*>(code + strlen(code) + 1);
+                if (m_callback && is_bin(rpcmsg->params)) {
+                    const char* cycle = rpcmsg->params.via.bin.ptr;
+                    const char* code = cycle + strlen(cycle) + 1;
+                    const RawBar* rbar = reinterpret_cast<const RawBar*>(code + strlen(code) + 1);
 
-                auto bar = make_shared<Bar>(*rbar, code);
-                m_callback->on_bar(cycle, bar);
+                    auto bar = make_shared<Bar>(*rbar, code);
+                    m_callback->on_bar(cycle, bar);
+                }
             }
             else if (rpcmsg->method == ".sys.heartbeat") {
-
                 if (!is_map(rpcmsg->result)) return;
                 uint64_t sub_hash = 0;
                 msgpack_object sub_info;

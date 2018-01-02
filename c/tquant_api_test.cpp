@@ -3,6 +3,7 @@
 #include <chrono>
 #include <iostream>
 #include <chrono>
+#include <sstream>
 #include "tquant_api.h"
 
 using namespace std;
@@ -29,14 +30,14 @@ public:
     }
 };
 
+MyCallback callback;
+
 void test_dapi(TQuantApi* api)
 {
     const char* code = "rb.SHF";// .CFE";
     vector<string> codes;
     codes.push_back(code);
-    codes.push_back("rb1801.SHF");
-
-    MyCallback callback;
+    codes.push_back("rb1805.SHF");
 
     api->data_api()->set_callback(&callback);
 
@@ -286,10 +287,36 @@ void perf_test2(DataApi* dapi)
 
 }
 
+void test_dapi_local(DataApi* dapi)
+{
+    dapi->set_callback(&callback);
+
+    vector<string> codes = { "000001.SH", "600000.SH", "rb1805.SHF" };
+    //codes
+    auto r = dapi->subscribe(codes, "local");
+    if (r.value) {
+        stringstream ss;
+        for (auto & s : *r.value) ss << s << ",";
+        cout << "subscribe result: " << ss.str() << endl;
+    }
+    else {
+        cout << "subscribe error: " << r.msg << endl;
+    }
+
+    while (true) {
+        this_thread::sleep_for(seconds(1));
+        auto r = dapi->quote("rb1805.SHF", "local");
+        if (r.value) {
+            auto q = r.value;
+            cout << "quote: " << q->code << "," << q->date << "," << q->time << "," << q->last << "," << q->volume << endl;
+        }
+    }
+}
+
 int main()
 {
-    //const char* addr = "tcp://127.0.0.1:10001";
-    const char* addr = "ipc://tqc_10001";
+    const char* addr = "tcp://127.0.0.1:10001";
+    //const char* addr = "ipc://tqc_10001";
 
     std::cout << addr << endl;
     TQuantApi* api = TQuantApi::create(addr);
@@ -297,6 +324,7 @@ int main()
     //perf_test(api->data_api());
     //perf_test2(api->data_api());
 
+    test_dapi_local(api->data_api());
     test_dapi(api);
     //test_tapi(api->trade_api());
     getchar();
