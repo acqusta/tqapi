@@ -41,6 +41,11 @@ void SocketConnection::main_run()
 {
     auto idle_time = system_clock::now();
     while (!m_should_exit) {
+        auto now = system_clock::now();
+        if (now < idle_time || now - idle_time > milliseconds(200)) {
+            idle_time = now;
+            m_callback->on_idle();
+        }
 
         fd_set rset, wset;
         FD_ZERO(&rset);
@@ -79,12 +84,6 @@ void SocketConnection::main_run()
         }
         else {
             do_connect();
-        }
-
-        auto now = system_clock::now();
-        if (now < idle_time || now - idle_time > milliseconds(200)){
-            idle_time = now;
-            m_callback->on_idle();
         }
     }
 }

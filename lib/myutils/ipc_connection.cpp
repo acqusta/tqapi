@@ -175,19 +175,24 @@ IpcConnection::~IpcConnection()
 
 void IpcConnection::recv_run()
 {
+    auto last_idle_time = system_clock::now();
     while (!m_should_exit) {
         if (m_conn->client_id != m_my_id)  break;
         if (get_now_ms() - m_conn->svr_update_time > 2000) break;
 
-        switch (m_sem_recv->timed_wait(100)){
+        switch (m_sem_recv->timed_wait(100)) {
         case 1:
-            msg_loop().PostTask(bind(&IpcConnection::do_recv, this)); 
+            msg_loop().PostTask([this]() { do_recv(); });
             break;
         case 0:
             m_conn->client_update_time = get_now_ms();
             break;
         default:
             break;
+        }
+
+        if (system_clock::now() - last_idle_time > seconds(1)) {
+            msg_loop().PostTask([this]() { if (m_callback) m_callback->on_idle(); });
         }
     }
     

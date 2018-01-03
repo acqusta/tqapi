@@ -305,11 +305,11 @@ void test_dapi_local(DataApi* dapi)
 
     while (true) {
         this_thread::sleep_for(seconds(1));
-        auto r = dapi->quote("rb1805.SHF", "local");
-        if (r.value) {
-            auto q = r.value;
-            cout << "quote: " << q->code << "," << q->date << "," << q->time << "," << q->last << "," << q->volume << endl;
-        }
+        //auto r = dapi->quote("rb1805.SHF", "local");
+        //if (r.value) {
+        //    auto q = r.value;
+        //    cout << "quote: " << q->code << "," << q->date << "," << q->time << "," << q->last << "," << q->volume << endl;
+        //}
     }
 }
 
