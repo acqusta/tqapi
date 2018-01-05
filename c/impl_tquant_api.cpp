@@ -51,7 +51,7 @@ namespace tquant { namespace api { namespace impl {
                 m_client->connect(addr, this);
             }
             else if (strncmp(addr.c_str(), "ipc://", 6) == 0) {
-                auto conn = make_shared<IpcConnection>();
+                auto conn = make_shared<IpcConnection>(30*1024*1024);
                 m_client = new MpRpcClient(conn);
                 m_client->connect(addr, this);
             }

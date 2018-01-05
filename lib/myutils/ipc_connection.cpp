@@ -150,7 +150,7 @@ bool SharedSemaphore::post()
 #endif
 }
 
-IpcConnection::IpcConnection()
+IpcConnection::IpcConnection(int32_t shmem_size)
     : m_callback(nullptr)
     , m_should_exit(false)
     , m_connected(false)
@@ -164,6 +164,7 @@ IpcConnection::IpcConnection()
     , m_conn(nullptr)
     , m_sem_send(nullptr)
     , m_sem_recv(nullptr)
+    , m_shmem_size(shmem_size)
 {
     m_msg_loop.PostDelayedTask(bind(&IpcConnection::check_connection, this), 500);
 }
@@ -203,7 +204,6 @@ void IpcConnection::recv_run()
             do_connect();
         }
     });
-
 }
 
 
@@ -334,9 +334,10 @@ bool IpcConnection::do_connect()
             sprintf(buf, "shm_%u", (uint32_t)m_my_id);
 
             m_my_shmem = new myutils::FileMapping();
-            if (!m_my_shmem->create_shmem(buf, 30 * 1024 * 1024))
+            if (!m_my_shmem->create_shmem(buf, m_shmem_size))
                 break;
             strcpy(m_conn->shmem_name, m_my_shmem->id().c_str());
+            m_conn->shmem_size = m_shmem_size;
         }
 
 #ifdef _WIN32        
@@ -349,7 +350,7 @@ bool IpcConnection::do_connect()
         ShmemHead* head = (ShmemHead*)m_my_shmem->addr();
         head->recv_size   = 2 * 1024 * 1024 - sizeof(ShmemHead);
         head->recv_offset = sizeof(ShmemHead);
-        head->send_size   = 28 * 1024 * 1024;
+        head->send_size   = m_shmem_size - 2 * 1024 * 1024;
         head->send_offset = 2 * 1024 * 1024;
 
         // different between client and server

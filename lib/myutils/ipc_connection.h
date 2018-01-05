@@ -61,6 +61,7 @@ namespace myutils {
             atomic<int32_t > req;
             atomic<int32_t > rsp;
             atomic<int32_t > dead_flag;
+            int32_t shmem_size;
             char shmem_name[128];
             char sem_send[128];
             char sem_recv[128];
@@ -73,7 +74,7 @@ namespace myutils {
             ConnectionInfo slots[20];
         };
 
-        IpcConnection();
+        IpcConnection(int32_t shmem_size);
 
         virtual ~IpcConnection();
 
@@ -107,6 +108,7 @@ namespace myutils {
         ConnectionInfo*             m_conn;
         SharedSemaphore*            m_sem_send;
         SharedSemaphore*            m_sem_recv;
+        int32_t                     m_shmem_size;
     };
 }
 
