@@ -19,6 +19,26 @@ public:
             << q->open << "," << q->high << "," << q->low << "," << q->close << ","
             << q->volume << "," << q->turnover << "," << q->oi << endl;
 
+        {
+            static int64_t tick_count;
+            static int64_t csum_time;
+
+            auto t = quote;
+            if (t->recv_time > 0) {
+                auto now = duration_cast<microseconds>(system_clock::now().time_since_epoch()).count();
+                tick_count++;
+                csum_time += now - t->recv_time;
+                if (tick_count % 10 == 0) {
+                    std::cout << "tqc delay: " << (csum_time / tick_count) << " microseconds" << endl;
+                    tick_count = 0;
+                    csum_time = 0;
+                }
+            }
+            else {
+                std::cout << "wrong recv_time: " << t->recv_time << "," << t->code << endl;
+            }
+        }
+
     }
 
     virtual void on_bar(const char* cycle, shared_ptr<Bar> bar) override
@@ -291,7 +311,7 @@ void test_dapi_local(DataApi* dapi)
 {
     dapi->set_callback(&callback);
 
-    vector<string> codes = { "000001.SH", "600000.SH", "rb1805.SHF" };
+    vector<string> codes = { "000001.SH", "600000.SH", "rb1805.SHF", "IF1801.CFE", "M1805.DCE", "i1803.SHF" };
     //codes
     auto r = dapi->subscribe(codes, "local");
     if (r.value) {
@@ -315,8 +335,8 @@ void test_dapi_local(DataApi* dapi)
 
 int main()
 {
-    const char* addr = "tcp://127.0.0.1:10001";
-    //const char* addr = "ipc://tqc_10001";
+    //const char* addr = "tcp://127.0.0.1:10001";
+    const char* addr = "ipc://tqc_10001";
 
     std::cout << addr << endl;
     TQuantApi* api = TQuantApi::create(addr);

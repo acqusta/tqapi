@@ -139,6 +139,7 @@ namespace mprpc {
     {
         unique_lock<mutex> lock(m_asyncall_lock);
         m_asyncall_queue.push_back(func);
+        m_asyncall_cond.notify_one();
     }
 
     void MpRpcClient::on_idle()

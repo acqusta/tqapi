@@ -274,6 +274,17 @@ namespace tquant { namespace api { namespace impl {
         {
             if (rpcmsg->method == "dapi.quote") {
                 if (m_callback && is_bin(rpcmsg->params)) {
+                    //static int64_t tick_count;
+                    //static int64_t csum_time;
+
+                    //tick_count++;
+                    //csum_time += duration_cast<microseconds>(system_clock::now() - rpcmsg->recv_time).count();
+                    //if (tick_count % 10 == 0) {
+                    //    std::cout << "callback delay: " << (csum_time / tick_count) << " microseconds" << endl;
+                    //    tick_count = 0;
+                    //    csum_time = 0;
+                    //}
+
                     const char* code = rpcmsg->params.via.bin.ptr;
                     auto quote = make_shared<MarketQuote>(*(RawMarketQuote*)(code + strlen(code) + 1), code);
                     m_callback->on_market_quote(quote);
