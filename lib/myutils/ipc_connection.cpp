@@ -21,12 +21,17 @@ static inline uint64_t get_now_ms()
     return time_point_cast<milliseconds>(system_clock::now()).time_since_epoch().count();
 }
 
+static inline int64_t get_now_micro()
+{
+    return duration_cast<microseconds>(system_clock::now().time_since_epoch()).count();
+}
+
+
 SharedSemaphore::SharedSemaphore()
 #ifdef _WIN32
     : m_hEvent(nullptr)
 #else
-    : m_cond(nullptr)
-    , m_mtx(nullptr)
+    : m_data(nullptr)
 #endif
 {
 }
@@ -51,20 +56,19 @@ SharedSemaphore*  SharedSemaphore::create(const char* name)
     }
 #else
     auto sem = new SharedSemaphore();
-    
-    sem->m_cond = (pthread_cond_t *)name;
-    sem->m_mtx  = (pthread_mutex_t*)(sem->m_cond + 1);
+
+    sem->m_data = (PthreadData*)name;
+    sem->m_data->count = 0;
 
     pthread_condattr_t cond_shared_attr;  
     pthread_condattr_init (&cond_shared_attr);  
     pthread_condattr_setpshared (&cond_shared_attr, PTHREAD_PROCESS_SHARED);
-    pthread_cond_init (sem->m_cond, &cond_shared_attr);  
+    pthread_cond_init (&sem->m_data->cond, &cond_shared_attr);  
 
     pthread_mutexattr_t mutex_shared_attr;  
     pthread_mutexattr_init (&mutex_shared_attr);  
     pthread_mutexattr_setpshared (&mutex_shared_attr, PTHREAD_PROCESS_SHARED);
-   
-    pthread_mutex_init (sem->m_mtx, &mutex_shared_attr);
+    pthread_mutex_init (&sem->m_data->mtx, &mutex_shared_attr);
 
     return sem;
 #endif
@@ -84,8 +88,7 @@ SharedSemaphore* SharedSemaphore::open(const char* name)
     }
 #else
     auto sem = new SharedSemaphore();
-    sem->m_cond = (pthread_cond_t *)name;
-    sem->m_mtx  = (pthread_mutex_t*)(sem->m_cond + 1);
+    sem->m_data = (PthreadData*)name;
     return sem;
 #endif
 }
@@ -109,21 +112,30 @@ int SharedSemaphore::timed_wait(int timeout_ms)
     struct timeval now;
     struct timespec outtime;
 
-    pthread_mutex_lock(m_mtx);
-    gettimeofday(&now, NULL);
-    memset(&outtime, 0, sizeof(outtime));
-    outtime.tv_sec  = now.tv_sec + timeout_ms/1000;
-    outtime.tv_nsec = now.tv_usec * 1000 + (timeout_ms%1000) * 1000000;
-    outtime.tv_sec  += outtime.tv_nsec / 1000000000;
-    outtime.tv_nsec %= 1000000000;
 
-    int r = pthread_cond_timedwait(m_cond, m_mtx, &outtime);
-    pthread_mutex_unlock (m_mtx);
+    pthread_mutex_lock(&m_data->mtx);
 
-    switch(r) {
-    case 0:            return 1;
-    case ETIMEDOUT:    return 0;
-    default:           return -1;
+    if (m_data->count <= 0 ) {
+        gettimeofday(&now, NULL);
+        memset(&outtime, 0, sizeof(outtime));
+        outtime.tv_sec  = now.tv_sec + timeout_ms/1000;
+        outtime.tv_nsec = now.tv_usec * 1000 + (timeout_ms%1000) * 1000000;
+        outtime.tv_sec  += outtime.tv_nsec / 1000000000;
+        outtime.tv_nsec %= 1000000000;
+        int r = pthread_cond_timedwait(&m_data->cond, &m_data->mtx, &outtime);
+        if (m_data->count>0)
+            m_data->count--;
+        pthread_mutex_unlock (&m_data->mtx);
+        switch(r) {
+        case 0:            return 1;
+        case ETIMEDOUT:    return 0;
+        default:           return -1;
+        }
+
+    } else {
+        m_data->count--;
+        pthread_mutex_unlock (&m_data->mtx);
+        return 1;
     }
 #endif
 }
@@ -141,8 +153,11 @@ bool SharedSemaphore::post()
         return false;
     }
 #else
-    if (m_cond) {
-        pthread_cond_signal(m_cond);
+    if (m_data) {
+        pthread_mutex_lock(&m_data->mtx);
+        m_data->count++;
+        pthread_cond_signal(&m_data->cond);
+        pthread_mutex_unlock(&m_data->mtx);
         return true;
     } else {
         return false;
@@ -214,8 +229,9 @@ void IpcConnection::do_recv()
 
     // at most read 10 msgs in one loop
     for (int i = 0; i < 10; i++) {
-        if (m_recv_queue->poll(&data, &size)) {
-            if (m_callback) m_callback->on_recv(data, size);
+        if (m_recv_queue->poll(&data, &size) ) {
+            if (m_callback)
+                m_callback->on_recv(data, size);
             m_recv_queue->pop();
         }
         else {

@@ -10,3 +10,4 @@ x64
 win32
 java/.project
 java/tquant-api.iml
+pyext/tqapi.pyc

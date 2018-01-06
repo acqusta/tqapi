@@ -15,9 +15,9 @@ public:
     virtual void on_market_quote(shared_ptr<MarketQuote> quote) override 
     {
         auto q = quote.get();
-        cout << "onQuote: " << q->code << "," << q->date << "," << q->time << ","
-            << q->open << "," << q->high << "," << q->low << "," << q->close << ","
-            << q->volume << "," << q->turnover << "," << q->oi << endl;
+        // cout << "onQuote: " << q->code << "," << q->date << "," << q->time << ","
+        //     << q->open << "," << q->high << "," << q->low << "," << q->close << ","
+        //     << q->volume << "," << q->turnover << "," << q->oi << endl;
 
         {
             static int64_t tick_count;
@@ -311,7 +311,7 @@ void test_dapi_local(DataApi* dapi)
 {
     dapi->set_callback(&callback);
 
-    vector<string> codes = { "000001.SH", "600000.SH", "rb1805.SHF", "IF1801.CFE", "M1805.DCE", "i1803.SHF" };
+    vector<string> codes = { "000001.SH", "600000.SH", "000001.SZ", "399001.SZ", "rb1805.SHF", "IF1801.CFE", "M1805.DCE", "i1803.SHF" };
     //codes
     auto r = dapi->subscribe(codes, "local");
     if (r.value) {

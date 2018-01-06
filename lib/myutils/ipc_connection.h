@@ -40,8 +40,12 @@ namespace myutils {
 #ifdef _WIN32
         HANDLE m_hEvent;
 #else
-        pthread_cond_t*  m_cond;
-        pthread_mutex_t* m_mtx;
+        struct PthreadData {
+            pthread_cond_t  cond;
+            pthread_mutex_t mtx;
+            int32_t        count;
+        };
+        PthreadData* m_data;
 #endif
     };
 
@@ -62,9 +66,9 @@ namespace myutils {
             atomic<int32_t > rsp;
             atomic<int32_t > dead_flag;
             int32_t shmem_size;
-            char shmem_name[128];
-            char sem_send[128];
-            char sem_recv[128];
+            char    shmem_name[128];
+            char    sem_send[128];
+            char    sem_recv[128];
         };
 
         struct ConnectionSlotInfo {
