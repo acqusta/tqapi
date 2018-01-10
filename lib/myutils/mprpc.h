@@ -172,7 +172,7 @@ namespace mprpc {
 
     static inline bool mp_get(msgpack_object& o, uint32_t* v)
     {
-        return mp_get(o, (uint32_t*)v);
+        return mp_get(o, (int32_t*)v);
     }
 
     static inline bool mp_get(msgpack_object& o, bool* v)
@@ -345,85 +345,26 @@ namespace mprpc {
 
         void on_recv(shared_ptr<ClientConnection> connection, const char* data, size_t len);
 
-        //bool notify(shared_ptr<Connection> connection, shared_ptr<MpRpcMessage> msg);
+        void on_close(shared_ptr<ClientConnection> connection);
+
+        bool notify(const string& conn_id, const char* method, const void* data, size_t size);
 
         bool send(shared_ptr<ClientConnection> connection, const void* data, size_t len);
 
-        void on_close(shared_ptr<ClientConnection> connection);
 
+        bool send_error_rsp(shared_ptr<mprpc::ClientConnection> connection,
+                            shared_ptr<mprpc::MpRpcMessage> req,
+                            int error,
+                            const string& err_msg);
+        bool send_rsp(shared_ptr<mprpc::ClientConnection> connection,
+                            shared_ptr<mprpc::MpRpcMessage> req,
+                            const void* data,
+                            size_t size);
     private:
         MpRpcServer_Callback* m_callback;
+        recursive_mutex       m_conn_map_lock;
+        unordered_map<string, shared_ptr<ClientConnection>> m_conn_map;
     };
-
-    //class ZmqMpRpcServer;
-
-    //class ZmqMpRpcServer_Connection;
-
-    //class ZmqMpRpcServer {
-
-    //    friend class ZmqMpRpcServer_Connection;
-
-    //public:
-
-    //    ZmqMpRpcServer(MpRpcServer* server);
-
-    //    virtual ~ZmqMpRpcServer();
-
-    //    bool listen(const std::string& addr);
-
-    //    void close();
-
-    //private:
-
-    //    void main_run();
-    //    //void do_send(const string& client, const char* data, size_t size);
-    //    void do_send(const string& client, zmq::message_t& data);
-    //    void do_connect();
-    //    void do_recv();
-    //    void do_send_heartbeat();
-    //    void do_listen();
-
-    //    bool send(const string& id, const char* data, size_t size);
-
-    //private:
-    //    MpRpcServer*      m_server;
-    //    string              m_addr;
-    //    mutex               m_send_lock;
-    //    zmq::context_t      m_zmq_ctx;
-    //    zmq::socket_t*      m_push_sock;
-    //    zmq::socket_t*      m_pull_sock;
-    //    zmq::socket_t*      m_remote_sock;
-    //    thread*             m_main_thread;
-    //    volatile bool       m_should_exit;
-    //    bool                m_connected;
-    //    map<string, shared_ptr<ZmqMpRpcServer_Connection>> m_client_map;
-    //};
-
-    //class ZmqMpRpcServer_Connection : public Connection {
-    //    friend class ZmqMpRpcServer;
-    //public:
-
-    //    ZmqMpRpcServer_Connection(const string& id, const string& addr, ZmqMpRpcServer* server) :
-    //        m_id(id),
-    //        m_addr(addr),
-    //        m_server(server)
-    //    {}
-
-    //    virtual string id() override { return m_id; }
-
-    //    virtual bool send(const char* data, size_t size) override {
-    //        return m_server->send(m_id, data, size);
-    //    }
-
-    //    void set_addr(const string& addr) {
-    //        m_addr = addr;
-    //    }
-
-    //private:
-    //    string m_id;
-    //    string m_addr;
-    //    ZmqMpRpcServer* m_server;
-    //};
 }
 
 #endif

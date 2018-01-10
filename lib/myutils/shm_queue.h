@@ -74,7 +74,6 @@ namespace myutils {
                     memcpy(p + 4, data, size);
                     m_write_pos = (int32_t)size + 4;
                     ret = true;
-                    return false;
                 }
                 lock--;
                 return true;

@@ -190,7 +190,7 @@ bool FileMapping::open_shmem(const string& name, uint32_t filesize, bool read_on
     filesize = ((filesize + dwSysGran - 1) / dwSysGran) * dwSysGran;
 
     m_hMapFile = OpenFileMapping(FILE_MAP_ALL_ACCESS,
-        NULL,
+        FALSE,
         name.c_str());
 
     if (m_hMapFile == NULL) {

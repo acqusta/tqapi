@@ -14,7 +14,7 @@ namespace mprpc {
 
         try {
             if (utf8_buf[0] == 'S') {
-                uint32_t orig_len = *(uint32_t*)(utf8_buf + 1);
+                //uint32_t orig_len = *(uint32_t*)(utf8_buf + 1);
                 if (!snappy::Uncompress(utf8_buf + 5, len - 5, &rpcmsg->_recv_data))
                     return nullptr;
             }
@@ -305,7 +305,7 @@ namespace mprpc {
     }
 
 
-    void MpRpcServer::on_recv(shared_ptr<ClientConnection> connection, const char* data, size_t size)
+    void MpRpcServer::on_recv(shared_ptr<ClientConnection> conn, const char* data, size_t size)
     {
         auto rpcmsg = MpRpcMessage::parse(data, size);
         if (!rpcmsg ||
@@ -315,10 +315,20 @@ namespace mprpc {
             return;
         }
 
+        {
+            unique_lock<recursive_mutex> lock(m_conn_map_lock);
+            auto it = m_conn_map.find(conn->id());
+            if (it == m_conn_map.end()) m_conn_map[conn->id()] = conn;
+        }
+
         rpcmsg->recv_time = system_clock::now();
 
-        if (!rpcmsg->method.empty()) {
-            m_callback->on_call(connection, rpcmsg);
+        if (rpcmsg->method.size()) {
+            if (m_callback)
+                m_callback->on_call(conn, rpcmsg);
+            else {
+                send_error_rsp(conn, rpcmsg, -1, "unknown method");
+            }
         }
         else {
             MsgPackPacker pk;
@@ -330,7 +340,7 @@ namespace mprpc {
             pk.pack_map_item ("code", -1);
             pk.pack_map_item ("message", "empty method");
 
-            connection->send(pk.sb.data, pk.sb.size);
+            conn->send(pk.sb.data, pk.sb.size);
         }
     }
 
@@ -369,8 +379,83 @@ namespace mprpc {
         }
     }
 
-    void MpRpcServer::on_close(shared_ptr<ClientConnection> connection)
+    void MpRpcServer::on_close(shared_ptr<ClientConnection> conn)
     {
-        return m_callback->on_close(connection);
+        {
+            unique_lock<recursive_mutex> lock(m_conn_map_lock);
+            auto it = m_conn_map.find(conn->id());
+            if (it != m_conn_map.end()) m_conn_map.erase(it);
+        }
+
+        if (m_callback)
+            m_callback->on_close(conn);
+    }
+
+    bool MpRpcServer::send_error_rsp(shared_ptr<mprpc::ClientConnection> conn,
+                                    shared_ptr<mprpc::MpRpcMessage> req,
+                                    int error,
+                                    const string& err_msg)
+    {
+        MsgPackPacker pk;
+        pk.pack_map(4);
+
+        pk.pack_map_item("id", req->id);
+        pk.pack_map_item("method", req->method);
+
+        pk.pack_string("error");
+        pk.pack_map(2);
+        pk.pack_map_item("code", error);
+        pk.pack_map_item("message", err_msg);
+
+        pk.pack_string("debug");
+        pk.pack_map(2);
+        pk.pack_map_item("recv_time", time_point_cast<microseconds>(req->recv_time).time_since_epoch().count());
+        pk.pack_map_item("send_time", time_point_cast<microseconds>(system_clock::now()).time_since_epoch().count());
+
+        return send(conn, pk.sb.data, pk.sb.size);
+    }
+
+    bool MpRpcServer::send_rsp(shared_ptr<mprpc::ClientConnection> conn,
+        shared_ptr<mprpc::MpRpcMessage> req,
+        const void* data,
+        size_t size)
+    {
+        MsgPackPacker pk;
+
+        pk.pack_map(4);
+        pk.pack_map_item("id", req->id);
+        pk.pack_map_item("method", req->method);
+        pk.pack_string("result");
+        msgpack_pack_str_body(&pk.pk, data, size);
+
+        pk.pack_string("debug");
+        pk.pack_map(2);
+        pk.pack_map_item("recv_time", time_point_cast<microseconds>(req->recv_time).time_since_epoch().count());
+        pk.pack_map_item("send_time", time_point_cast<microseconds>(system_clock::now()).time_since_epoch().count());
+
+        return send(conn, pk.sb.data, pk.sb.size);
+    }
+
+    bool MpRpcServer::notify(const string& conn_id, const char* method, const void* data, size_t size)
+    {
+        MsgPackPacker pk;
+        pk.pack_map(3);
+
+        pk.pack_map_item("id", 0);
+        pk.pack_map_item("method", method);
+        pk.pack_string("params");
+        msgpack_pack_str_body(&pk.pk, data, size);
+
+        unique_lock<recursive_mutex> lock(m_conn_map_lock);
+
+        for (auto it = m_conn_map.begin(); it != m_conn_map.end(); it++) {
+            if (conn_id.empty()) {
+                send(it->second, pk.sb.data, pk.sb.size);
+            }
+            else if (conn_id == it->first) {
+                return send(it->second, pk.sb.data, pk.sb.size);
+            }
+        }
+        return true;
     }
 }

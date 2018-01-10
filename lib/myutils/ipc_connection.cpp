@@ -13,19 +13,9 @@
 #include "myutils/misc.h"
 #include "myutils/ipc_connection.h"
 #include "myutils/stringutils.h"
+#include "myutils/timeutils.h"
 
 using namespace myutils;
-
-static inline uint64_t get_now_ms()
-{
-    return time_point_cast<milliseconds>(system_clock::now()).time_since_epoch().count();
-}
-
-static inline int64_t get_now_micro()
-{
-    return duration_cast<microseconds>(system_clock::now().time_since_epoch()).count();
-}
-
 
 SharedSemaphore::SharedSemaphore()
 #ifdef _WIN32
@@ -194,14 +184,14 @@ void IpcConnection::recv_run()
     auto last_idle_time = system_clock::now();
     while (!m_should_exit) {
         if (m_conn->client_id != m_my_id)  break;
-        if (get_now_ms() - m_conn->svr_update_time > 2000) break;
+        if (now_ms() - m_conn->svr_update_time > 2000) break;
 
         switch (m_sem_recv->timed_wait(100)) {
         case 1:
             msg_loop().PostTask([this]() { do_recv(); });
             break;
         case 0:
-            m_conn->client_update_time = get_now_ms();
+            m_conn->client_update_time = now_ms();
             break;
         default:
             break;
@@ -249,10 +239,11 @@ bool IpcConnection::connect(const string& addr, Connection_Callback* callback)
     condition_variable cv;
     unique_lock<mutex> lock(mtx);
 
-    m_msg_loop.PostTask([this, &cv, addr, callback]() {
+    m_msg_loop.PostTask([this, &mtx, &cv, addr, callback]() {
         m_addr = addr;
         m_callback = callback;
         do_connect();
+        unique_lock<mutex> lock(mtx);
         cv.notify_all();
     });
 
@@ -268,6 +259,8 @@ void IpcConnection::reconnect()
 
 void IpcConnection::clear_data()
 {
+    unique_lock<mutex> lock(m_send_mtx);
+
     if (m_recv_thread) {
         m_should_exit = true;
         m_recv_thread->join();
@@ -377,7 +370,7 @@ bool IpcConnection::do_connect()
 
         {
             uint64_t exp = 0;
-            if (!m_conn->client_update_time.compare_exchange_strong(exp, get_now_ms())) {
+            if (!m_conn->client_update_time.compare_exchange_strong(exp, now_ms())) {
                 //std::cerr << "update_time is not zero" << endl;
                 break;
             }
