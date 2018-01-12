@@ -23,7 +23,7 @@ namespace myutils {
     public:
         void init(int32_t size) {
             m_rw_mtx = 0;
-            int data_size = size - (int)&(((ShmemQueue*)0)->m_data);
+            int32_t data_size = size - (size_t)&(((ShmemQueue*)0)->m_data);
             m_data_size = m_data_realsize = data_size;
             m_read_pos = m_write_pos = 0;
             memset(m_data, 0, data_size);
