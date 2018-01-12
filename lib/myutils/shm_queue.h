@@ -13,8 +13,7 @@ namespace myutils {
     using namespace std::chrono;
 
     class ShmemQueue {
-        volatile int32_t m_read_mtx;
-        volatile int32_t m_write_mtx;
+        atomic<int32_t>  m_rw_mtx;
         volatile int32_t m_data_realsize;
         volatile int32_t m_data_size;
         volatile int32_t m_read_pos;
@@ -23,8 +22,11 @@ namespace myutils {
 
     public:
         void init(int32_t size) {
-            ::memset((char*)&this->m_read_mtx, 0, size);
-            m_data_size = m_data_realsize = size;
+            m_rw_mtx = 0;
+            int data_size = size - (int)&(((ShmemQueue*)0)->m_data);
+            m_data_size = m_data_realsize = data_size;
+            m_read_pos = m_write_pos = 0;
+            memset(m_data, 0, data_size);
         }
 
         inline bool push(const char* data, size_t size);
@@ -37,9 +39,8 @@ namespace myutils {
         bool ret = false;
         auto begin_time = system_clock::now();
         do {
-            atomic<int32_t> lock(m_write_mtx);
             int32_t v = 0;
-            if (lock.compare_exchange_strong(v, 1)) {
+            if (m_rw_mtx.compare_exchange_strong(v, 1)) {
                 if (m_read_pos <= m_write_pos) {
                     // ---R----W---
                     if (m_data_size - m_write_pos >= size + 4) {
@@ -75,7 +76,7 @@ namespace myutils {
                     m_write_pos += (int32_t)size + 4;
                     ret = true;
                 }
-                lock--;
+                m_rw_mtx--;
                 return true;
             }
         } while (system_clock::now() - begin_time < milliseconds(10));
@@ -88,9 +89,8 @@ namespace myutils {
         bool ret = false;
         auto begin_time = system_clock::now();
         do {
-            atomic<int32_t> lock(m_read_mtx);
             int32_t v = 0;
-            if (lock.compare_exchange_strong(v, 1)) {
+            if (m_rw_mtx.compare_exchange_strong(v, 1)) {
                 if (m_read_pos < m_write_pos) {
                     char* p = m_data + m_read_pos;
                     int32_t pkt_size = *(int32_t*)p;
@@ -107,7 +107,7 @@ namespace myutils {
                     assert(*size == m_data_realsize - m_read_pos);
                     ret = true;
                 }
-                lock--;
+                m_rw_mtx--;
                 return ret;
             }
 
@@ -121,9 +121,8 @@ namespace myutils {
         bool ret = false;
         auto begin_time = system_clock::now();
         do {
-            atomic<int32_t> lock(m_read_mtx);
             int32_t v = 0;
-            if (lock.compare_exchange_strong(v, 1)) {
+            if (m_rw_mtx.compare_exchange_strong(v, 1)) {
                 char* p = m_data + m_read_pos;
                 int32_t pkt_size = *(int32_t*)p;
 
@@ -144,7 +143,7 @@ namespace myutils {
                     }
                 }
 
-                lock--;
+                m_rw_mtx--;
                 return ret;
             }
         } while (system_clock::now() - begin_time < milliseconds(10));
