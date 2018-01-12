@@ -58,7 +58,7 @@ namespace myutils {
                         char* p = m_data;
                         memcpy(p, (char*)&len, 4);
                         memcpy(p + 4, data, size);
-                        m_write_pos = (int32_t)size + 4;
+                        m_write_pos += (int32_t)size + 4;
                         ret = true;
                     }
                     else {
@@ -72,7 +72,7 @@ namespace myutils {
                     char* p = m_data + m_write_pos;
                     memcpy(p, (char*)&len, 4);
                     memcpy(p + 4, data, size);
-                    m_write_pos = (int32_t)size + 4;
+                    m_write_pos += (int32_t)size + 4;
                     ret = true;
                 }
                 lock--;

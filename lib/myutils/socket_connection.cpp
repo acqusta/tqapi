@@ -27,14 +27,7 @@ SocketConnection::SocketConnection()
 
 SocketConnection::~SocketConnection()
 {
-    m_should_exit = true;
-
-    m_main_thread->join();
-
-    delete m_main_thread;
-
-    if (m_socket != INVALID_SOCKET)
-        closesocket(m_socket);
+    close();
 }
 
 void SocketConnection::main_run()
@@ -203,6 +196,17 @@ bool SocketConnection::do_connect()
 void SocketConnection::close()
 {
     m_should_exit = true;
+
+    if (m_main_thread) {
+        m_main_thread->join();
+        delete m_main_thread;
+        m_main_thread = nullptr;
+    }
+
+    if (m_socket != INVALID_SOCKET) {
+        closesocket(m_socket);
+        m_socket = INVALID_SOCKET;
+    }
 }
 
 void SocketConnection::send(const char* data, size_t size)

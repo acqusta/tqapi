@@ -109,6 +109,8 @@ namespace mprpc {
 
     MpRpcClient::~MpRpcClient()
     {
+        m_conn->close();
+
         m_should_exit = true;
 
         m_callback_thread->join();
