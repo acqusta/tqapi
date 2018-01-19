@@ -14,11 +14,14 @@
 #include <unordered_map>
 #include <vector>
 #include "myutils/connection.h"
+#include "myutils/loop/MsgRunLoop.h"
+#include "myutils/loop/MsgLoopFuture.h"
 
 namespace mprpc {
 
     using namespace std;
     using namespace std::chrono;
+    using namespace loop;
 
     class MsgPackPacker {
         MsgPackPacker(const MsgPackPacker& copy) {
@@ -52,6 +55,8 @@ namespace mprpc {
         inline void pack_bool(bool v)      { if (v) msgpack_pack_true(&pk); else msgpack_pack_false(&pk); }
 
         inline void pack_string(const string& str) { pack_string(str.c_str(), str.size()); }
+
+        inline void pack_obj(msgpack_object& obj) { msgpack_pack_object(&pk, obj); }
 
         inline void pack_bin (const char* data, int len) {
             msgpack_pack_bin(&pk, len);
@@ -274,15 +279,10 @@ namespace mprpc {
         virtual void on_connected    () {}
         virtual void on_disconnected () {}
         virtual void on_notification (shared_ptr<MpRpcMessage> rpcmsg) {}
-        virtual void on_call_result  (int callid, shared_ptr<MpRpcMessage> cr) {}
+        //virtual void on_call_result  (int callid, shared_ptr<MpRpcMessage> cr) {}
     };
 
-    class MpRpcClient : public ::Connection_Callback {
-
-        struct ResultWaiter {
-            condition_variable  cond;
-            shared_ptr<MpRpcMessage> result;
-        };
+    class MpRpcClient : public ::Connection_Callback, public loop::MsgLoopRun {
 
     public:
         MpRpcClient(shared_ptr<Connection> conn);
@@ -295,33 +295,39 @@ namespace mprpc {
 
         shared_ptr<MpRpcMessage> call(const char* method, const char* params, size_t params_size, int timeout = 6000);
         
-        int asnyc_call(const char* method, const char* params, size_t params_size);
+        Future<MpRpcMessage, std::pair<int,string>>  asnyc_call(const char* method, const char* params, size_t params_size, int timeout=6000);
 
     private:
-        void callback_run();
         void do_send_heartbeat();
-        void call_callback(function<void()>);
 
         // Connection_Callback
         virtual void on_recv(const char* data, size_t size) override;
-        virtual void on_idle() override;
         virtual void on_conn_status(bool connected) override;
+        virtual void on_idle() override  { }
+        
+        void on_check_timer();
 
     private:
+        typedef Promise<MpRpcMessage, pair<int, string>> AsyncCallPromise;   
+        struct OnRspHandler {
+            shared_ptr<AsyncCallPromise>  promise;
+            system_clock::time_point      dead_time;
+
+            OnRspHandler() { }
+
+            OnRspHandler(shared_ptr<AsyncCallPromise> p, system_clock::time_point t)
+                : promise(p), dead_time(t)
+            {}
+        };
+
         string                      m_addr;
         shared_ptr<Connection>      m_conn;
         MpRpcClient_Callback*       m_callback;
-        thread*                     m_callback_thread;
-        volatile bool               m_should_exit;
         bool                        m_connected;
         system_clock::time_point    m_last_hb_rsp_time;
-        atomic_int                  m_cur_callid;
-        mutex                       m_waiter_map_lock;
-        unordered_map<int, ResultWaiter*>     m_waiter_map;
-        list < function<void()>>    m_asyncall_queue;
-        mutex                       m_asyncall_lock;
-        condition_variable          m_asyncall_cond;
+        atomic<int>                 m_cur_callid;
         system_clock::time_point    m_last_hb_time;
+        unordered_map<int, OnRspHandler> m_on_rsp_map;
     };
 
     class ClientConnection {
@@ -360,6 +366,9 @@ namespace mprpc {
                             shared_ptr<mprpc::MpRpcMessage> req,
                             const void* data,
                             size_t size);
+
+        void close(const string& conn_id);
+
     private:
         MpRpcServer_Callback* m_callback;
         recursive_mutex       m_conn_map_lock;

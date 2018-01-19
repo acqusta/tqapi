@@ -1,8 +1,6 @@
-//#include <apr_time.h>
-
 #include "MessageLoop.h"
 #include "RunLoop.h"
-//#include <apr_atomic.h>
+//#include <iostream>
 
 using namespace loop;
 
@@ -12,15 +10,10 @@ using namespace std::chrono;
 MessageLoop::MessageLoop() : m_run(nullptr)
 {
     m_next_id = 1;
-    //apr_pool_create(&m_pool, NULL);
-    //apr_thread_mutex_create(&m_queue_lock, APR_THREAD_MUTEX_DEFAULT, m_pool);
-    //apr_thread_cond_create(&m_queue_cond, m_pool);
 };
 
 MessageLoop::~MessageLoop()
 {
-    //apr_thread_mutex_destroy(m_queue_lock);
-    //apr_pool_destroy(m_pool);
 }
 
 bool MessageLoop::DeleteTask(uint32_t id)
@@ -94,8 +87,10 @@ void MessageLoop::Run(RunLoop* run)
             }
         }
 
-        if (found)
+        if (found) {
+            //std::cout << __FUNCTION__ << endl;
             task.task();
+        }
     }
 
     m_run = nullptr;

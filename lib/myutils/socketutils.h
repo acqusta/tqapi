@@ -8,25 +8,25 @@
 
 #ifdef _WIN32
 # include <WinSock2.h>
+typedef int socklen_t;
 #else
 # include <sys/socket.h>
 # include <netdb.h>
 # include <arpa/inet.h>
 # include <fcntl.h>
-#endif
-
-#ifndef _WIN32
-
-#include <unistd.h>
+# include <unistd.h>
 
 typedef int SOCKET;
-#define INVALID_SOCKET -1
-#define closesocket ::close
+
+#ifndef INVALID_SOCKET
+#  define INVALID_SOCKET -1
+#endif
+
+#ifndef closesocket
+#  define closesocket ::close
+#endif
+
 #define WSAGetLastError() errno
-
-#else
-
-typedef int socklen_t;
 
 #endif
 

@@ -18,7 +18,7 @@ namespace myutils {
         volatile int32_t m_data_size;
         volatile int32_t m_read_pos;
         volatile int32_t m_write_pos;
-        char             m_data[0];
+        char             m_data[1];
 
     public:
         void init(int32_t size) {
@@ -43,7 +43,7 @@ namespace myutils {
             if (m_rw_mtx.compare_exchange_strong(v, 1)) {
                 if (m_read_pos <= m_write_pos) {
                     // ---R----W---
-                    if (m_data_size - m_write_pos >= size + 4) {
+                    if (m_data_size - m_write_pos >= (int32_t)size + 4) {
                         // after ---R-------W-
                         int32_t len = (int32_t)size;
                         char* p = m_data + m_write_pos;
@@ -52,7 +52,7 @@ namespace myutils {
                         m_write_pos += (int32_t)size + 4;
                         ret = true;
                     }
-                    else if (m_read_pos > size + 4) {
+                    else if (m_read_pos > (int32_t)size + 4) {
                         // after  ---W---R-------
                         m_data_size = m_write_pos;
                         int32_t len = (int32_t)size;
@@ -66,7 +66,7 @@ namespace myutils {
                         assert(false);
                     }
                 }
-                else if (m_read_pos - m_write_pos > size + 4) {
+                else if (m_read_pos - m_write_pos > (int32_t)size + 4) {
                     //       ---W-------R----
                     // after -------W---R----
                     int32_t len = (int32_t)size;

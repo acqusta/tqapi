@@ -23,13 +23,8 @@ namespace loop {
         }
 
         MessageLoop& msg_loop() { return m_msg_loop; }
-    protected:
-        void join() {
-            m_thread->join();
-            delete m_thread;
-            m_thread = nullptr;
-        }
-        void close_loop () {
+
+        void close_loop() {
             if (m_thread) {
                 m_msg_loop.PostTask(bind(&loop::MessageLoop::QuitNow, &m_msg_loop));
                 if (m_thread->joinable())
@@ -37,6 +32,12 @@ namespace loop {
                 delete m_thread;
                 m_thread = nullptr;
             }
+        }
+    protected:
+        void join() {
+            m_thread->join();
+            delete m_thread;
+            m_thread = nullptr;
         }
         MessageLoop m_msg_loop;
 

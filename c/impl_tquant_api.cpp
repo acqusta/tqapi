@@ -90,8 +90,6 @@ namespace tquant { namespace api { namespace impl {
                 m_tapi->on_notification(rpcmsg);
             }
         }
-        virtual void on_call_result(int callid, shared_ptr<MpRpcMessage> cr) override
-        {}
     private:
         MpRpcClient*  m_client;
         DataApiImpl*    m_dapi;

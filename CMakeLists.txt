@@ -64,7 +64,6 @@ else()
 
 endif()
 
-add_subdirectory(lib/loop)
 add_subdirectory(lib/msgpack)
 add_subdirectory(lib/myutils)
 add_subdirectory(lib/snappy)

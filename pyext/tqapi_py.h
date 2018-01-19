@@ -17,7 +17,7 @@
 #  define API_EXPORT __attribute__ ((visibility("default")))
 #endif
 
-#include "loop/MsgRunLoop.h"
+#include "myutils/loop/MsgRunLoop.h"
 #include "tquant_api.h"
 
 using namespace tquant::api;

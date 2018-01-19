@@ -98,54 +98,23 @@ namespace mprpc {
     MpRpcClient::MpRpcClient(shared_ptr<Connection> conn)
         : m_conn(conn)
         , m_callback(nullptr)
-        , m_should_exit(false)
         , m_connected(false)
         , m_last_hb_time(system_clock::time_point())
     {
         m_cur_callid = 0;
 
-        m_callback_thread = new thread(&MpRpcClient::callback_run, this);
+        msg_loop().PostDelayedTask(bind(&MpRpcClient::on_check_timer, this), 100);
     }
 
     MpRpcClient::~MpRpcClient()
     {
-        m_conn->close();
-
-        m_should_exit = true;
-
-        m_callback_thread->join();
-
-        delete m_callback_thread;
+        close();
     }
 
-    void MpRpcClient::callback_run()
+    void MpRpcClient::on_check_timer()
     {
-        while (!m_should_exit) {
-            function<void()> func;
-            {
-                unique_lock<mutex> lock(m_asyncall_lock);
-                if (!m_asyncall_queue.empty()) {
-                    func = m_asyncall_queue.front();
-                    m_asyncall_queue.pop_front();
-                }
-                else {
-                    m_asyncall_cond.wait_for(lock, milliseconds(100));
-                    continue;
-                }
-            }
-            if (func) func();
-        }
-    }
+        msg_loop().PostDelayedTask(bind(&MpRpcClient::on_check_timer, this), 100);
 
-    void MpRpcClient::call_callback(function<void()> func)
-    {
-        unique_lock<mutex> lock(m_asyncall_lock);
-        m_asyncall_queue.push_back(func);
-        m_asyncall_cond.notify_one();
-    }
-
-    void MpRpcClient::on_idle()
-    {
         auto now = system_clock::now();
         if (now - m_last_hb_time > seconds(2)) {
             m_last_hb_time = now;
@@ -155,61 +124,63 @@ namespace mprpc {
         if (m_connected) {
             if (now - m_last_hb_rsp_time > seconds(3)) {
                 m_connected = false;
-                if (m_callback)  call_callback(bind(&MpRpcClient_Callback::on_disconnected, m_callback));
+                if (m_callback) m_callback->on_disconnected();
+            }
+        }
+
+        for (auto it = m_on_rsp_map.begin(); it != m_on_rsp_map.end(); ) {
+            if (it->second.dead_time < now) {
+                it->second.promise->set_error(make_shared<pair<int, string>>(-1, "timeout"));
+                it = m_on_rsp_map.erase(it);
+            }
+            else {
+                it++;
             }
         }
     }
 
     void MpRpcClient::on_conn_status(bool connected)
     {
-        m_connected = connected;
-        if (m_callback) {
-            if (connected)
-                call_callback(bind(&MpRpcClient_Callback::on_connected, m_callback));
-            else
-                call_callback(bind(&MpRpcClient_Callback::on_disconnected, m_callback));
-        }
+        msg_loop().PostTask([this, connected]() {
+            m_connected = connected;
+            if (m_callback) {
+                if (connected)
+                    m_callback->on_connected();
+                else
+                    m_callback->on_disconnected();
+            }
+        });
     }
 
     void MpRpcClient::on_recv(const char* data, size_t size)
     {
-        try {
-            shared_ptr<MpRpcMessage> rpcmsg = MpRpcMessage::parse(data, size);
-            if (!rpcmsg) return;
+        shared_ptr<MpRpcMessage> rpcmsg = MpRpcMessage::parse(data, size);
+        if (!rpcmsg) return;
+        rpcmsg->recv_time = system_clock::now();
 
-            rpcmsg->recv_time = system_clock::now();
-
+        msg_loop().PostTask([this, rpcmsg]() {
             if (rpcmsg->method == ".sys.heartbeat") {
                 m_last_hb_rsp_time = system_clock::now();
                 if (!m_connected) {
                     m_connected = true;
-                    if (m_callback)
-                        call_callback(bind(&MpRpcClient_Callback::on_connected, m_callback));
+                    if (m_callback) m_callback->on_connected();
                 }
-                if (m_callback)
-                    call_callback(bind(&MpRpcClient_Callback::on_notification, m_callback, rpcmsg));
+                if (m_callback) m_callback->on_notification(rpcmsg);
             }
             else if (rpcmsg->id) {
-                unique_lock<mutex> lock(m_waiter_map_lock);
-
-                auto it = m_waiter_map.find(rpcmsg->id);
-                if (it != m_waiter_map.end()) {
-                    it->second->result = rpcmsg;
-                    it->second->cond.notify_all();
-                }
-                else {
-                    call_callback(bind(&MpRpcClient_Callback::on_call_result, m_callback, rpcmsg->id, rpcmsg));
+                auto it = m_on_rsp_map.find(rpcmsg->id);
+                if (it != m_on_rsp_map.end()) {
+                    auto rsp = it->second.promise;
+                    m_on_rsp_map.erase(it);
+                    rsp->set_value(rpcmsg);
                 }
             }
             else {
                 // Notification message
                 if (m_callback && !rpcmsg->method.empty())
-                    call_callback(bind(&MpRpcClient_Callback::on_notification, m_callback, rpcmsg));
+                    m_callback->on_notification(rpcmsg);
             }
-        }
-        catch (exception& e) {
-            std::cerr << e.what() << endl;
-        }
+        });
     }
 
     bool MpRpcClient::connect(const string& addr, MpRpcClient_Callback* callback)
@@ -225,68 +196,70 @@ namespace mprpc {
 
     void MpRpcClient::close()
     {
+        close_loop();
         m_conn->close();
-        m_should_exit = true;
     }
 
-    int MpRpcClient::asnyc_call(const char* method, const char* params, size_t params_size)
+    Future<MpRpcMessage, pair<int, string>> MpRpcClient::asnyc_call(const char* method, const char* params, size_t params_size, int timeout_ms)
     {
         int callid = ++m_cur_callid;
-
         MsgPackPacker pk;
         pk.pack_map(3);
-        pk.pack_map_item    ("id",     callid);
-        pk.pack_map_item    ("method", method);
+        pk.pack_map_item("id", callid);
+        pk.pack_map_item("method", method);
         pk.pack_map_item_obj("params", params, params_size);
 
-        m_conn->send(pk.sb.data, pk.sb.size);
-        return callid;
+        auto msg = make_shared<string>(pk.sb.data, pk.sb.size);
+        auto prom = make_shared<AsyncCallPromise>(&this->m_msg_loop);
+
+        this->msg_loop().PostTask([this, prom, callid, timeout_ms, msg]() {
+            m_conn->send(msg->data(), msg->size());
+            m_on_rsp_map[callid] = OnRspHandler(prom, system_clock::now() + milliseconds(timeout_ms));
+        });
+        return prom->get_future();
     }
 
-    static inline shared_ptr<MpRpcMessage> build_timeout_result(const char* method, int callid)
-    {
-        auto rsp = make_shared<MpRpcMessage>();
+    //static inline shared_ptr<MpRpcMessage> build_timeout_result(const char* method, int callid)
+    //{
+    //    auto rsp = make_shared<MpRpcMessage>();
 
-        rsp->err_code = -1;
-        rsp->err_msg = "rpc_call timeout";
-        rsp->id = callid;
-        rsp->method = method;
+    //    rsp->err_code = -1;
+    //    rsp->err_msg = "rpc_call timeout";
+    //    rsp->id = callid;
+    //    rsp->method = method;
 
-        return rsp;
-    }
+    //    return rsp;
+    //}
 
     shared_ptr<MpRpcMessage> MpRpcClient::call(const char* method, const char* params, size_t params_size, int timeout)
     {
         int callid = ++m_cur_callid;
 
-        ResultWaiter waiter;
-        if (timeout != 0) {
-            unique_lock<mutex> lock(m_waiter_map_lock);
-            m_waiter_map[callid] = &waiter;
-        }
+        mutex mtx;
+        condition_variable  cond;
+        shared_ptr<MpRpcMessage> rsp_msg;
 
-        MsgPackPacker pk;
-        pk.pack_map(3);
-        pk.pack_map_item    ("id", callid);
-        pk.pack_map_item    ("method", method);
-        pk.pack_map_item_obj("params", params, params_size);
-
-        m_conn->send(pk.sb.data, pk.sb.size);
-
-        if (!timeout)
-            return nullptr;
-
-        auto dead_time = system_clock::now() + milliseconds(timeout);
-        while (true) {
-            unique_lock<mutex> lock(m_waiter_map_lock);
-            waiter.cond.wait_for(lock, dead_time - system_clock::now());
-            if (waiter.result || system_clock::now() >= dead_time){
-                m_waiter_map.erase(m_waiter_map.find(callid));
-                break;
-            }
-        }
-
-        return waiter.result ? waiter.result : build_timeout_result(method, callid);
+        asnyc_call(method, params, params_size, timeout)
+            .in_loop(nullptr)
+            .on_success([&mtx, &cond, &rsp_msg](shared_ptr<MpRpcMessage> msg) {
+                unique_lock<mutex> lock(mtx);
+                rsp_msg = msg;
+                cond.notify_one();
+            })
+            .on_failure([callid, method, &mtx, &cond, &rsp_msg](shared_ptr<pair<int, string>> e) {
+                auto rsp = make_shared<MpRpcMessage>();
+                rsp->err_code = e->first;
+                rsp->err_msg = e->second;
+                rsp->id = callid;
+                rsp->method = method;
+                unique_lock<mutex> lock(mtx);
+                rsp_msg = rsp;
+                cond.notify_one();
+            });
+        
+        unique_lock<mutex> lock(mtx);
+        cond.wait(lock);
+        return rsp_msg;
     }
 
     void MpRpcClient::do_send_heartbeat()
@@ -459,5 +432,16 @@ namespace mprpc {
             }
         }
         return true;
+    }
+
+    void MpRpcServer::close(const string& conn_id)
+    {
+        unique_lock<recursive_mutex> lock(m_conn_map_lock);
+
+        auto it = m_conn_map.find(conn_id);
+        if (it != m_conn_map.end()) {
+            //auto conn = it->second;
+            m_conn_map.erase(it);
+        }
     }
 }

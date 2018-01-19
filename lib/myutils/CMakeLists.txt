@@ -15,6 +15,13 @@ set(SRC
   misc.h
   ipc_connection.cpp
   ipc_connection.h
+  loop/AsyncCall.h
+  loop/MessageLoop.cpp
+  loop/MessageLoop.h
+  loop/MsgLoopFuture.h
+  loop/MsgRunLoop.h
+  loop/RunLoop.cpp
+  loop/RunLoop.h
   )
 
 include_directories( . )
