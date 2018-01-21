@@ -1,6 +1,6 @@
 # tqapi
 
-TQuant是acqusta.com开发的量化交易工具。它通过互联网提供行情和交易服务，支持本地插件提供行情和交易服务，适合量化爱好者、私募搭建自己的交易系统。
+TQuant是[acqusta.com](http://www.acqusta.com)开发的量化交易工具。它通过互联网提供行情和交易服务，支持本地插件提供行情和交易服务，适合量化爱好者、私募搭建自己的交易系统。
 
 tqapi是TQuant的的标准API，包含行情和交易接口。源码开放，支持多种语言。
 
@@ -65,7 +65,7 @@ tqapi是TQuant的的标准API，包含行情和交易接口。源码开放，支
 | callback          | 回调函数 |
 
 ## TQC 客户端
-为使用tquant服务，用户需要在自己电脑上运行服务程序tqc。该程序负责用户登录、数据加速，并提供tqapi服务。tqc下载地址： [acqusta.com](http://www.acqusta.com/download/)。
+为使用tquant服务，用户需要在自己电脑上运行服务程序tqc。该程序负责用户登录、数据加速，并提供tqapi服务。tqc下载地址： [acqusta.com/download](http://www.acqusta.com/download/)。
 
 > 目前只发布了Windows版本。如有需要Linux和Max版本，可以通过微信联系。
 
