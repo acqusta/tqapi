@@ -1,16 +1,19 @@
 # tqapi
 
-tqapi是acqusta.com的量化交易平台TQuant的客户端API。它通过TQuant平台提供的互联网服务，提供行情和交易接口。适合量化爱好者、私募搭建自己的交易系统。
+TQuant是[acqusta.com](http://www.acqusta.com)开发的量化交易工具。它通过互联网提供行情和交易服务，支持本地插件提供行情和交易服务，适合量化爱好者、私募搭建自己的交易系统。
 
-使用说明参见API源码注释和 [Wiki](https://github.com/tzxu/tqc-api/wiki)。
+tqapi是TQuant的的标准API，包含行情和交易接口。源码开放，支持多种语言。
+
+使用说明参见API源码注释和 [Wiki](https://github.com/acqusta/tqapi/wiki)。
 更多资讯，请关注微信号：tquant。
 
 <img src="weichat_tquant.jpg" width="150" height="150">
 
 ## 特点
 
-* 实时推送行情，支持Sina等互联网Level 1行情、CTP期货行情
+* 实时推送行情，支持sina等互联网Level 1行情、CTP期货行情
 * 快速获取历史数据，包括tick, 分钟线，日线
+* 本地文件历史数据库，特有压缩算法高效压缩和快速读取
 * 交易接口统一，同时支持股票和期货
 * 订单状态、成交回报实时通知
 * 支持C++, Pyhon, Java, Scala, JavaScript等编程语言
@@ -36,9 +39,13 @@ tqapi是acqusta.com的量化交易平台TQuant的客户端API。它通过TQuant�
 
 | 数据类型 | 期限   |
 | ---- | ---- |
-| tick | 3个月  |
+| tick | 7天  |
 | 分钟线  | 1 年  |
 | 日行情  | 全部   |
+
+> TQuant不是数据提供商，这里的数据仅供用户测试使用，不保证数据质量。
+> 如果用户自己有tick数据，可以通过TQuant的数据转换工具导入到本地历史数据库中使用。
+> 
 
 ## 交易接口
 
@@ -58,17 +65,9 @@ tqapi是acqusta.com的量化交易平台TQuant的客户端API。它通过TQuant�
 | callback          | 回调函数 |
 
 ## TQC 客户端
-用户需要在自己电脑上运行客户端程序tqc。该程序负责用户登录、数据加速，并提供tqapi服务。tqc下载地址： [TQuant](http://www.acqusta.com/download/tqc)。
+为使用tquant服务，用户需要在自己电脑上运行服务程序tqc。该程序负责用户登录、数据加速，并提供tqapi服务。tqc下载地址： [acqusta.com/download](http://www.acqusta.com/download/)。
 
 > 目前只发布了Windows版本。如有需要Linux和Max版本，可以通过微信联系。
-
-**试用帐号: 用户名 demo 密码 123456。** 
-
-试用帐号有以下限制：
-
-1. 允许订阅的代码：000001.SH, 399001.SZ, 600000.SH, 000001.SZ, IF.CFE, rb.SHF
-1. 允许交易的代码：600000.SH, 000001.SZ， IF.CFE, rb.SHF
-
 
 
 
