@@ -163,7 +163,7 @@ PyObject* _wrap_tapi_cancel_order(PyObject* self, PyObject *args, PyObject* kwar
     int64_t order_id;
     const char* entrust_no;
 
-    if (!PyArg_ParseTuple(args, "LssL", &h, &account_id, &code, &entrust_no, &order_id))
+    if (!PyArg_ParseTuple(args, "LsssL", &h, &account_id, &code, &entrust_no, &order_id))
         return NULL;
 
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
