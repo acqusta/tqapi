@@ -125,7 +125,7 @@ class DataApi:
         else:
             return (v, msg)
 
-    def dailybar(self, code, price_adj="", align=True, source=None):
+    def daily_bar(self, code, price_adj="", align=True, source=None):
         v, msg = _tqapi.dapi_dailybar(self._api._handle, str(code), str(price_adj), bool(align), str(source) if source else "")
         if v:
             return (pd.DataFrame(v), msg)

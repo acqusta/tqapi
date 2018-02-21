@@ -1,10 +1,10 @@
 package com.acqusta.tquant.api;
 
 /**
- *  数据查询接口
+ *  数据接口
  *
  *  功能：
- *      查实时行情，当天的tick, 分钟线
+ *      查实时行情，当天和历史的tick, 分钟线
  *      订阅和推送行情
  */
 public interface DataApi {
@@ -134,8 +134,9 @@ public interface DataApi {
      *  当 cycle == "1m"时，返回trading_day的分钟线，trading_day=0表示当前交易日。
      *
      * @param code          证券代码
-     * @param cycle         "1m" 或 "1d"
-     * @param trading_day   交易日，对分钟线有意义
+     * @param cycle         "1m"
+     * @param trading_day   交易日
+     * @param align         是否对齐
      * @param source
      * @return
      */
@@ -148,6 +149,7 @@ public interface DataApi {
      * @param price_adj     价格复权，取值
      *                        back -- 后复权
      *                        forward -- 前复权
+     * @param align         是否对齐
      * @param source
      * @return
      */

@@ -153,7 +153,7 @@ namespace tquant {  namespace api {
         /**
         * 取某交易日的某个代码的 ticks
         *
-        * tradingday 为0，表示当前交易日
+        * 当tradingday为0，表示当前交易日
         *
         * @param code
         * @param trading_day
@@ -164,12 +164,12 @@ namespace tquant {  namespace api {
         /**
         * 取某个代码的Bar
         *
-        * 目前只支持分钟线和日线。
+        * 目前只支持分钟线
         *  当 cycle == "1m"时，返回trading_day的分钟线，trading_day=0表示当前交易日。
         *
         * @param code          证券代码
         * @param cycle         "1m""
-        * @param trading_day   交易日，对分钟线有意义
+        * @param trading_day   交易日
         * @param align         是否对齐
         * @return
         */
@@ -178,9 +178,6 @@ namespace tquant {  namespace api {
         /**
         * 取某个代码的日线
         *
-        * 目前只支持分钟线和日线。
-        *  当 cycle == "1m"时，返回trading_day的分钟线，trading_day=0表示当前交易日。
-        *  当 cycle == "1d"时，返回所有的日线，trading_day值无意义。
         *
         * @param code          证券代码
         * @param price_adj     价格复权，取值
