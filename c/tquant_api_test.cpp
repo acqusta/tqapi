@@ -15,11 +15,12 @@ public:
     virtual void on_market_quote(shared_ptr<MarketQuote> quote) override 
     {
         auto q = quote.get();
-        // cout << "onQuote: " << q->code << "," << q->date << "," << q->time << ","
-        //     << q->open << "," << q->high << "," << q->low << "," << q->close << ","
-        //     << q->volume << "," << q->turnover << "," << q->oi << endl;
-
-        {
+        
+        if (1) {
+            cout << "onQuote: " << q->code << "," << q->date << "," << q->time << ","
+                << q->open << "," << q->high << "," << q->low << "," << q->close << ","
+                << q->volume << "," << q->turnover << "," << q->oi << endl;
+        } else {
             static int64_t tick_count;
             static int64_t csum_time;
 
@@ -54,10 +55,10 @@ MyCallback callback;
 
 void test_dapi(TQuantApi* api)
 {
-    const char* code = "rb.SHF";// .CFE";
+    const char* code = "RB.SHF";// .CFE";
     vector<string> codes;
     codes.push_back(code);
-    codes.push_back("rb1805.SHF");
+    codes.push_back("RB1805.SHF");
 
     api->data_api()->set_callback(&callback);
 
@@ -267,7 +268,7 @@ void perf_test(DataApi* dapi)
 
 void perf_test2(DataApi* dapi)
 {
-    const char* code = "rb.SHF";
+    const char* code = "RB.SHF";
     vector<string> codes = { code };
     while (true) {
         dapi->subscribe(codes);
@@ -307,13 +308,12 @@ void perf_test2(DataApi* dapi)
 
 }
 
-void test_dapi_local(DataApi* dapi)
+void test_dapi2(DataApi* dapi)
 {
     dapi->set_callback(&callback);
 
-    vector<string> codes = { "000001.SH", "600000.SH", "000001.SZ", "399001.SZ", "rb1805.SHF", "IF1801.CFE", "M1805.DCE", "i1803.SHF" };
-    //codes
-    auto r = dapi->subscribe(codes, "local");
+    vector<string> codes = { "000001.SH", "600000.SH", "000001.SZ", "399001.SZ", "RB1805.SHF", "IF1801.CFE", "M1805.DCE", "I1803.SHF" };
+    auto r = dapi->subscribe(codes);
     if (r.value) {
         stringstream ss;
         for (auto & s : *r.value) ss << s << ",";
@@ -325,11 +325,14 @@ void test_dapi_local(DataApi* dapi)
 
     while (true) {
         this_thread::sleep_for(seconds(1));
-        //auto r = dapi->quote("rb1805.SHF", "local");
-        //if (r.value) {
-        //    auto q = r.value;
-        //    cout << "quote: " << q->code << "," << q->date << "," << q->time << "," << q->last << "," << q->volume << endl;
-        //}
+        auto r = dapi->quote("RB1805.SHF");
+        if (r.value) {
+            //auto q = r.value;
+            //cout << "quote: " << q->code << "," << q->date << "," << q->time << "," << q->last << "," << q->volume << endl;
+        }
+        else {
+            cout << "error quote: " << r.msg << endl;
+        }
     }
 }
 
@@ -344,8 +347,8 @@ int main()
     //perf_test(api->data_api());
     //perf_test2(api->data_api());
 
-    test_dapi_local(api->data_api());
-    test_dapi(api);
+    //test_dapi(api);
+    test_dapi2(api->data_api());
     //test_tapi(api->trade_api());
     getchar();
 

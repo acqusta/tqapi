@@ -254,6 +254,10 @@ bool IpcConnection::connect(const string& addr, Connection_Callback* callback)
 
 void IpcConnection::reconnect()
 {
+    m_msg_loop.PostTask([this] {
+        m_connected = false;
+        do_connect();
+    });
 }
 
 

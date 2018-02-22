@@ -65,6 +65,15 @@ void SocketConnection::main_run()
         if (FD_ISSET(m_cmd_server, &rset)) {
             char buf[16];
             ::recv(m_cmd_server, buf, 16, 0);
+
+            if (buf[0] == 'C' || buf[0] == 'R') {
+                if (m_socket != INVALID_SOCKET) {
+                    closesocket(m_socket);
+                    m_socket = INVALID_SOCKET;
+                    m_recv_size = 0;
+                    m_pkt_size = 0;
+                }
+            }
         }
 
         if (m_socket != INVALID_SOCKET) {
@@ -152,6 +161,8 @@ bool SocketConnection::connect(const string& addr, Connection_Callback* callback
 
 void SocketConnection::reconnect()
 {
+    char buf[1] = { 'R' };
+    ::send(m_cmd_client, buf, 1, 0);
 }
 
 bool SocketConnection::do_connect() 
