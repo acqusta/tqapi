@@ -9,7 +9,7 @@
 
 static inline PyObject* convert_quote      (MarketQuote* q);
 static inline PyObject* convert_bar        (Bar* b);
-static inline PyObject* convert_dailybar   (DailyBar* b);
+//static inline PyObject* convert_dailybar   (DailyBar* b);
 static inline PyObject* convert_bars       (vector<Bar>* b);
 static inline PyObject* convert_dailybars  (vector<DailyBar>* b);
 static inline PyObject* convert_ticks      (vector<MarketQuote>* ticks);
@@ -382,6 +382,7 @@ static PyObject* convert_bars(vector<Bar>* bars)
     return dict;
 }
 
+#if 0
 static PyObject* convert_dailybar(DailyBar* b)
 {
     PyObject* obj = PyDict_New();
@@ -401,6 +402,7 @@ static PyObject* convert_dailybar(DailyBar* b)
 
     return obj;
 }
+#endif
 
 static PyObject* convert_dailybars(vector<DailyBar>* bars)
 {

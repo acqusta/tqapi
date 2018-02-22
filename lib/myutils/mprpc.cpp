@@ -99,8 +99,8 @@ namespace mprpc {
         : m_conn(conn)
         , m_callback(nullptr)
         , m_connected(false)
-        , m_last_hb_time(system_clock::now())
         , m_last_hb_rsp_time(system_clock::now())
+        , m_last_hb_time(system_clock::now())
     {
         m_cur_callid = 0;
 

@@ -304,7 +304,6 @@ namespace tquant { namespace api { namespace impl {
             }
             else if (rpcmsg->method == ".sys.heartbeat") {
                 if (!is_map(rpcmsg->result)) return;
-                uint64_t sub_hash = 0;
                 msgpack_object sub_info;
                 if (mp_map_get(rpcmsg->result, "sub_info", &sub_info)) {
                     unordered_map<string, uint64_t> new_sub_info;

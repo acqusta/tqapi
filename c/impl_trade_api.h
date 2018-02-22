@@ -85,12 +85,10 @@ namespace tquant { namespace api { namespace impl {
     class TradeApiImpl : public TradeApi {
         MpRpcClient*        m_client;
         unordered_set<string> m_sub_codes;
-        uint64_t              m_sub_hash;
         TradeApi_Callback*    m_callback;
     public:
         TradeApiImpl(MpRpcClient* client)
             : m_client(client)
-            , m_sub_hash(0)
             , m_callback(nullptr)
         {}
 
