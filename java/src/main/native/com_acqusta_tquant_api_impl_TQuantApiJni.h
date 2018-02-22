@@ -34,10 +34,10 @@ JNIEXPORT jlong JNICALL Java_com_acqusta_tquant_api_impl_TQuantApiJni_getTradeAp
 /*
  * Class:     com_acqusta_tquant_api_impl_TQuantApiJni
  * Method:    getDataApi
- * Signature: (J)J
+ * Signature: (JLjava/lang/String;)J
  */
 JNIEXPORT jlong JNICALL Java_com_acqusta_tquant_api_impl_TQuantApiJni_getDataApi
-  (JNIEnv *, jclass, jlong);
+  (JNIEnv *, jclass, jlong, jstring);
 
 #ifdef __cplusplus
 }

@@ -34,29 +34,31 @@ namespace tquant { namespace api { namespace impl {
         SubInfo() : hash_code(0)
         {}
     };
+
     class DataApiImpl : public DataApi {
         mprpc::MpRpcClient*   m_client;
         DataApi_Callback*     m_callback;
         mutex                 m_mtx;
-        //string                m_source;
+        string                m_source;
         unordered_map<string, SubInfo> m_sub_info_map;
     public:
-        DataApiImpl(mprpc::MpRpcClient* client) 
+        DataApiImpl(mprpc::MpRpcClient* client, const char* source) 
             : m_client(client)
             , m_callback(nullptr)
+            , m_source(source)
         {}
 
         virtual ~DataApiImpl() override
         {}
 
-        virtual CallResult<vector<MarketQuote>> tick(const char* code, int trading_day, const char* source = nullptr) override
+        virtual CallResult<vector<MarketQuote>> tick(const char* code, int trading_day) override
         {
             mprpc::MsgPackPacker pk;
             pk.pack_map(4);
             pk.pack_map_item("code",        code);
             pk.pack_map_item("trading_day", trading_day);
             pk.pack_map_item("_format",     "bin");
-            pk.pack_map_item("source",      source ? source : "");
+            pk.pack_map_item("source",      m_source);
 
             auto rsp = m_client->call("dapi.tst", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
@@ -76,7 +78,7 @@ namespace tquant { namespace api { namespace impl {
             return CallResult<vector<MarketQuote>>(ticks);
         }
 
-        virtual CallResult<vector<Bar>> bar(const char* code, const char* cycle, int trading_day, bool align, const char* source = nullptr) override
+        virtual CallResult<vector<Bar>> bar(const char* code, const char* cycle, int trading_day, bool align) override
         {
             MsgPackPacker pk;
             pk.pack_map(6);
@@ -85,7 +87,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map_item("trading_day", trading_day);
             pk.pack_map_item("align",       align);
             pk.pack_map_item("_format",     "bin");
-            pk.pack_map_item("source",      source ? source : "");
+            pk.pack_map_item("source",      m_source);
 
             auto rsp = m_client->call("dapi.tsi", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
@@ -105,7 +107,7 @@ namespace tquant { namespace api { namespace impl {
             return CallResult<vector<Bar>>(bars);
         }
 
-        virtual CallResult<vector<DailyBar>> daily_bar(const char* code, const char* price_adj, bool align, const char* source = nullptr) override
+        virtual CallResult<vector<DailyBar>> daily_bar(const char* code, const char* price_adj, bool align) override
         {
             MsgPackPacker pk;
             pk.pack_map(6);
@@ -114,7 +116,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map_item("price_adj",   price_adj);
             pk.pack_map_item("align",       align);
             pk.pack_map_item("_format",     "bin");
-            pk.pack_map_item("source",       source ? source : "");
+            pk.pack_map_item("source",       m_source);
 
             auto rsp = m_client->call("dapi.tsi", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
@@ -135,13 +137,13 @@ namespace tquant { namespace api { namespace impl {
             return CallResult<vector<DailyBar>>(bars);
         }
 
-        virtual CallResult<MarketQuote> quote(const char* code, const char* source = nullptr) override
+        virtual CallResult<MarketQuote> quote(const char* code) override
         {
             MsgPackPacker pk;
             pk.pack_map(3);
             pk.pack_map_item("code",    code);
             pk.pack_map_item("_format", "bin");
-            pk.pack_map_item("source",  source ? source : "");
+            pk.pack_map_item("source",  m_source);
 
             auto rsp = m_client->call("dapi.tsq_quote", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
@@ -211,7 +213,7 @@ namespace tquant { namespace api { namespace impl {
             }
         }
 
-        virtual CallResult<vector<string>> subscribe(const vector<string>& codes, const char* source = nullptr) override
+        virtual CallResult<vector<string>> subscribe(const vector<string>& codes) override
         {
             stringstream ss;
             for (size_t i = 0; i < codes.size(); i++) {
@@ -225,7 +227,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map(3);
             pk.pack_map_item ("codes",        ss.str());
             pk.pack_map_item ("want_bin_fmt", true);
-            pk.pack_map_item("source",        source ? source : "");
+            pk.pack_map_item("source",        m_source);
 
             auto rsp = m_client->call("dapi.tsq_sub", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
@@ -234,7 +236,7 @@ namespace tquant { namespace api { namespace impl {
             return update_subscribe_result(rsp->result);
         }
 
-        virtual CallResult<vector<string>> unsubscribe(const vector<string>& codes, const char* source = nullptr) override
+        virtual CallResult<vector<string>> unsubscribe(const vector<string>& codes) override
         {
             MsgPackPacker pk_codes;
             pk_codes.pack_array(codes.size());
@@ -253,7 +255,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map(3);
             pk.pack_map_item("codes",        ss.str());
             pk.pack_map_item("want_bin_fmt", true);
-            pk.pack_map_item("source",       source ? source : "");
+            pk.pack_map_item("source",       m_source);
 
             auto rsp = m_client->call("dapi.tsq_unsub", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))

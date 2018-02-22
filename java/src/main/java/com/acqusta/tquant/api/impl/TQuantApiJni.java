@@ -1,13 +1,14 @@
 package com.acqusta.tquant.api.impl;
 
 import com.acqusta.tquant.api.DataApi;
+import com.acqusta.tquant.api.TQuantApi;
 import com.acqusta.tquant.api.TradeApi;
 
 public class TQuantApiJni {
 
     static {
-        //System.load("D:\\work\\github\\tqc-api\\c\\build\\java\\src\\main\\native\\Release\\tqapi_jni.dll");
-        System.load("/Users/terryxu/work/tquant/tqc-api/c/build/dist/java/libtqapi_jni.dylib");
+        System.load("D:\\work\\github\\tqapi\\build\\java\\src\\main\\native\\Release\\tqapi_jni.dll");
+        //System.load("/Users/terryxu/work/tquant/tqapi/build/dist/java/libtqapi_jni.dylib");
     }
 
     public static native long create(String addr) throws Exception;
@@ -16,7 +17,7 @@ public class TQuantApiJni {
 
     public static native long getTradeApi(long handle);
 
-    public static native long getDataApi(long handle);
+    public static native long getDataApi(long handle, String source);
 
     long handle = 0;
 
@@ -55,23 +56,51 @@ class TradeApiJni {
     static native String query(long handle, String account_id, String command, String params);
 
     static native void setCallback(long handle, TradeApi.Callback callback);
+
+    long handle = 0;
+
+    TradeApiJni(TQuantApiJni tqapi) throws  Exception {
+        this.handle = TQuantApiJni.getTradeApi(tqapi.handle);
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+    }
 }
 
 class DataApiJni {
 
-    static native DataApi.MarketQuote[] getTick(long handle, String code, int trading_day, String source);
+    static native DataApi.MarketQuote[] getTick(long handle, String code, int trading_day);
 
-    static native DataApi.Bar[] getBar (long handle, String code, String cycle, int trading_day, boolean align, String source);
+    static native DataApi.Bar[] getBar (long handle, String code, String cycle, int trading_day, boolean align);
 
-    static native DataApi.DailyBar[] getDailyBar (long handle, String code, String price_adj, boolean align, String source);
+    static native DataApi.DailyBar[] getDailyBar (long handle, String code, String price_adj, boolean align);
 
-    static native DataApi.MarketQuote getQuote (long handle, String code, String source);
+    static native DataApi.MarketQuote getQuote (long handle, String code);
 
-    static native String[] subscribe(long handle, String[] codes, String source);
+    static native String[] subscribe(long handle, String[] codes);
 
-    static native String[] unsubscribe(long handle, String[] codes, String source);
+    static native String[] unsubscribe(long handle, String[] codes);
 
     static native void setCallback(long handle, DataApi.Callback callback);
+
+    static native void destroy(long handle);
+
+    long handle = 0;
+
+    DataApiJni(TQuantApiJni tqapi, String source) throws  Exception {
+        this.handle = TQuantApiJni.getDataApi(tqapi.handle, source);
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        if (handle!=0) {
+            DataApiJni.destroy(handle);
+            handle = 0;
+        }
+        super.finalize();
+    }
 }
 
 class JniHelper {

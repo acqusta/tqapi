@@ -99,7 +99,8 @@ namespace mprpc {
         : m_conn(conn)
         , m_callback(nullptr)
         , m_connected(false)
-        , m_last_hb_time(system_clock::time_point())
+        , m_last_hb_time(system_clock::now())
+        , m_last_hb_rsp_time(system_clock::now())
     {
         m_cur_callid = 0;
 
@@ -121,11 +122,13 @@ namespace mprpc {
             do_send_heartbeat();
         }
 
-        if (m_connected) {
-            if (now - m_last_hb_rsp_time > seconds(3)) {
+        if (now - m_last_hb_rsp_time > seconds(4)) {
+            if (m_connected) {
                 m_connected = false;
                 if (m_callback) m_callback->on_disconnected();
             }
+            m_last_hb_rsp_time = now;
+            m_conn->reconnect();
         }
 
         for (auto it = m_on_rsp_map.begin(); it != m_on_rsp_map.end(); ) {
@@ -239,27 +242,32 @@ namespace mprpc {
         condition_variable  cond;
         shared_ptr<MpRpcMessage> rsp_msg;
 
-        asnyc_call(method, params, params_size, timeout)
-            .in_loop(nullptr)
-            .on_success([&mtx, &cond, &rsp_msg](shared_ptr<MpRpcMessage> msg) {
-                unique_lock<mutex> lock(mtx);
-                rsp_msg = msg;
-                cond.notify_one();
-            })
-            .on_failure([callid, method, &mtx, &cond, &rsp_msg](shared_ptr<pair<int, string>> e) {
-                auto rsp = make_shared<MpRpcMessage>();
-                rsp->err_code = e->first;
-                rsp->err_msg = e->second;
-                rsp->id = callid;
-                rsp->method = method;
-                unique_lock<mutex> lock(mtx);
-                rsp_msg = rsp;
-                cond.notify_one();
-            });
+        if (!timeout) {
+            asnyc_call(method, params, params_size, timeout);
+            return nullptr;
+        } else {
+            asnyc_call(method, params, params_size, timeout)
+                .in_loop(nullptr)
+                .on_success([&mtx, &cond, &rsp_msg](shared_ptr<MpRpcMessage> msg) {
+                    unique_lock<mutex> lock(mtx);
+                    rsp_msg = msg;
+                    cond.notify_one();
+                })
+                .on_failure([callid, method, &mtx, &cond, &rsp_msg](shared_ptr<pair<int, string>> e) {
+                    auto rsp = make_shared<MpRpcMessage>();
+                    rsp->err_code = e->first;
+                    rsp->err_msg = e->second;
+                    rsp->id = callid;
+                    rsp->method = method;
+                    unique_lock<mutex> lock(mtx);
+                    rsp_msg = rsp;
+                    cond.notify_one();
+                });
         
-        unique_lock<mutex> lock(mtx);
-        cond.wait(lock);
-        return rsp_msg;
+            unique_lock<mutex> lock(mtx);
+            cond.wait(lock);
+            return rsp_msg;
+        }
     }
 
     void MpRpcClient::do_send_heartbeat()

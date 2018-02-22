@@ -35,8 +35,7 @@ PyObject* _wrap_dapi_subscribe(PyObject* self, PyObject *args, PyObject* kwargs)
 {
     int64_t h;
     const char* codes;
-    const char* source;
-    if (!PyArg_ParseTuple(args, "Lss", &h, &codes, &source))
+    if (!PyArg_ParseTuple(args, "Ls", &h, &codes))
         return NULL;
 
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
@@ -45,7 +44,7 @@ PyObject* _wrap_dapi_subscribe(PyObject* self, PyObject *args, PyObject* kwargs)
     split(codes, ",", &ss);
 
     auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
-    auto r = wrap->data_api()->subscribe(ss, source);
+    auto r = wrap->data_api()->subscribe(ss);
 
     if (r.value) {
         for (auto& c : ss) {
@@ -68,8 +67,7 @@ PyObject* _wrap_dapi_unsubscribe(PyObject* self, PyObject *args, PyObject* kwarg
 {
     int64_t h;
     const char* codes;
-    const char* source;
-    if (!PyArg_ParseTuple(args, "Lss", &h, &codes, &source))
+    if (!PyArg_ParseTuple(args, "Ls", &h, &codes))
         return NULL;
 
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
@@ -78,7 +76,7 @@ PyObject* _wrap_dapi_unsubscribe(PyObject* self, PyObject *args, PyObject* kwarg
     split(codes, ",", &ss);
 
     auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
-    auto r = wrap->data_api()->unsubscribe(ss, source);
+    auto r = wrap->data_api()->unsubscribe(ss);
 
     if (r.value) {
         stringstream ss;
@@ -96,14 +94,14 @@ PyObject* _wrap_dapi_quote(PyObject* self, PyObject *args, PyObject* kwargs)
 {
     int64_t h;
     const char* code;
-    const char* source;
-    if (!PyArg_ParseTuple(args, "Lss", &h, &code, &source))
+
+    if (!PyArg_ParseTuple(args, "Ls", &h, &code))
         return NULL;
 
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
 
     auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
-    auto r = wrap->data_api()->quote(code, source);
+    auto r = wrap->data_api()->quote(code);
 
     if (r.value) {
         return Py_BuildValue("NO", convert_quote(r.value.get()), Py_None);
@@ -120,10 +118,9 @@ PyObject* _wrap_dapi_bar(PyObject* self, PyObject *args, PyObject* kwargs)
     int32_t trading_day = 0;
     PyObject* align;
     const char* cycle = nullptr;
-    const char* source;
 
-    if (!PyArg_ParseTuple(args, "LssiOs",
-        &h, &code, &cycle, &trading_day, &align, &source))
+    if (!PyArg_ParseTuple(args, "LssiO",
+        &h, &code, &cycle, &trading_day, &align))
     {
         return NULL;
     }
@@ -133,7 +130,7 @@ PyObject* _wrap_dapi_bar(PyObject* self, PyObject *args, PyObject* kwargs)
     if (!cycle || !strlen(cycle)) return Py_BuildValue("Os", Py_None, "empty cycle");
 
     auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
-    auto r = wrap->data_api()->bar(code, cycle, trading_day, PyObject_IsTrue(align), source);
+    auto r = wrap->data_api()->bar(code, cycle, trading_day, PyObject_IsTrue(align));
 
     if (r.value) {
         return Py_BuildValue("NO", convert_bars(r.value.get()), Py_None);
@@ -149,10 +146,9 @@ PyObject* _wrap_dapi_dailybar(PyObject* self, PyObject *args, PyObject* kwargs)
     const char* code = nullptr;
     PyObject* align = nullptr;
     const char* price_adj = nullptr;
-    const char* source;
 
-    if (!PyArg_ParseTuple(args, "LssOs",
-        &h, &code, &price_adj, &align, &source))
+    if (!PyArg_ParseTuple(args, "LssO",
+        &h, &code, &price_adj, &align))
     {
         return NULL;
     }
@@ -162,7 +158,7 @@ PyObject* _wrap_dapi_dailybar(PyObject* self, PyObject *args, PyObject* kwargs)
     if (!price_adj) return Py_BuildValue("Os", Py_None, "null price_adj");
 
     auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
-    auto r = wrap->data_api()->daily_bar(code, price_adj, PyObject_IsTrue(align), source);
+    auto r = wrap->data_api()->daily_bar(code, price_adj, PyObject_IsTrue(align));
 
     if (r.value) {
         return Py_BuildValue("NO", convert_dailybars(r.value.get()), Py_None);
@@ -177,10 +173,9 @@ PyObject* _wrap_dapi_tick(PyObject* self, PyObject *args, PyObject* kwargs)
     int64_t h = 0;
     const char* code;
     int trading_day;
-    const char* source;
 
-    if (!PyArg_ParseTuple(args, "Lsis",
-        &h, &code, &trading_day, &source))
+    if (!PyArg_ParseTuple(args, "Lsi",
+        &h, &code, &trading_day))
     {
         return NULL;
     }
@@ -189,7 +184,7 @@ PyObject* _wrap_dapi_tick(PyObject* self, PyObject *args, PyObject* kwargs)
     if (!code || strlen(code)==0) return Py_BuildValue("Os", Py_None, "empty code");
 
     auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
-    auto r = wrap->data_api()->tick(code, trading_day, source);
+    auto r = wrap->data_api()->tick(code, trading_day);
 
     if (r.value) {
         return Py_BuildValue("NO", convert_ticks(r.value.get()), Py_None);

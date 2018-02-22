@@ -11,9 +11,6 @@ namespace tquant { namespace api { namespace impl {
 
     using namespace std;
 
-
-
-
 } } }
 
 #endif

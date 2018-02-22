@@ -6,8 +6,7 @@ using namespace std;
 using namespace tquant::api;
 
 jobject convert_quote(JNIEnv* env, jclass help_cls, jmethodID createMarketQuote, tquant::api::MarketQuote* q)
-{
-    
+{    
     return env->CallStaticObjectMethod(help_cls, createMarketQuote,
         LocalRef(env, env->NewStringUTF(q->code)).m_obj,
         q->date,
@@ -93,9 +92,9 @@ jobject convert_bar(JNIEnv* env, jclass help_cls, jmethodID createBar, tquant::a
  * Signature: (JLjava/lang/String;I)[Lcom/acqusta/tquant/api/DataApi/MarketQuote;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getTick
-(JNIEnv * env, jclass cls, jlong h, jstring code, jint trading_day, jstring source)
+(JNIEnv * env, jclass cls, jlong h, jstring code, jint trading_day)
 {
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<DataApiWrap*>(h);
     if (!wrap) {
         throwJavaException(env, "null handle");
         return 0;
@@ -103,8 +102,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getTi
 
     try {
         string s_code = get_string(env, code);
-        string s_source = get_string(env, source);
-        auto r = wrap->api->data_api()->tick(s_code.c_str(), trading_day, s_source.c_str());
+        auto r = wrap->m_dapi->tick(s_code.c_str(), trading_day);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -112,7 +110,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getTi
 
         jobjectArray arr = env->NewObjectArray((jsize)r.value->size(), env->FindClass("Lcom/acqusta/tquant/api/DataApi$MarketQuote;"), nullptr);
         for (size_t i = 0; i < r.value->size(); i++) {
-            auto obj = convert_quote(env, wrap->help_cls, wrap->createMarketQuote, &r.value->at(i));
+            auto obj = convert_quote(env, wrap->m_tqapi->help_cls, wrap->m_tqapi->createMarketQuote, &r.value->at(i));
             env->SetObjectArrayElement(arr, (jsize)i, obj);
             env->DeleteLocalRef(obj);
         }
@@ -131,9 +129,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getTi
  * Signature: (JLjava/lang/String;Ljava/lang/String;IZ)[Lcom/acqusta/tquant/api/DataApi/Bar;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getBar
-  (JNIEnv *env, jclass cls, jlong h, jstring code, jstring cycle, jint trading_day, jboolean align, jstring source)
+  (JNIEnv *env, jclass cls, jlong h, jstring code, jstring cycle, jint trading_day, jboolean align)
 {
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<DataApiWrap*>(h);
     if (!wrap) {
         throwJavaException(env, "null handle");
         return 0;
@@ -142,8 +140,8 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getBa
     try {
         std::string s_code = get_string(env, code);
         std::string s_cycle = get_string(env, cycle);
-        string s_source = get_string(env, source);
-        auto r = wrap->api->data_api()->bar(s_code.c_str(), s_cycle.c_str(), trading_day, align!=0, s_source.c_str());
+
+        auto r = wrap->m_tqapi->api->data_api()->bar(s_code.c_str(), s_cycle.c_str(), trading_day, align!=0);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -151,7 +149,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getBa
 
         jobjectArray arr = env->NewObjectArray((jsize)r.value->size(), env->FindClass("Lcom/acqusta/tquant/api/DataApi$Bar;"), nullptr);
         for (size_t i = 0; i < r.value->size(); i++) {
-            auto obj = convert_bar(env, wrap->help_cls, wrap->createBar, &r.value->at(i));
+            auto obj = convert_bar(env, wrap->m_tqapi->help_cls, wrap->m_tqapi->createBar, &r.value->at(i));
             env->SetObjectArrayElement(arr, (jsize)i, obj);
             env->DeleteLocalRef(obj);
         }
@@ -171,9 +169,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getBa
  * Signature: (JLjava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;)[Lcom/acqusta/tquant/api/DataApi/DailyBar;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getDailyBar
-  (JNIEnv *env, jclass cls, jlong h, jstring code, jstring price_adj, jboolean align, jstring source)
+  (JNIEnv *env, jclass cls, jlong h, jstring code, jstring price_adj, jboolean align)
 {
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<DataApiWrap*>(h);
     if (!wrap) {
         throwJavaException(env, "null handle");
         return 0;
@@ -182,8 +180,8 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getDa
     try {
         std::string s_code      = get_string(env, code);
         std::string s_price_adj = get_string(env, price_adj);
-        string s_source         = get_string(env, source);
-        auto r = wrap->api->data_api()->daily_bar(s_code.c_str(), s_price_adj.c_str(), align != 0, s_source.c_str());
+
+        auto r = wrap->m_tqapi->api->data_api()->daily_bar(s_code.c_str(), s_price_adj.c_str(), align != 0);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -192,7 +190,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getDa
         jobjectArray arr = env->NewObjectArray((jsize)r.value->size(), env->FindClass("Lcom/acqusta/tquant/api/DataApi$DailyBar;"), nullptr);
         for (size_t i = 0; i < r.value->size(); i++) {
             auto bar = &r.value->at(i);
-            jobject obj = env->CallStaticObjectMethod(wrap->help_cls, wrap->createDailyBar,
+            jobject obj = env->CallStaticObjectMethod(wrap->m_tqapi->help_cls, wrap->m_tqapi->createDailyBar,
                                 LocalRef(env, env->NewStringUTF(bar->code)).m_obj,
                                 bar->date              ,
                                 bar->open              ,
@@ -225,9 +223,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getDa
  * Signature: (JLjava/lang/String;)[Lcom/acqusta/tquant/api/DataApi/MarketQuote;
  */
 JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getQuote
-  (JNIEnv * env, jclass cls, jlong h, jstring code, jstring source)
+  (JNIEnv * env, jclass cls, jlong h, jstring code)
 {
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<DataApiWrap*>(h);
     if (!wrap) {
         throwJavaException(env, "null handle");
         return 0;
@@ -235,14 +233,14 @@ JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getQuote
 
     try {
         std::string s_code = get_string(env, code);
-        string s_source = get_string(env, source);
-        auto r = wrap->api->data_api()->quote(s_code.c_str(), s_source.c_str());
+
+        auto r = wrap->m_tqapi->api->data_api()->quote(s_code.c_str());
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
         }
 
-        return convert_quote(env, wrap->help_cls, wrap->createMarketQuote, r.value.get());
+        return convert_quote(env, wrap->m_tqapi->help_cls, wrap->m_tqapi->createMarketQuote, r.value.get());
     }
     catch (const std::exception& e) {
         throwJavaException(env, "exception: %s", e.what());
@@ -257,9 +255,9 @@ JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getQuote
  * Signature: (J[Ljava/lang/String;)[Ljava/lang/String;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_subscribe
-  (JNIEnv * env, jclass cls, jlong h, jobjectArray codes, jstring source)
+  (JNIEnv * env, jclass cls, jlong h, jobjectArray codes)
 {
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<DataApiWrap*>(h);
     if (!wrap) {
         throwJavaException(env, "null handle");
         return 0;
@@ -274,9 +272,8 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_subsc
                 env->DeleteLocalRef(tmp);
             }
         }
-        string s_source = get_string(env, source);
 
-        auto r = wrap->api->data_api()->subscribe(s_codes, s_source.c_str());
+        auto r = wrap->m_tqapi->api->data_api()->subscribe(s_codes);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return nullptr;
@@ -310,9 +307,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_subsc
  * Signature: (J[Ljava/lang/String;)[Ljava/lang/String;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_unsubscribe
-  (JNIEnv * env, jclass cls, jlong h, jobjectArray codes, jstring source)
+  (JNIEnv * env, jclass cls, jlong h, jobjectArray codes)
 {
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<DataApiWrap*>(h);
     if (!wrap) {
         throwJavaException(env, "null handle");
         return 0;
@@ -327,9 +324,8 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_unsub
                 env->DeleteLocalRef(tmp);
             }
         }
-        string s_source = get_string(env, source);
 
-        auto r = wrap->api->data_api()->unsubscribe(s_codes, s_source.c_str());
+        auto r = wrap->m_tqapi->api->data_api()->unsubscribe(s_codes);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return nullptr;
@@ -364,7 +360,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_unsub
 JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_setCallback
   (JNIEnv * env, jclass cls, jlong h, jobject callback)
 {
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<DataApiWrap*>(h);
     if (!wrap) {
         throwJavaException(env, "null handle");
         return;
@@ -388,61 +384,81 @@ JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_setCallback
         }
 
         callback = env->NewGlobalRef(callback);
-        wrap->m_dapi_loop.msg_loop().PostTask([wrap, callback, onMarketQuote, onBar]() {
-            if (wrap->dapi_callback)
-                wrap->dapi_jenv->DeleteGlobalRef(wrap->dapi_callback);
+        wrap->m_tqapi->m_dapi_loop.msg_loop().PostTask([wrap, callback, onMarketQuote, onBar]() {
+            if (wrap->m_dapi_callback)
+                wrap->m_tqapi->dapi_jenv->DeleteGlobalRef(wrap->m_dapi_callback);
 
-            wrap->dapi_callback = callback;
-            wrap->dapi_onMarketQuote = onMarketQuote;
-            wrap->dapi_onBar = onBar;
+            wrap->m_dapi_callback = callback;
+            wrap->m_tqapi->dapi_onMarketQuote = onMarketQuote;
+            wrap->m_tqapi->dapi_onBar = onBar;
         });
     }
     else {
-        wrap->m_dapi_loop.msg_loop().PostTask([wrap]() {
-            if (wrap->dapi_callback) {
-                wrap->dapi_jenv->DeleteGlobalRef(wrap->dapi_callback);
-                wrap->dapi_callback = nullptr;
-                wrap->dapi_onMarketQuote = nullptr;
-                wrap->dapi_onBar = nullptr;
+        wrap->m_tqapi->m_dapi_loop.msg_loop().PostTask([wrap]() {
+            if (wrap->m_dapi_callback) {
+                wrap->m_tqapi->dapi_jenv->DeleteGlobalRef(wrap->m_dapi_callback);
+                wrap->m_dapi_callback = nullptr;
+                wrap->m_tqapi->dapi_onMarketQuote = nullptr;
+                wrap->m_tqapi->dapi_onBar = nullptr;
             }
         });
     }
 }
 
-
-void TQuantApiWrap::on_market_quote(shared_ptr<MarketQuote> quote)
+/*
+ * Class:     com_acqusta_tquant_api_impl_DataApiJni
+ * Method:    destroy
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_destroy
+  (JNIEnv * env, jclass cls, jlong h)
 {
-    if (!dapi_callback) return;
+    if (h) {
+        auto wrap = reinterpret_cast<DataApiWrap*>(h);
+        if (!wrap) {
+            throwJavaException(env, "null handle");
+            return;
+        }
+        wrap->destroy(env);
+        delete wrap;
+    }
+}
 
-    m_dapi_loop.msg_loop().PostTask([this, quote]() {
+
+
+void DataApiWrap::on_market_quote(shared_ptr<MarketQuote> quote)
+{
+    if (!m_dapi_callback) return;
+
+    m_tqapi->m_dapi_loop.msg_loop().PostTask([this, quote]() {
         try {
-            if (dapi_jenv) {
-                auto q = convert_quote(dapi_jenv, this->help_cls, createMarketQuote, quote.get());
-                dapi_jenv->CallVoidMethod(this->dapi_callback, this->dapi_onMarketQuote, q);
-                dapi_jenv->DeleteLocalRef(q);
+            if (m_tqapi->dapi_jenv) {
+                auto q = convert_quote(m_tqapi->dapi_jenv, m_tqapi->help_cls, m_tqapi->createMarketQuote, quote.get());
+                m_tqapi->dapi_jenv->CallVoidMethod(m_dapi_callback, m_tqapi->dapi_onMarketQuote, q);
+                m_tqapi->dapi_jenv->DeleteLocalRef(q);
             }
         }
         catch (const exception& e) {
-            throwJavaException(this->dapi_jenv, "exception: ", e.what());
+            throwJavaException(m_tqapi->dapi_jenv, "exception: ", e.what());
         }
     });
 }
-void TQuantApiWrap::on_bar(const char* cycle, shared_ptr<Bar> bar)
+void DataApiWrap::on_bar(const char* cycle, shared_ptr<Bar> bar)
 {
-    if (!dapi_callback) return;
+    if (!m_dapi_callback) return;
 
     string s_cycle(cycle);
-    m_dapi_loop.msg_loop().PostTask([this, s_cycle, bar]() {
+    m_tqapi->m_dapi_loop.msg_loop().PostTask([this, s_cycle, bar]() {
         try {
-            if (dapi_jenv) {
-                auto cycle = dapi_jenv->NewStringUTF(s_cycle.c_str());
-                auto b = convert_bar(dapi_jenv, this->help_cls, createBar, bar.get());
-                dapi_jenv->CallVoidMethod(this->dapi_callback, this->dapi_onBar, cycle, b);
-                dapi_jenv->DeleteLocalRef(b);
+            if (m_tqapi->dapi_jenv) {
+                auto cycle = m_tqapi->dapi_jenv->NewStringUTF(s_cycle.c_str());
+                auto b = convert_bar(m_tqapi->dapi_jenv, m_tqapi->help_cls, m_tqapi->createBar, bar.get());
+                m_tqapi->dapi_jenv->CallVoidMethod(m_dapi_callback, m_tqapi->dapi_onBar, cycle, b);
+                m_tqapi->dapi_jenv->DeleteLocalRef(b);
             }
         }
         catch (const exception& e) {
-            throwJavaException(this->dapi_jenv, "exception: ", e.what());
+            throwJavaException(m_tqapi->dapi_jenv, "exception: ", e.what());
         }
     });
 }

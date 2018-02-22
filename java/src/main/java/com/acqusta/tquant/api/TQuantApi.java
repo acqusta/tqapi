@@ -27,8 +27,8 @@ public class TQuantApi {
      *
      * @return
      */
-    public DataApi  getDataApi() {
-        return impl.getDataApi();
+    public DataApi  getDataApi(String source) {
+        return impl.getDataApi(source);
     }
 
 

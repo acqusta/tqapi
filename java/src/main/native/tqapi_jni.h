@@ -10,13 +10,17 @@
 using namespace std;
 using namespace tquant::api;
 
+#define RELEASE_JOBJECT(_obj_)          \
+    if (_obj_) {                        \
+        env->DeleteGlobalRef(_obj_);    \
+        _obj_ = nullptr;                \
+    }
+
+
 class TQuantApiWrap :
-    public tquant::api::DataApi_Callback ,
     public tquant::api::TradeApi_Callback {
 
 public:
-    virtual void on_market_quote(shared_ptr<MarketQuote> quote) override;
-    virtual void on_bar(const char* cycle, shared_ptr<Bar> bar) override;
     virtual void on_order_status(shared_ptr<Order> order) override;
     virtual void on_order_trade(shared_ptr<Trade> trade) override;
     virtual void on_account_status(shared_ptr<AccountInfo> account) override;
@@ -43,7 +47,6 @@ public:
     jmethodID tapi_onOrderTrade;
     jmethodID tapi_onAccountStatus;
 
-    jobject dapi_callback;
     jobject tapi_callback;
 
     JNIEnv* dapi_jenv;
@@ -56,7 +59,6 @@ public:
         : jvm(nullptr)
         , help_cls(nullptr) 
         , api(nullptr)
-        , dapi_callback(nullptr)
         , tapi_callback(nullptr)
         , dapi_jenv(nullptr)
         , tapi_jenv(nullptr)
@@ -66,6 +68,32 @@ public:
     void destroy(JNIEnv* env);
 private:
     ~TQuantApiWrap() {}
+};
+
+class DataApiWrap : public tquant::api::DataApi_Callback {
+public:
+    DataApiWrap(TQuantApiWrap*tqapi, DataApi* dapi)
+        : m_tqapi(tqapi)
+        , m_dapi(dapi)
+        , m_dapi_callback(nullptr)
+    {        
+        m_dapi->set_callback(this);
+    }
+
+    ~DataApiWrap() {
+
+    }
+
+    void destroy(JNIEnv* env) {
+        RELEASE_JOBJECT(m_dapi_callback);
+    }
+
+    virtual void on_market_quote(shared_ptr<MarketQuote> quote) override;
+    virtual void on_bar(const char* cycle, shared_ptr<Bar> bar) override;
+
+    TQuantApiWrap* m_tqapi;
+    DataApi*       m_dapi;
+    jobject        m_dapi_callback;
 };
 
 class LocalRef {

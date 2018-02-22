@@ -80,7 +80,7 @@ JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_TQuantApiJni_destroy
  * Signature: (J)J
  */
 JNIEXPORT jlong JNICALL Java_com_acqusta_tquant_api_impl_TQuantApiJni_getTradeApi
-    (JNIEnv *, jclass, jlong handle)
+    (JNIEnv *env, jclass, jlong handle)
 {
     return handle;
 }
@@ -91,17 +91,27 @@ JNIEXPORT jlong JNICALL Java_com_acqusta_tquant_api_impl_TQuantApiJni_getTradeAp
  * Signature: (J)J
  */
 JNIEXPORT jlong JNICALL Java_com_acqusta_tquant_api_impl_TQuantApiJni_getDataApi
-    (JNIEnv *, jclass, jlong handle)
+    (JNIEnv *env, jclass, jlong handle, jstring source)
 {
-    return handle;
-}
-
-#define RELEASE_JOBJECT(_obj_)          \
-    if (_obj_) {                        \
-        env->DeleteGlobalRef(_obj_);    \
-        _obj_ = nullptr;                \
+    auto wrap = reinterpret_cast<TQuantApiWrap*>(handle);
+    if (!wrap) {
+        throwJavaException(env, "null handle");
+        return 0;
     }
 
+    try {
+        std::string s_source = get_string(env, source);
+        auto dapi = wrap->api->data_api(s_source.c_str());
+        if (dapi)
+            return reinterpret_cast<jlong>(new DataApiWrap(wrap, dapi));
+        else
+            throwJavaException(env, "can't create DataApi");
+    }
+    catch (const std::exception& e) {
+        throwJavaException(env, "exception: %s", e.what());
+        return 0;
+    }
+}
 
 bool TQuantApiWrap::init(JNIEnv* env)
 {
@@ -228,8 +238,8 @@ bool TQuantApiWrap::init(JNIEnv* env)
 
          m_dapi_loop.msg_loop().PostTask([this]() {
              int r = jvm->GetEnv((void**)&dapi_jenv, JNI_VERSION_1_6);
-             if (r==JNI_EDETACHED) 
-                jvm->AttachCurrentThreadAsDaemon((void**)&dapi_jenv, nullptr);
+             if (r == JNI_EDETACHED)
+                 jvm->AttachCurrentThreadAsDaemon((void**)&dapi_jenv, nullptr);
          });
 
          m_tapi_loop.msg_loop().PostTask([this]() {
@@ -238,7 +248,6 @@ bool TQuantApiWrap::init(JNIEnv* env)
                  jvm->AttachCurrentThreadAsDaemon((void**)&tapi_jenv, nullptr);
          });
 
-         api->data_api()->set_callback(this);
          api->trade_api()->set_callback(this);
         return true;
     } while (false);
@@ -263,7 +272,6 @@ void TQuantApiWrap::destroy(JNIEnv* env)
     });
 
     RELEASE_JOBJECT(help_cls);
-    RELEASE_JOBJECT(dapi_callback);
     RELEASE_JOBJECT(tapi_callback);
 }
 

@@ -3,21 +3,39 @@ package com.acqusta.tquant.api.impl;
 import com.acqusta.tquant.api.DataApi;
 import com.acqusta.tquant.api.TradeApi;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class TQuantApiImpl {
-    private TradeApiImpl trade_api;
-    private DataApiImpl  data_api;
+    private TradeApiImpl tapi;
+    private Map<String, DataApiImpl> dapi_map = new HashMap<String, DataApiImpl>();
+    private TQuantApiJni tqapi;
 
     public TQuantApiImpl(String addr) throws Exception {
-        TQuantApiJni tqapi = new TQuantApiJni(addr);
-        trade_api = new TradeApiImpl(tqapi);
-        data_api = new DataApiImpl(tqapi);
+        tqapi = new TQuantApiJni(addr);
+        tapi = new TradeApiImpl(tqapi);
     }
 
     public TradeApi getTradeApi() {
-        return trade_api;
+        return tapi;
     }
 
-    public DataApi getDataApi() {
-        return data_api;
+    public DataApi getDataApi(String source) {
+        synchronized (dapi_map){
+            source = source !=null?source.trim():"";
+            DataApiImpl dapi = dapi_map.get(source);
+
+            if (dapi != null)
+                return dapi;
+
+            try {
+                dapi = new DataApiImpl(tqapi, source);
+                dapi_map.put(source, dapi);
+                return dapi;
+            } catch (Exception e) {
+                System.out.println(e);
+                return null;
+            }
+        }
     }
 }

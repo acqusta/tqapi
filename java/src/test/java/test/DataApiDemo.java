@@ -13,7 +13,7 @@ public class DataApiDemo {
 
         //api = new TQuantApi("tcp://127.0.0.1:10001");
         api = new TQuantApi("ipc://tqc_10001");
-        dapi = api.getDataApi();
+        dapi = api.getDataApi("");
 
         dapi.setCallback(new Callback() {
             @Override
@@ -137,14 +137,15 @@ public class DataApiDemo {
 
     void testPerf() {
         try {
-            CallResult<DailyBar[]> r = dapi.getDailyBar("rb.SHF", "", true);
+            dapi.subscribe(new String[]{"IF.CFE"});
+            CallResult<DailyBar[]> r = dapi.getDailyBar("IF.CFE", "", true);
             long begin_time = System.currentTimeMillis();
             int count  = 0;
             int dates = 0;
             for (DailyBar bar : r.value) {
-                if (true) { //bar.date > 20171001) {
+                if (bar.date > 20171001) {
                     dates += 1;
-                    DataApi.CallResult<DataApi.MarketQuote[]> result = dapi.getTick("rb.SHF", bar.date);
+                    DataApi.CallResult<DataApi.MarketQuote[]> result = dapi.getTick("IF.CFE", bar.date);
                     if (result.value != null) {
                         count += result.value.length;
                     } else {
@@ -191,11 +192,11 @@ public class DataApiDemo {
     }
 
     void test() {
-//        testSubscribe();
-//        testQuote();
-//        testBar();
-//        testTick();
-//        testPerf();
+        testSubscribe();
+        testQuote();
+        testBar();
+        testTick();
+        testPerf();
         testPerf2();
     }
 
