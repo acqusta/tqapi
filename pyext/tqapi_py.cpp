@@ -21,7 +21,7 @@ void call_callback(PyObject* callback, const char* evt, PyObject* data)
 static PyMethodDef Methods[] = {
     { (char *)"tqapi_create",            (PyCFunction)_wrap_tqapi_create,           METH_KEYWORDS | METH_VARARGS, NULL },
     { (char *)"tqapi_destroy",           (PyCFunction)_wrap_tqapi_destroy,          METH_KEYWORDS | METH_VARARGS, NULL },
-    //{ (char *)"tqapi_get_data_api",      (PyCFunction)_wrap_tqapi_get_data_api,     METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tqapi_get_data_api",      (PyCFunction)_wrap_tqapi_get_data_api,     METH_KEYWORDS | METH_VARARGS, NULL },
     //{ (char *)"tqapi_get_trade_api",     (PyCFunction)_wrap_tqapi_get_trade_api,    METH_KEYWORDS | METH_VARARGS, NULL },
 
     { (char *)"tapi_place_order",           (PyCFunction)_wrap_tapi_place_order,            METH_KEYWORDS | METH_VARARGS, NULL },
@@ -72,6 +72,27 @@ PyObject* _wrap_tqapi_destroy(PyObject* self, PyObject *args, PyObject* kwargs)
     }
 
     Py_RETURN_TRUE;
+}
+
+PyObject* _wrap_tqapi_get_data_api(PyObject* self, PyObject *args, PyObject* kwargs)
+{
+    int64_t h;
+    const char* source;
+    if (!PyArg_ParseTuple(args, "Ls", &h, (char*)&source))
+        return NULL;
+
+    if (!h) Py_RETURN_NONE;
+    
+    try {
+        auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+
+        DataApiWrap* dapi_wrap = wrap->data_api(source);
+
+        return PyLong_FromLongLong((int64_t)(dapi_wrap));
+    }
+    catch (const std::exception& e) {
+        Py_RETURN_NONE;
+    }
 }
 
 

@@ -99,6 +99,7 @@ JNIEXPORT jlong JNICALL Java_com_acqusta_tquant_api_impl_TQuantApiJni_getDataApi
         return 0;
     }
 
+    // Java code should only call getDataApi once for a same source!
     try {
         std::string s_source = get_string(env, source);
         auto dapi = wrap->api->data_api(s_source.c_str());

@@ -331,7 +331,7 @@ void TQuantApiWrap::on_order_status(shared_ptr<Order> order)
     m_msg_loop.PostTask([this, order]() {
         auto gstate = PyGILState_Ensure();
         PyObject* obj = convert_order(order.get());
-        call_callback(this->m_dapi_cb.obj, "tapi.order_status_ind", obj);
+        call_callback(this->m_tapi_cb.obj, "tapi.order_status_ind", obj);
         PyGILState_Release(gstate);
     });
 }
@@ -343,7 +343,7 @@ void TQuantApiWrap::on_order_trade(shared_ptr<Trade> trade)
     m_msg_loop.PostTask([this, trade]() {
         auto gstate = PyGILState_Ensure();
         PyObject* obj = convert_trade(trade.get());
-        call_callback(this->m_dapi_cb.obj, "tapi.order_trade_ind", obj);
+        call_callback(this->m_tapi_cb.obj, "tapi.order_trade_ind", obj);
         PyGILState_Release(gstate);
     });
 }
@@ -355,7 +355,7 @@ void TQuantApiWrap::on_account_status(shared_ptr<AccountInfo> account)
     m_msg_loop.PostTask([this, account]() {
         auto gstate = PyGILState_Ensure();
         PyObject* obj = convert_account_status(account.get());
-        call_callback(this->m_dapi_cb.obj, "tapi.account_status_ind", obj);
+        call_callback(this->m_tapi_cb.obj, "tapi.account_status_ind", obj);
         PyGILState_Release(gstate);
     });
 

@@ -17,8 +17,12 @@
 #  define API_EXPORT __attribute__ ((visibility("default")))
 #endif
 
+#include <unordered_map>
+#include <mutex>
+#include "myutils/stringutils.h"
 #include "myutils/loop/MsgRunLoop.h"
 #include "tquant_api.h"
+
 
 using namespace tquant::api;
 
@@ -97,43 +101,76 @@ static inline void dict_set_item(PyObject* obj, const char* key, bool value)
     Py_XDECREF(v);
 }
 
+class TQuantApiWrap;
+
+class DataApiWrap : public DataApi_Callback {
+public:
+    DataApiWrap(TQuantApiWrap* tqapi, DataApi* dapi)
+        : m_tqapi(tqapi)
+        , m_dapi(dapi)
+    {
+        m_dapi->set_callback(this);
+    }
+
+    // DataApi_Callback
+    virtual void on_market_quote (shared_ptr<MarketQuote> quote) override;
+    virtual void on_bar          (const char* cycle, shared_ptr<Bar> bar) override;
+
+    PyObjectHolder  m_dapi_cb;
+    TQuantApiWrap*  m_tqapi;
+    DataApi* m_dapi;
+};
+
 class TQuantApiWrap :
-        public DataApi_Callback,
         public TradeApi_Callback,
         public loop::MsgLoopRun
 {
+    friend DataApiWrap;
 public:
     TQuantApiWrap(TQuantApi* api)
         : m_api(api)
     {
-        m_api->data_api()->set_callback(this);
         m_api->trade_api()->set_callback(this);
     }
 
     ~TQuantApiWrap() {
-
+        for (auto e : m_dapi_map)
+            delete e.second;
     }
-
-    // DataApi_Callback
-    virtual void on_market_quote(shared_ptr<MarketQuote> quote) override;
-    virtual void on_bar        (const char* cycle, shared_ptr<Bar> bar) override;
 
     // TradeApi_Callback
     virtual void on_order_status   (shared_ptr<Order> order) override;
     virtual void on_order_trade    (shared_ptr<Trade> trade) override;
     virtual void on_account_status (shared_ptr<AccountInfo> account) override;
 
-    DataApi*  data_api()  { return m_api->data_api(); }
     TradeApi* trade_api() { return m_api->trade_api(); }
 
+    DataApiWrap* data_api(const char* source) {
+        unique_lock<mutex> lock(m_mtx);
+        string str = trim(source ? source : "");
+        auto it = m_dapi_map.find(str);
+        if (it != m_dapi_map.end())
+            return it->second;
+
+        auto dapi = m_api->data_api(source);
+        if (!dapi)
+            return nullptr;
+
+        auto dapi_wrap = new DataApiWrap(this, dapi);
+        m_dapi_map[str] = dapi_wrap;
+        return dapi_wrap;
+    }
+
     TQuantApi*      m_api;
-    PyObjectHolder  m_dapi_cb;
     PyObjectHolder  m_tapi_cb;
+    unordered_map<string, DataApiWrap*> m_dapi_map;
+    mutex m_mtx;
 };
+
 
 PyObject* _wrap_tqapi_create            (PyObject* self, PyObject *args, PyObject* kwargs);
 PyObject* _wrap_tqapi_destroy           (PyObject* self, PyObject *args, PyObject* kwargs);
-//PyObject* _wrap_tqapi_get_data_api      (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tqapi_get_data_api      (PyObject* self, PyObject *args, PyObject* kwargs);
 //PyObject* _wrap_tqapi_get_trade_api     (PyObject* self, PyObject *args, PyObject* kwargs);
 
 PyObject* _wrap_tapi_place_order            (PyObject* self, PyObject *args, PyObject* kwargs);

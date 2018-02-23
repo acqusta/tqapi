@@ -22,7 +22,7 @@ PyObject* _wrap_dapi_set_callback(PyObject* self, PyObject *args, PyObject* kwar
         return NULL;
 
     if (h)  {
-        auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+        auto wrap = reinterpret_cast<DataApiWrap*>(h);
         wrap->m_dapi_cb = cb;
         Py_RETURN_TRUE;
     }
@@ -43,12 +43,12 @@ PyObject* _wrap_dapi_subscribe(PyObject* self, PyObject *args, PyObject* kwargs)
     vector<string> ss;
     split(codes, ",", &ss);
 
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
-    auto r = wrap->data_api()->subscribe(ss);
+    auto wrap = reinterpret_cast<DataApiWrap*>(h);
+    auto r = wrap->m_dapi->subscribe(ss);
 
     if (r.value) {
         for (auto& c : ss) {
-            auto r = wrap->data_api()->quote(c.c_str());
+            auto r = wrap->m_dapi->quote(c.c_str());
             if (r.value)
                 wrap->on_market_quote(r.value);
         }
@@ -75,8 +75,8 @@ PyObject* _wrap_dapi_unsubscribe(PyObject* self, PyObject *args, PyObject* kwarg
     vector<string> ss;
     split(codes, ",", &ss);
 
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
-    auto r = wrap->data_api()->unsubscribe(ss);
+    auto wrap = reinterpret_cast<DataApiWrap*>(h);
+    auto r = wrap->m_dapi->unsubscribe(ss);
 
     if (r.value) {
         stringstream ss;
@@ -100,8 +100,8 @@ PyObject* _wrap_dapi_quote(PyObject* self, PyObject *args, PyObject* kwargs)
 
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
 
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
-    auto r = wrap->data_api()->quote(code);
+    auto wrap = reinterpret_cast<DataApiWrap*>(h);
+    auto r = wrap->m_dapi->quote(code);
 
     if (r.value) {
         return Py_BuildValue("NO", convert_quote(r.value.get()), Py_None);
@@ -129,8 +129,8 @@ PyObject* _wrap_dapi_bar(PyObject* self, PyObject *args, PyObject* kwargs)
     if (!code || !strlen(code)) return Py_BuildValue("Os", Py_None, "empty code");
     if (!cycle || !strlen(cycle)) return Py_BuildValue("Os", Py_None, "empty cycle");
 
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
-    auto r = wrap->data_api()->bar(code, cycle, trading_day, PyObject_IsTrue(align));
+    auto wrap = reinterpret_cast<DataApiWrap*>(h);
+    auto r = wrap->m_dapi->bar(code, cycle, trading_day, PyObject_IsTrue(align)!=0);
 
     if (r.value) {
         return Py_BuildValue("NO", convert_bars(r.value.get()), Py_None);
@@ -157,8 +157,8 @@ PyObject* _wrap_dapi_dailybar(PyObject* self, PyObject *args, PyObject* kwargs)
     if (!code || !strlen(code)) return Py_BuildValue("Os", Py_None, "empty code");
     if (!price_adj) return Py_BuildValue("Os", Py_None, "null price_adj");
 
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
-    auto r = wrap->data_api()->daily_bar(code, price_adj, PyObject_IsTrue(align));
+    auto wrap = reinterpret_cast<DataApiWrap*>(h);
+    auto r = wrap->m_dapi->daily_bar(code, price_adj, PyObject_IsTrue(align)!=0);
 
     if (r.value) {
         return Py_BuildValue("NO", convert_dailybars(r.value.get()), Py_None);
@@ -183,8 +183,8 @@ PyObject* _wrap_dapi_tick(PyObject* self, PyObject *args, PyObject* kwargs)
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
     if (!code || strlen(code)==0) return Py_BuildValue("Os", Py_None, "empty code");
 
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
-    auto r = wrap->data_api()->tick(code, trading_day);
+    auto wrap = reinterpret_cast<DataApiWrap*>(h);
+    auto r = wrap->m_dapi->tick(code, trading_day);
 
     if (r.value) {
         return Py_BuildValue("NO", convert_ticks(r.value.get()), Py_None);
@@ -195,11 +195,11 @@ PyObject* _wrap_dapi_tick(PyObject* self, PyObject *args, PyObject* kwargs)
 }
 
 // DataApi_Callback
-void TQuantApiWrap::on_market_quote(shared_ptr<MarketQuote> quote)
+void DataApiWrap::on_market_quote(shared_ptr<MarketQuote> quote)
 {
     if (m_dapi_cb.obj == Py_None) return;
 
-    m_msg_loop.PostTask([this, quote]() {
+    m_tqapi->msg_loop().PostTask([this, quote]() {
         auto gstate = PyGILState_Ensure();
         PyObject* obj = convert_quote(quote.get());
         call_callback(this->m_dapi_cb.obj, "dapi.quote", obj);
@@ -207,12 +207,12 @@ void TQuantApiWrap::on_market_quote(shared_ptr<MarketQuote> quote)
     });
 }
 
-void TQuantApiWrap::on_bar(const char* cycle, shared_ptr<Bar> bar)
+void DataApiWrap::on_bar(const char* cycle, shared_ptr<Bar> bar)
 {
     if (m_dapi_cb.obj != Py_None) return;
 
     string s_cycle(cycle);
-    m_msg_loop.PostTask([this, s_cycle, bar]() {
+    m_tqapi->msg_loop().PostTask([this, s_cycle, bar]() {
         auto gstate = PyGILState_Ensure();
         PyObject* obj = Py_BuildValue("sN", s_cycle.c_str(), convert_bar(bar.get()));
         call_callback(this->m_dapi_cb.obj, "dapi.bar", obj);

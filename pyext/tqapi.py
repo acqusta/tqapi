@@ -1,6 +1,7 @@
 import _tqapi
 import pandas as pd
 import traceback
+import threading
 
 class TradeApi:
     
@@ -81,13 +82,23 @@ class TradeApi:
         return _tqapi.tapi_query(self._api._handle, str(account_id), str(command), str(params))
 
 class DataApi:
-    def __init__(self, api):
+    def __init__(self, api, handle):
         self._api = api
+        self._handle = handle
         self._on_quote = None
         self._on_bar = None
+        _tqapi.dapi_set_callback(self._handle, self._on_callback)
 
-    def __del__(self):
-        self.close()
+    def _on_callback(self, method, data):
+        try:
+            if method == "dapi.quote" :
+                if self._on_quote :
+                    self._on_quote(data)
+            elif method == "dapi.bar" :
+                if self._on_bar:
+                    self._on_bar(data["cycle"], data["bar"])
+        except Exception as e:
+            traceback.print_exc()
 
     def set_on_quote(self, func):
         """Set on_quote callback"""
@@ -101,59 +112,52 @@ class DataApi:
         if type(codes) is tuple or type(codes) is list:
             codes = ",".join(codes)
 
-        return _tqapi.dapi_subscribe(self._api._handle, str(codes) )
+        return _tqapi.dapi_subscribe(self._handle, str(codes) )
 
     def unsubscribe(self, codes):
         if type(codes) is tuple or type(codes) is list:
             codes = ",".join(codes)            
 
-        return _tqapi.dapi_unsubscribe(self._api._handle, str(codes))
+        return _tqapi.dapi_unsubscribe(self._handle, str(codes))
 
-    def _my_callback(self, event, id, data):
-        cb = self._callback_map.get(event)
-        if cb:
-            cb(id, data)
-
+    #def _my_callback(self, event, id, data):
+    #    cb = self._callback_map.get(event)
+    #    if cb:
+    #        cb(id, data)
+    #
 
     def quote(self, code):
-        return _tqapi.dapi_quote(self._api._handle, str(code))
+        return _tqapi.dapi_quote(self._handle, str(code))
 
     def bar(self, code, cycle="1m", trading_day=0, align=True):
-        v, msg = _tqapi.dapi_bar(self._api._handle, str(code), str(cycle), int(trading_day), bool(align))
+        v, msg = _tqapi.dapi_bar(self._handle, str(code), str(cycle), int(trading_day), bool(align))
         if v:
             return (pd.DataFrame(v), msg)
         else:
             return (v, msg)
 
     def daily_bar(self, code, price_adj="", align=True):
-        v, msg = _tqapi.dapi_dailybar(self._api._handle, str(code), str(price_adj), bool(align))
+        v, msg = _tqapi.dapi_dailybar(self._handle, str(code), str(price_adj), bool(align))
         if v:
             return (pd.DataFrame(v), msg)
         else:
             return (v, msg)
 
     def tick(self, code, trading_day=0):
-        v, msg = _tqapi.dapi_tick(self._api._handle, str(code), int(trading_day))
+        v, msg = _tqapi.dapi_tick(self._handle, str(code), int(trading_day))
         if v:
             return (pd.DataFrame(v), msg)
         else:
             return (v, msg)
 
-    def _on_callback(self, method, data):
-        if method == "dapi.quote" :
-            if self._on_quote :
-                self._on_quote(data)
-        elif method == "dapi.bar" :
-            if self._on_bar:
-                self._on_bar(data["cycle"], data["bar"])
 
 class TQuantApi:
     def __init__(self, addr):
         self._handle = _tqapi.tqapi_create(addr)
-        self._dapi = DataApi(self)
         self._tapi = TradeApi(self)
+        self._mtx = threading.Lock()
+        self._dapi_map = {}
         _tqapi.tapi_set_callback(self._handle, self._on_tapi_cb)
-        _tqapi.dapi_set_callback(self._handle, self._on_dapi_cb)
 
     def __del__(self):
         self.close()
@@ -161,19 +165,27 @@ class TQuantApi:
     def _on_tapi_cb(self, method, params):
         self._tapi._on_callback(method, params)
 
-    def _on_dapi_cb(self, method, params):
-        try:
-            self._dapi._on_callback(method, params)
-        except Exception as e:
-            traceback.print_exc()
-
     def close(self):
         if self._handle:
             _tqapi.tqapi_destroy(self._handle)
             self._handle = 0
 
-    def data_api(self):
-        return self._dapi
+    def data_api(self, source=None):
+        if not source:
+            source = ""
+        self._mtx.acquire()
+        dapi = None
+        try:
+            dapi = self._dapi_map.get(source)
+            if not dapi:
+                h = _tqapi.tqapi_get_data_api(self._handle, source)
+                if h :
+                    dapi = DataApi(self, h)
+                    self._dapi_map[source] = dapi
+                    
+        finally:
+            self._mtx.release()
+        return dapi
 
     def trade_api(self):
         return self._tapi
