@@ -398,7 +398,7 @@ void FileMapping::close()
 void FileMapping::remove()
 {
     close();
-    shm_unlink(m_id);
+    shm_unlink(m_id.c_str());
 }
 
 

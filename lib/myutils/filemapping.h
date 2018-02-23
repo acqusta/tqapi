@@ -88,6 +88,7 @@ namespace myutils {
         bool open_shmem   (const string& name,     uint32_t filesize, bool read_only);
 
         void close();
+	void remove();
 
         bool is_attached() {
             return m_pMapAddress != nullptr;
