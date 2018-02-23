@@ -39,20 +39,9 @@ namespace myutils {
 
         bool open_shmem(const string& name, uint32_t filesize, bool read_only);
 
-        void close() {
-            if (m_pMapAddress) {
-                UnmapViewOfFile(m_pMapAddress);
-                m_pMapAddress = nullptr;
-            }
-            if (m_hMapFile) {
-                CloseHandle(m_hMapFile);
-                m_hMapFile = nullptr;
-            }
-            if (m_hFile != INVALID_HANDLE_VALUE) {
-                CloseHandle(m_hFile);
-                m_hFile = INVALID_HANDLE_VALUE;
-            }
-        }
+        void close();
+
+        void remove();
 
         bool is_attached() {
             return m_pMapAddress != nullptr;

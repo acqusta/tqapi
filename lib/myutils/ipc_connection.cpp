@@ -155,7 +155,7 @@ bool SharedSemaphore::post()
 #endif
 }
 
-IpcConnection::IpcConnection(int32_t shmem_size)
+IpcConnection::IpcConnection()
     : m_callback(nullptr)
     , m_should_exit(false)
     , m_connected(false)
@@ -166,10 +166,9 @@ IpcConnection::IpcConnection(int32_t shmem_size)
     , m_send_queue(nullptr)
     , m_recv_thread(nullptr)
     , m_slot_info(nullptr)
-    , m_conn(nullptr)
+    , m_slot(nullptr)
     , m_sem_send(nullptr)
     , m_sem_recv(nullptr)
-    , m_shmem_size(shmem_size)
 {
     m_msg_loop.PostDelayedTask(bind(&IpcConnection::check_connection, this), 500);
 }
@@ -183,15 +182,15 @@ void IpcConnection::recv_run()
 {
     auto last_idle_time = system_clock::now();
     while (!m_should_exit) {
-        if (m_conn->client_id != m_my_id)  break;
-        if (now_ms() - m_conn->svr_update_time > 2000) break;
+        if (m_slot->client_id != m_my_id)  break;
+        if (now_ms() - m_slot->svr_update_time > 2000) break;
 
         switch (m_sem_recv->timed_wait(100)) {
         case 1:
             msg_loop().PostTask([this]() { do_recv(); });
             break;
         case 0:
-            m_conn->client_update_time = now_ms();
+            m_slot->client_update_time = now_ms();
             break;
         default:
             break;
@@ -287,7 +286,7 @@ void IpcConnection::clear_data()
     m_send_queue = nullptr;
     m_recv_queue = nullptr;
     m_slot_info = nullptr;
-    m_conn = nullptr;
+    m_slot = nullptr;
 
     if (m_sem_recv) {
         delete m_sem_recv;
@@ -320,7 +319,7 @@ bool IpcConnection::do_connect()
     clear_data();
 
     do {
-        string addr = string("shm_tqc_v1_") + m_addr.substr(6);
+        string addr = string("shm_tqc_v2_") + m_addr.substr(6);
         m_svr_shmem = new myutils::FileMapping();
         if (!m_svr_shmem) break;
         if (!m_svr_shmem->open_shmem(addr, sizeof(ConnectionSlotInfo), false)) {
@@ -329,7 +328,7 @@ bool IpcConnection::do_connect()
         }
 
         m_slot_info = (ConnectionSlotInfo*)m_svr_shmem->addr();
-        if (m_slot_info->slot_size != sizeof(ConnectionInfo)) break;
+        if (m_slot_info->slot_size != sizeof(ConnectionSlot)) break;
 
         m_my_id = myutils::random();
 
@@ -338,49 +337,19 @@ bool IpcConnection::do_connect()
             uint64_t exp = 0;
             if (slot->client_id.compare_exchange_strong(exp, m_my_id)) {
                 //std::cout << "Find empty slot " << i << endl;
-                m_conn = slot;
+                m_slot = slot;
                 break;
             }
         }
     
-        if (!m_conn) {
+        if (!m_slot) {
             //std::cerr << "Can't find empty slot!" << endl;
             break;
         }
 
         {
-            char buf[100];
-            sprintf(buf, "shm_%u", (uint32_t)m_my_id);
-
-            m_my_shmem = new myutils::FileMapping();
-            if (!m_my_shmem->create_shmem(buf, m_shmem_size))
-                break;
-            strcpy(m_conn->shmem_name, m_my_shmem->id().c_str());
-            m_conn->shmem_size = m_shmem_size;
-        }
-
-#ifdef _WIN32        
-        sprintf(m_conn->sem_send, "ipc_sem_send_%ud", (uint32_t)m_my_id);
-        sprintf(m_conn->sem_recv, "ipc_sem_recv_%ud", (uint32_t)m_my_id);
-#endif
-        m_sem_recv = SharedSemaphore::create(m_conn->sem_send);
-        m_sem_send = SharedSemaphore::create(m_conn->sem_recv);
-
-        ShmemHead* head = (ShmemHead*)m_my_shmem->addr();
-        head->recv_size   = 2 * 1024 * 1024 - sizeof(ShmemHead);
-        head->recv_offset = sizeof(ShmemHead);
-        head->send_size   = m_shmem_size - 2 * 1024 * 1024;
-        head->send_offset = 2 * 1024 * 1024;
-
-        // different between client and server
-        m_send_queue = (ShmemQueue*)(m_my_shmem->addr() + head->recv_offset);
-        m_send_queue->init(head->recv_size);
-        m_recv_queue = (ShmemQueue*)(m_my_shmem->addr() + head->send_offset);
-        m_recv_queue->init(head->send_size);
-
-        {
             uint64_t exp = 0;
-            if (!m_conn->client_update_time.compare_exchange_strong(exp, now_ms())) {
+            if (!m_slot->client_update_time.compare_exchange_strong(exp, now_ms())) {
                 //std::cerr << "update_time is not zero" << endl;
                 break;
             }
@@ -388,7 +357,7 @@ bool IpcConnection::do_connect()
 
         {
             int32_t exp = 0;
-            if (!m_conn->req.compare_exchange_strong(exp, 1)) break;
+            if (!m_slot->req.compare_exchange_strong(exp, 1)) break;
         }
 
         auto sem = SharedSemaphore::open(m_slot_info->sem_conn);
@@ -402,19 +371,34 @@ bool IpcConnection::do_connect()
         {
             auto begin_time = system_clock::now();
             while (duration_cast<milliseconds>(system_clock::now() - begin_time).count() < 200) {
-                if (m_conn->rsp) break;
+                if (m_slot->rsp) break;
             }
-            if (m_conn->rsp != 1)
+            if (m_slot->rsp != 1)
                 break;
         }
 
-        m_connected = true;
+        m_my_shmem = new myutils::FileMapping();
+        if (!m_my_shmem->open_shmem(m_slot->shmem_name, m_slot->shmem_size, false))
+            break;
 
+        m_sem_recv = SharedSemaphore::create(m_slot->sem_send);
+        m_sem_send = SharedSemaphore::create(m_slot->sem_recv);
+        if (!m_sem_recv || !m_sem_send) break;
+
+        ShmemHead* head = (ShmemHead*)m_my_shmem->addr();
+
+        // different between client and server
+        m_send_queue = (ShmemQueue*)(m_my_shmem->addr() + head->recv_offset);
+        m_send_queue->init(head->recv_size);
+        m_recv_queue = (ShmemQueue*)(m_my_shmem->addr() + head->send_offset);
+        m_recv_queue->init(head->send_size);
+
+        m_connected = true;
         m_should_exit = false;
         m_recv_thread = new thread(bind(&IpcConnection::recv_run, this));
 
-        // connected
-        if (m_callback) m_callback->on_conn_status(true);
+        if (m_callback)
+            m_callback->on_conn_status(true);
 
         return true;
 

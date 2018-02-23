@@ -212,6 +212,27 @@ bool FileMapping::open_shmem(const string& name, uint32_t filesize, bool read_on
     return true;
 }
 
+void FileMapping::close()
+{
+    if (m_pMapAddress) {
+        UnmapViewOfFile(m_pMapAddress);
+        m_pMapAddress = nullptr;
+    }
+    if (m_hMapFile) {
+        CloseHandle(m_hMapFile);
+        m_hMapFile = nullptr;
+    }
+    if (m_hFile != INVALID_HANDLE_VALUE) {
+        CloseHandle(m_hFile);
+        m_hFile = INVALID_HANDLE_VALUE;
+    }
+}
+
+void FileMapping::remove()
+{
+    close();
+}
+
 #else
 
 #include <sys/types.h>
@@ -373,5 +394,12 @@ void FileMapping::close()
         m_fd = -1;
     }
 }
+
+void FileMapping::remove()
+{
+    close();
+    shm_unlink(m_id);
+}
+
 
 #endif

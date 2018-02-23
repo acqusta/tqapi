@@ -58,7 +58,7 @@ namespace myutils {
             int32_t recv_offset;
         };
 
-        struct ConnectionInfo {
+        struct ConnectionSlot {
             atomic<uint64_t> client_id;          // 0 means no connection;
             atomic<uint64_t> client_update_time; // client update time
             atomic<uint64_t> svr_update_time;    // server check time
@@ -75,10 +75,10 @@ namespace myutils {
             int64_t        slot_count;
             int64_t        slot_size;          // Size of ConnectionInfo
             char           sem_conn[128];
-            ConnectionInfo slots[20];
+            ConnectionSlot slots[20];
         };
 
-        IpcConnection(int32_t shmem_size);
+        IpcConnection();
 
         virtual ~IpcConnection();
 
@@ -108,10 +108,9 @@ namespace myutils {
         ShmemQueue*                 m_send_queue;
         thread*                     m_recv_thread;
         ConnectionSlotInfo*         m_slot_info;
-        ConnectionInfo*             m_conn;
+        ConnectionSlot*             m_slot;
         SharedSemaphore*            m_sem_send;
         SharedSemaphore*            m_sem_recv;
-        int32_t                     m_shmem_size;
         system_clock::time_point    m_last_connect_time;
     };
 }
