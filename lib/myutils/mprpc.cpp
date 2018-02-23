@@ -100,7 +100,7 @@ namespace mprpc {
         , m_callback(nullptr)
         , m_connected(false)
         , m_last_hb_rsp_time(system_clock::now())
-        , m_last_hb_time(system_clock::now())
+        //, m_last_hb_time
     {
         m_cur_callid = 0;
 
@@ -146,6 +146,10 @@ namespace mprpc {
     {
         msg_loop().PostTask([this, connected]() {
             m_connected = connected;
+
+            if (m_connected)
+                do_send_heartbeat();
+
             if (m_callback) {
                 if (connected)
                     m_callback->on_connected();
@@ -191,10 +195,15 @@ namespace mprpc {
         if (addr.empty()) return false;
 
         m_addr = addr;
-        m_callback = callback;
-
         m_conn->connect(addr, this);
-        return true;
+
+        auto begin_time = system_clock::now();
+        while (system_clock::now() - begin_time < seconds(1) && !m_connected) {
+            // nothing
+        }
+
+        m_msg_loop.PostTask([this, callback]() { this->m_callback = callback; });
+        return m_callback;
     }
 
     void MpRpcClient::close()

@@ -312,7 +312,7 @@ void test_dapi2(DataApi* dapi)
 {
     dapi->set_callback(&callback);
 
-    vector<string> codes = { "000001.SH", "600000.SH", "000001.SZ", "399001.SZ", "RB1805.SHF", "IF1801.CFE", "M1805.DCE", "I1803.SHF" };
+    vector<string> codes = { "000001.SH", "600000.SH", "000001.SZ", "399001.SZ", "RB1805.SHF", "IF1801.CFE", "M1805.DCE", "I1803.SHF", "000999.SH" };
     auto r = dapi->subscribe(codes);
     if (r.value) {
         stringstream ss;
@@ -327,8 +327,8 @@ void test_dapi2(DataApi* dapi)
         this_thread::sleep_for(seconds(1));
         auto r = dapi->quote("RB1805.SHF");
         if (r.value) {
-            //auto q = r.value;
-            //cout << "quote: " << q->code << "," << q->date << "," << q->time << "," << q->last << "," << q->volume << endl;
+            auto q = r.value;
+            cout << "quote: " << q->code << "," << q->date << "," << q->time << "," << q->last << "," << q->volume << endl;
         }
         else {
             cout << "error quote: " << r.msg << endl;

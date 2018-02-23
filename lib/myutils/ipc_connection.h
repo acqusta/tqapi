@@ -91,7 +91,6 @@ namespace myutils {
     private:
         bool do_connect();
         void do_recv();
-        void do_close();
         void recv_run();
         void clear_data();
         void check_connection();
@@ -113,6 +112,7 @@ namespace myutils {
         SharedSemaphore*            m_sem_send;
         SharedSemaphore*            m_sem_recv;
         int32_t                     m_shmem_size;
+        system_clock::time_point    m_last_connect_time;
     };
 }
 

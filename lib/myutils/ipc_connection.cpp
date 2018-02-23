@@ -214,6 +214,8 @@ void IpcConnection::recv_run()
 
 void IpcConnection::do_recv()
 {
+    if (!m_recv_queue) return;
+
     const char* data;
     size_t size;
 
@@ -310,6 +312,10 @@ bool IpcConnection::do_connect()
     if (m_connected) return true;
 
     if (m_addr.empty()) return false;
+
+    if (system_clock::now() - m_last_connect_time < seconds(1))
+        return false;
+    m_last_connect_time = system_clock::now();
 
     clear_data();
 
@@ -424,7 +430,6 @@ void IpcConnection::close()
     close_loop();
     clear_data();
 }
-
 
 void IpcConnection::send(const string& data)
 {

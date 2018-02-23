@@ -323,7 +323,7 @@ namespace mprpc {
         string                      m_addr;
         shared_ptr<Connection>      m_conn;
         MpRpcClient_Callback*       m_callback;
-        bool                        m_connected;
+        volatile bool               m_connected;
         system_clock::time_point    m_last_hb_rsp_time;
         atomic<int>                 m_cur_callid;
         system_clock::time_point    m_last_hb_time;
