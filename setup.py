@@ -94,7 +94,7 @@ setup(packages = [ 'tquant' ],
       description="Acqusta quantitative trading tools",
       author = "Xu Tiezhu",
       author_email = 'xutiezhu@gmail.com',
-      url = 'https://github.com/acqusta/tqc-api'
+      url = 'https://github.com/acqusta/tqapi'
 )
 
 

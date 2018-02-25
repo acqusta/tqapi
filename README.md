@@ -54,8 +54,7 @@ tqapi是TQuant的的标准API，包含行情和交易接口。源码开放，支
 | callback          | 回调函数 |
 
 ## TQC 客户端
-为使用tquant服务，用户需要在自己电脑上运行服务程序tqc。该程序负责用户登录、数据加速，并提供tqapi服务。
-请从 [www.acqusta.com](http://www.acqusta.com)下载。
+请从[www.acqusta.com](http://www.acqusta.com)下载tqc客户端。该程序负责用户登录、数据加速，并提供API服务。
 
 
 
