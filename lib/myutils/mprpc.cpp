@@ -163,6 +163,7 @@ namespace mprpc {
     {
         shared_ptr<MpRpcMessage> rpcmsg = MpRpcMessage::parse(data, size);
         if (!rpcmsg) return;
+
         rpcmsg->recv_time = system_clock::now();
 
         msg_loop().PostTask([this, rpcmsg]() {
@@ -199,7 +200,7 @@ namespace mprpc {
 
         auto begin_time = system_clock::now();
         while (system_clock::now() - begin_time < seconds(1) && !m_connected) {
-            // nothing
+			this_thread::sleep_for(milliseconds(10));
         }
 
         m_msg_loop.PostTask([this, callback]() { this->m_callback = callback; });

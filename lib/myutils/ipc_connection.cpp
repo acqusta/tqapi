@@ -187,7 +187,10 @@ void IpcConnection::recv_run()
 
         switch (m_sem_recv->timed_wait(100)) {
         case 1:
-            msg_loop().PostTask([this]() { do_recv(); });
+            m_slot->client_update_time = now_ms();
+            msg_loop().PostTask([this]() {
+                do_recv(); 
+            });
             break;
         case 0:
             m_slot->client_update_time = now_ms();
@@ -197,13 +200,15 @@ void IpcConnection::recv_run()
         }
 
         if (system_clock::now() - last_idle_time > seconds(1)) {
-            msg_loop().PostTask([this]() { if (m_callback) m_callback->on_idle(); });
+            msg_loop().PostTask([this]() {
+                if (m_callback) m_callback->on_idle(); 
+            });
         }
     }
     
     msg_loop().PostTask([this]() {
         if (m_connected) {
-            m_connected = false;
+            set_conn_stat(false);
             if (m_callback) m_callback->on_conn_status(false);
             do_connect();
         }
@@ -256,7 +261,7 @@ bool IpcConnection::connect(const string& addr, Connection_Callback* callback)
 void IpcConnection::reconnect()
 {
     m_msg_loop.PostTask([this] {
-        m_connected = false;
+        set_conn_stat(false);
         do_connect();
     });
 }
@@ -393,7 +398,7 @@ bool IpcConnection::do_connect()
         m_recv_queue = (ShmemQueue*)(m_my_shmem->addr() + head->send_offset);
         m_recv_queue->init(head->send_size);
 
-        m_connected = true;
+        set_conn_stat(true);
         m_should_exit = false;
         m_recv_thread = new thread(bind(&IpcConnection::recv_run, this));
 
@@ -428,6 +433,7 @@ void IpcConnection::send(const char* data, size_t size)
             m_sem_send->post();
         }
         else {
+            cout << "send error: failed to push\n";
             msg_loop().PostTask([this]() {
                 if (m_connected) {
                     m_connected = false;
@@ -436,6 +442,9 @@ void IpcConnection::send(const char* data, size_t size)
                 }
             });
         }
+    }
+    else {
+        cout << "send error: no connection\n";
     }
 }
 
