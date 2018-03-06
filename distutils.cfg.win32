@@ -1,0 +1,9 @@
+[build]
+compiler=msvc
+
+[build_ext]
+compiler=msvc
+
+
+[build_clib]
+compiler=msvc
