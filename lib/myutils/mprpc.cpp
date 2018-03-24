@@ -204,7 +204,7 @@ namespace mprpc {
         }
 
         m_msg_loop.PostTask([this, callback]() { this->m_callback = callback; });
-        return m_callback;
+        return m_connected;
     }
 
     void MpRpcClient::close()
