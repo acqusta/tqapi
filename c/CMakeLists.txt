@@ -17,18 +17,18 @@ target_link_libraries(tqapi-static
   ${COMMON_LIB}
 )
 
-#add_library(tqapi SHARED ${SRC})
-#
-#target_link_libraries(tqapi
-#  myutils
-#  msgpack
-#  snappy
-#  loop
-#  ${COMMON_LIB}
-#)
-#
-#install(TARGETS tqapi DESTINATION cpp)
+add_library(tqapi SHARED ${SRC})
 
+target_link_libraries(tqapi
+  myutils
+  msgpack
+  snappy
+  ${COMMON_LIB}
+)
+
+install(TARGETS tqapi DESTINATION cpp)
+
+target_compile_definitions(tqapi PRIVATE _TQAPI_DLL=1)
 
 set(SRC
   tquant_api_test.cpp
