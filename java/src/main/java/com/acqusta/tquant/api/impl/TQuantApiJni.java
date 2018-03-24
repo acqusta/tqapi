@@ -7,8 +7,9 @@ import com.acqusta.tquant.api.TradeApi;
 public class TQuantApiJni {
 
     static {
-        System.load("D:\\work\\github\\tqapi\\build\\java\\src\\main\\native\\Release\\tqapi_jni.dll");
+        //System.load("D:\\work\\github\\tqapi\\build\\java\\src\\main\\native\\Release\\tqapi_jni.dll");
         //System.load("/Users/terryxu/work/tquant/tqapi/build/dist/java/libtqapi_jni.dylib");
+        System.loadLibrary("tqapi_jni");
     }
 
     public static native long create(String addr) throws Exception;
@@ -88,8 +89,10 @@ class DataApiJni {
     static native void destroy(long handle);
 
     long handle = 0;
+    private TQuantApiJni tqapi; // Should keep a reference of TQuantApi!
 
     DataApiJni(TQuantApiJni tqapi, String source) throws  Exception {
+        this.tqapi = tqapi;
         this.handle = TQuantApiJni.getDataApi(tqapi.handle, source);
     }
 

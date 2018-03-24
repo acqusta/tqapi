@@ -102,6 +102,7 @@ public class DataApiDemo {
 
     void testSubscribe() {
 
+        for (int i = 0; i < 10; i++)
         {
             String[] codes = new String[] {
                     "000001.SH", "399001.SZ", "cu1705.SHF",
