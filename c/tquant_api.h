@@ -6,6 +6,12 @@
 #include <memory>
 #include <vector>
 
+#ifdef _TQAPI_DLL
+#define _TQAPI_EXPORT __declspec(dllexport)
+#else
+#define _TQAPI_EXPORT
+#endif
+
 namespace tquant {  namespace api {
 
     using namespace std;
@@ -14,6 +20,7 @@ namespace tquant {  namespace api {
     class TickDataHolder : public T {
         string _code;
     public:
+        TickDataHolder() {}
         TickDataHolder(const T& t, const char* a_code) : T(t), _code(a_code) {
             this->code = _code.c_str();
         }
@@ -24,6 +31,11 @@ namespace tquant {  namespace api {
                 this->_code = t.code;
                 this->code = this->_code.c_str();
             }
+        }
+
+        void set_code(const char* a_code) {
+            _code = a_code;
+            this->_code = _code.c_str();
         }
     };
 
@@ -125,7 +137,7 @@ namespace tquant {  namespace api {
     *      查实时行情，当天的tick, 分钟线
     *      订阅和推送行情
     */
-    class DataApi_Callback {
+    _TQAPI_EXPORT class DataApi_Callback {
     public:
         virtual void on_market_quote (shared_ptr<MarketQuote> quote) = 0;
         virtual void on_bar          (const char* cycle, shared_ptr<Bar> bar) = 0;
@@ -146,7 +158,7 @@ namespace tquant {  namespace api {
         }
     };
 
-    class DataApi {
+    _TQAPI_EXPORT class DataApi {
     protected:
         virtual ~DataApi() {}
     public:   
@@ -261,7 +273,7 @@ namespace tquant {  namespace api {
 
     //class EntrustAction {
 #define EA_Buy             "Buy"
-#define EA_Short           "Sell"
+#define EA_Short           "Short"
 #define EA_Cover           "Cover"
 #define EA_Sell            "Sell"
 #define EA_CoverToday      "CoverToday"
@@ -310,7 +322,7 @@ namespace tquant {  namespace api {
 
     // Side {
 #define SD_Long "Long"
-#define D_Short "Short"
+#define SD_Short "Short"
     //}
 
     struct Position {
@@ -351,7 +363,7 @@ namespace tquant {  namespace api {
         virtual void on_account_status(shared_ptr<AccountInfo> account) = 0;
     };
 
-    class TradeApi {
+    _TQAPI_EXPORT class TradeApi {
     protected:
         virtual ~TradeApi() {}
     public:
@@ -477,7 +489,7 @@ namespace tquant {  namespace api {
         */
         virtual DataApi*  data_api(const char* source=nullptr) = 0;
 
-        static TQuantApi* create(const char* addr);
+        static _TQAPI_EXPORT TQuantApi* create(const char* addr);
     };
 
 } }
