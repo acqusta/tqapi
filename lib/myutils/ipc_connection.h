@@ -102,6 +102,7 @@ namespace myutils {
 
     private:
         string                      m_addr;
+        int64_t                     m_timeout;
         mutex                       m_send_mtx;
         Connection_Callback*        m_callback;
         volatile bool               m_should_exit;
