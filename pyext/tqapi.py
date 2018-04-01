@@ -3,6 +3,22 @@ import pandas as pd
 import traceback
 import threading
 
+def _to_date(row):
+    date = int(row['date'])
+    return pd.datetime(year=date // 10000, month=date // 100 % 100, day=date % 100)
+
+def _to_datetime(row):
+    date = int(row['date'])
+    time = int(row['time']) // 1000
+    return pd.datetime(year=date // 10000, month=date // 100 % 100, day=date % 100,
+                       hour=time // 10000, minute=time // 100 % 100, second=time % 100)
+def _add_index(df):
+    if 'time' in df.columns:
+        df.index = df.apply(_to_datetime, axis=1)
+    elif 'date' in df.columns:
+        df.index = df.apply(_to_date, axis=1)    
+    return df
+
 class TradeApi:
     
     def __init__(self, api):
@@ -129,24 +145,33 @@ class DataApi:
     def quote(self, code):
         return _tqapi.dapi_quote(self._handle, str(code))
 
-    def bar(self, code, cycle="1m", trading_day=0, align=True):
+    def bar(self, code, cycle="1m", trading_day=0, align=True, index=False):
         v, msg = _tqapi.dapi_bar(self._handle, str(code), str(cycle), int(trading_day), bool(align))
         if v:
-            return (pd.DataFrame(v), msg)
+            df = pd.DataFrame(v)
+            if df is not None and index:
+                df = _add_index(df)
+            return (df, msg)
         else:
             return (v, msg)
 
-    def daily_bar(self, code, price_adj="", align=True):
+    def daily_bar(self, code, price_adj="", align=True, index=False):
         v, msg = _tqapi.dapi_dailybar(self._handle, str(code), str(price_adj), bool(align))
         if v:
-            return (pd.DataFrame(v), msg)
+            df = pd.DataFrame(v)
+            if df is not None and index:
+                df = _add_index(df)
+            return (df, msg)
         else:
             return (v, msg)
 
-    def tick(self, code, trading_day=0):
+    def tick(self, code, trading_day=0, index=False):
         v, msg = _tqapi.dapi_tick(self._handle, str(code), int(trading_day))
         if v:
-            return (pd.DataFrame(v), msg)
+            df = pd.DataFrame(v)
+            if df is not None and index:
+                df = _add_index(df)
+            return (df, msg)
         else:
             return (v, msg)
 
