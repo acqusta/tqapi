@@ -42,7 +42,7 @@ namespace tquant { namespace api { namespace impl {
         string                m_source;
         unordered_map<string, SubInfo> m_sub_info_map;
     public:
-        DataApiImpl(mprpc::MpRpcClient* client, const char* source) 
+        DataApiImpl(mprpc::MpRpcClient* client, const string& source) 
             : m_client(client)
             , m_callback(nullptr)
             , m_source(source)
@@ -51,7 +51,7 @@ namespace tquant { namespace api { namespace impl {
         virtual ~DataApiImpl() override
         {}
 
-        virtual CallResult<vector<MarketQuote>> tick(const char* code, int trading_day) override
+        virtual CallResult<const vector<MarketQuote>> tick(const string& code, int trading_day) override
         {
             mprpc::MsgPackPacker pk;
             pk.pack_map(4);
@@ -62,23 +62,23 @@ namespace tquant { namespace api { namespace impl {
 
             auto rsp = m_client->call("dapi.tst", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
-                return CallResult<vector<MarketQuote>>(builld_errmsg(rsp->err_code, rsp->err_msg));
+                return CallResult<const vector<MarketQuote>>(builld_errmsg(rsp->err_code, rsp->err_msg));
             
             const BinDataHead* bin_head = reinterpret_cast<const BinDataHead*>(rsp->result.via.bin.ptr);
             //uint32_t bin_len = rsp->result.via.bin.size;
 
             if (bin_head->element_size < sizeof(RawMarketQuote))
-                return CallResult<vector<MarketQuote>>("-1,wrong data format");
+                return CallResult<const vector<MarketQuote>>("-1,wrong data format");
             auto ticks = make_shared<vector<MarketQuote>>();
             const char* p = bin_head->data;
             for (uint32_t i = 0; i < bin_head->element_count; i++) {
                 ticks->push_back(MarketQuote(*reinterpret_cast<const RawMarketQuote*>(p), code));
                 p += bin_head->element_size;
             }
-            return CallResult<vector<MarketQuote>>(ticks);
+            return CallResult<const vector<MarketQuote>>(ticks);
         }
 
-        virtual CallResult<vector<Bar>> bar(const char* code, const char* cycle, int trading_day, bool align) override
+        virtual CallResult<const vector<Bar>> bar(const string& code, const string& cycle, int trading_day, bool align) override
         {
             MsgPackPacker pk;
             pk.pack_map(6);
@@ -91,23 +91,23 @@ namespace tquant { namespace api { namespace impl {
 
             auto rsp = m_client->call("dapi.tsi", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
-                return CallResult<vector<Bar>>(builld_errmsg(rsp->err_code, rsp->err_msg));
+                return CallResult<const vector<Bar>>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
             const BinDataHead* bin_head = reinterpret_cast<const BinDataHead*>(rsp->result.via.bin.ptr);
             //uint32_t bin_len = rsp->result.via.bin.size;
 
             if (bin_head->element_size < sizeof(RawBar))
-                return CallResult<vector<Bar>>("-1,wrong data format");
+                return CallResult<const vector<Bar>>("-1,wrong data format");
             auto bars = make_shared<vector<Bar>>();
             const char* p = bin_head->data;
             for (uint32_t i = 0; i < bin_head->element_count; i++) {
                 bars->push_back(Bar(*reinterpret_cast<const RawBar*>(p), code));
                 p += bin_head->element_size;
             }
-            return CallResult<vector<Bar>>(bars);
+            return CallResult<const vector<Bar>>(bars);
         }
 
-        virtual CallResult<vector<DailyBar>> daily_bar(const char* code, const char* price_adj, bool align) override
+        virtual CallResult<const vector<DailyBar>> daily_bar(const string& code, const string& price_adj, bool align) override
         {
             MsgPackPacker pk;
             pk.pack_map(6);
@@ -120,13 +120,13 @@ namespace tquant { namespace api { namespace impl {
 
             auto rsp = m_client->call("dapi.tsi", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
-                return CallResult<vector<DailyBar>>(builld_errmsg(rsp->err_code, rsp->err_msg));
+                return CallResult<const vector<DailyBar>>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
             const BinDataHead* bin_head = reinterpret_cast<const BinDataHead*>(rsp->result.via.bin.ptr);
             //uint32_t bin_len = rsp->result.via.bin.size;
 
             if (bin_head->element_size < sizeof(RawDailyBar))
-                return CallResult<vector<DailyBar>>("-1,wrong data format");
+                return CallResult<const vector<DailyBar>>("-1,wrong data format");
 
             auto bars = make_shared<vector<DailyBar>>();
             const char* p = bin_head->data;
@@ -134,10 +134,10 @@ namespace tquant { namespace api { namespace impl {
                 bars->push_back(DailyBar(*reinterpret_cast<const RawDailyBar*>(p), code));
                 p += bin_head->element_size;
             }
-            return CallResult<vector<DailyBar>>(bars);
+            return CallResult<const vector<DailyBar>>(bars);
         }
 
-        virtual CallResult<MarketQuote> quote(const char* code) override
+        virtual CallResult<const MarketQuote> quote(const string& code) override
         {
             MsgPackPacker pk;
             pk.pack_map(3);
@@ -147,25 +147,25 @@ namespace tquant { namespace api { namespace impl {
 
             auto rsp = m_client->call("dapi.tsq_quote", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
-                return CallResult<MarketQuote>(builld_errmsg(rsp->err_code, rsp->err_msg));
+                return CallResult<const MarketQuote>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
             const char* p = (const char*)(rsp->result.via.bin.ptr);
             uint32_t bin_len = rsp->result.via.bin.size;
 
             size_t code_len = strlen(p);
             if ( bin_len < code_len + 1 + sizeof(RawMarketQuote))
-                return CallResult<MarketQuote>("-1,wrong data format");
+                return CallResult<const MarketQuote>("-1,wrong data format");
 
             auto quote = make_shared<MarketQuote>(*(const RawMarketQuote*)(p+code_len+1), code);
-            return CallResult<MarketQuote>(quote);
+            return CallResult<const MarketQuote>(quote);
         }
 
-        CallResult<vector<string>> update_subscribe_result(msgpack_object& result)
+        CallResult<const vector<string>> update_subscribe_result(msgpack_object& result)
         {
             unique_lock<mutex> lock(m_mtx);
 
             if (!is_map(result))
-                return CallResult<vector<string>>("-1,wrong data format");
+                return CallResult<const vector<string>>("-1,wrong data format");
 
             string new_codes;
             string source;
@@ -184,7 +184,7 @@ namespace tquant { namespace api { namespace impl {
                 si->hash_code = sub_hash;
             }
 
-            return CallResult<vector<string>>(make_shared <vector<string>>(sub_codes));
+            return CallResult<const vector<string>>(make_shared <vector<string>>(sub_codes));
         }
 
         void subscribe_again()
@@ -213,7 +213,7 @@ namespace tquant { namespace api { namespace impl {
             }
         }
 
-        virtual CallResult<vector<string>> subscribe(const vector<string>& codes) override
+        virtual CallResult<const vector<string>> subscribe(const vector<string>& codes) override
         {
             stringstream ss;
             for (size_t i = 0; i < codes.size(); i++) {
@@ -231,12 +231,12 @@ namespace tquant { namespace api { namespace impl {
 
             auto rsp = m_client->call("dapi.tsq_sub", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
-                return CallResult<vector<string>>(builld_errmsg(rsp->err_code, rsp->err_msg));
+                return CallResult<const vector<string>>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
             return update_subscribe_result(rsp->result);
         }
 
-        virtual CallResult<vector<string>> unsubscribe(const vector<string>& codes) override
+        virtual CallResult<const vector<string>> unsubscribe(const vector<string>& codes) override
         {
             MsgPackPacker pk_codes;
             pk_codes.pack_array(codes.size());
@@ -259,10 +259,10 @@ namespace tquant { namespace api { namespace impl {
 
             auto rsp = m_client->call("dapi.tsq_unsub", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
-                return CallResult<vector<string>>(builld_errmsg(rsp->err_code, rsp->err_msg));
+                return CallResult<const vector<string>>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
             if (!is_map(rsp->result))
-                return CallResult<vector<string>>("-1,wrong data format");
+                return CallResult<const vector<string>>("-1,wrong data format");
 
             return update_subscribe_result(rsp->result);
         }

@@ -20,7 +20,7 @@ namespace tquant { namespace api { namespace impl {
         friend DataApiImpl;
         friend TradeApiImpl;
     public:
-        TQuantApiImpl(const char* params) {
+        TQuantApiImpl(const string& params) {
 #if 0
             const char* p = strchr(params, '?');
             string addr;
@@ -71,13 +71,12 @@ namespace tquant { namespace api { namespace impl {
 
         virtual TradeApi* trade_api() override { return m_tapi; }
 
-        virtual DataApi*  data_api(const char* source) override {
-            string str = source ? source : "";
-            auto it = m_dapi_map.find(str);
+        virtual DataApi*  data_api(const string& source) override {
+            auto it = m_dapi_map.find(source);
             if (it != m_dapi_map.end())
                 return it->second;
-            auto dapi = new DataApiImpl(this->m_client, str.c_str());
-            this->m_dapi_map[str] = dapi;
+            auto dapi = new DataApiImpl(this->m_client, source);
+            this->m_dapi_map[source] = dapi;
             return dapi;
         }
 
@@ -113,7 +112,7 @@ namespace tquant { namespace api { namespace impl {
 
 namespace tquant { namespace api {
 
-    TQuantApi* TQuantApi::create(const char* addr)
+    TQuantApi* TQuantApi::create(const string& addr)
     {
 #ifdef _WIN32
         static bool inited = false;

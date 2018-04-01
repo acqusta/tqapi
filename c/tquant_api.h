@@ -21,7 +21,7 @@ namespace tquant {  namespace api {
         string _code;
     public:
         TickDataHolder() {}
-        TickDataHolder(const T& t, const char* a_code) : T(t), _code(a_code) {
+        TickDataHolder(const T& t, const string& a_code) : T(t), _code(a_code) {
             this->code = _code.c_str();
         }
 
@@ -33,7 +33,7 @@ namespace tquant {  namespace api {
             }
         }
 
-        void set_code(const char* a_code) {
+        void set_code(const string& a_code) {
             _code = a_code;
             this->_code = _code.c_str();
         }
@@ -139,8 +139,8 @@ namespace tquant {  namespace api {
     */
     _TQAPI_EXPORT class DataApi_Callback {
     public:
-        virtual void on_market_quote (shared_ptr<MarketQuote> quote) = 0;
-        virtual void on_bar          (const char* cycle, shared_ptr<Bar> bar) = 0;
+        virtual void on_market_quote (shared_ptr<const MarketQuote> quote) = 0;
+        virtual void on_bar          (const string& cycle, shared_ptr<const Bar> bar) = 0;
     };
 
     template<typename T_VALUE>
@@ -171,7 +171,7 @@ namespace tquant {  namespace api {
         * @param trading_day
         * @return
         */
-        virtual CallResult<vector<MarketQuote>> tick(const char* code, int trading_day) = 0;
+        virtual CallResult<const vector<MarketQuote>> tick(const string& code, int trading_day) = 0;
 
         /**
         * 取某个代码的Bar
@@ -185,7 +185,7 @@ namespace tquant {  namespace api {
         * @param align         是否对齐
         * @return
         */
-        virtual CallResult<vector<Bar>> bar(const char* code, const char* cycle, int trading_day, bool align) = 0;
+        virtual CallResult<const vector<Bar>> bar(const string& code, const string& cycle, int trading_day, bool align) = 0;
 
         /**
         * 取某个代码的日线
@@ -198,7 +198,7 @@ namespace tquant {  namespace api {
         * @param align         是否对齐
         * @return
         */
-        virtual CallResult<vector<DailyBar>> daily_bar(const char* code, const char* price_adj, bool align) = 0;
+        virtual CallResult<const vector<DailyBar>> daily_bar(const string& code, const string& price_adj, bool align) = 0;
 
         /**
         * 取当前的行情快照
@@ -206,7 +206,7 @@ namespace tquant {  namespace api {
         * @param code
         * @return
         */
-        virtual CallResult<MarketQuote> quote(const char* code) = 0;
+        virtual CallResult<const MarketQuote> quote(const string& code) = 0;
 
         /**
         * 订阅行情
@@ -216,7 +216,7 @@ namespace tquant {  namespace api {
         * @param codes
         * @return 所有已经订阅的代码
         */
-        virtual CallResult<vector<string>> subscribe(const vector<string>& codes) = 0;
+        virtual CallResult<const vector<string>> subscribe(const vector<string>& codes) = 0;
 
         /**
         * 取消订阅
@@ -227,7 +227,7 @@ namespace tquant {  namespace api {
         * @param codes
         * @return
         */
-        virtual CallResult<vector<string>> unsubscribe(const vector<string>& codes) = 0;
+        virtual CallResult<const vector<string>> unsubscribe(const vector<string>& codes) = 0;
 
         /**
         * 设置推送行情的回调函数
@@ -374,7 +374,7 @@ namespace tquant {  namespace api {
         *
         * @return
         */
-        virtual CallResult<vector<AccountInfo>> query_account_status() = 0;
+        virtual CallResult<const vector<AccountInfo>> query_account_status() = 0;
 
         /**
         * 查询某个帐号的资金使用情况
@@ -382,7 +382,7 @@ namespace tquant {  namespace api {
         * @param account_id
         * @return
         */
-        virtual CallResult<Balance> query_balance(const char* account_id) = 0;
+        virtual CallResult<const Balance> query_balance(const string& account_id) = 0;
 
         /**
         * 查询某个帐号的当天的订单
@@ -390,7 +390,7 @@ namespace tquant {  namespace api {
         * @param account_id
         * @return
         */
-        virtual CallResult<vector<Order>> query_orders(const char* account_id) = 0;
+        virtual CallResult<const vector<Order>> query_orders(const string& account_id) = 0;
 
         /**
         * 查询某个帐号的当天的成交
@@ -398,7 +398,7 @@ namespace tquant {  namespace api {
         * @param account_id
         * @return
         */
-        virtual CallResult<vector<Trade>> query_trades(const char* account_id) = 0;
+        virtual CallResult<const vector<Trade>> query_trades(const string& account_id) = 0;
 
         /**
         * 查询某个帐号的当天的持仓
@@ -406,7 +406,7 @@ namespace tquant {  namespace api {
         * @param account_id
         * @return
         */
-        virtual CallResult<vector<Position>> query_positions(const char* account_id) = 0;
+        virtual CallResult<const vector<Position>> query_positions(const string& account_id) = 0;
 
         /**
         * 下单
@@ -425,7 +425,7 @@ namespace tquant {  namespace api {
         * @param order_id      自定义订单编号，不为0表示有值
         * @return OrderID      订单ID
         */
-        virtual CallResult<OrderID> place_order(const char* account_id, const char* code, double price, int64_t size, const char* action, int order_id) = 0;
+        virtual CallResult<const OrderID> place_order(const string& account_id, const string& code, double price, int64_t size, const string& action, int order_id) = 0;
 
         /**
         * 根据订单号撤单
@@ -437,7 +437,7 @@ namespace tquant {  namespace api {
         * @param order_id      订单号
         * @return 是否成功
         */
-        virtual CallResult<bool> cancel_order(const char* account_id, const char* code, int order_id) = 0;
+        virtual CallResult<bool> cancel_order(const string& account_id, const string& code, int order_id) = 0;
 
         /**
         * 根据委托号撤单
@@ -449,7 +449,7 @@ namespace tquant {  namespace api {
         * @param entrust_no    委托编号
         * @return 是否成功
         */
-        virtual CallResult<bool> cancel_order(const char* account_id, const char* code, const char* entrust_no) = 0;
+        virtual CallResult<bool> cancel_order(const string& account_id, const string& code, const string& entrust_no) = 0;
 
         /**
         * 通用查询接口
@@ -462,7 +462,7 @@ namespace tquant {  namespace api {
         * @param params
         * @return
         */
-        virtual CallResult<string> query(const char* account_id, const char* command, const char* params) = 0;
+        virtual CallResult<string> query(const string& account_id, const string& command, const string& params) = 0;
         /**
         * 设置 TradeApi.Callback
         *
@@ -487,9 +487,9 @@ namespace tquant {  namespace api {
         *
         * @return
         */
-        virtual DataApi*  data_api(const char* source=nullptr) = 0;
+        virtual DataApi*  data_api(const string& source="") = 0;
 
-        static _TQAPI_EXPORT TQuantApi* create(const char* addr);
+        static _TQAPI_EXPORT TQuantApi* create(const string& addr);
     };
 
 } }

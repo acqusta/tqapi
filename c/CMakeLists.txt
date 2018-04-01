@@ -17,6 +17,7 @@ target_link_libraries(tqapi-static
   ${COMMON_LIB}
 )
 
+if (NOT BUILD_TQS)
 add_library(tqapi SHARED ${SRC})
 
 target_link_libraries(tqapi
@@ -39,5 +40,7 @@ add_executable(tqapi_test ${SRC})
 target_link_libraries(tqapi_test tqapi-static)
 
 install(TARGETS tqapi_test DESTINATION bin)
+endif()
 
 install(FILES tquant_api.h DESTINATION cpp)
+ 

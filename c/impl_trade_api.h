@@ -95,14 +95,14 @@ namespace tquant { namespace api { namespace impl {
         virtual ~TradeApiImpl() override
         {}
 
-        virtual CallResult<vector<AccountInfo>> query_account_status() override
+        virtual CallResult<const vector<AccountInfo>> query_account_status() override
         {
             MsgPackPacker pk;
             pk.pack_map(0);
 
             auto rsp = m_client->call("tapi.account_status", pk.sb.data, pk.sb.size);
             if (!is_arr(rsp->result))
-                return CallResult<vector<AccountInfo>>(builld_errmsg(rsp->err_code, rsp->err_msg));
+                return CallResult<const vector<AccountInfo>>(builld_errmsg(rsp->err_code, rsp->err_msg));
     
             auto accounts = make_shared<vector<AccountInfo>>();
 
@@ -113,10 +113,10 @@ namespace tquant { namespace api { namespace impl {
                     accounts->push_back(act);
             }
 
-            return CallResult<vector<AccountInfo>>(accounts);
+            return CallResult<const vector<AccountInfo>>(accounts);
         }
 
-        virtual CallResult<Balance> query_balance(const char* account_id) override
+        virtual CallResult<const Balance> query_balance(const string& account_id) override
         {
             MsgPackPacker pk;
             pk.pack_map(1);
@@ -124,9 +124,9 @@ namespace tquant { namespace api { namespace impl {
 
             auto rsp = m_client->call("tapi.query_balance", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
-                return CallResult<Balance>(builld_errmsg(rsp->err_code, rsp->err_msg));
+                return CallResult<const Balance>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
-            if (!is_map(rsp->result)) return CallResult<Balance>("-1,wrong data format");
+            if (!is_map(rsp->result)) return CallResult<const Balance>("-1,wrong data format");
             
             auto bal = make_shared<Balance>();
             mp_map_get (rsp->result, "account_id",    &bal->account_id);
@@ -137,10 +137,10 @@ namespace tquant { namespace api { namespace impl {
             mp_map_get (rsp->result, "float_pnl",     &bal->float_pnl);
             mp_map_get (rsp->result, "close_pnl",     &bal->close_pnl);
 
-            return CallResult<Balance>(bal);
+            return CallResult<const Balance>(bal);
         }
 
-        virtual CallResult<vector<Order>> query_orders(const char* account_id) override
+        virtual CallResult<const vector<Order>> query_orders(const string& account_id) override
         {
             MsgPackPacker pk;
             pk.pack_map(1);
@@ -148,9 +148,9 @@ namespace tquant { namespace api { namespace impl {
 
             auto rsp = m_client->call("tapi.query_orders", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
-                return CallResult<vector<Order>>(builld_errmsg(rsp->err_code, rsp->err_msg));
+                return CallResult<const vector<Order>>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
-            if (!is_arr(rsp->result)) return CallResult<vector<Order>>("-1,wrong data format");
+            if (!is_arr(rsp->result)) return CallResult<const vector<Order>>("-1,wrong data format");
 
             auto orders = make_shared<vector<Order>>();
 
@@ -161,10 +161,10 @@ namespace tquant { namespace api { namespace impl {
                     orders->push_back(ord);
             }
 
-            return CallResult<vector<Order>>(orders);
+            return CallResult<const vector<Order>>(orders);
         }
 
-        virtual CallResult<vector<Trade>> query_trades(const char* account_id) override
+        virtual CallResult<const vector<Trade>> query_trades(const string& account_id) override
         {
             MsgPackPacker pk;
             pk.pack_map(1);
@@ -172,9 +172,9 @@ namespace tquant { namespace api { namespace impl {
 
             auto rsp = m_client->call("tapi.query_trades", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
-                return CallResult<vector<Trade>>(builld_errmsg(rsp->err_code, rsp->err_msg));
+                return CallResult<const vector<Trade>>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
-            if (!is_arr(rsp->result)) return CallResult<vector<Trade>>("-1,wrong data format");
+            if (!is_arr(rsp->result)) return CallResult<const vector<Trade>>("-1,wrong data format");
 
             auto trades = make_shared<vector<Trade>>();
 
@@ -185,10 +185,10 @@ namespace tquant { namespace api { namespace impl {
                     trades->push_back(trd);
             }
 
-            return CallResult<vector<Trade>>(trades);
+            return CallResult<const vector<Trade>>(trades);
         }
 
-        virtual CallResult<vector<Position>> query_positions(const char* account_id) override
+        virtual CallResult<const vector<Position>> query_positions(const string& account_id) override
         {
             MsgPackPacker pk;
             pk.pack_map(1);
@@ -196,9 +196,9 @@ namespace tquant { namespace api { namespace impl {
 
             auto rsp = m_client->call("tapi.query_positions", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
-                return CallResult<vector<Position>>(builld_errmsg(rsp->err_code, rsp->err_msg));
+                return CallResult<const vector<Position>>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
-            if (!is_arr(rsp->result)) return CallResult<vector<Position>>("-1,wrong data format");
+            if (!is_arr(rsp->result)) return CallResult<const vector<Position>>("-1,wrong data format");
 
             auto positions = make_shared<vector<Position>>();
 
@@ -233,10 +233,10 @@ namespace tquant { namespace api { namespace impl {
                 positions->push_back(pos);
             }
 
-            return CallResult<vector<Position>>(positions);
+            return CallResult<const vector<Position>>(positions);
         }
 
-        virtual CallResult<OrderID> place_order(const char* account_id, const char* code, double price, int64_t size, const char* action, int order_id) override
+        virtual CallResult<const OrderID> place_order(const string& account_id, const string& code, double price, int64_t size, const string& action, int order_id) override
         {
             MsgPackPacker pk;
             pk.pack_map(6);
@@ -249,9 +249,9 @@ namespace tquant { namespace api { namespace impl {
 
             auto rsp = m_client->call("tapi.place_order", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
-                return CallResult<OrderID>(builld_errmsg(rsp->err_code, rsp->err_msg));
+                return CallResult<const OrderID>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
-            if (!is_map(rsp->result)) return CallResult<OrderID>("-1,wrong data format");
+            if (!is_map(rsp->result)) return CallResult<const OrderID>("-1,wrong data format");
 
             auto orderid = make_shared<OrderID>();
             msgpack_object_kv* p     = rsp->result.via.map.ptr;
@@ -265,10 +265,10 @@ namespace tquant { namespace api { namespace impl {
                 else if (str == "order_id")     mp_get(p->val, &orderid->order_id);
             }
 
-            return CallResult<OrderID>(orderid);
+            return CallResult<const OrderID>(orderid);
         }
 
-        virtual CallResult<bool> cancel_order(const char* account_id, const char* code, int order_id) override
+        virtual CallResult<bool> cancel_order(const string& account_id, const string& code, int order_id) override
         {
             MsgPackPacker pk;
             pk.pack_map(3);
@@ -289,7 +289,7 @@ namespace tquant { namespace api { namespace impl {
             }
         }
 
-        virtual CallResult<bool> cancel_order(const char* account_id, const char* code, const char* entrust_no) override
+        virtual CallResult<bool> cancel_order(const string& account_id, const string& code, const string& entrust_no) override
         {
             MsgPackPacker pk;
             pk.pack_map(3);
@@ -310,7 +310,7 @@ namespace tquant { namespace api { namespace impl {
             }
         }
 
-        virtual CallResult<string> query(const char* account_id, const char* command, const char* params) override
+        virtual CallResult<string> query(const string& account_id, const string& command, const string& params) override
         {
             return CallResult<string>("-1,to be implemented");
         }
