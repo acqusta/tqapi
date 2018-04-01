@@ -112,9 +112,13 @@ public:
         m_dapi->set_callback(this);
     }
 
+    virtual ~DataApiWrap() {
+
+    }
+
     // DataApi_Callback
-    virtual void on_market_quote (shared_ptr<MarketQuote> quote) override;
-    virtual void on_bar          (const char* cycle, shared_ptr<Bar> bar) override;
+    virtual void on_market_quote (shared_ptr<const MarketQuote> quote) override;
+    virtual void on_bar          (const string& cycle, shared_ptr<const Bar> bar) override;
 
     PyObjectHolder  m_dapi_cb;
     TQuantApiWrap*  m_tqapi;

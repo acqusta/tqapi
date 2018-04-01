@@ -12,7 +12,7 @@ using namespace tquant::api;
 
 class MyCallback : public DataApi_Callback {
 public:
-    virtual void on_market_quote(shared_ptr<MarketQuote> quote) override 
+    virtual void on_market_quote(shared_ptr<const MarketQuote> quote) override 
     {
         auto q = quote.get();
         
@@ -42,9 +42,9 @@ public:
 
     }
 
-    virtual void on_bar(const char* cycle, shared_ptr<Bar> bar) override
+    virtual void on_bar(const string& cycle, shared_ptr<const Bar> bar) override
     {
-        Bar& b = *bar;
+        const Bar& b = *bar;
         cout << "on_bar: " << cycle<< "," << b.code << "," << b.date << "," << b.time << ","
             << b.open << "," << b.high << "," << b.low << "," << b.close << ","
             << b.volume << "," << b.turnover << "," << b.oi << endl;

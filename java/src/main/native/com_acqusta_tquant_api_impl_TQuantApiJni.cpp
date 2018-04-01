@@ -40,7 +40,7 @@ JNIEXPORT jlong JNICALL Java_com_acqusta_tquant_api_impl_TQuantApiJni_create
             return 0;
         string s(cs);
         env->ReleaseStringUTFChars(addr, cs);
-        auto api = TQuantApi::create(s.c_str());
+        auto api = TQuantApi::create(s);
         if (api) {
             auto wrap = new TQuantApiWrap();
             wrap->api = api;
@@ -102,7 +102,7 @@ JNIEXPORT jlong JNICALL Java_com_acqusta_tquant_api_impl_TQuantApiJni_getDataApi
     // Java code should only call getDataApi once for a same source!
     try {
         std::string s_source = get_string(env, source);
-        auto dapi = wrap->api->data_api(s_source.c_str());
+        auto dapi = wrap->api->data_api(s_source);
         if (dapi)
             return reinterpret_cast<jlong>(new DataApiWrap(wrap, dapi));
         else
@@ -110,8 +110,8 @@ JNIEXPORT jlong JNICALL Java_com_acqusta_tquant_api_impl_TQuantApiJni_getDataApi
     }
     catch (const std::exception& e) {
         throwJavaException(env, "exception: %s", e.what());
-        return 0;
     }
+    return 0;
 }
 
 bool TQuantApiWrap::init(JNIEnv* env)

@@ -2,7 +2,7 @@
 
 #include "myutils/stringutils.h"
 
-PyObject* convert_balance(Balance* bal)
+PyObject* convert_balance(const Balance* bal)
 {
     PyObject* obj = PyDict_New();
     
@@ -17,7 +17,7 @@ PyObject* convert_balance(Balance* bal)
     return obj;
 }
 
-PyObject* convert_order(Order* order)
+PyObject* convert_order(const Order* order)
 {
     PyObject* obj = PyDict_New();
 
@@ -39,7 +39,7 @@ PyObject* convert_order(Order* order)
     return obj;
 }
 
-PyObject* convert_trade(Trade* trade)
+PyObject* convert_trade(const Trade* trade)
 {
     PyObject* obj = PyDict_New();
 
@@ -57,7 +57,7 @@ PyObject* convert_trade(Trade* trade)
     return obj;
 }
 
-PyObject* convert_position(Position* pos)
+PyObject* convert_position(const Position* pos)
 {
     PyObject* obj = PyDict_New();
 
@@ -81,7 +81,7 @@ PyObject* convert_position(Position* pos)
     return obj;
 }
 
-PyObject* convert_account_status(AccountInfo* account)
+PyObject* convert_account_status(const AccountInfo* account)
 {
     PyObject* obj = PyDict_New();
 
@@ -95,7 +95,7 @@ PyObject* convert_account_status(AccountInfo* account)
     return obj;
 }
 
-PyObject* convert_orders(vector<Order>* orders)
+PyObject* convert_orders(const vector<Order>* orders)
 {
     PyObject* list = PyList_New(orders->size());
     for (size_t i = 0; i < orders->size(); i++)
@@ -103,7 +103,7 @@ PyObject* convert_orders(vector<Order>* orders)
     return list;
 }
 
-PyObject* convert_trades(vector<Trade>* trades)
+PyObject* convert_trades(const vector<Trade>* trades)
 {
     PyObject* list = PyList_New(trades->size());
     for (size_t i = 0; i < trades->size(); i++)
@@ -111,7 +111,7 @@ PyObject* convert_trades(vector<Trade>* trades)
     return list;
 }
 
-PyObject* convert_positions(vector<Position>* positions)
+PyObject* convert_positions(const vector<Position>* positions)
 {
     PyObject* list = PyList_New(positions->size());
     for (size_t i = 0; i < positions->size(); i++)
@@ -119,7 +119,7 @@ PyObject* convert_positions(vector<Position>* positions)
     return list;
 }
 
-PyObject* convert_account_status_list(vector<AccountInfo>* accounts)
+PyObject* convert_account_status_list(const vector<AccountInfo>* accounts)
 {
     PyObject* list = PyList_New(accounts->size());
     for (size_t i = 0; i < accounts->size(); i++)

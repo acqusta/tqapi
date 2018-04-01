@@ -5,7 +5,7 @@
 using namespace std;
 using namespace tquant::api;
 
-jobject convert_quote(JNIEnv* env, jclass help_cls, jmethodID createMarketQuote, tquant::api::MarketQuote* q)
+jobject convert_quote(JNIEnv* env, jclass help_cls, jmethodID createMarketQuote, const tquant::api::MarketQuote* q)
 {    
     return env->CallStaticObjectMethod(help_cls, createMarketQuote,
         LocalRef(env, env->NewStringUTF(q->code)).m_obj,
@@ -70,7 +70,7 @@ jobject convert_quote(JNIEnv* env, jclass help_cls, jmethodID createMarketQuote,
 }
 
 
-jobject convert_bar(JNIEnv* env, jclass help_cls, jmethodID createBar, tquant::api::Bar* bar)
+jobject convert_bar(JNIEnv* env, jclass help_cls, jmethodID createBar, const tquant::api::Bar* bar)
 {
     return env->CallStaticObjectMethod(help_cls, createBar,
                     LocalRef(env, env->NewStringUTF(bar->code)).m_obj,
@@ -102,7 +102,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getTi
 
     try {
         string s_code = get_string(env, code);
-        auto r = wrap->m_dapi->tick(s_code.c_str(), trading_day);
+        auto r = wrap->m_dapi->tick(s_code, trading_day);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -141,7 +141,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getBa
         std::string s_code = get_string(env, code);
         std::string s_cycle = get_string(env, cycle);
 
-        auto r = wrap->m_tqapi->api->data_api()->bar(s_code.c_str(), s_cycle.c_str(), trading_day, align!=0);
+        auto r = wrap->m_tqapi->api->data_api()->bar(s_code, s_cycle.c_str(), trading_day, align!=0);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -181,7 +181,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getDa
         std::string s_code      = get_string(env, code);
         std::string s_price_adj = get_string(env, price_adj);
 
-        auto r = wrap->m_tqapi->api->data_api()->daily_bar(s_code.c_str(), s_price_adj.c_str(), align != 0);
+        auto r = wrap->m_tqapi->api->data_api()->daily_bar(s_code, s_price_adj.c_str(), align != 0);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -234,7 +234,7 @@ JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getQuote
     try {
         std::string s_code = get_string(env, code);
 
-        auto r = wrap->m_tqapi->api->data_api()->quote(s_code.c_str());
+        auto r = wrap->m_tqapi->api->data_api()->quote(s_code);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -426,7 +426,7 @@ JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_destroy
 
 
 
-void DataApiWrap::on_market_quote(shared_ptr<MarketQuote> quote)
+void DataApiWrap::on_market_quote(shared_ptr<const MarketQuote> quote)
 {
     if (!m_dapi_callback) return;
 
@@ -443,18 +443,17 @@ void DataApiWrap::on_market_quote(shared_ptr<MarketQuote> quote)
         }
     });
 }
-void DataApiWrap::on_bar(const char* cycle, shared_ptr<Bar> bar)
+void DataApiWrap::on_bar(const string& cycle, shared_ptr<const Bar> bar)
 {
     if (!m_dapi_callback) return;
 
-    string s_cycle(cycle);
-    m_tqapi->m_dapi_loop.msg_loop().PostTask([this, s_cycle, bar]() {
+    m_tqapi->m_dapi_loop.msg_loop().PostTask([this, cycle, bar]() {
         try {
             if (m_tqapi->dapi_jenv) {
-                auto cycle = m_tqapi->dapi_jenv->NewStringUTF(s_cycle.c_str());
-                auto b = convert_bar(m_tqapi->dapi_jenv, m_tqapi->help_cls, m_tqapi->createBar, bar.get());
-                m_tqapi->dapi_jenv->CallVoidMethod(m_dapi_callback, m_tqapi->dapi_onBar, cycle, b);
-                m_tqapi->dapi_jenv->DeleteLocalRef(b);
+                auto py_cycle = m_tqapi->dapi_jenv->NewStringUTF(cycle.c_str());
+                auto py_bar = convert_bar(m_tqapi->dapi_jenv, m_tqapi->help_cls, m_tqapi->createBar, bar.get());
+                m_tqapi->dapi_jenv->CallVoidMethod(m_dapi_callback, m_tqapi->dapi_onBar, cycle, py_bar);
+                m_tqapi->dapi_jenv->DeleteLocalRef(py_bar);
             }
         }
         catch (const exception& e) {

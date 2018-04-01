@@ -7,12 +7,11 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
-static inline PyObject* convert_quote      (MarketQuote* q);
-static inline PyObject* convert_bar        (Bar* b);
-//static inline PyObject* convert_dailybar   (DailyBar* b);
-static inline PyObject* convert_bars       (vector<Bar>* b);
-static inline PyObject* convert_dailybars  (vector<DailyBar>* b);
-static inline PyObject* convert_ticks      (vector<MarketQuote>* ticks);
+static inline PyObject* convert_quote      (const MarketQuote* q);
+static inline PyObject* convert_bar        (const Bar* b);
+static inline PyObject* convert_bars       (const vector<Bar>* b);
+static inline PyObject* convert_dailybars  (const vector<DailyBar>* b);
+static inline PyObject* convert_ticks      (const vector<MarketQuote>* ticks);
 
 PyObject* _wrap_dapi_set_callback(PyObject* self, PyObject *args, PyObject* kwargs)
 {
@@ -48,7 +47,7 @@ PyObject* _wrap_dapi_subscribe(PyObject* self, PyObject *args, PyObject* kwargs)
 
     if (r.value) {
         for (auto& c : ss) {
-            auto r = wrap->m_dapi->quote(c.c_str());
+            auto r = wrap->m_dapi->quote(c);
             if (r.value)
                 wrap->on_market_quote(r.value);
         }
@@ -195,7 +194,7 @@ PyObject* _wrap_dapi_tick(PyObject* self, PyObject *args, PyObject* kwargs)
 }
 
 // DataApi_Callback
-void DataApiWrap::on_market_quote(shared_ptr<MarketQuote> quote)
+void DataApiWrap::on_market_quote(shared_ptr<const MarketQuote> quote)
 {
     if (m_dapi_cb.obj == Py_None) return;
 
@@ -207,20 +206,19 @@ void DataApiWrap::on_market_quote(shared_ptr<MarketQuote> quote)
     });
 }
 
-void DataApiWrap::on_bar(const char* cycle, shared_ptr<Bar> bar)
+void DataApiWrap::on_bar(const string& cycle, shared_ptr<const Bar> bar)
 {
     if (m_dapi_cb.obj != Py_None) return;
 
-    string s_cycle(cycle);
-    m_tqapi->msg_loop().PostTask([this, s_cycle, bar]() {
+    m_tqapi->msg_loop().PostTask([this, cycle, bar]() {
         auto gstate = PyGILState_Ensure();
-        PyObject* obj = Py_BuildValue("sN", s_cycle.c_str(), convert_bar(bar.get()));
+        PyObject* obj = Py_BuildValue("sN", cycle.c_str(), convert_bar(bar.get()));
         call_callback(this->m_dapi_cb.obj, "dapi.bar", obj);
         PyGILState_Release(gstate);
     });
 }
 
-static PyObject* convert_quote(MarketQuote* q)
+static PyObject* convert_quote(const MarketQuote* q)
 {
     PyObject* obj = PyDict_New();
 
@@ -276,7 +274,7 @@ static PyObject* convert_quote(MarketQuote* q)
     dict_set_item(_dict, # _field, _field);
 
 
-static PyObject* convert_ticks(vector<MarketQuote>* ticks)
+static PyObject* convert_ticks(const vector<MarketQuote>* ticks)
 {
 
     import_array1(nullptr);
@@ -334,7 +332,7 @@ static PyObject* convert_ticks(vector<MarketQuote>* ticks)
     return dict;
 }
 
-static PyObject* convert_bar(Bar* b)
+static PyObject* convert_bar(const Bar* b)
 {
     PyObject* obj = PyDict_New();
 
@@ -353,7 +351,7 @@ static PyObject* convert_bar(Bar* b)
     return obj;
 }
 
-static PyObject* convert_bars(vector<Bar>* bars)
+static PyObject* convert_bars(const vector<Bar>* bars)
 {
     import_array1(nullptr);
 
@@ -404,7 +402,7 @@ static PyObject* convert_dailybar(DailyBar* b)
 }
 #endif
 
-static PyObject* convert_dailybars(vector<DailyBar>* bars)
+static PyObject* convert_dailybars(const vector<DailyBar>* bars)
 {
     import_array1(nullptr);
 

@@ -7,7 +7,7 @@
 using namespace std;
 using namespace tquant::api;
 
-jobject convert_order(JNIEnv* env, jclass help_cls, jmethodID createOrder, tquant::api::Order* ord)
+jobject convert_order(JNIEnv* env, jclass help_cls, jmethodID createOrder, const tquant::api::Order* ord)
 {
     return env->CallStaticObjectMethod(help_cls, createOrder,
         LocalRef(env, env->NewStringUTF(ord->account_id.c_str())    ).m_obj,       
@@ -26,7 +26,7 @@ jobject convert_order(JNIEnv* env, jclass help_cls, jmethodID createOrder, tquan
         ord->order_id);
 }
 
-jobject convert_trade(JNIEnv* env, jclass help_cls, jmethodID createTrade, tquant::api::Trade* trd)
+jobject convert_trade(JNIEnv* env, jclass help_cls, jmethodID createTrade, const tquant::api::Trade* trd)
 {
     return env->CallStaticObjectMethod(help_cls, createTrade,
         LocalRef(env, env->NewStringUTF(trd->account_id.c_str())         ).m_obj,
@@ -41,7 +41,7 @@ jobject convert_trade(JNIEnv* env, jclass help_cls, jmethodID createTrade, tquan
         trd->fill_time);
 }
 
-jobject convert_account_info(JNIEnv* env, jclass help_cls, jmethodID createAccountInfo, tquant::api::AccountInfo* act)
+jobject convert_account_info(JNIEnv* env, jclass help_cls, jmethodID createAccountInfo, const tquant::api::AccountInfo* act)
 {
     return env->CallStaticObjectMethod(help_cls, createAccountInfo,
             LocalRef (env, env->NewStringUTF(act->account_id.c_str())   ).m_obj,
@@ -102,7 +102,7 @@ JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_queryBala
         return 0;
     }
 
-    auto r = wrap->api->trade_api()->query_balance(get_string(env, account_id).c_str());
+    auto r = wrap->api->trade_api()->query_balance(get_string(env, account_id));
     if (!r.value) {
         throwJavaException(env, "%s", r.msg.c_str());
         return 0;
@@ -142,7 +142,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_quer
         return 0;
     }
 
-    auto r = wrap->api->trade_api()->query_orders(get_string(env, account_id).c_str());
+    auto r = wrap->api->trade_api()->query_orders(get_string(env, account_id));
     if (!r.value) {
         throwJavaException(env, "%s", r.msg.c_str());
         return 0;
@@ -180,7 +180,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_quer
         return 0;
     }
 
-    auto r = wrap->api->trade_api()->query_trades(get_string(env, account_id).c_str());
+    auto r = wrap->api->trade_api()->query_trades(get_string(env, account_id));
     if (!r.value) {
         throwJavaException(env, "%s", r.msg.c_str());
         return 0;
@@ -218,7 +218,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_quer
         return 0;
     }
 
-    auto r = wrap->api->trade_api()->query_positions(get_string(env, account_id).c_str());
+    auto r = wrap->api->trade_api()->query_positions(get_string(env, account_id));
     if (!r.value) {
         throwJavaException(env, "%s", r.msg.c_str());
         return 0;
@@ -277,7 +277,7 @@ JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_placeOrde
         string s_code       = get_string(env, code);
         string s_action     = get_string(env, action);
 
-        auto r = wrap->api->trade_api()->place_order(s_account_id.c_str(), s_code.c_str(), price, size, s_action.c_str(), order_id);
+        auto r = wrap->api->trade_api()->place_order(s_account_id, s_code, price, size, s_action, order_id);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -309,7 +309,7 @@ JNIEXPORT jboolean JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_cancelOr
         string s_account_id = get_string(env, account_id);
         string s_code = get_string(env, code);
 
-        auto r = wrap->api->trade_api()->cancel_order(s_account_id.c_str(), s_code.c_str(), order_id);
+        auto r = wrap->api->trade_api()->cancel_order(s_account_id, s_code, order_id);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -341,7 +341,7 @@ JNIEXPORT jboolean JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_cancelOr
         string s_code = get_string(env, code);
         string s_entrust_no = get_string(env, entrust_no);
 
-        auto r = wrap->api->trade_api()->cancel_order(s_account_id.c_str(), s_code.c_str(), s_entrust_no.c_str());
+        auto r = wrap->api->trade_api()->cancel_order(s_account_id, s_code, s_entrust_no);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -373,7 +373,7 @@ JNIEXPORT jstring JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_query
         string s_command = get_string(env, command);
         string s_params = get_string(env, params);
 
-        auto r = wrap->api->trade_api()->query(s_account_id.c_str(), s_command.c_str(), s_params.c_str());
+        auto r = wrap->api->trade_api()->query(s_account_id, s_command, s_params);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;

@@ -88,8 +88,8 @@ public:
         RELEASE_JOBJECT(m_dapi_callback);
     }
 
-    virtual void on_market_quote(shared_ptr<MarketQuote> quote) override;
-    virtual void on_bar(const char* cycle, shared_ptr<Bar> bar) override;
+    virtual void on_market_quote(shared_ptr<const MarketQuote> quote) override;
+    virtual void on_bar(const string& cycle, shared_ptr<const Bar> bar) override;
 
     TQuantApiWrap* m_tqapi;
     DataApi*       m_dapi;
