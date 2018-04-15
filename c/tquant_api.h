@@ -7,6 +7,8 @@
 #include <vector>
 
 #ifdef _TQAPI_DLL
+#define _TQAPI_EXPORT __declspec(dllimport)
+#elif defined(_TQAPI_DLL_IMPL)
 #define _TQAPI_EXPORT __declspec(dllexport)
 #else
 #define _TQAPI_EXPORT
@@ -239,7 +241,10 @@ namespace tquant {  namespace api {
         virtual void set_callback(DataApi_Callback* callback) = 0;
     };
 
+
     // TradeApi
+
+#pragma pack(1)
     struct AccountInfo {
         string account_id;       // 帐号编号
         string broker;           // 交易商名称，如招商证券
@@ -355,6 +360,7 @@ namespace tquant {  namespace api {
         string  entrust_no;       // 订单委托号
         int32_t order_id;         // 自定义编号
     };
+#pragma pack()
 
     class TradeApi_Callback{
     public:

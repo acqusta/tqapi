@@ -6,6 +6,7 @@ set(SRC
     impl_tquant_api.cpp
     impl_data_api.h
     impl_trade_api.h
+    tqapi_cs.cpp
 )
 
 add_library(tqapi-static STATIC ${SRC})
@@ -29,7 +30,9 @@ target_link_libraries(tqapi
 
 install(TARGETS tqapi DESTINATION cpp)
 
-target_compile_definitions(tqapi PRIVATE _TQAPI_DLL=1)
+install(TARGETS tqapi-static DESTINATION cpp)
+
+target_compile_definitions(tqapi PRIVATE _TQAPI_DLL_IMPL=1)
 
 set(SRC
   tquant_api_test.cpp

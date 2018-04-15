@@ -252,7 +252,7 @@ void perf_test(DataApi* dapi)
             }
         }
 
-        int ms = duration_cast<milliseconds>(system_clock::now() - begin_time).count();
+        size_t ms = duration_cast<milliseconds>(system_clock::now() - begin_time).count();
         cout << (ms*1.0/count) << endl;
     }
     {
@@ -261,7 +261,7 @@ void perf_test(DataApi* dapi)
         for (int i = 0; i < count; i++)
             dapi->quote("");
 
-        int ms = duration_cast<milliseconds>(system_clock::now() - begin_time).count();
+        size_t ms = duration_cast<milliseconds>(system_clock::now() - begin_time).count();
         cout << (ms*1.0 / count) << endl;
     }
 }
@@ -279,7 +279,7 @@ void perf_test2(DataApi* dapi)
     }
 
     auto begin_time = system_clock::now();
-    int total_count = 0;
+    size_t total_count = 0;
     auto bars = dapi->daily_bar(code, "", true);
     int date_count = 0;
     assert(bars.value);
