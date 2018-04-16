@@ -5,7 +5,7 @@ namespace tquant
 {
     namespace api
     {
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
         public class AccountInfo
         {
             public String account_id;       // 帐号编号
@@ -16,8 +16,8 @@ namespace tquant
             public String account_type;     // 帐号类型，如 stock, ctp
         }
 
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public class Balance
+        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
+		public class Balance
         {
             public String account_id;       // 帐号编号
             public String fund_account;     // 资金帐号
@@ -49,8 +49,8 @@ namespace tquant
             public const String SellYesterday = "SellYesterday"   ;
         }
 
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public class Order
+        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
+		public class Order
         {
             public String account_id;       // 帐号编号
             public String code;             // 证券代码
@@ -68,8 +68,8 @@ namespace tquant
             public Int32  order_id;         // 自定义订单编号
         }
 
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public class Trade
+        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
+		public class Trade
         {
             public String account_id;       // 帐号编号
             public String code;             // 证券代码
@@ -89,8 +89,8 @@ namespace tquant
             public const String Short = "Short";
         }
 
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public class Position
+        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
+		public class Position
         {
             public String account_id;       // 帐号编号
             public String code;             // 证券代码
@@ -110,8 +110,8 @@ namespace tquant
             public Double commission;       // 手续费
         }
 
-        [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public class OrderID
+        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
+		public class OrderID
         {
             public String entrust_no;
             public Int32  order_id;

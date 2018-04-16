@@ -139,8 +139,9 @@ namespace tquant {  namespace api {
     *      查实时行情，当天的tick, 分钟线
     *      订阅和推送行情
     */
-    _TQAPI_EXPORT class DataApi_Callback {
+    class DataApi_Callback {
     public:
+        virtual ~DataApi_Callback() { }
         virtual void on_market_quote (shared_ptr<const MarketQuote> quote) = 0;
         virtual void on_bar          (const string& cycle, shared_ptr<const Bar> bar) = 0;
     };
@@ -160,7 +161,7 @@ namespace tquant {  namespace api {
         }
     };
 
-    _TQAPI_EXPORT class DataApi {
+    class DataApi {
     protected:
         virtual ~DataApi() {}
     public:   
@@ -238,13 +239,12 @@ namespace tquant {  namespace api {
         *
         * @param callback
         */
-        virtual void set_callback(DataApi_Callback* callback) = 0;
+        virtual DataApi_Callback* set_callback(DataApi_Callback* callback) = 0;
     };
 
 
     // TradeApi
 
-#pragma pack(1)
     struct AccountInfo {
         string account_id;       // 帐号编号
         string broker;           // 交易商名称，如招商证券
@@ -360,16 +360,17 @@ namespace tquant {  namespace api {
         string  entrust_no;       // 订单委托号
         int32_t order_id;         // 自定义编号
     };
-#pragma pack()
+
 
     class TradeApi_Callback{
     public:
+        virtual ~TradeApi_Callback() { }
         virtual void on_order_status  (shared_ptr<Order> order) = 0;
         virtual void on_order_trade   (shared_ptr<Trade> trade) = 0;
         virtual void on_account_status(shared_ptr<AccountInfo> account) = 0;
     };
 
-    _TQAPI_EXPORT class TradeApi {
+    class TradeApi {
     protected:
         virtual ~TradeApi() {}
     public:
@@ -474,7 +475,7 @@ namespace tquant {  namespace api {
         *
         * @param callback
         */
-        virtual void set_callback(TradeApi_Callback* callback) = 0;
+        virtual TradeApi_Callback* set_callback(TradeApi_Callback* callback) = 0;
     };
 
     class TQuantApi {

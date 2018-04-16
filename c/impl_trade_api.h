@@ -5,6 +5,7 @@
 
 #include "myutils/stringutils.h"
 #include "myutils/mprpc.h"
+#include "myutils/unicode.h"
 #include "impl_tquant_api.h"
 
 namespace tquant { namespace api { namespace impl {
@@ -315,9 +316,11 @@ namespace tquant { namespace api { namespace impl {
             return CallResult<string>("-1,to be implemented");
         }
 
-        virtual void set_callback(TradeApi_Callback* callback) override
+        virtual TradeApi_Callback* set_callback(TradeApi_Callback* callback) override
         {
+            auto old = m_callback;
             m_callback = callback;
+            return old;
         }
 
 

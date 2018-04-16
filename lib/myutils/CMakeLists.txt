@@ -15,6 +15,8 @@ set(SRC
   misc.h
   ipc_connection.cpp
   ipc_connection.h
+  unicode.cpp
+  unicode.h
   loop/AsyncCall.h
   loop/MessageLoop.cpp
   loop/MessageLoop.h

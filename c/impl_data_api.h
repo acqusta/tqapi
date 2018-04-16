@@ -267,9 +267,11 @@ namespace tquant { namespace api { namespace impl {
             return update_subscribe_result(rsp->result);
         }
 
-        virtual void set_callback(DataApi_Callback* callback) override
+        virtual DataApi_Callback* set_callback(DataApi_Callback* callback) override
         {
+            auto old = m_callback;
             m_callback = callback;
+            return old;
         }
 
         void on_notification(shared_ptr<mprpc::MpRpcMessage> rpcmsg)

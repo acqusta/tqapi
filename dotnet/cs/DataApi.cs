@@ -105,10 +105,12 @@ namespace tquant
 
         public interface DataApiCallback
         {
-
+            void OnMarketQuote(MarketQuote quote);
+            void OnBar(String cycle, Bar bar);
         }
 
-        public interface DataApi {
+        public interface DataApi
+        {
             /**
             * 取某交易日的某个代码的 ticks
             *

@@ -28,7 +28,7 @@ target_link_libraries(tqapi
   ${COMMON_LIB}
 )
 
-install(TARGETS tqapi DESTINATION cpp)
+install(TARGETS tqapi DESTINATION bin)
 
 install(TARGETS tqapi-static DESTINATION cpp)
 

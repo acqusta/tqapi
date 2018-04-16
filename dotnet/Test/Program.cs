@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using tquant.api;
 
 namespace Test
@@ -26,7 +27,7 @@ namespace Test
             }
             {
                 var r = dapi.GetTick("600000.SH");
-                if (r.Value!=null)
+                if (r.Value != null)
                 {
                     foreach (var tick in r.Value)
                         Console.WriteLine(tick.code + "|"
@@ -57,8 +58,51 @@ namespace Test
 
         }
 
+        class MyTradeApiCallback : TradeApiCallback
+        {
+            public void OnAccountStatus(AccountInfo account)
+            {
+                Console.WriteLine("on_account: " + account.account_id + "," + account.status);
+            }
+
+            public void OnOrderStatus(Order order)
+            {
+                Console.WriteLine("on_order: "
+                            + order.account_id + ","
+                            + order.code + ","
+                            + order.entrust_action + ","
+                            + order.entrust_price + ","
+                            + order.entrust_size + ","
+                            + order.entrust_date + ","
+                            + order.entrust_time + ","
+                            + order.entrust_no + ","
+                            + order.fill_price + ","
+                            + order.fill_size + ","
+                            + order.status + ","
+                            + order.status_msg
+                            );
+            }
+
+            public void OnOrderTrade(Trade trade)
+            {
+                Console.WriteLine("on_trade: "
+                            + trade.account_id + ","
+                            + trade.fill_date + ","
+                            + trade.fill_time + ","
+                            + trade.code + ","
+                            + trade.entrust_action + ","
+                            + trade.entrust_no + ","
+                            + trade.fill_price + ","
+                            + trade.fill_size + ","
+                            + trade.fill_no
+                            );
+            }
+        }
+
         static void TestTradeApi(TradeApi tapi)
         {
+            tapi.SetCallback(new MyTradeApiCallback());
+
             {
                 var r = tapi.QueryAccountStatus();
                 if (r.Value != null)
@@ -101,6 +145,7 @@ namespace Test
                     {
                         Console.WriteLine("position: "
                             + pos.code + ","
+                            + pos.name + ","
                             + pos.side + ","
                             + pos.init_size + ","
                             + pos.enable_size + ","
@@ -178,7 +223,7 @@ namespace Test
                     Console.WriteLine("PlaceOrder error: " + r.Msg);
                 }
 
-                if (r.Value!=null)
+                if (r.Value != null)
                 {
                     var r2 = tapi.CanceOrder("glsc", "000001.SH", r.Value.entrust_no);
                     if (r2.Value)
@@ -191,13 +236,43 @@ namespace Test
                     }
                 }
             }
+
+            while(true)
+            {
+                Thread.Sleep(1000);
+            }
+
+        }
+
+        class MyDataApiCallback : DataApiCallback
+        {
+            public void OnMarketQuote(MarketQuote quote) {
+                Console.WriteLine("on_quote: " + quote.date + "," + quote.time + ","
+                    + quote.code + "," + quote.last + "," + quote.volume);
+            }
+            public void OnBar(String cycle, Bar bar) {
+                Console.WriteLine("on_quote: " + bar.date + "," + bar.time + ","
+                    + bar.code + "," + bar.open + "," + bar.high + "," + bar.low + "," + bar.close);
+            }
+        }
+
+        static void TestDataApi2(DataApi dapi)
+        {
+            dapi.Subscribe(new string[] { "CU1806.SHF", "RB1810.SHF" });
+            dapi.SetCallback(new MyDataApiCallback());
+
+            while(true)
+            {
+                Thread.Sleep(1000);
+            }
         }
         static int Main(string[] args)
         {
             var tqapi = TQuantApi.Create("tcp://127.0.0.1:10001");
             var dapi = tqapi.GetDataApi();
             var tapi = tqapi.GetTradeApi();
-            //TestDataApi(dapi);
+            // TestDataApi(dapi);
+            //TestDataApi2(dapi);
             TestTradeApi(tapi);
             return 0;
         }
