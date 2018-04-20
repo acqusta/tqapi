@@ -229,14 +229,15 @@ enum CallResultValueType {
 
 #pragma pack()
 
-extern "C" __declspec(dllexport)
+
+extern "C" _TQAPI_EXPORT
 void* tqapi_create(const char* addr)
 {
     auto api = TQuantApi::create(addr);
     return reinterpret_cast<void*>(api);
 }
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
 void tqapi_destroy(void* h)
 {
     auto api = reinterpret_cast<TQuantApi*>(h);
@@ -244,7 +245,7 @@ void tqapi_destroy(void* h)
         delete api;
 }
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
 void* tqapi_get_data_api(void* h, const char* source)
 {
     auto api = reinterpret_cast<TQuantApi*>(h);
@@ -254,7 +255,7 @@ void* tqapi_get_data_api(void* h, const char* source)
     return reinterpret_cast<void*>(dapi);
 }
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
 void* tqapi_get_trade_api(void* h)
 {
     auto api = reinterpret_cast<TQuantApi*>(h);
@@ -264,14 +265,14 @@ void* tqapi_get_trade_api(void* h)
     return reinterpret_cast<void*>(tapi);
 }
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
 void destroy_callresult(void* h)
 {
     auto cr = reinterpret_cast<CallResultValueType*>(h);
     delete cr;
 }
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
 CallResultWrap* dapi_get_bar(void* h, const char* code, const char* cycle, int trading_day, bool align)
 {
     auto dapi = reinterpret_cast<DataApi*>(h);
@@ -293,7 +294,7 @@ CallResultWrap* dapi_get_bar(void* h, const char* code, const char* cycle, int t
     return cr;
 }
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
 CallResultWrap* dapi_get_daily_bar(void* h, const char* code, const char* price_adj, bool align)
 {
     auto dapi = reinterpret_cast<DataApi*>(h);
@@ -315,7 +316,7 @@ CallResultWrap* dapi_get_daily_bar(void* h, const char* code, const char* price_
     return cr;
 }
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
 CallResultWrap* dapi_get_tick(void* h, const char* code, int trading_day)
 {
     auto dapi = reinterpret_cast<DataApi*>(h);
@@ -337,7 +338,29 @@ CallResultWrap* dapi_get_tick(void* h, const char* code, int trading_day)
     return cr;
 }
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
+CallResultWrap* dapi_get_quote(void* h, const char* code)
+{
+    auto dapi = reinterpret_cast<DataApi*>(h);
+    assert(dapi);
+
+    CallResultWrap* cr = new CallResultWrap();
+    auto r = dapi->quote(code);
+    if (r.value) {
+        cr->quote = r.value;
+        cr->value = reinterpret_cast<const void*>(cr->quote.get());
+        cr->element_size = sizeof(MarketQuote);
+        cr->element_count = 1;
+        cr->value_type = QUOTE_VALUE;
+    }
+    else {
+        cr->_msg = r.msg;
+        cr->msg = _T(cr->_msg);
+    }
+    return cr;
+}
+
+extern "C" _TQAPI_EXPORT
 CallResultWrap* dapi_subscribe(void* h, const char* codes)
 {
     auto dapi = reinterpret_cast<DataApi*>(h);
@@ -367,7 +390,7 @@ CallResultWrap* dapi_subscribe(void* h, const char* codes)
     return cr;
 }
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
 CallResultWrap* dapi_unsubscribe(void* h, const char* codes)
 {
     auto dapi = reinterpret_cast<DataApi*>(h);
@@ -422,7 +445,7 @@ public:
     }
 };
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
 void dapi_set_callback(void*h, T_on_market_quote a_on_quote, T_on_bar a_on_bar)
 {
     auto dapi = reinterpret_cast<DataApi*>(h);
@@ -440,7 +463,7 @@ void dapi_set_callback(void*h, T_on_market_quote a_on_quote, T_on_bar a_on_bar)
     }
 }
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
 CallResultWrap* tapi_query_account_status(void* h)
 {
     auto tapi = reinterpret_cast<TradeApi*>(h);
@@ -467,7 +490,7 @@ CallResultWrap* tapi_query_account_status(void* h)
     return cr;
 }
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
 CallResultWrap* tapi_query_balance(void* h, const char* account_id)
 {
     auto tapi = reinterpret_cast<TradeApi*>(h);
@@ -489,7 +512,7 @@ CallResultWrap* tapi_query_balance(void* h, const char* account_id)
     return cr;
 }
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
 CallResultWrap* tapi_query_positions(void* h, const char* account_id)
 {
     auto tapi = reinterpret_cast<TradeApi*>(h);
@@ -515,7 +538,7 @@ CallResultWrap* tapi_query_positions(void* h, const char* account_id)
     return cr;
 }
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
 CallResultWrap* tapi_query_orders(void* h, const char* account_id)
 {
     auto tapi = reinterpret_cast<TradeApi*>(h);
@@ -540,7 +563,7 @@ CallResultWrap* tapi_query_orders(void* h, const char* account_id)
     return cr;
 }
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
 CallResultWrap* tapi_query_trades(void* h, const char* account_id)
 {
     auto tapi = reinterpret_cast<TradeApi*>(h);
@@ -565,7 +588,7 @@ CallResultWrap* tapi_query_trades(void* h, const char* account_id)
     return cr;
 }
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
 CallResultWrap* tapi_place_order(void* h, const char* account_id,
                                  const char* code, 
                                  double price,
@@ -593,7 +616,7 @@ CallResultWrap* tapi_place_order(void* h, const char* account_id,
 }
 
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
 CallResultWrap* tapi_cancel_order1(void* h, const char* account_id,
                                    const char* code,
                                    const char* entrust_no)
@@ -617,7 +640,7 @@ CallResultWrap* tapi_cancel_order1(void* h, const char* account_id,
     return cr;
 }
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
 CallResultWrap* tapi_cancel_order2(void* h, const char* account_id,
                                    const char* code,
                                    int32_t order_id)
@@ -642,7 +665,7 @@ CallResultWrap* tapi_cancel_order2(void* h, const char* account_id,
 }
 
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
 CallResultWrap* tapi_query(void* h, const char* account_id, const char* command, const char* data)
 {
     auto tapi = reinterpret_cast<TradeApi*>(h);
@@ -695,7 +718,7 @@ public:
     }
 };
 
-extern "C" __declspec(dllexport)
+extern "C" _TQAPI_EXPORT
 void tapi_set_callback(void*h,
     T_on_order_status on_order,
     T_on_order_trade on_trade,

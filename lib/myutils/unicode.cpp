@@ -1,4 +1,6 @@
 #include <assert.h>
+#include <iostream>
+#include <string.h>
 #include "unicode.h"
 
 using namespace std;
@@ -166,12 +168,16 @@ static string convert(const char* from, const char* to, const char* src, size_t 
     size_t src_len = size;
 
     iconv_t ic = iconv_open(to, from);
-    CHECK( (size_t)ic != -1 ) << "iconv_open failed";
+    //CHECK( (size_t)ic != -1 ) << "iconv_open failed";
+    if ((size_t)ic == -1) {
+        cerr << "iconv_open error: " << from << " -> " << to << endl;
+        return "";
+    }
 
     size_t ret = iconv(ic, (char**)&src, &src_len, &dst, &dst_len);
 
     if (ret == (size_t)-1){
-        LOG(ERROR) << "iconv failed: " << from << "," << to << ":" << strerror(errno);
+        cerr << "iconv failed: " << from << "," << to << ":" << strerror(errno);
         delete[] buf;
         iconv_close(ic);
         return src_orig;

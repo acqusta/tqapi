@@ -2,15 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using tquant.api.impl;
 
-namespace tquant
+namespace TQuant
 {
-    namespace api
+    namespace Api
     {
-        namespace impl
+        namespace Impl
         {
             class TqapiDll
             {
@@ -189,16 +186,23 @@ namespace tquant
                     return new CallResult<MarketQuote[]>(ticks);
                 }
 
+                TqapiDll.DataApiOnMarketQuote on_quote;
+                TqapiDll.DataApiOnBar on_bar;
+
                 public void SetCallback(DataApiCallback callback)
                 {
                     if (callback!=null)
-                    { 
-                        TqapiDll.dapi_set_callback(this.handle, 
-                                (quote) => { callback.OnMarketQuote(quote); },
-                                (cycle, bar) => { callback.OnBar(cycle, bar); });
+                    {
+                        on_quote = (quote) => { callback.OnMarketQuote(quote); };
+                        on_bar   = (cycle, bar) => { callback.OnBar(cycle, bar);};
+
+                        TqapiDll.dapi_set_callback(this.handle, on_quote, on_bar);
                     }
                     else
                     {
+                        on_quote = null;
+                        on_bar = null;
+
                         TqapiDll.dapi_set_callback(this.handle, null, null);
                     }
                 }
@@ -213,7 +217,7 @@ namespace tquant
 
                     IntPtr r = TqapiDll.dapi_subscribe(handle, str);
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
-                    if (cr.value == null)
+                    if (cr.value == IntPtr.Zero)
                         return new CallResult<string[]>(cr.msg);
 
                     var subed_codes = TqapiDll.CopyArray<string>(cr);
@@ -400,17 +404,25 @@ namespace tquant
                     return ret;
                 }
 
+                TqapiDll.TradeApiOnOrderStatus   on_order_status;
+                TqapiDll.TradeApiOnOrderTrade    on_order_trade;
+                TqapiDll.TradeApiOnAccountStatus on_account_status;
+
                 public void SetCallback(TradeApiCallback callback)
                 {
                     if (callback != null)
                     {
-                        TqapiDll.tapi_set_callback(this.handle,
-                                (order) => { callback.OnOrderStatus(order); },
-                                (trade) => { callback.OnOrderTrade(trade); },
-                                (account) => { callback.OnAccountStatus(account); });
+                        on_order_status   = (order) => { callback.OnOrderStatus(order); };
+                        on_order_trade    = (trade) => { callback.OnOrderTrade(trade); };
+                        on_account_status = (account) => { callback.OnAccountStatus(account); };
+                        TqapiDll.tapi_set_callback(this.handle, on_order_status, on_order_trade, on_account_status);
                     }
                     else
                     {
+                        on_order_status   = null;
+                        on_order_trade    = null;
+                        on_account_status = null;
+
                         TqapiDll.tapi_set_callback(this.handle, null, null, null);
                     }
                 }

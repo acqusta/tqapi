@@ -6,12 +6,16 @@
 #include <memory>
 #include <vector>
 
-#ifdef _TQAPI_DLL
-#define _TQAPI_EXPORT __declspec(dllimport)
-#elif defined(_TQAPI_DLL_IMPL)
-#define _TQAPI_EXPORT __declspec(dllexport)
+#ifdef _WIN32
+#  ifdef _TQAPI_DLL
+#    define _TQAPI_EXPORT __declspec(dllimport)
+#  elif defined(_TQAPI_DLL_IMPL)
+#    define _TQAPI_EXPORT __declspec(dllexport)
+#  else
+#    define _TQAPI_EXPORT
+#  endif
 #else
-#define _TQAPI_EXPORT
+#  define _TQAPI_EXPORT
 #endif
 
 namespace tquant {  namespace api {

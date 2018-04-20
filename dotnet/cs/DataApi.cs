@@ -5,9 +5,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace tquant
+namespace TQuant
 {
-    namespace api
+    namespace Api
     {
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public struct MarketQuote

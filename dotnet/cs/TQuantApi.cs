@@ -4,11 +4,11 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using tquant.api.impl;
+using TQuant.Api.Impl;
 
-namespace tquant
+namespace TQuant
 {
-    namespace api
+    namespace Api
     {
         public class TQuantApi
         {
@@ -62,7 +62,7 @@ namespace tquant
 
             public static TQuantApi Create(string addr)
             {
-                IntPtr h = impl.TqapiDll.tqapi_create(addr);
+                IntPtr h = TqapiDll.tqapi_create(addr);
                 return h != null ? new TQuantApi(h) : null;
             }
         }

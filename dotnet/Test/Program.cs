@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading;
-using tquant.api;
+using TQuant.Api;
 
 namespace Test
 {
@@ -251,14 +251,17 @@ namespace Test
                     + quote.code + "," + quote.last + "," + quote.volume);
             }
             public void OnBar(String cycle, Bar bar) {
-                Console.WriteLine("on_quote: " + bar.date + "," + bar.time + ","
+                Console.WriteLine("on_bar: " + cycle + "," + bar.date + "," + bar.time + ","
                     + bar.code + "," + bar.open + "," + bar.high + "," + bar.low + "," + bar.close);
             }
         }
 
         static void TestDataApi2(DataApi dapi)
         {
-            dapi.Subscribe(new string[] { "CU1806.SHF", "RB1810.SHF" });
+            dapi.Subscribe(new string[] { "CU1806.SHF", "RB1810.SHF",
+                "000001.SH", "399001.SZ",
+                "600000.SH", "000001.SZ"
+            });
             dapi.SetCallback(new MyDataApiCallback());
 
             while(true)
@@ -266,14 +269,40 @@ namespace Test
                 Thread.Sleep(1000);
             }
         }
+
+        static void PerfTest(DataApi dapi)
+        {
+            //var code = "RB1810.SHF";
+            var code = "600000.SH";
+            dapi.Subscribe(new string[] { code });
+
+            long begin_time = DateTime.Now.Ticks;
+
+            int count = 100000;
+            for (var i = 0; i < count; i ++)
+            {
+                var r = dapi.GetTick(code, 20180416);
+                //var r = dapi.GetBar(code, "1m", 20180416);
+                if (r.Value == null)
+                    Console.WriteLine("GetTick error: " + r.Msg);
+                Thread.Sleep(10);
+            }
+
+            long end_time = DateTime.Now.Ticks;
+
+            Console.WriteLine("Used time: " + (end_time - begin_time) /10000.0 / count + "ms");
+            Console.Read();
+        }
+
         static int Main(string[] args)
         {
             var tqapi = TQuantApi.Create("tcp://127.0.0.1:10001");
             var dapi = tqapi.GetDataApi();
             var tapi = tqapi.GetTradeApi();
-            // TestDataApi(dapi);
-            //TestDataApi2(dapi);
-            TestTradeApi(tapi);
+            //TestDataApi(dapi);
+            TestDataApi2(dapi);
+            //TestTradeApi(tapi);
+            PerfTest(dapi);
             return 0;
         }
     }
