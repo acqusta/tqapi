@@ -45,7 +45,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\cs\tqapi_cs.csproj">
+    <ProjectReference Include="..\src\tqapi_cs.csproj">
       <Project>{beb1ce43-7f22-45ed-a096-46c1a2e6d242}</Project>
       <Name>tqapi_cs</Name>
     </ProjectReference>
