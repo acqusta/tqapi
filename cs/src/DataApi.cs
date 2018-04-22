@@ -10,7 +10,7 @@ namespace TQuant
     namespace Api
     {
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
-        public struct MarketQuote
+        public class MarketQuote
         {
             public String code;
             public Int32  date;
@@ -147,7 +147,7 @@ namespace TQuant
             * @param align         是否对齐
             * @return
             */
-            CallResult<DailyBar[]> GetDailyBar(String code, String price_adj, bool align);
+            CallResult<DailyBar[]> GetDailyBar(String code, String price_adj = "", bool align=true);
 
             /**
             * 取当前的行情快照

@@ -15,6 +15,7 @@ namespace TestUI
         public TickForm()
         {
             InitializeComponent();
+            SetHeader(false);
         }
 
         public void SetHeader(bool isFuture)
@@ -89,7 +90,6 @@ namespace TestUI
                 long volume = 0;
                 double turnover = 0.0;
 
-                //foreach (var tick in r.Value)
                 for (int i = 0; i < r.Value.Length; i++)
                 {
                     var tick = r.Value[i];
@@ -102,6 +102,7 @@ namespace TestUI
                         (tick.time / 1000) % 100, (tick.time % 1000));
 
                     ListViewItem item = new ListViewItem();
+                    item.Text = i.ToString();
                     item.SubItems.Add(sdate);
                     item.SubItems.Add(stime);
                     item.SubItems.Add(String.Format(price_fmt, tick.pre_close));
@@ -158,7 +159,14 @@ namespace TestUI
 
         private void buttonShowChart_Click(object sender, EventArgs e)
         {
-            TrendForm form = new TrendForm();
+            string code = editCode.Text.Trim();
+            if (code == "")
+                return;
+
+            int date = this.checkBoxUseTody.Checked ? 0 :
+                dtpDate.Value.Year * 10000 + dtpDate.Value.Month * 100 + dtpDate.Value.Day;
+
+            TrendForm form = new TrendForm(code, date);
             form.Show();
         }
 
