@@ -13,6 +13,9 @@ namespace TQuant
         public class MarketQuote
         {
             public String code;
+#if X86
+            public Int32 _padding_1;
+#endif
             public Int32  date;
             public Int32  time;
             public Int64  recv_time;
@@ -57,6 +60,9 @@ namespace TQuant
         public class Bar
         {
             public String code;
+#if X86
+            public Int32 _padding_1;
+#endif
             public Int32  date;
             public Int32  time;
             public Int32  trading_day;
@@ -73,6 +79,9 @@ namespace TQuant
         public class DailyBar
         {
             public String code;
+#if X86
+            public Int32 _padding_1;
+#endif
             public Int32  date;
             public Double open;
             public Double high;

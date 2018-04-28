@@ -20,68 +20,68 @@ namespace TQuant
                     public Int32 value_type;
                 }
 
-                [DllImport("tqapi.dll", EntryPoint = "tqapi_create")]
+                [DllImport("tqapi.dll", EntryPoint = "tqapi_create", CallingConvention =CallingConvention.Cdecl)]
                 public static extern IntPtr tqapi_create(String addr);
 
-                [DllImport("tqapi.dll", EntryPoint = "tqapi_destroy")]
+                [DllImport("tqapi.dll", EntryPoint = "tqapi_destroy", CallingConvention = CallingConvention.Cdecl)]
                 public static extern void tqapi_destroy(IntPtr h);
 
-                [DllImport("tqapi.dll", EntryPoint = "tqapi_get_data_api")]
+                [DllImport("tqapi.dll", EntryPoint = "tqapi_get_data_api", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tqapi_get_data_api(IntPtr h, String source);
 
-                [DllImport("tqapi.dll", EntryPoint = "tqapi_get_trade_api")]
+                [DllImport("tqapi.dll", EntryPoint = "tqapi_get_trade_api", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tqapi_get_trade_api(IntPtr h);
 
-                [DllImport("tqapi.dll", EntryPoint = "dapi_get_bar")]
+                [DllImport("tqapi.dll", EntryPoint = "dapi_get_bar", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr dapi_get_bar(IntPtr h, String code, String cycle,
                                                          Int32 trading_day, Boolean align);
 
-                [DllImport("tqapi.dll", EntryPoint = "dapi_get_daily_bar")]
+                [DllImport("tqapi.dll", EntryPoint = "dapi_get_daily_bar", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr dapi_get_daily_bar(IntPtr h, String code, String cycle,
                                                                Boolean align);
 
-                [DllImport("tqapi.dll", EntryPoint = "dapi_get_quote")]
+                [DllImport("tqapi.dll", EntryPoint = "dapi_get_quote", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr dapi_get_quote(IntPtr h, String code);
 
-                [DllImport("tqapi.dll", EntryPoint = "dapi_get_tick")]
+                [DllImport("tqapi.dll", EntryPoint = "dapi_get_tick", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr dapi_get_tick(IntPtr h, String code, Int32 trading_day);
 
-                [DllImport("tqapi.dll", EntryPoint = "destroy_callresult")]
+                [DllImport("tqapi.dll", EntryPoint = "destroy_callresult", CallingConvention = CallingConvention.Cdecl)]
                 public static extern void destroy_callresult(IntPtr h);
 
-                [DllImport("tqapi.dll", EntryPoint = "dapi_subscribe")]
+                [DllImport("tqapi.dll", EntryPoint = "dapi_subscribe", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr dapi_subscribe(IntPtr h, String codes);
 
-                [DllImport("tqapi.dll", EntryPoint = "dapi_unsubscribe")]
+                [DllImport("tqapi.dll", EntryPoint = "dapi_unsubscribe", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr dapi_unsubscribe(IntPtr h, String codes);
 
-                [DllImport("tqapi.dll", EntryPoint = "tapi_query_balance")]
+                [DllImport("tqapi.dll", EntryPoint = "tapi_query_balance", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tapi_query_balance(IntPtr h, String account_id);
 
-                [DllImport("tqapi.dll", EntryPoint = "tapi_query_positions")]
+                [DllImport("tqapi.dll", EntryPoint = "tapi_query_positions", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tapi_query_positions(IntPtr h, String account_id);
 
-                [DllImport("tqapi.dll", EntryPoint = "tapi_query_orders")]
+                [DllImport("tqapi.dll", EntryPoint = "tapi_query_orders", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tapi_query_orders(IntPtr h, String account_id);
 
-                [DllImport("tqapi.dll", EntryPoint = "tapi_query_trades")]
+                [DllImport("tqapi.dll", EntryPoint = "tapi_query_trades", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tapi_query_trades(IntPtr h, String account_id);
 
-                [DllImport("tqapi.dll", EntryPoint = "tapi_query_account_status")]
+                [DllImport("tqapi.dll", EntryPoint = "tapi_query_account_status", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tapi_query_account_status(IntPtr h);
 
-                [DllImport("tqapi.dll", EntryPoint = "tapi_query")]
+                [DllImport("tqapi.dll", EntryPoint = "tapi_query", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tapi_query(IntPtr h, String account_id, String command, String data);
 
-                [DllImport("tqapi.dll", EntryPoint = "tapi_place_order")]
+                [DllImport("tqapi.dll", EntryPoint = "tapi_place_order", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tapi_place_order(IntPtr h, String account_id,
                     String code, Double price, Int64 size, String action, Int32 order_id);
 
-                [DllImport("tqapi.dll", EntryPoint = "tapi_cancel_order1")]
+                [DllImport("tqapi.dll", EntryPoint = "tapi_cancel_order1", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tapi_cancel_order1(IntPtr h, String account_id,
                     String code, String entrust_no, Int32 order_id);
 
-                [DllImport("tqapi.dll", EntryPoint = "tapi_cancel_order2")]
+                [DllImport("tqapi.dll", EntryPoint = "tapi_cancel_order2", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tapi_cancel_order2(IntPtr h, String account_id,
                     String code, Int32 order_id);
 
@@ -91,7 +91,7 @@ namespace TQuant
                 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
                 public delegate void DataApiOnBar(String cycle, Bar bar);
 
-                [DllImport("tqapi.dll", EntryPoint = "dapi_set_callback")]
+                [DllImport("tqapi.dll", EntryPoint = "dapi_set_callback", CallingConvention = CallingConvention.Cdecl)]
                 public static extern void dapi_set_callback(IntPtr h, DataApiOnMarketQuote on_quote, DataApiOnBar on_bar);
 
                 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -103,7 +103,7 @@ namespace TQuant
                 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
                 public delegate void TradeApiOnAccountStatus(AccountInfo account);
 
-                [DllImport("tqapi.dll", EntryPoint = "tapi_set_callback")]
+                [DllImport("tqapi.dll", EntryPoint = "tapi_set_callback", CallingConvention = CallingConvention.Cdecl)]
                 public static extern void tapi_set_callback(IntPtr h,
                                                             TradeApiOnOrderStatus on_order_status,
                                                             TradeApiOnOrderTrade on_order_trade,
