@@ -127,10 +127,21 @@ namespace TQuant
                 IntPtr handle;
                 TQuantApi tqapi;
 
+                TqapiDll.DataApiOnMarketQuote on_quote;
+                TqapiDll.DataApiOnBar on_bar;
+
+                public event OnMarketQuoteHandler OnMarketQuote;
+
+                public event OnBarHandler OnBar;
+
                 public DataApiImpl(TQuantApi tqapi, IntPtr handle)
                 {
                     this.tqapi = tqapi;
                     this.handle = handle;
+                    on_quote = (quote)      => { if (OnMarketQuote != null) OnMarketQuote(quote); };
+                    on_bar   = (cycle, bar) => { if (OnBar != null) OnBar(cycle, bar);};
+
+                    TqapiDll.dapi_set_callback(this.handle, on_quote, on_bar);
                 }
 
                 ~DataApiImpl()
@@ -186,27 +197,6 @@ namespace TQuant
                     return new CallResult<MarketQuote[]>(ticks);
                 }
 
-                TqapiDll.DataApiOnMarketQuote on_quote;
-                TqapiDll.DataApiOnBar on_bar;
-
-                public void SetCallback(DataApiCallback callback)
-                {
-                    if (callback!=null)
-                    {
-                        on_quote = (quote) => { callback.OnMarketQuote(quote); };
-                        on_bar   = (cycle, bar) => { callback.OnBar(cycle, bar);};
-
-                        TqapiDll.dapi_set_callback(this.handle, on_quote, on_bar);
-                    }
-                    else
-                    {
-                        on_quote = null;
-                        on_bar = null;
-
-                        TqapiDll.dapi_set_callback(this.handle, null, null);
-                    }
-                }
-
                 public CallResult<string[]> Subscribe(string[] codes)
                 {
                     string str = "";
@@ -249,10 +239,23 @@ namespace TQuant
                 IntPtr handle;
                 TQuantApi tqapi;
 
+                TqapiDll.TradeApiOnOrderStatus on_order_status;
+                TqapiDll.TradeApiOnOrderTrade on_order_trade;
+                TqapiDll.TradeApiOnAccountStatus on_account_status;
+
+                public event OnOrderStatusHandler OnOrderStatus;
+                public event OnOrderTradeHandler OnOrderTrade;
+                public event OnAccountStatusHandler OnAccountStatus;
+
                 public TradeApiImpl(TQuantApi tqapi, IntPtr handle)
                 {
                     this.tqapi = tqapi;
                     this.handle = handle;
+                    on_order_status = (order)     => { if (OnOrderStatus != null) OnOrderStatus(order); };
+                    on_order_trade = (trade)      => { if (OnOrderTrade  != null) OnOrderTrade(trade); };
+                    on_account_status = (account) => { if (OnAccountStatus != null) OnAccountStatus(account); };
+
+                    TqapiDll.tapi_set_callback(this.handle, on_order_status, on_order_trade, on_account_status);
                 }
 
                 ~TradeApiImpl()
@@ -402,29 +405,6 @@ namespace TQuant
 
                     TqapiDll.destroy_callresult(r);
                     return ret;
-                }
-
-                TqapiDll.TradeApiOnOrderStatus   on_order_status;
-                TqapiDll.TradeApiOnOrderTrade    on_order_trade;
-                TqapiDll.TradeApiOnAccountStatus on_account_status;
-
-                public void SetCallback(TradeApiCallback callback)
-                {
-                    if (callback != null)
-                    {
-                        on_order_status   = (order) => { callback.OnOrderStatus(order); };
-                        on_order_trade    = (trade) => { callback.OnOrderTrade(trade); };
-                        on_account_status = (account) => { callback.OnAccountStatus(account); };
-                        TqapiDll.tapi_set_callback(this.handle, on_order_status, on_order_trade, on_account_status);
-                    }
-                    else
-                    {
-                        on_order_status   = null;
-                        on_order_trade    = null;
-                        on_account_status = null;
-
-                        TqapiDll.tapi_set_callback(this.handle, null, null, null);
-                    }
                 }
             }
         }

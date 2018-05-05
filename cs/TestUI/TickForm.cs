@@ -15,6 +15,7 @@ namespace TestUI
     {
         MarketQuote[] ticks;
         ListViewItem[] lvitem_cache = new ListViewItem[0];
+        string code;
 
         public TickForm()
         {
@@ -89,23 +90,25 @@ namespace TestUI
             listView1.View = View.Details;
         }
 
+        int trading_day = 0;
         private void btnGetTick_Click(object sender, EventArgs e)
         {
             string code = editCode.Text.Trim();
             if (code == "")
                 return;
 
-            int date = this.checkBoxUseTody.Checked? 0:
+            trading_day = this.checkBoxUseTody.Checked ? 0 :
                 dtpDate.Value.Year * 10000 + dtpDate.Value.Month * 100 + dtpDate.Value.Day;
 
-            //if (dtpDate.Value.Date == DateTime.Today.Date)
-            //    date = 0;
+            this.code = code;
+            UpdateData();
+        }
 
-            listView1.Items.Clear();
-
+        void UpdateData()
+        { 
             var dapi = GlobalData.GetDataApi();
             dapi.Subscribe(new String[] { code });
-            var r = dapi.GetTick(code, date);
+            var r = dapi.GetTick(code, this.trading_day);
             if (r.Value == null)
             {
                 MessageBox.Show("GetTick Error: " + r.Msg);
@@ -113,6 +116,14 @@ namespace TestUI
             }
 
             this.ticks = r.Value;
+
+            UpdateListView();
+            UpdateTrendChart();
+        }
+
+        private void UpdateListView()
+        {
+            listView1.Items.Clear();
 
             DataType dt;
             if (code.StartsWith("0") && code.EndsWith(".SH") ||
@@ -139,11 +150,11 @@ namespace TestUI
             long volume = 0;
             double turnover = 0.0;
 
-            lvitem_cache = new ListViewItem[r.Value.Length];
+            lvitem_cache = new ListViewItem[this.ticks.Length];
 
-            for (int i = 0; i < r.Value.Length; i++)
+            for (int i = 0; i < this.ticks.Length; i++)
             {
-                var tick = r.Value[i];
+                var tick = this.ticks[i];
 
                 string sdate = String.Format("{0}-{1:D2}-{2:D2}",
                     tick.date / 10000, (tick.date / 100) % 100, (tick.date % 100));
@@ -206,12 +217,32 @@ namespace TestUI
 
             listView1.BeginUpdate();
             SetHeader(dt);
-            listView1.VirtualListSize = r.Value.Length;
+            listView1.VirtualListSize = this.ticks.Length;
 
-            listView1.EnsureVisible(r.Value.Length - 1);
+            listView1.EnsureVisible(this.ticks.Length - 1);
             foreach (ColumnHeader col in listView1.Columns)
                 col.Width = -1;
             listView1.EndUpdate();
+        }
+
+        private void UpdateTrendChart()
+        {
+            var bars = TrendForm.BuildBar(this.ticks, 60);
+            double[] prices = new double[bars.Length];
+            long[] volumes = new long[bars.Length];
+            int[] times = new int[bars.Length];
+
+            for (int i = 0; i < bars.Length; i++)
+            {
+                prices[i] = bars[i].close;
+                times[i] = bars[i].time;
+                volumes[i] = bars[i].volume;
+            }
+
+            double pre_close = this.ticks[0].pre_close;
+            int trading_day = this.ticks[0].trading_day;
+            trendChart1.SetData(code, trading_day, pre_close, prices, volumes, times);
+
         }
 
         private void buttonShowChart_Click(object sender, EventArgs e)
@@ -244,6 +275,90 @@ namespace TestUI
                 int x = e.ItemIndex * e.ItemIndex;
                 e.Item = new ListViewItem(x.ToString());
             }
+        }
+
+        private void trendChart1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void listView1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (this.listView1.SelectedIndices.Count > 0)
+            {
+                int idx = this.listView1.SelectedIndices[0];
+                if (idx < this.ticks.Length)
+                {
+                    var tick = this.ticks[idx];
+                    trendChart1.SetCrossLinePos(tick.last, tick.time);
+                }
+            }
+        }
+
+        HashSet<int> trading_day_set = new HashSet<int>();
+
+        bool IsTradingDay(DateTime dt)
+        {
+            int date = dt.Year * 10000 + dt.Month * 100 + dt.Day;
+            if (trading_day_set.Count == 0)
+            {
+                var dapi = GlobalData.GetDataApi();
+                dapi.Subscribe(new String[] { "000001.SH" });
+                var bars = dapi.GetDailyBar("000001.SH").Value;
+                if (bars != null)
+                {
+                    foreach (var b in bars)
+                        trading_day_set.Add(b.date);
+                }
+            }
+
+            if (trading_day_set!=null)
+                return trading_day_set.Contains(date);
+
+            return (dt.DayOfWeek != DayOfWeek.Saturday && dt.DayOfWeek != DayOfWeek.Sunday);
+        }
+
+        private void buttonPrev_Click(object sender, EventArgs e)
+        {
+            string code = editCode.Text.Trim();
+            if (code == "")
+                return;
+
+            if (this.checkBoxUseTody.Checked) return;
+
+            DateTime dt = dtpDate.Value.AddDays(-1);
+            while(!IsTradingDay(dt))
+                dt = dt.AddDays(-1);
+
+            dtpDate.Value = dt;
+
+            trading_day = dtpDate.Value.Year * 10000 + dtpDate.Value.Month * 100 + dtpDate.Value.Day;
+
+            this.code = code;
+            UpdateData();
+
+        }
+
+        private void buttonNext_Click(object sender, EventArgs e)
+        {
+            string code = editCode.Text.Trim();
+            if (code == "")
+                return;
+
+            if (this.checkBoxUseTody.Checked) return;
+
+            DateTime dt = dtpDate.Value.AddDays(1);
+            while (!IsTradingDay(dt) && dt.Date <= DateTime.Today)
+                dt = dt.AddDays(1);
+
+            if (dt.Date > DateTime.Today) dt = DateTime.Today;
+            dtpDate.Value = dt;
+
+            trading_day = dtpDate.Value.Year * 10000 + dtpDate.Value.Month * 100 + dtpDate.Value.Day;
+
+            this.code = code;
+            UpdateData();
+
         }
 
         //void listView1_CacheVirtualItems(object sender, CacheVirtualItemsEventArgs e)

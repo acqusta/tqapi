@@ -19,6 +19,9 @@ namespace TestUI
         float    brick_width = 0;
         float    brick_height = 0;
 
+        double cross_price = -1;
+        int    cross_time = -1;
+
         public TrendChart()
         {
             InitializeComponent();
@@ -45,8 +48,10 @@ namespace TestUI
             base.OnPaint(pe);
             Graphics g = pe.Graphics;
 
-            //g.DrawString("TrendChart", DefaultFont, new SolidBrush(ForeColor), Width / 2, Height / 2);
-            DrawTrendChart(pe.Graphics);
+            if (prices == null)
+                g.DrawString("TrendChart", DefaultFont, new SolidBrush(ForeColor), Width / 2, Height / 2);
+            else
+                DrawTrendChart(pe.Graphics);
         }
 
         private void DrawTitleBar(Graphics g, int x, int y)
@@ -214,14 +219,24 @@ namespace TestUI
             }
         }
 
+        private double max_price = -1.0;
+        private double min_price = 1e20;
+        private double center_price = 0;
+
+        const int titlebar_height = 20;
+        const int timebar_height = 20;
+        const int sidebar_width = 60;
+
+
         private void DrawTrendChart(Graphics g)
         {
             int width  = this.Width;
             int height = this.Height;
 
-            double max_price = -1.0;
-            double min_price = 1e20;
-            double center_price = pre_close;
+            this.max_price = -1.0;
+            this.min_price = 1e20;
+            this.center_price = pre_close;
+
 
             foreach (var p in prices)
             {
@@ -235,10 +250,6 @@ namespace TestUI
                 min_price = center_price - tmp;
             }
 
-
-            const int titlebar_height = 20;
-            const int timebar_height = 20;
-            const int sidebar_width = 60;
 
             g.Clear(Color.Black);
             DrawLines(g,
@@ -263,6 +274,46 @@ namespace TestUI
                 titlebar_height + (brick_v_count - 2) * brick_height,  // y
                 width - 2 * sidebar_width,
                 brick_height * 2);
+
+            DrawCrossLine(g);
+        }
+
+        private void DrawCrossLine(Graphics g)
+        {
+            int width = this.Width;
+            int height = this.Height;
+
+            if (cross_price < 0.0 || cross_time < 0) return;
+
+            int time_idx = 0;
+            for (int i = 0; i < times.Length; i++)
+            {
+                if (times[i] > cross_time)
+                {
+                    time_idx = i > 0 ? i-- : i;
+                    break;
+                }
+            }
+            float x = sidebar_width + (width - 2 * sidebar_width) * time_idx / 240.0f;
+            float y = (float)(titlebar_height + brick_height * (brick_v_count - 2) * (max_price - cross_price) / (max_price - min_price));
+
+            float left = sidebar_width;
+            float top = titlebar_height;
+            float right = width - sidebar_width;
+            float bottom = height - titlebar_height;
+
+            Pen gray_pen = new Pen(Color.LightCyan, 1);
+            gray_pen.DashStyle = DashStyle.Custom;
+            gray_pen.DashPattern = new float[] { 1f, 1f };
+            g.DrawLine(gray_pen, left, y, right, y);
+            g.DrawLine(gray_pen, x, top, x, bottom);
+        }
+
+        public void SetCrossLinePos(double price, int time)
+        {
+            this.cross_price = price;
+            this.cross_time = time;
+            this.Invalidate();
         }
 
         private void TrendChart_Load(object sender, EventArgs e)

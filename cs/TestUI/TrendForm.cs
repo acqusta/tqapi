@@ -148,7 +148,7 @@ namespace TestUI
             return (seconds / 3600 * 10000 + (seconds % 3600) / 60 * 100 + (seconds % 60)) * 1000;
         }
 
-        static Bar[] BuildBar(MarketQuote[] ticks, int cycle)
+        public static Bar[] BuildBar(MarketQuote[] ticks, int cycle)
         {
             List<Bar> bars = new List<Bar>();
             Bar cur_bar = null;

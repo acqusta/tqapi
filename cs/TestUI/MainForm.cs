@@ -104,5 +104,18 @@ namespace TestUI
             form.WindowState = FormWindowState.Maximized;
             form.Show();
         }
+
+        private void jToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void positionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var form = new PositionForm();
+            form.MdiParent = this;
+            form.WindowState = FormWindowState.Maximized;
+            form.Show();
+        }
     }
 }

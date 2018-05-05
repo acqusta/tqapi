@@ -117,12 +117,9 @@ namespace TQuant
             public Int32  order_id;
         }
 
-        public interface TradeApiCallback
-        {
-            void OnOrderStatus  (Order order);
-            void OnOrderTrade   (Trade trade);
-            void OnAccountStatus(AccountInfo account);
-        };
+        public delegate void OnOrderStatusHandler   (Order order);
+        public delegate void OnOrderTradeHandler    (Trade trade);
+        public delegate void OnAccountStatusHandler (AccountInfo account);
 
         public interface TradeApi
         {
@@ -226,7 +223,10 @@ namespace TQuant
             *
             * @param callback
             */
-            void SetCallback(TradeApiCallback callback);
+            //void SetCallback(TradeApiCallback callback);
+            event OnOrderStatusHandler   OnOrderStatus;
+            event OnOrderTradeHandler    OnOrderTrade;
+            event OnAccountStatusHandler OnAccountStatus;
         };
     }
 }

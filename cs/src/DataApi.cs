@@ -112,14 +112,18 @@ namespace TQuant
             }
         }
 
-        public interface DataApiCallback
-        {
-            void OnMarketQuote(MarketQuote quote);
-            void OnBar(String cycle, Bar bar);
-        }
+        //public interface DataApiCallback
+        //{
+        //    void OnMarketQuote(MarketQuote quote);
+        //    void OnBar(String cycle, Bar bar);
+        //}
+
+        public delegate void OnMarketQuoteHandler(MarketQuote quote);
+        public delegate void OnBarHandler(String cycle, Bar bar);
 
         public interface DataApi
         {
+
             /**
             * 取某交易日的某个代码的 ticks
             *
@@ -194,7 +198,9 @@ namespace TQuant
             *
             * @param callback
             */
-            void SetCallback(DataApiCallback callback);
+            //void SetCallback(DataApiCallback callback);
+            event OnMarketQuoteHandler OnMarketQuote;
+            event OnBarHandler         OnBar;
         }
     }
 }

@@ -58,50 +58,49 @@ namespace Test
 
         }
 
-        class MyTradeApiCallback : TradeApiCallback
+        static void OnAccountStatus(AccountInfo account)
         {
-            public void OnAccountStatus(AccountInfo account)
-            {
-                Console.WriteLine("on_account: " + account.account_id + "," + account.status);
-            }
+            Console.WriteLine("on_account: " + account.account_id + "," + account.status);
+        }
 
-            public void OnOrderStatus(Order order)
-            {
-                Console.WriteLine("on_order: "
-                            + order.account_id + ","
-                            + order.code + ","
-                            + order.entrust_action + ","
-                            + order.entrust_price + ","
-                            + order.entrust_size + ","
-                            + order.entrust_date + ","
-                            + order.entrust_time + ","
-                            + order.entrust_no + ","
-                            + order.fill_price + ","
-                            + order.fill_size + ","
-                            + order.status + ","
-                            + order.status_msg
-                            );
-            }
+        static void OnOrderStatus(Order order)
+        {
+            Console.WriteLine("on_order: "
+                        + order.account_id + ","
+                        + order.code + ","
+                        + order.entrust_action + ","
+                        + order.entrust_price + ","
+                        + order.entrust_size + ","
+                        + order.entrust_date + ","
+                        + order.entrust_time + ","
+                        + order.entrust_no + ","
+                        + order.fill_price + ","
+                        + order.fill_size + ","
+                        + order.status + ","
+                        + order.status_msg
+                        );
+        }
 
-            public void OnOrderTrade(Trade trade)
-            {
-                Console.WriteLine("on_trade: "
-                            + trade.account_id + ","
-                            + trade.fill_date + ","
-                            + trade.fill_time + ","
-                            + trade.code + ","
-                            + trade.entrust_action + ","
-                            + trade.entrust_no + ","
-                            + trade.fill_price + ","
-                            + trade.fill_size + ","
-                            + trade.fill_no
-                            );
-            }
+        static void OnOrderTrade(Trade trade)
+        {
+            Console.WriteLine("on_trade: "
+                        + trade.account_id + ","
+                        + trade.fill_date + ","
+                        + trade.fill_time + ","
+                        + trade.code + ","
+                        + trade.entrust_action + ","
+                        + trade.entrust_no + ","
+                        + trade.fill_price + ","
+                        + trade.fill_size + ","
+                        + trade.fill_no
+                        );
         }
 
         static void TestTradeApi(TradeApi tapi)
         {
-            tapi.SetCallback(new MyTradeApiCallback());
+            tapi.OnAccountStatus += OnAccountStatus;
+            tapi.OnOrderStatus += OnOrderStatus;
+            tapi.OnOrderTrade  += OnOrderTrade;
 
             {
                 var r = tapi.QueryAccountStatus();
@@ -244,27 +243,30 @@ namespace Test
 
         }
 
-        class MyDataApiCallback : DataApiCallback
+        static void OnMarketQuote(MarketQuote quote)
         {
-            public void OnMarketQuote(MarketQuote quote) {
-                Console.WriteLine("on_quote: " + quote.date + "," + quote.time + ","
-                    + quote.code + "," + quote.last + "," + quote.volume);
-            }
-            public void OnBar(String cycle, Bar bar) {
-                Console.WriteLine("on_bar: " + cycle + "," + bar.date + "," + bar.time + ","
-                    + bar.code + "," + bar.open + "," + bar.high + "," + bar.low + "," + bar.close);
-            }
+            Console.WriteLine("on_quote: " + quote.date + "," + quote.time + ","
+                + quote.code + "," + quote.last + "," + quote.volume);
+        }
+
+        static void OnBar(String cycle, Bar bar)
+        {
+            Console.WriteLine("on_bar: " + cycle + "," + bar.date + "," + bar.time + ","
+                + bar.code + "," + bar.open + "," + bar.high + "," + bar.low + "," + bar.close);
         }
 
         static void TestDataApi2(DataApi dapi)
         {
-            dapi.Subscribe(new string[] { "CU1806.SHF", "RB1810.SHF",
+            dapi.Subscribe(new string[] { 
+                //"CU1806.SHF", "RB1810.SHF",
                 "000001.SH", "399001.SZ",
                 "600000.SH", "000001.SZ"
             });
-            dapi.SetCallback(new MyDataApiCallback());
 
-            while(true)
+            dapi.OnBar += OnBar;
+            dapi.OnMarketQuote += OnMarketQuote;
+
+            while (true)
             {
                 Thread.Sleep(1000);
             }

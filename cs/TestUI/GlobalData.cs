@@ -15,5 +15,10 @@ namespace TestUI
         {
             return tqapi.GetDataApi();
         }
+
+        public static TradeApi GetTradeApi()
+        {
+            return tqapi.GetTradeApi();
+        }
     }
 }
