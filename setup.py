@@ -43,8 +43,8 @@ sources = [
     "pyext/tqapi_tapi.cpp",
     "pyext/tqapi_dapi.cpp",
     "pyext/tqapi_py.cpp",
-    "c/impl_tquant_api.cpp",
-    "c/tquant_api_test.cpp",
+    "c/api/impl_tquant_api.cpp",
+    "c/api/tquant_api_test.cpp",
 ]
 
 define_macros = [
@@ -56,7 +56,7 @@ include_dirs = [
     'lib',
     'lib/msgpack/include',
     'pyext',
-    'c',
+    'c/api',
     np.get_include()
 ]
 
