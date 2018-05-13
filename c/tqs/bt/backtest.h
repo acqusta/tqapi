@@ -9,7 +9,7 @@
 
 using namespace std;
 
-using namespace tquant::stra;
+using namespace tquant::stralet;
 
 struct Holding {
     string  code;

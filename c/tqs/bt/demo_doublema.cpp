@@ -8,7 +8,7 @@
 
 // https://uqer.io/ R-Breaker²ßÂÔ
 //
-using namespace tquant::stra;
+using namespace tquant::stralet;
 using namespace tquant::api;
 
 
@@ -26,8 +26,8 @@ public:
 private:
     string m_account_id;
     string m_contract;
-    int    m_fast_ma_len = 0;
-    int    m_slow_ma_len = 0;
+    size_t m_fast_ma_len = 0;
+    size_t m_slow_ma_len = 0;
 };
 
 void DoubleMAStralet::on_init(StraletContext* sc)

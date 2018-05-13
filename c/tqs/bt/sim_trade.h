@@ -8,7 +8,7 @@
 #include "backtest.h"
 
 using namespace tquant::api;
-using namespace tquant::stra;
+using namespace tquant::stralet;
 
 class SimStraletContext;
 

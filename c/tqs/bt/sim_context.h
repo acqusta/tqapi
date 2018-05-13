@@ -5,7 +5,7 @@
 #include "stralet.h"
 
 using namespace tquant::api;
-using namespace tquant::stra;
+using namespace tquant::stralet;
 
 enum DataLevel {
     BT_TICK,
@@ -40,8 +40,8 @@ public:
     void set_sim_time(const DateTime& dt);
 
     virtual int32_t trading_day() override;
-    virtual void cur_time(DateTime* dt) override;
-    virtual system_clock::time_point cur_time() override;
+    virtual DateTime cur_time() override;
+    virtual system_clock::time_point cur_time_as_tp() override;
     virtual void post_event(const char* evt, void* data) override;
 
     virtual void set_timer (Stralet* stralet, int32_t id, int32_t delay, void* data) override;

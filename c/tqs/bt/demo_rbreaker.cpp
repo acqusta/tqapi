@@ -36,7 +36,7 @@
 // 其中，High、Close、Low 分别为昨日最高价、昨日收盘价和昨日最低价。这六个价位从大到小一次是，
 // 突破买入价、观察爱出价、反转卖出价、反转买入价、观察买入价和突破卖出价。
 
-using namespace tquant::stra;
+using namespace tquant::stralet;
 using namespace tquant::api;
 
 struct PriceRange {
@@ -141,8 +141,8 @@ int RBreakerStralet::cancel_unfinished_order()
 
 void RBreakerStralet::place_order(const string& code, double price, int64_t size, const string action)
 {
-    DateTime dt;
-    m_ctx->cur_time(&dt);
+    DateTime dt = m_ctx->cur_time();
+
     ctx()->logger(INFO) << dt.date <<"," << dt.time <<", place order: " << code << "," << price << "," << size << "," << action << endl;
     auto r = m_ctx->trade_api()->place_order(account_id.c_str(), code.c_str(),price, size, action.c_str(), 0);
     if (!r.value)

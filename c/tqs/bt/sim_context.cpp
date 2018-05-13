@@ -34,12 +34,12 @@ int32_t SimStraletContext::trading_day()
     return m_trading_day;
 }
 
-void SimStraletContext::cur_time(DateTime* dt)
+DateTime SimStraletContext::cur_time()
 {
-    *dt = m_now;
+    return m_now;
 }
 
-system_clock::time_point SimStraletContext::cur_time()
+system_clock::time_point SimStraletContext::cur_time_as_tp()
 {
     return m_now_tp;
 }
@@ -97,8 +97,8 @@ ostream& SimStraletContext::logger(LogLevel level)
         "F"
     };
 
-    DateTime now;
-    cur_time(&now);
+    DateTime now = cur_time();
+
     char label[100];
     
     sprintf(label, "%08d %06d.%03d %s| ", now.date, now.time / 1000, now.time % 1000, str_level[level]);

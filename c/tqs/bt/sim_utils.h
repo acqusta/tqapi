@@ -5,7 +5,7 @@
 #include "stralet.h"
 
 using namespace std::chrono;
-using namespace tquant::stra;
+using namespace tquant::stralet;
 
 static inline system_clock::time_point dt_to_tp(int date, int time)
 {

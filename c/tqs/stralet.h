@@ -6,7 +6,7 @@
 
 #include "tquant_api.h"
 
-namespace tquant { namespace stra {
+namespace tquant { namespace stralet {
 
     using namespace std::chrono;
     using namespace tquant::api;
@@ -68,8 +68,8 @@ namespace tquant { namespace stra {
     class StraletContext {
     public:
         virtual int32_t trading_day() = 0;
-        virtual void cur_time(DateTime* dt) = 0;
-        virtual system_clock::time_point cur_time() = 0;
+        virtual DateTime cur_time( ) = 0;
+        virtual system_clock::time_point cur_time_as_tp() = 0;
         virtual void post_event(const char* evt, void* data) = 0;
 
         virtual void set_timer (Stralet* stralet, int32_t id, int32_t delay, void* data) = 0;

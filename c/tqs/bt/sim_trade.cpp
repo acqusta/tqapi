@@ -13,7 +13,7 @@
 #include "sim_trade.h"
 
 using namespace tquant::api;
-using namespace tquant::stra;
+using namespace tquant::stralet;
 
 int32_t SimAccount::g_fill_id = 0;
 int32_t SimAccount::g_order_id = 0;
@@ -224,8 +224,7 @@ CallResult<const vector<Position>> SimAccount::query_positions()
 
 CallResult<const OrderID> SimAccount::validate_order(const string& code, double price, int64_t size, const string& action)
 {
-    DateTime dt;
-    m_ctx->cur_time(&dt);
+    DateTime dt = m_ctx->cur_time();
 
     auto q = m_ctx->data_api()->quote(code).value;
     //cout << "place_order: " << dt.date << "," << dt.time << ","
@@ -313,8 +312,7 @@ CallResult<const OrderID> SimAccount::place_order(const string& code, double pri
         status_msg = r.msg;
     }
 
-    DateTime dt;
-    m_ctx->cur_time(&dt);
+    DateTime dt = m_ctx->cur_time();
 
     auto order = make_shared<Order>();
     order->account_id     = m_tdata->account_id;
@@ -468,8 +466,7 @@ void SimAccount::make_trade(double fill_price, Order* order)
     // Must make a copy!
     m_ord_status_ind_list.push_back(make_shared<Order>(*order));
 
-    DateTime dt;
-    m_ctx->cur_time(&dt);
+    DateTime dt = m_ctx->cur_time();
 
     int32_t fill_id = ++g_fill_id;
     char fill_no[100];

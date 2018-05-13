@@ -10,7 +10,7 @@
 #include "algo.h"
 
 
-namespace tquant { namespace stra {
+namespace tquant { namespace stralet {
 
     using namespace tquant::api;
 

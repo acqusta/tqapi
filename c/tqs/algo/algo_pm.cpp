@@ -11,7 +11,7 @@
 #include "algo_pm.h"
 
 
-namespace tquant { namespace stra {
+namespace tquant { namespace stralet {
 
     using namespace tquant::api;
 
@@ -362,8 +362,7 @@ namespace tquant { namespace stra {
         task->fill_price    = 0;
         task->task_id       = ++m_next_task_id;
 
-        DateTime dt;
-        m_ctx->cur_time(&dt);
+        DateTime dt = m_ctx->cur_time();
 
         bool has_error = false;
         string err_msg;

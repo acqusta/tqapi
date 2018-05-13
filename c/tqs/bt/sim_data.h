@@ -10,7 +10,7 @@
 
 using namespace std;
 using namespace tquant::api;
-using namespace tquant::stra;
+using namespace tquant::stralet;
 
 
 class SimStraletContext;

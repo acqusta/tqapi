@@ -16,7 +16,8 @@ set(SRC
   algo/algo_twap.cpp
   algo/algo_vwap.cpp
   stralet.cpp
-  stralet.h    
+  stralet.h
+  tqs_cs.cpp
 )
 
 include_directories(.)

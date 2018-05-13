@@ -10,7 +10,7 @@
  * 假设可以提前计算指数价格，用于股指期货交易。用于测试。
  */
 
-using namespace tquant::stra;
+using namespace tquant::stralet;
 using namespace tquant::api;
 
 
@@ -129,8 +129,8 @@ inline int time_diff(int t1, int t2)
 
 shared_ptr<const OrderID> IFHftStralet::place_order(const string& code, double price, int64_t size, const string action)
 {
-    DateTime dt;
-    m_ctx->cur_time(&dt);
+    DateTime dt = m_ctx->cur_time();
+
     ctx()->logger(INFO) << "place order: " << code << "," << price << "," << size << "," << action << endl;
     auto r = m_ctx->trade_api()->place_order(m_account_id, code, price, size, action, 0);
     if (!r.value)
@@ -142,8 +142,7 @@ void IFHftStralet::on_quote(shared_ptr<const MarketQuote> quote)
 {
     if (m_state != S_IDLE) return;
 
-    DateTime now;
-    m_ctx->cur_time(&now);
+    DateTime now = m_ctx->cur_time();
     if (now.time < HMS(9, 30, 30) || now.time> HMS(14, 45)) return;
 
     if (strcmp(quote->code, "000300.SH")==0) {
@@ -195,7 +194,7 @@ void IFHftStralet::on_quote(shared_ptr<const MarketQuote> quote)
                         m_open_oid = place_order("IF.CFE", quote->ask1, 1, EA_Buy);
                         m_close_price = quote->ask1 + 3;
                         m_close_action = EA_Sell;
-                        m_ctx->cur_time(&m_open_time);
+                        m_open_time = m_ctx->cur_time();
                         m_ctx->set_timer(this, TIMER_CANCEL_OPEN, 1000, nullptr);
                         m_state = S_OPEN;
                     }
@@ -291,8 +290,7 @@ void IFHftStralet::on_order_trade(shared_ptr<const Trade> trade)
 
             m_ctx->kill_timer(this, TIMER_CANCEL_OPEN);
 
-            DateTime now;
-            m_ctx->cur_time(&now);
+            DateTime now = m_ctx->cur_time();
             int cancel_time = 6000 - time_diff(now.time, m_open_time.time);
             m_ctx->logger(INFO) << "set cancel timer after " << cancel_time << "ms\n";
             m_ctx->set_timer(this, TIMER_CANCEL_CLOSE, cancel_time, nullptr);
@@ -331,8 +329,8 @@ void IFHftStralet::clear_data()
 
 void IFHftStralet::on_timer(int32_t id, void* data)
 {
-    DateTime dt;
-    m_ctx->cur_time(&dt);
+    DateTime dt = m_ctx->cur_time();
+
     m_ctx->logger(INFO) << "on_timer: " << dt.time << "," << id << "\n";
 
     auto tapi = m_ctx->trade_api();

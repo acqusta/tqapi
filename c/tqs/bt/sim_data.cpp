@@ -9,7 +9,7 @@
 #include "sim_context.h"
 
 using namespace tquant::api;
-using namespace tquant::stra;
+using namespace tquant::stralet;
 
 #ifdef __linux__
 
@@ -120,8 +120,7 @@ CallResult<const MarketQuote> SimDataApi::quote(const string& code)
 
 CallResult<const vector<string>> SimDataApi::subscribe(const vector<string>& codes)
 {
-    DateTime dt;
-    m_ctx->cur_time(&dt);
+    DateTime dt = m_ctx->cur_time();
 
     m_dapi->subscribe(codes);
 
@@ -282,8 +281,7 @@ shared_ptr<MarketQuote> SimDataApi::next_quote(const string& code)
         return nullptr;
 
     auto cache = &it->second;
-    DateTime dt;
-    m_ctx->cur_time(&dt);
+    DateTime dt = m_ctx->cur_time();
 
     if (cache->pos + 1 >= cache->size) return nullptr;
     auto q = cache->ticks->data() + cache->pos + 1;
@@ -304,8 +302,7 @@ shared_ptr<Bar> SimDataApi::next_bar(const string& code)
         return nullptr;
 
     auto cache = &it->second;
-    DateTime dt;
-    m_ctx->cur_time(&dt);
+    DateTime dt = m_ctx->cur_time();
 
     if (cache->pos + 1 >= cache->size) return nullptr;
     auto bar = cache->bars->data() + cache->pos + 1;
