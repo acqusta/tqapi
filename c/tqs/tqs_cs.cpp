@@ -1,3 +1,4 @@
+#include <string.h>
 #include "stralet.h"
 #include "bt/backtest.h"
 #include "tqapi_cs.h"

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <list>
 #include <assert.h>
+#include <math.h>
 #include "stralet.h"
 
 
