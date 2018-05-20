@@ -43,10 +43,17 @@ struct BackTestConfig {
     int    end_date;
     vector<AccountConfig> accounts;
     string result_dir;
+
+    BackTestConfig() 
+        : begin_date(0)
+        , end_date(0)
+    {
+    }
 };
 
 //typedef Stralet* (*create_stralet
 
 void bt_run(const BackTestConfig & cfg, function<Stralet*()> creator);
+void bt_run(const char* cfg, function<Stralet*()> creator);
 
 #endif

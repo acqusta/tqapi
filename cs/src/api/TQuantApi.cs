@@ -31,7 +31,7 @@ namespace TQuant
                 if (tapi != null) return tapi;
 
                 var h = TqapiDll.tqapi_get_trade_api(this.handle);
-                if (h != null)
+                if (h != IntPtr.Zero)
                     tapi = new TradeApiImpl(this, h);
 
                 return tapi;
@@ -48,7 +48,7 @@ namespace TQuant
                     return dapi_map[source];
 
                 var h = TqapiDll.tqapi_get_data_api(this.handle, source);
-                if (h != null)
+                if (h != IntPtr.Zero)
                 {
                     var dapi = new DataApiImpl(this, h);
                     dapi_map[source] = dapi;

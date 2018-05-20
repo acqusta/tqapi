@@ -224,7 +224,7 @@ namespace Test
 
                 if (r.Value != null)
                 {
-                    var r2 = tapi.CanceOrder("glsc", "000001.SH", r.Value.entrust_no);
+                    var r2 = tapi.CancelOrder("glsc", "000001.SH", r.Value.entrust_no);
                     if (r2.Value)
                     {
                         Console.WriteLine("CancelOrder result: " + r2.Value);
@@ -305,6 +305,7 @@ namespace Test
             TestDataApi2(dapi);
             //TestTradeApi(tapi);
             PerfTest(dapi);
+
             return 0;
         }
     }

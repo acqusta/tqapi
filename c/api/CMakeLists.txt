@@ -7,6 +7,7 @@ set(SRC
     impl_data_api.h
     impl_trade_api.h
     tqapi_cs.cpp
+    tqapi_cs.h
 )
 
 add_library(tqapi-static STATIC ${SRC})

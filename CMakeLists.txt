@@ -49,6 +49,7 @@ else()
   include_directories(
     lib
     lib/msgpack/include
+    lib/jsoncpp/inc
     c
     ${FRAMEWORK_DIR}/include
     )
@@ -69,6 +70,7 @@ endif()
 add_subdirectory(lib/msgpack)
 add_subdirectory(lib/myutils)
 add_subdirectory(lib/snappy)
+add_subdirectory(lib/jsoncpp)
 
 add_subdirectory(c)
 

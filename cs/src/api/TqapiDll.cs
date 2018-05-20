@@ -125,7 +125,7 @@ namespace TQuant
             class DataApiImpl : DataApi
             {
                 IntPtr handle;
-                TQuantApi tqapi;
+                Object owner;
 
                 TqapiDll.DataApiOnMarketQuote on_quote;
                 TqapiDll.DataApiOnBar on_bar;
@@ -134,9 +134,9 @@ namespace TQuant
 
                 public event OnBarHandler OnBar;
 
-                public DataApiImpl(TQuantApi tqapi, IntPtr handle)
+                public DataApiImpl(Object owner, IntPtr handle)
                 {
-                    this.tqapi = tqapi;
+                    this.owner = owner;
                     this.handle = handle;
                     on_quote = (quote)      => { if (OnMarketQuote != null) OnMarketQuote(quote); };
                     on_bar   = (cycle, bar) => { if (OnBar != null) OnBar(cycle, bar);};
@@ -146,55 +146,78 @@ namespace TQuant
 
                 ~DataApiImpl()
                 {
-                    TqapiDll.dapi_set_callback(this.handle, null, null);
+                    if (this.handle != IntPtr.Zero)
+                        TqapiDll.dapi_set_callback(this.handle, null, null);
+                }
+
+                public void Detach()
+                {
+                    if (this.handle != IntPtr.Zero)
+                    {
+                        TqapiDll.dapi_set_callback(this.handle, null, null);
+                        this.handle = IntPtr.Zero;
+                        this.owner = null;
+                    }
                 }
 
                 public CallResult<Bar[]> GetBar(string code, string cycle, int trading_day, bool align)
                 {
                     IntPtr r = TqapiDll.dapi_get_bar(handle, code, cycle, trading_day, align);
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
-                    if (cr.value == IntPtr.Zero)
-                        return new CallResult<Bar[]>(cr.msg);
 
-                    var bars = TqapiDll.CopyArray<Bar>(cr);
+                    CallResult<Bar[]> ret;
+                    if (cr.value_type != 0)
+                        ret = new CallResult<Bar[]>(TqapiDll.CopyArray<Bar>(cr));
+                    else
+                        ret = new CallResult<Bar[]>(cr.msg);
+                    
                     TqapiDll.destroy_callresult(r);
-                    return new CallResult<Bar[]>(bars);
+                    return ret;
                 }
 
                 public CallResult<DailyBar[]> GetDailyBar(string code, string price_adj, bool align)
                 {
                     IntPtr r = TqapiDll.dapi_get_daily_bar(handle, code, price_adj, align);
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
-                    if (cr.value == IntPtr.Zero)
-                        return new CallResult<DailyBar[]>(cr.msg);
 
-                    var bars = TqapiDll.CopyArray<DailyBar>(cr);
+                    CallResult<DailyBar[]> ret;
+                    if (cr.value_type != 0)
+                        ret = new CallResult<DailyBar[]>(TqapiDll.CopyArray<DailyBar>(cr));
+                    else
+                        ret = new CallResult<DailyBar[]>(cr.msg);
+
                     TqapiDll.destroy_callresult(r);
-                    return new CallResult<DailyBar[]>(bars);
+                    return ret;
                 }
 
                 public CallResult<MarketQuote> GetQuote(string code)
                 {
                     IntPtr r = TqapiDll.dapi_get_quote(handle, code);
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
-                    if (cr.value == IntPtr.Zero)
-                        return new CallResult<MarketQuote>(cr.msg);
 
-                    var quote = Marshal.PtrToStructure<MarketQuote>(cr.value);
+                    CallResult<MarketQuote> ret;
+                    if (cr.value != IntPtr.Zero)
+                        ret = new CallResult<MarketQuote>(Marshal.PtrToStructure<MarketQuote>(cr.value));
+                    else
+                        ret = new CallResult<MarketQuote>(cr.msg);
+
                     TqapiDll.destroy_callresult(r);
-                    return new CallResult<MarketQuote>(quote);
+                    return ret;
                 }
 
                 public CallResult<MarketQuote[]> GetTick(string code, int trading_day)
                 {
                     IntPtr r = TqapiDll.dapi_get_tick(handle, code, trading_day);
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
-                    if (cr.value == IntPtr.Zero)
-                        return new CallResult<MarketQuote[]>(cr.msg);
 
-                    var ticks = TqapiDll.CopyArray<MarketQuote>(cr);
+                    CallResult<MarketQuote[]> ret;
+                    if (cr.value_type != 0)
+                        ret = new CallResult<MarketQuote[]>(TqapiDll.CopyArray<MarketQuote>(cr));
+                    else
+                        ret = new CallResult<MarketQuote[]>(cr.msg);
+
                     TqapiDll.destroy_callresult(r);
-                    return new CallResult<MarketQuote[]>(ticks);
+                    return ret;
                 }
 
                 public CallResult<string[]> Subscribe(string[] codes)
@@ -207,12 +230,15 @@ namespace TQuant
 
                     IntPtr r = TqapiDll.dapi_subscribe(handle, str);
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
-                    if (cr.value == IntPtr.Zero)
-                        return new CallResult<string[]>(cr.msg);
 
-                    var subed_codes = TqapiDll.CopyArray<string>(cr);
+                    CallResult<string[]> ret;
+                    if (cr.value_type != 0)
+                        ret = new CallResult<string[]>(TqapiDll.CopyArray<string>(cr));
+                    else
+                        ret = new CallResult<string[]>(cr.msg);
+
                     TqapiDll.destroy_callresult(r);
-                    return new CallResult<string[]>(subed_codes);
+                    return ret;
                 }
 
                 public CallResult<string[]> UnSubscribe(string[] codes)
@@ -225,12 +251,14 @@ namespace TQuant
 
                     IntPtr r = TqapiDll.dapi_unsubscribe(handle, str);
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
-                    if (cr.value == IntPtr.Zero)
-                        return new CallResult<string[]>(cr.msg);
+                    CallResult<string[]> ret;
+                    if (cr.value_type != 0)
+                        ret = new CallResult<string[]>(TqapiDll.CopyArray<string>(cr));
+                    else
+                        ret = new CallResult<string[]>(cr.msg);
 
-                    var subed_codes = TqapiDll.CopyArray<string>(cr);
                     TqapiDll.destroy_callresult(r);
-                    return new CallResult<string[]>(subed_codes);
+                    return ret;
                 }
             }
 
@@ -260,10 +288,20 @@ namespace TQuant
 
                 ~TradeApiImpl()
                 {
-                    TqapiDll.tapi_set_callback(this.handle, null, null, null);
+                    if (this.handle != IntPtr.Zero)
+                        TqapiDll.tapi_set_callback(this.handle, null, null, null);
                 }
 
-                public CallResult<bool> CanceOrder(string account_id, string code, int order_id)
+                public void Detach()
+                {
+                    if (this.handle != IntPtr.Zero)
+                    {
+                        TqapiDll.tapi_set_callback(this.handle, null, null, null);
+                        this.handle = IntPtr.Zero;
+                    }
+                }
+
+                public CallResult<bool> CancelOrder(string account_id, string code, int order_id)
                 {
                     IntPtr r = TqapiDll.tapi_cancel_order2(this.handle, account_id, code, order_id);
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
@@ -278,7 +316,7 @@ namespace TQuant
                     return ret;
                 }
 
-                public CallResult<bool> CanceOrder(string account_id, string code, string entrust_no, int order_id = 0)
+                public CallResult<bool> CancelOrder(string account_id, string code, string entrust_no, int order_id = 0)
                 {
                     IntPtr r = TqapiDll.tapi_cancel_order1(this.handle, account_id, code, entrust_no, order_id);
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
@@ -301,7 +339,7 @@ namespace TQuant
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
 
                     CallResult<OrderID> ret;
-                    if (cr.value != IntPtr.Zero)
+                    if (cr.value_type != 0)
                         ret = new CallResult<OrderID>(Marshal.PtrToStructure<OrderID>(cr.value));
                     else
                         ret = new CallResult<OrderID>(cr.msg);
@@ -318,7 +356,7 @@ namespace TQuant
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
 
                     CallResult<string> ret;
-                    if (cr.value != IntPtr.Zero)
+                    if (cr.value_type != 0)
                         ret = new CallResult<string>(Marshal.PtrToStringAuto(cr.value));
                     else
                         ret = new CallResult<string>(cr.msg);
@@ -334,7 +372,7 @@ namespace TQuant
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
 
                     CallResult<AccountInfo[]> ret;
-                    if (cr.value != IntPtr.Zero)
+                    if (cr.value_type != 0)
                         ret = new CallResult<AccountInfo[]>(TqapiDll.CopyArray<AccountInfo>(cr));
                     else
                         ret = new CallResult<AccountInfo[]>(cr.msg);
@@ -350,7 +388,7 @@ namespace TQuant
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
 
                     CallResult<Balance> ret;
-                    if (cr.value != IntPtr.Zero)
+                    if (cr.value_type != 0)
                         ret = new CallResult<Balance>(Marshal.PtrToStructure<Balance>(cr.value));
                     else
                         ret = new CallResult<Balance>(cr.msg);
@@ -366,7 +404,7 @@ namespace TQuant
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
 
                     CallResult<Order[]> ret;
-                    if (cr.value != IntPtr.Zero)
+                    if (cr.value_type != 0)
                         ret = new CallResult<Order[]>(TqapiDll.CopyArray<Order>(cr));
                     else
                         ret = new CallResult<Order[]>(cr.msg);
@@ -382,7 +420,7 @@ namespace TQuant
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
 
                     CallResult<Position[]> ret;
-                    if (cr.value != IntPtr.Zero)
+                    if (cr.value_type != 0)
                         ret = new CallResult<Position[]>(TqapiDll.CopyArray<Position>(cr));
                     else
                         ret = new CallResult<Position[]>(cr.msg);
@@ -398,7 +436,7 @@ namespace TQuant
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
 
                     CallResult<Trade[]> ret;
-                    if (cr.value != IntPtr.Zero)
+                    if (cr.value_type != 0)
                         ret = new CallResult<Trade[]>(TqapiDll.CopyArray<Trade>(cr));
                     else
                         ret = new CallResult<Trade[]>(cr.msg);

@@ -118,14 +118,18 @@ CallResult<const MarketQuote> SimDataApi::quote(const string& code)
     }
 }
 
-CallResult<const vector<string>> SimDataApi::subscribe(const vector<string>& codes)
+CallResult<const vector<string>> SimDataApi::subscribe(const vector<string>& old_codes)
 {
     DateTime dt = m_ctx->cur_time();
 
-    m_dapi->subscribe(codes);
+    vector<string> new_codes;
+    for (auto code : old_codes)
+        if (!code.empty()) new_codes.push_back(code);
+
+    m_dapi->subscribe(new_codes);
 
     if (m_ctx->data_level() == BT_BAR1M || m_ctx->data_level() == BT_TICK) {
-        for (auto& code : codes) {
+        for (auto& code : new_codes) {
             if (m_bar_caches.find(code) != m_bar_caches.end()) continue;
             auto r = m_dapi->bar(code.c_str(), "1m", m_ctx->trading_day(), true);
             if (!r.value) {
@@ -167,7 +171,7 @@ CallResult<const vector<string>> SimDataApi::subscribe(const vector<string>& cod
     }
 
     if (m_ctx->data_level() == BT_TICK) {
-        for (auto& code : codes) {
+        for (auto& code : new_codes) {
             if (m_tick_caches.find(code) != m_tick_caches.end()) continue;
             auto r = m_dapi->tick(code.c_str(), m_ctx->trading_day());
             if (!r.value) continue;
@@ -203,10 +207,10 @@ CallResult<const vector<string>> SimDataApi::subscribe(const vector<string>& cod
         }
     }
 
-    for (auto& code : codes) m_codes.insert(code);
+    for (auto& code : new_codes) m_codes.insert(code);
 
     auto ret_codes = make_shared<vector<string>>();
-    for (auto& c : codes) ret_codes->push_back(c);
+    for (auto& c : new_codes) ret_codes->push_back(c);
     sort(ret_codes->begin(), ret_codes->end());
     
     return CallResult<const vector<string>>(ret_codes);

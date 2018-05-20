@@ -191,7 +191,7 @@ namespace TQuant
             * @param order_id      订单号
             * @return 是否成功
             */
-            CallResult<Boolean> CanceOrder(string account_id, string code, int order_id);
+            CallResult<Boolean> CancelOrder(string account_id, string code, int order_id);
 
             /**
             * 根据委托号撤单
@@ -203,7 +203,7 @@ namespace TQuant
             * @param entrust_no    委托编号
             * @return 是否成功
             */
-            CallResult<Boolean> CanceOrder(string account_id, string code, string entrust_no, int order_id = 0);
+            CallResult<Boolean> CancelOrder(string account_id, string code, string entrust_no, int order_id = 0);
 
             /**
             * 通用查询接口

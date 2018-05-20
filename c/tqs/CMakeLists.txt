@@ -24,6 +24,11 @@ include_directories(.)
 include_directories(../api)
 
 add_library(tqs-static STATIC ${SRC})
+target_link_libraries(tqs-static jsoncpp)
+
+add_library(tqs SHARED ${SRC})
+
+target_link_libraries(tqs jsoncpp myutils tqapi)
 
 add_executable(tqs_demo 
   bt/demo.cpp
@@ -38,3 +43,4 @@ target_link_libraries(tqs_demo
 )
 
 install(TARGETS tqs_demo RUNTIME DESTINATION bin)
+install(TARGETS tqs DESTINATION bin)

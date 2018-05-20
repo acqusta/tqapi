@@ -188,10 +188,15 @@ namespace TestUI
                         item.SubItems.Add(String.Format(price_fmt, tick.ask4)); item.SubItems.Add(String.Format("{0}", tick.ask_vol4 / 100));
                         item.SubItems.Add(String.Format(price_fmt, tick.ask3)); item.SubItems.Add(String.Format("{0}", tick.ask_vol3 / 100));
                         item.SubItems.Add(String.Format(price_fmt, tick.ask2)); item.SubItems.Add(String.Format("{0}", tick.ask_vol2 / 100));
+                        item.SubItems.Add(String.Format(price_fmt, tick.ask1)); item.SubItems.Add(String.Format("{0}", tick.ask_vol1 / 100));
+                        item.SubItems.Add(String.Format(price_fmt, tick.bid1)); item.SubItems.Add(String.Format("{0}", tick.ask_vol1 / 100));
+                    }
+                    else
+                    {
+                        item.SubItems.Add(String.Format(price_fmt, tick.ask1)); item.SubItems.Add(String.Format("{0}", tick.ask_vol1));
+                        item.SubItems.Add(String.Format(price_fmt, tick.bid1)); item.SubItems.Add(String.Format("{0}", tick.ask_vol1));
                     }
 
-                    item.SubItems.Add(String.Format(price_fmt, tick.ask1)); item.SubItems.Add(String.Format("{0}", tick.ask_vol1 / 100));
-                    item.SubItems.Add(String.Format(price_fmt, tick.bid1)); item.SubItems.Add(String.Format("{0}", tick.ask_vol1 / 100));
 
                     if (dt != DataType.FUTURE)
                     {

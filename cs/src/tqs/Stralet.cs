@@ -1,189 +1,310 @@
 ﻿using System;
+using System.Collections.Generic;
 using TQuant.Api;
+using TQuant.Api.Impl;
 using TQuant.Stralet.Impl;
 
-namespace TQuant
+namespace TQuant.Stralet
 {
-    namespace Stralet
+    public interface ILoggingAdapter
     {
-        public enum LogLevel
+        void Debug(String format, params object[] objs);
+        void Info(String format, params object[] objs);
+        void Warning(String format, params object[] objs);
+        void Error(String format, params object[] objs);
+        void Error(Exception e, String format, params object[] objs);
+    }
+
+    public interface IStraletContext
+    {
+        ILoggingAdapter Logger { get; }
+        //IStraletRef Self { get; }
+
+        //Props Props { get; }
+        Int32 TradingDay { get; }
+
+        TQuant.Stralet.FinDataTime CurTime { get; }
+
+        void PostEvent(String evt, Object data);
+
+        void SetTimer(Stralet stralet, int id, int delay, long data = 0);
+
+        //void SetTimer(String name, Int32 delay, bool repeated, Object data = null);
+
+        void KillTimer(Stralet stralet, int id);
+
+        DataApi GetDataApi(String source = "");
+
+        DataApi DataApi { get; }
+
+        TradeApi TradeApi { get; }
+
+        void Stop();
+    }
+
+    //public interface IStralet
+    //{
+    //    IStraletContext Context { get; }
+    //    void OnInit(IStraletContext sc);
+    //    void OnFini();
+    //    void OnQuote(MarketQuote quote);
+    //    void OnBar(String cycle, Bar bar);
+    //    void OnTimer(Int32 id, Int64 data);
+    //    void OnEvent(String evt, Object data);
+    //    void OnOrderStatus(Order order);
+    //    void OnOrderTrade(Trade trade);
+    //    void OnAccountStatus(AccountInfo account);
+    //}
+
+    public class Stralet //: IStralet
+    {
+        private StraletWrap wrap;
+
+        private StraletContextImpl ctx;
+
+        public Stralet()
         {
-            INFO,
-            WARNING,
-            ERROR,
-            FATAL
+            wrap = new StraletWrap(this);
         }
 
-        public class StraletContext
+        internal IntPtr _Handle { get { return wrap.handle; } }
+
+        internal void _OnInit(StraletContextImpl sc)
         {
-            IntPtr handle;
-            int trading_day;
-
-            public StraletContext(IntPtr h)
-            {
-                this.handle = h;
-                this.trading_day = TqsDll.tqs_sc_trading_day(h);
-            }
-
-            public Int32 TradingDay { get { return trading_day; } }
-            public DateTime CurTime { get { return TqsDll.tqs_sc_cur_time(this.handle); } }
-            //public DateTime CurTimeAsSysDT { }
-
-            IntPtr SaveEventData(Object data)
-            {
-                return IntPtr.Zero;
-            }
-
-            Object GetEventData(IntPtr ptr)
-            {
-                return null;
-            }
-
-            IntPtr SaveTimerData(Int32 timer_id, Object data)
-            {
-                return IntPtr.Zero;
-            }
-
-            Object GetTimerData(Int32 timer_id, IntPtr ptr)
-            {
-                return null;
-            }
-
-            void RemoveTimerData(Int32 timer_id)
-            { }
-
-            public void PostEvent(String evt, Object data)
-            {
-                TqsDll.tqs_sc_post_event(this.handle, evt, SaveEventData(data));
-            }
-
-            public void SetTimer(Stralet stralet, Int32 id, Int32 delay, Object data)
-            {
-                TqsDll.tqs_sc_set_timer(this.handle, stralet._Handle, id, delay, SaveTimerData(id, data));
-            }
-
-            public void KillTimer(Stralet stralet, Int32 id)
-            {
-                TqsDll.tqs_sc_kill_timer(this.handle, stralet._Handle, id);
-                RemoveTimerData(id);
-            }
-
-            public DataApi DataApi(String source)
-            {
-                return null;
-            }
-
-            public TradeApi TradeApi
-            {
-                get
-                {
-                    return null;
-                }
-            }
-
-
-            public void Log(LogLevel level, String str)
-            {
-                int l = 0;
-                switch (level)
-                {
-                    case LogLevel.INFO: l = 0; break;
-                    case LogLevel.WARNING: l = 1; break;
-                    case LogLevel.ERROR: l = 2; break;
-                    case LogLevel.FATAL: l = 3; break;
-                }
-                TqsDll.tqs_sc_log(this.handle, l, str);
-            }
-
-            //virtual string get_parameter(const char* name, const char* def_value) = 0;
-
-            //        virtual string mode() = 0;
-
-            //virtual void register_algo(AlgoStralet* algo) = 0;
-            //virtual void unregister_algo(AlgoStralet* algo) = 0;
-
+            this.ctx = sc;
+            OnInit(sc);
         }
 
-        public class Stralet
+        internal void _OnDestroy()
         {
-            StraletWrap wrap;
-            StraletContext ctx;
+            this.ctx.Detach();
+            this.ctx = null;
+            this.wrap = null;
+        }
+        public IStraletContext Context { get { return ctx; } }
 
-            public Stralet()
-            {
-                wrap = new StraletWrap(this);
-            }
+        public virtual void OnInit(IStraletContext sc) { }
+        public virtual void OnFini() { }
+        public virtual void OnQuote(MarketQuote quote) { }
+        public virtual void OnBar(String cycle, Bar bar) { }
+        public virtual void OnTimer(Int32 id, Int64 data) { }
+        public virtual void OnEvent(String evt, Object data) { }
+        public virtual void OnOrderStatus(Order order) { }
+        public virtual void OnOrderTrade(Trade trade) { }
+        public virtual void OnAccountStatus(AccountInfo account) { }
+    }
 
-            internal IntPtr _Handle { get { return wrap.handle; } }
+    class LogginAdpterImpl : ILoggingAdapter
+    {
+        StraletContextImpl context;
 
-            internal void _OnInit(StraletContext sc)
-            {
-                this.ctx = sc;
-                OnInit(sc);
-            }
-
-            internal void _OnFini()
-            {
-                OnFini();
-                this.ctx = null;
-                this.wrap = null;
-            }
-
-            public StraletContext Context { get { return ctx; } }
-
-            public virtual void OnInit(StraletContext sc) { }
-            public virtual void OnFini() { }
-            public virtual void OnQuote(MarketQuote quote) { }
-            public virtual void OnBar(Bar bar) { }
-            public virtual void OnTimer(Int32 id, Object data) { }
-            public virtual void OnEvent(String evt, Object data) { }
-            public virtual void OnOrderStatus(OrderStatus order) { }
-            public virtual void OnOrderTrade(Trade trade) { }
-            public virtual void OnAccountStatus(AccountInfo account) { }
+        public LogginAdpterImpl(StraletContextImpl context)
+        {
+            this.context = context;
+        }
+        public void Debug(string format, params object[] objs)
+        {
+            context.Log(LogLevel.INFO, String.Format(format, objs));
         }
 
-        class StraletWrap
+        public void Info(string format, params object[] objs)
         {
-            TqsDll.DotNetStralet wrap = new TqsDll.DotNetStralet();
-            StraletContext ctx;
-            internal IntPtr handle;
+            context.Log(LogLevel.INFO, String.Format(format, objs));
+        }
 
-            Object GetObjectByID(IntPtr id)
+        public void Error(string format, params object[] objs)
+        {
+            context.Log(LogLevel.ERROR, String.Format(format, objs));
+        }
+
+        public void Error(Exception e, string format, params object[] objs)
+        {
+            context.Log(LogLevel.ERROR, String.Format(format, objs));
+            throw e;
+        }
+
+        public void Warning(string format, params object[] objs)
+        {
+            context.Log(LogLevel.WARNING, String.Format(format, objs));
+        }
+    }
+
+    public class StraletContextImpl : IStraletContext
+    {
+        private IntPtr handle;
+        private int trading_day;
+        private Dictionary<string, DataApiImpl> dapi_map = new Dictionary<string, DataApiImpl>();
+        private TradeApiImpl tapi = null;
+
+        public StraletContextImpl(IntPtr h)
+        {
+            this.handle = h;
+            this.trading_day = TqsDll.tqs_sc_trading_day(h);
+
+            this.Logger = new LogginAdpterImpl(this);
+        }
+
+        internal void Detach()
+        {
+            foreach (var dapi in dapi_map)
+            {
+                dapi.Value.Detach();
+            }
+
+            dapi_map.Clear();
+
+            if (tapi != null)
+            {
+                tapi.Detach();
+                tapi = null;
+            }
+        }
+
+        public Int32 TradingDay { get { return trading_day; } }
+
+        public FinDataTime CurTime { get { return TqsDll.tqs_sc_cur_time(this.handle); } }
+
+        public void PostEvent(String evt, long data)
+        {
+            TqsDll.tqs_sc_post_event(this.handle, evt, new IntPtr(data));
+        }
+
+        public void SetTimer(Stralet stralet, Int32 id, Int32 delay, long data)
+        {
+            TqsDll.tqs_sc_set_timer(this.handle, stralet._Handle, id, delay, new IntPtr(data));
+        }
+
+        public void KillTimer(Stralet stralet, Int32 id)
+        {
+            TqsDll.tqs_sc_kill_timer(this.handle, stralet._Handle, id);
+        }
+
+        public DataApi GetDataApi(String source = "")
+        {
+            if (source == null) source = "";
+
+            if (dapi_map.ContainsKey(source))
+                return dapi_map[source];
+
+            var h = TqsDll.tqs_sc_data_api(this.handle, source);
+            if (h != IntPtr.Zero)
+            {
+                var dapi = new DataApiImpl(this, h);
+                dapi_map[source] = dapi;
+                return dapi;
+            }
+            else
             {
                 return null;
             }
+        }
 
-            public StraletWrap(Stralet stralet)
+        public DataApi DataApi
+        {
+            get
             {
-                wrap.OnInit = (sc) =>
-                {
-                    ctx = new StraletContext(sc);
-                    stralet._OnInit(ctx);
-                };
-                wrap.OnFini = stralet._OnFini;
-                wrap.OnQuote = stralet.OnQuote;
-                wrap.OnBar = stralet.OnBar;
-                wrap.OnTimer = (id, data) =>
-                {
-                    stralet.OnTimer(id, GetObjectByID(data));
-                };
-
-                wrap.OnEvent = (evt, data) =>
-                {
-                    stralet.OnEvent(evt, GetObjectByID(data));
-                };
-
-                wrap.OnOrderStatus = stralet.OnOrderStatus;
-                wrap.OnTrade = stralet.OnOrderTrade;
-                wrap.OnAccountStatus = stralet.OnAccountStatus;
-
-                handle = TqsDll.tqs_create_stralet(wrap);
+                return GetDataApi();
             }
+        }
 
-            ~StraletWrap()
+        public TradeApi TradeApi
+        {
+            get
             {
-                TqsDll.tqs_destroy_stralet(handle);
+                if (tapi != null) return tapi;
+
+                var h = TqsDll.tqs_sc_trade_api(this.handle);
+                if (h != IntPtr.Zero)
+                    tapi = new TradeApiImpl(null, h);
+
+                return tapi;
             }
+        }
+
+        public void Log(String str)
+        {
+            Log(LogLevel.INFO, str);
+        }
+
+        public void Log(LogLevel level, String str)
+        {
+            int l = 0;
+            switch (level)
+            {
+                case LogLevel.INFO: l = 0; break;
+                case LogLevel.WARNING: l = 1; break;
+                case LogLevel.ERROR: l = 2; break;
+                case LogLevel.FATAL: l = 3; break;
+            }
+            TqsDll.tqs_sc_log(this.handle, l, str);
+        }
+
+        public ILoggingAdapter Logger { get; }
+
+        public void Stop()
+        {
+            throw new NotImplementedException();
+        }
+
+        //public void AddStralet(Stralet stralet)
+        //{
+        //    stralet.SetContext(this);
+        //}
+
+        public void PostEvent(string evt, object data)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    class StraletWrap
+    {
+        TqsDll.DotNetStralet wrap = new TqsDll.DotNetStralet();
+        StraletContextImpl ctx;
+        internal IntPtr handle;
+
+        Object GetObjectByID(IntPtr id)
+        {
+            return null;
+        }
+
+        public StraletWrap(Stralet stralet)
+        {
+            wrap.OnInit = (sc) =>
+            {
+                ctx = new StraletContextImpl(sc);
+                stralet._OnInit(ctx);
+            };
+            wrap.OnDestroy = () =>
+            {
+                this.handle = IntPtr.Zero;
+                stralet._OnDestroy();
+            };
+
+            wrap.OnFini = stralet.OnFini;
+            wrap.OnQuote = stralet.OnQuote;
+            wrap.OnBar = stralet.OnBar;
+            wrap.OnTimer = (id, data) =>
+            {
+                stralet.OnTimer(id, data.ToInt64());
+            };
+
+            wrap.OnEvent = (evt, data) =>
+            {
+                stralet.OnEvent(evt, GetObjectByID(data));
+            };
+
+            wrap.OnOrderStatus = stralet.OnOrderStatus;
+            wrap.OnTrade = stralet.OnOrderTrade;
+            wrap.OnAccountStatus = stralet.OnAccountStatus;
+
+            handle = TqsDll.tqs_stralet_create(ref wrap);
+        }
+
+        ~StraletWrap()
+        {
+            if (handle != IntPtr.Zero)
+                TqsDll.tqs_stralet_destroy(handle);
         }
     }
 }

@@ -3,6 +3,8 @@
 #include "sim_data.h"
 #include "sim_trade.h"
 #include "backtest.h"
+#include "jsoncpp/inc/json/json.h"
+#include "myutils/unicode.h"
 
 vector<int> get_calendar(DataApi* dapi)
 {
@@ -18,10 +20,56 @@ vector<int> get_calendar(DataApi* dapi)
     return dates;
 }
 
+void bt_run(const char* cfg_str, function<Stralet*()> creator)
+{
+    string utf8 = gbk_to_utf8(cfg_str);
+
+    Json::Value conf;
+    Json::Reader reader;
+    if (!reader.parse(utf8, conf)) {
+        cerr << "parse conf failure: " << reader.getFormattedErrorMessages();
+        return;
+    }
+
+    //string dapi_addr;
+    //string data_level; // tk, 1m, 1d
+    //int    begin_date;
+    //int    end_date;
+    //vector<AccountConfig> accounts;
+    //string result_dir;
+
+
+    BackTestConfig cfg;
+    try {
+        Json::Value empty;
+        Json::Value dapi_addr = conf.get("dapi_addr", empty);
+        if (dapi_addr.isString()) cfg.dapi_addr = dapi_addr.asString();
+
+        Json::Value data_level = conf.get("data_level", empty);
+        if (data_level.isString())    cfg.data_level = data_level.asString();
+
+        Json::Value begin_date = conf.get("begin_date", empty);
+        if (begin_date.isNumeric())    cfg.begin_date = begin_date.asInt();
+
+        Json::Value end_date = conf.get("end_date", empty);
+        if (end_date.isNumeric())    cfg.end_date = end_date.asInt();
+
+        Json::Value result_dir = conf.get("result_dir", empty);
+        if (result_dir.isString())    cfg.result_dir = result_dir.asString();
+
+    }
+    catch (exception& e) {
+        cerr << "parse conf failure: " << e.what();
+        return;
+    }
+
+    bt_run(cfg, creator);
+}
+
 void bt_run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
 {
     BackTestConfig cfg = a_cfg;
-    if (cfg.dapi_addr.empty())  cfg.dapi_addr = "ipc://tqc_10001";// "tcp://127.0.0.1:10001";
+    if (cfg.dapi_addr.empty())  cfg.dapi_addr = "tcp://127.0.0.1:10001"; //"ipc://tqc_10001";
     if (cfg.accounts.empty())   cfg.accounts.push_back(AccountConfig("sim", 1e8, vector<Holding>()));
     if (cfg.data_level.empty()) cfg.data_level = "tk";
     if (cfg.result_dir.empty()) cfg.result_dir = "result";
