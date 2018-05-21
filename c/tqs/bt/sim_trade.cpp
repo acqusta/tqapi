@@ -14,16 +14,18 @@
 
 using namespace tquant::api;
 using namespace tquant::stralet;
+using namespace tquant::stralet::backtest;
+
 
 int32_t SimAccount::g_fill_id = 0;
 int32_t SimAccount::g_order_id = 0;
 
-bool is_finished_status(const string& status)
+static bool is_finished_status(const string& status)
 {
     return status == OS_Filled || status == OS_Rejected || status == OS_Cancelled;
 }
 
-void get_action_effect(const string& action, string* pos_side, int* inc_dir)
+static void get_action_effect(const string& action, string* pos_side, int* inc_dir)
 {
     if (action == EA_Buy) {
         *pos_side = SD_Long;

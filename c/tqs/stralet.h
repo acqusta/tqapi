@@ -67,6 +67,10 @@ namespace tquant { namespace stralet {
 
     class StraletContext {
     public:
+        virtual ~StraletContext()
+        {
+
+        }
         virtual int32_t trading_day() = 0;
         virtual DateTime cur_time( ) = 0;
         virtual system_clock::time_point cur_time_as_tp() = 0;
@@ -75,14 +79,14 @@ namespace tquant { namespace stralet {
         virtual void set_timer (Stralet* stralet, int32_t id, int32_t delay, void* data) = 0;
         virtual void kill_timer(Stralet* stralet, int32_t id) = 0;
 
-        virtual DataApi*  data_api(const char* source = nullptr) = 0;
+        virtual DataApi*  data_api(const char* source = "") = 0;
         virtual TradeApi* trade_api() = 0;
 
         virtual ostream& logger(LogLevel level = LogLevel::INFO) = 0;
 
         virtual string get_parameter(const char* name, const char* def_value) = 0;
 
-        virtual string mode() = 0;
+        virtual const string& mode() = 0;
 
         virtual void register_algo  (AlgoStralet* algo) = 0;
         virtual void unregister_algo(AlgoStralet* algo) = 0;

@@ -5,11 +5,14 @@
 #include "sim_trade.h"
 #include "sim_utils.h"
 
+using namespace tquant::stralet::backtest;
+
 SimStraletContext::SimStraletContext()
     : m_dapi(nullptr)
     , m_tapi(nullptr)
     , m_data_level(BT_TICK)
     , m_trading_day(0)
+    , m_mode("backtest")
 {
 }
 
@@ -123,9 +126,9 @@ string SimStraletContext::get_parameter(const char* name, const char* def_value)
     return "";
 }
 
-string SimStraletContext::mode()
+const string& SimStraletContext::mode()
 {
-    return "backtest";
+    return m_mode;
 }
 
 

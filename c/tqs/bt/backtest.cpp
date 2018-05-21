@@ -6,7 +6,9 @@
 #include "jsoncpp/inc/json/json.h"
 #include "myutils/unicode.h"
 
-vector<int> get_calendar(DataApi* dapi)
+namespace tquant { namespace stralet { namespace backtest {
+
+static vector<int> get_calendar(DataApi* dapi)
 {
     auto sh000001 = dapi->daily_bar("000001.SH", "", true);
     if (!sh000001.value) {
@@ -20,7 +22,7 @@ vector<int> get_calendar(DataApi* dapi)
     return dates;
 }
 
-void bt_run(const char* cfg_str, function<Stralet*()> creator)
+void run(const char* cfg_str, function<Stralet*()> creator)
 {
     string utf8 = gbk_to_utf8(cfg_str);
 
@@ -30,14 +32,6 @@ void bt_run(const char* cfg_str, function<Stralet*()> creator)
         cerr << "parse conf failure: " << reader.getFormattedErrorMessages();
         return;
     }
-
-    //string dapi_addr;
-    //string data_level; // tk, 1m, 1d
-    //int    begin_date;
-    //int    end_date;
-    //vector<AccountConfig> accounts;
-    //string result_dir;
-
 
     BackTestConfig cfg;
     try {
@@ -63,10 +57,10 @@ void bt_run(const char* cfg_str, function<Stralet*()> creator)
         return;
     }
 
-    bt_run(cfg, creator);
+    backtest::run(cfg, creator);
 }
 
-void bt_run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
+void run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
 {
     BackTestConfig cfg = a_cfg;
     if (cfg.dapi_addr.empty())  cfg.dapi_addr = "tcp://127.0.0.1:10001"; //"ipc://tqc_10001";
@@ -124,3 +118,5 @@ void bt_run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
     delete sim_tapi;
     delete tqapi;
 }
+
+} } }

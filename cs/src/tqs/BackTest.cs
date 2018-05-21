@@ -1,16 +1,18 @@
 using Newtonsoft.Json;
 
-namespace TQuant
+namespace TQuant.Stralet
 {
-    namespace Stralet
+    public class BackTest
     {
-        public class BackTestConfig
+        public delegate Stralet StraletCreator();
+
+        public class Config
         {
             public class Holding
             {
                 public string code;
                 public string side;
-                public long   size;
+                public long size;
                 public double cost_price;
             }
 
@@ -21,41 +23,29 @@ namespace TQuant
                 public Holding[] init_holdings;
             }
 
-            public string   dapi_addr;
-            public string   data_level;
-            public int      begin_date;
-            public int      end_date;
-            public string   result_dir;
+            public string dapi_addr;
+            public string data_level;
+            public int begin_date;
+            public int end_date;
+            public string result_dir;
             public AccountConfig[] accounts;
         }
 
-        public delegate Stralet CreateStralet();
-        public delegate IFsmStralet CreateFSMStralet();
-
-        public class BackTest
+        static public void Run(Config cfg, StraletCreator creatae_stralet)
         {
-            static public void Run(BackTestConfig cfg, CreateStralet creatae_stralet)
+            var json = JsonConvert.SerializeObject(cfg);
+
+            Stralet stralet = null;
+            Impl.TqsDll.StraletCreator my_creatae_stralet = () =>
             {
-                var json = JsonConvert.SerializeObject(cfg);
+                // FIXME
+                stralet = creatae_stralet();
+                return stralet._Handle;
+            };
 
-                Stralet stralet = null;
-                Impl.TqsDll.BTRunCreateStralet bt_creatae_stralet = () =>
-                {
-                    // FIXME
-                    stralet = creatae_stralet();
-                    return stralet._Handle;
-                };
+            Impl.TqsDll.tqs_bt_run(json, my_creatae_stralet);
 
-                Impl.TqsDll.tqs_bt_run(json, bt_creatae_stralet);
-
-                stralet = null;
-            }
-
-            //static public void RunFSM(TQuant.Stralet.BackTestConfig cfg, CreateFSMStralet creatae_stralet)
-            //{
-            //    TQuant.Stralet.BackTest.Run(cfg, () => { return creatae_stralet().Stralet; });
-            //}
-
+            stralet = null;
         }
     }
 }

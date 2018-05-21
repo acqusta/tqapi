@@ -83,7 +83,7 @@ namespace Test
 
         public static int Main(string[] args)
         {
-            TQuant.Stralet.BackTestConfig cfg = new TQuant.Stralet.BackTestConfig();
+            TQuant.Stralet.BackTest.Config cfg = new TQuant.Stralet.BackTest.Config();
             cfg.data_level = "tk";
             cfg.begin_date = 20180101;
             cfg.end_date   = 20180501;

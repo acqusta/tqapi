@@ -112,12 +112,6 @@ namespace TQuant
             }
         }
 
-        //public interface DataApiCallback
-        //{
-        //    void OnMarketQuote(MarketQuote quote);
-        //    void OnBar(String cycle, Bar bar);
-        //}
-
         public delegate void OnMarketQuoteHandler(MarketQuote quote);
         public delegate void OnBarHandler(String cycle, Bar bar);
 

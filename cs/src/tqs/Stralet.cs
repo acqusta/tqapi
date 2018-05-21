@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using TQuant.Api;
 using TQuant.Api.Impl;
 using TQuant.Stralet.Impl;
@@ -29,8 +30,6 @@ namespace TQuant.Stralet
 
         void SetTimer(Stralet stralet, int id, int delay, long data = 0);
 
-        //void SetTimer(String name, Int32 delay, bool repeated, Object data = null);
-
         void KillTimer(Stralet stralet, int id);
 
         DataApi GetDataApi(String source = "");
@@ -39,24 +38,12 @@ namespace TQuant.Stralet
 
         TradeApi TradeApi { get; }
 
+        String Mode { get; }
+
         void Stop();
     }
 
-    //public interface IStralet
-    //{
-    //    IStraletContext Context { get; }
-    //    void OnInit(IStraletContext sc);
-    //    void OnFini();
-    //    void OnQuote(MarketQuote quote);
-    //    void OnBar(String cycle, Bar bar);
-    //    void OnTimer(Int32 id, Int64 data);
-    //    void OnEvent(String evt, Object data);
-    //    void OnOrderStatus(Order order);
-    //    void OnOrderTrade(Trade trade);
-    //    void OnAccountStatus(AccountInfo account);
-    //}
-
-    public class Stralet //: IStralet
+    public class Stralet
     {
         private StraletWrap wrap;
 
@@ -140,6 +127,9 @@ namespace TQuant.Stralet
         {
             this.handle = h;
             this.trading_day = TqsDll.tqs_sc_trading_day(h);
+
+            IntPtr mode = TqsDll.tqs_sc_mode(this.handle);
+            this.Mode = Marshal.PtrToStringAnsi(mode);
 
             this.Logger = new LogginAdpterImpl(this);
         }
@@ -255,6 +245,8 @@ namespace TQuant.Stralet
         {
             throw new NotImplementedException();
         }
+
+        public String Mode { get; }
     }
 
     class StraletWrap

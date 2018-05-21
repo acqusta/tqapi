@@ -18,3 +18,4 @@ cs/**/*.user
 cs/**/bin
 cs/packages
 cs/tqapi.VC.VC.opendb
+cs/myjob/*

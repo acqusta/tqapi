@@ -7,17 +7,32 @@
 
 static inline int human_date(time_t t)
 {
-    char datetime[20];
-
     struct tm tm = *localtime(&t);
-    strftime(datetime, 15, "%Y%m%d", &tm);
-    return atoi(datetime);
+    //char datetime[20];
+    //strftime(datetime, 15, "%Y%m%d", &tm);
+    //return atoi(datetime);
+    return (tm.tm_year + 1900) * 10000 + (tm.tm_mon + 1) * 100 + tm.tm_mday;
 }
 
 static inline int human_time_seconds(time_t t)
 {
     struct tm tm = *localtime(&t);
     return tm.tm_hour * 10000 + tm.tm_min * 100 + tm.tm_sec;
+}
+
+static void human_datetime(int* date, int* time)
+{
+   std:: chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+
+    time_t tnow = std::chrono::system_clock::to_time_t(now);
+    tm *t = localtime(&tnow);
+    t->tm_hour = 0;
+    t->tm_min = 0;
+    t->tm_sec = 0;
+    auto midnight = std::chrono::system_clock::from_time_t(mktime(t));
+
+    *date = (t->tm_year + 1900) * 10000 + (t->tm_mon + 1) * 100 + t->tm_mday;
+    *time = (int)std::chrono::duration_cast<std::chrono::milliseconds>(now - midnight).count();
 }
 
 static inline int human_today()

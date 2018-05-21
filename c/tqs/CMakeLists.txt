@@ -20,8 +20,12 @@ set(SRC
   tqs_cs.cpp
 )
 
-include_directories(.)
-include_directories(../api)
+include_directories(
+  .
+  bt
+  rt
+  ../api
+)
 
 add_library(tqs-static STATIC ${SRC})
 target_link_libraries(tqs-static jsoncpp)
@@ -31,10 +35,10 @@ add_library(tqs SHARED ${SRC})
 target_link_libraries(tqs jsoncpp myutils tqapi)
 
 add_executable(tqs_demo 
-  bt/demo.cpp
-  bt/demo_rbreaker.cpp
-  bt/demo_doublema.cpp
-  bt/demo_ifhft.cpp
+  demo/demo.cpp
+  demo/demo_rbreaker.cpp
+  demo/demo_doublema.cpp
+  demo/demo_ifhft.cpp
 )
 
 target_link_libraries(tqs_demo

@@ -65,6 +65,7 @@ void IFHftStralet::on_init(StraletContext* sc)
 {
     Stralet::on_init(sc);
 
+    return;
     sc->logger() << "on_init: " << sc->trading_day() << endl;
     m_account_id  = "sim";
 

@@ -10,6 +10,7 @@
 
 using namespace tquant::api;
 using namespace tquant::stralet;
+using namespace tquant::stralet::backtest;
 
 #ifdef __linux__
 
@@ -20,7 +21,7 @@ static_assert(sizeof(VectorImpl<int>) == sizeof(vector<int>), "vector size is ch
               
 #endif
 
-int cmp_time(int date_1, int time_1, int date_2, int time_2)
+static int cmp_time(int date_1, int time_1, int date_2, int time_2)
 {
     if (date_1 < date_2) return -1;
     if (date_1 == date_2) return time_1 - time_2;

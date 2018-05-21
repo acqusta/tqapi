@@ -1,6 +1,7 @@
 #include <string.h>
 #include "stralet.h"
 #include "bt/backtest.h"
+#include "rt/realtime.h"
 #include "tqapi_cs.h"
 
 using namespace tquant::api;
@@ -91,7 +92,6 @@ extern "C" _TQS_EXPORT
 const char* tqs_sc_mode(void* h)
 {
     StraletContext* ctx = reinterpret_cast<StraletContext*>(h);
-    //FIXME
     return ctx->mode().c_str();
 }
 
@@ -192,5 +192,11 @@ void tqs_stralet_destroy(void* h)
 extern "C" _TQS_EXPORT
 void tqs_bt_run(const char* cfg, Stralet* (*create_stralet)())
 {
-    bt_run(cfg, create_stralet);
+    backtest::run(cfg, create_stralet);
+}
+
+extern "C" _TQS_EXPORT
+void tqs_rt_run(const char* cfg, Stralet* (*create_stralet)())
+{
+    realtime::run(cfg, create_stralet);
 }

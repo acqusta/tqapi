@@ -50,7 +50,7 @@ namespace TQuant
                 public static extern String tqs_get_parameter(IntPtr h, String name, String def_value);
 
                 [DllImport("tqs.dll", EntryPoint = "tqs_sc_mode", CallingConvention = CallingConvention.Cdecl)]
-                public static extern void tqs_sc_mode(IntPtr h);
+                public static extern IntPtr tqs_sc_mode(IntPtr h);
 
                 [DllImport("tqs.dll", EntryPoint = "tqs_sc_register_algo", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tqs_sc_register_algo(IntPtr h, IntPtr algo);
@@ -63,12 +63,6 @@ namespace TQuant
 
                 [DllImport("tqs.dll", EntryPoint = "tqs_stralet_destroy", CallingConvention = CallingConvention.Cdecl)]
                 public static extern void tqs_stralet_destroy(IntPtr stralet);
-
-                [DllImport("tqs.dll", EntryPoint = "tqs_sc_register_stralet", CallingConvention = CallingConvention.Cdecl)]
-                public static extern IntPtr tqs_bt_register_stralet(IntPtr h, IntPtr algo);
-
-                [DllImport("tqs.dll", EntryPoint = "tqs_sc_unregister_algo", CallingConvention = CallingConvention.Cdecl)]
-                public static extern IntPtr tqs_bt_unregister_algo(IntPtr h, IntPtr algo);
 
 
                 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -117,10 +111,13 @@ namespace TQuant
                 }
 
                 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-                public delegate IntPtr BTRunCreateStralet();
+                public delegate IntPtr StraletCreator();
 
                 [DllImport("tqs.dll", EntryPoint = "tqs_bt_run", CallingConvention = CallingConvention.Cdecl)]
-                public static extern IntPtr tqs_bt_run(String cfg, BTRunCreateStralet create_stralet);
+                public static extern IntPtr tqs_bt_run(String cfg, StraletCreator stralet_creator);
+
+                [DllImport("tqs.dll", EntryPoint = "tqs_rt_run", CallingConvention = CallingConvention.Cdecl)]
+                public static extern IntPtr tqs_rt_run(String cfg, StraletCreator stralet_creator);
             }
 
             public enum LogLevel
@@ -130,127 +127,6 @@ namespace TQuant
                 ERROR,
                 FATAL
             }
-
-            //public class StraletContext
-            //{
-            //    IntPtr handle;
-            //    int trading_day;
-
-            //    Dictionary<string, DataApiImpl> dapi_map = new Dictionary<string, DataApiImpl>();
-            //    TradeApiImpl tapi = null;
-
-            //    public StraletContext(IntPtr h)
-            //    {
-            //        this.handle = h;
-            //        this.trading_day = TqsDll.tqs_sc_trading_day(h);
-            //        TqsDll.tqs_sc_cur_time(h);
-            //    }
-
-            //    internal void Detach()
-            //    {
-            //        foreach (var dapi in dapi_map)
-            //        {
-            //            dapi.Value.Detach();
-            //        }
-
-            //        dapi_map.Clear();
-
-            //        if (tapi != null)
-            //        {
-            //            tapi.Detach();
-            //            tapi = null;
-            //        }
-            //    }
-
-            //    public Int32 TradingDay { get { return trading_day; } }
-            //    public FinDataTime CurTime { get { return TqsDll.tqs_sc_cur_time(this.handle); } }
-
-            //    public void PostEvent(String evt, long data)
-            //    {
-            //        TqsDll.tqs_sc_post_event(this.handle, evt, new IntPtr(data));
-            //    }
-
-            //    public void SetTimer(Stralet stralet, Int32 id, Int32 delay, long data)
-            //    {
-            //        TqsDll.tqs_sc_set_timer(this.handle, stralet._Handle, id, delay, new IntPtr(data));
-            //    }
-
-            //    public void KillTimer(Stralet stralet, Int32 id)
-            //    {
-            //        TqsDll.tqs_sc_kill_timer(this.handle, stralet._Handle, id);
-            //    }
-
-            //    public DataApi GetDataApi(String source = "")
-            //    {
-            //        if (source == null) source = "";
-
-            //        if (dapi_map.ContainsKey(source))
-            //            return dapi_map[source];
-
-            //        var h = TqsDll.tqs_sc_data_api(this.handle, source);
-            //        if (h != IntPtr.Zero)
-            //        {
-            //            var dapi = new DataApiImpl(this, h);
-            //            dapi_map[source] = dapi;
-            //            return dapi;
-            //        }
-            //        else
-            //        {
-            //            return null;
-            //        }
-            //    }
-
-            //    public DataApi DataApi
-            //    {
-            //        get
-            //        {
-            //            return GetDataApi();
-            //        }
-            //    }
-
-            //    public TradeApi TradeApi
-            //    {
-            //        get
-            //        {
-            //            if (tapi != null) return tapi;
-
-            //            var h = TqsDll.tqs_sc_trade_api(this.handle);
-            //            if (h != IntPtr.Zero)
-            //                tapi = new TradeApiImpl(null, h);
-
-            //            return tapi;
-            //        }
-            //    }
-
-            //    public void Log(String str)
-            //    {
-            //        Log(LogLevel.INFO, str);
-            //    }
-
-            //    public void Log(LogLevel level, String str)
-            //    {
-            //        int l = 0;
-            //        switch (level)
-            //        {
-            //            case LogLevel.INFO: l = 0; break;
-            //            case LogLevel.WARNING: l = 1; break;
-            //            case LogLevel.ERROR: l = 2; break;
-            //            case LogLevel.FATAL: l = 3; break;
-            //        }
-            //        TqsDll.tqs_sc_log(this.handle, l, str);
-            //    }
-
-            //    //virtual string get_parameter(const char* name, const char* def_value) = 0;
-
-            //    //        virtual string mode() = 0;
-
-            //    //virtual void register_algo(AlgoStralet* algo) = 0;
-            //    //virtual void unregister_algo(AlgoStralet* algo) = 0;
-
-            //}
-
-
-
         }
     }
 }

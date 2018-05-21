@@ -1,7 +1,9 @@
 #include <iostream>
 #include "stralet.h"
 #include "backtest.h"
+#include "realtime.h"
 
+using namespace tquant::stralet;
 
 class MyStralet : public Stralet {
 public:
@@ -34,16 +36,16 @@ public:
 
 int test1()
 {
-    BackTestConfig cfg;
+    backtest::BackTestConfig cfg;
     //cfg.dapi_addr = "tcp://127.0.0.1:10001";
     cfg.begin_date = 20170101;
     cfg.end_date = 20171231;
     cfg.data_level = "tk";
-    cfg.accounts.push_back(AccountConfig("sim", 1e8));
+    cfg.accounts.push_back(backtest::AccountConfig("sim", 1e8));
 
     auto begin_time = system_clock::now();
 
-    bt_run(cfg, []() { return new MyStralet(); });
+    backtest::run(cfg, []() { return new MyStralet(); });
 
     auto end_time = system_clock::now();
     cout << "used time: " << duration_cast<milliseconds>(end_time - begin_time).count() << "ms\n";
@@ -56,16 +58,16 @@ Stralet* create_rbreaker();
 
 int test2() 
 {
-    BackTestConfig cfg;
+    backtest::BackTestConfig cfg;
     cfg.dapi_addr = "tcp://127.0.0.1:10001";
     cfg.begin_date = 20170101;
     cfg.end_date = 20180321;
     cfg.data_level = "1m";
-    cfg.accounts.push_back(AccountConfig("sim", 1e8));
+    cfg.accounts.push_back(backtest::AccountConfig("sim", 1e8));
 
     auto begin_time = system_clock::now();
 
-    bt_run(cfg, create_rbreaker);
+    backtest::run(cfg, create_rbreaker);
 
     auto end_time = system_clock::now();
     cout << "used time: " << duration_cast<milliseconds>(end_time - begin_time).count() << "ms\n";
@@ -78,16 +80,16 @@ Stralet *create_doublema();
 
 int test3()
 {
-    BackTestConfig cfg;
+    backtest::BackTestConfig cfg;
     cfg.dapi_addr = "tcp://127.0.0.1:10001";
     cfg.begin_date = 20170101;
     cfg.end_date = 20180321;
     cfg.data_level = "1m";
-    cfg.accounts.push_back(AccountConfig("sim", 1e8));
+    cfg.accounts.push_back(backtest::AccountConfig("sim", 1e8));
 
     auto begin_time = system_clock::now();
 
-    bt_run(cfg, create_doublema);
+    backtest::run(cfg, create_doublema);
 
     auto end_time = system_clock::now();
     cout << "used time: " << duration_cast<milliseconds>(end_time - begin_time).count() << "ms\n";
@@ -100,17 +102,17 @@ Stralet *create_ifhft();
 
 int test_ifhft()
 {
-    BackTestConfig cfg;
+    backtest::BackTestConfig cfg;
     //cfg.dapi_addr = "tcp://127.0.0.1:10001";
     cfg.dapi_addr = "ipc://tqc_10001?timeout=30";
     cfg.begin_date = 20180101;
     cfg.end_date = 20180330;
     cfg.data_level = "tk";
-    cfg.accounts.push_back(AccountConfig("sim", 1e8));
+    cfg.accounts.push_back(backtest::AccountConfig("sim", 1e8));
 
     auto begin_time = system_clock::now();
 
-    bt_run(cfg, create_ifhft);
+    backtest::run(cfg, create_ifhft);
 
     auto end_time = system_clock::now();
     cout << "used time: " << duration_cast<milliseconds>(end_time - begin_time).count() << "ms\n";
@@ -119,9 +121,24 @@ int test_ifhft()
     return 0;
 }
 
+int run_ifhft()
+{
+    realtime::RealTimeConfig cfg;
+
+    //cfg.tqapi_addr = "ipc://tqc_10001?timeout=30";
+    cfg.tqapi_addr = "tcp://127.0.0.1:10001";
+
+    auto begin_time = system_clock::now();
+
+    realtime::run(cfg, create_ifhft);
+
+    getchar();
+    return 0;
+}
+
 int main()
 {
-    test_ifhft();
-
+    //test_ifhft();
+    run_ifhft();
     return 0;
 }

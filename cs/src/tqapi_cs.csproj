@@ -66,6 +66,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="tqs\BackTest.cs" />
     <Compile Include="tqs\FsmStralet.cs" />
+    <Compile Include="tqs\RealTime.cs" />
     <Compile Include="tqs\Stralet.cs" />
     <Compile Include="tqs\TqsDll.cs" />
   </ItemGroup>

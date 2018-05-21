@@ -7,103 +7,107 @@
 #include "tquant_api.h"
 #include "backtest.h"
 
-using namespace tquant::api;
-using namespace tquant::stralet;
+namespace tquant { namespace stralet { namespace backtest {
 
-class SimStraletContext;
+    using namespace tquant::api;
+    using namespace tquant::stralet;
 
-struct TradeData {
-    string  account_id;
-    int32_t trading_day;
-    double  init_balance;
-    double  enable_balance;
-    double  frozen_balance;
+    class SimStraletContext;
 
-    unordered_map<string, shared_ptr<Position>> positions;     // code + side -> Position
-    unordered_map<string, shared_ptr<Order>>    orders;     // entrust_no -> order
-    unordered_map<string, shared_ptr<Trade>>    trades;     // fill_no -> trade
-};
+    struct TradeData {
+        string  account_id;
+        int32_t trading_day;
+        double  init_balance;
+        double  enable_balance;
+        double  frozen_balance;
 
-class SimAccount {
-    friend SimStraletContext;
-    friend SimTradeApi;
-public:
-    SimAccount(SimStraletContext* ctx, const string& account_id,
-               double init_balance,
-               const vector<Holding> & holdings);
+        unordered_map<string, shared_ptr<Position>> positions;     // code + side -> Position
+        unordered_map<string, shared_ptr<Order>>    orders;     // entrust_no -> order
+        unordered_map<string, shared_ptr<Trade>>    trades;     // fill_no -> trade
+    };
 
-    CallResult<const Balance>             query_balance();
-    CallResult<const vector<Order>>       query_orders();
-    CallResult<const vector<Trade>>       query_trades();
-    CallResult<const vector<Position>>    query_positions();
-    CallResult<const OrderID>             place_order(const string& code, double price, int64_t size, const string& action, int order_id);
-    CallResult<bool>                      cancel_order(const string& code, int order_id);
-    CallResult<bool>                      cancel_order(const string& code, const string& entrust_no);
-    CallResult<const OrderID>             validate_order(const string& code, double price, int64_t size, const string& action);
+    class SimAccount {
+        friend SimStraletContext;
+        friend SimTradeApi;
+    public:
+        SimAccount(SimStraletContext* ctx, const string& account_id,
+                   double init_balance,
+                   const vector<Holding> & holdings);
 
-    void try_match();
+        CallResult<const Balance>             query_balance();
+        CallResult<const vector<Order>>       query_orders();
+        CallResult<const vector<Trade>>       query_trades();
+        CallResult<const vector<Position>>    query_positions();
+        CallResult<const OrderID>             place_order(const string& code, double price, int64_t size, const string& action, int order_id);
+        CallResult<bool>                      cancel_order(const string& code, int order_id);
+        CallResult<bool>                      cancel_order(const string& code, const string& entrust_no);
+        CallResult<const OrderID>             validate_order(const string& code, double price, int64_t size, const string& action);
 
-    void try_buy  (Order* order);
-    void try_short(Order* order);
-    void try_cover(Order* order);
-    void try_sell (Order* order);
+        void try_match();
 
-    void make_trade     (double price, Order* order);
-    Position* get_position(const string& code, const string& side);
+        void try_buy  (Order* order);
+        void try_short(Order* order);
+        void try_cover(Order* order);
+        void try_sell (Order* order);
 
-    void move_to(int trading_day);
-    void save_data(const string& dir);
+        void make_trade     (double price, Order* order);
+        Position* get_position(const string& code, const string& side);
 
-private:
-    shared_ptr<TradeData> m_tdata;
-    vector<shared_ptr<TradeData>> m_his_tdata;
+        void move_to(int trading_day);
+        void save_data(const string& dir);
 
-    list<shared_ptr<Order>> m_ord_status_ind_list;
-    list<shared_ptr<Trade>> m_trade_ind_list;
+    private:
+        shared_ptr<TradeData> m_tdata;
+        vector<shared_ptr<TradeData>> m_his_tdata;
 
-    SimStraletContext* m_ctx;
+        list<shared_ptr<Order>> m_ord_status_ind_list;
+        list<shared_ptr<Trade>> m_trade_ind_list;
 
-    static int g_order_id;
-    static int g_fill_id;;
-};
+        SimStraletContext* m_ctx;
 
-class SimTradeApi : public TradeApi {
-    friend SimStraletContext;
-public:
-    SimTradeApi(SimStraletContext* ctx, vector<SimAccount*>& accounts)
-        : m_ctx(ctx)
-    {
-        for (auto& e : accounts)
-            m_accounts[e->m_tdata->account_id] = e;
-    }
+        static int g_order_id;
+        static int g_fill_id;;
+    };
 
-    // TradeApi
-    virtual CallResult<const vector<AccountInfo>>   query_account_status();
-    virtual CallResult<const Balance>               query_balance  (const string& account_id);
-    virtual CallResult<const vector<Order>>         query_orders   (const string& account_id);
-    virtual CallResult<const vector<Trade>>         query_trades   (const string& account_id);
-    virtual CallResult<const vector<Position>>      query_positions(const string& account_id);
-    virtual CallResult<const OrderID>               place_order    (const string& account_id, const string& code, double price, int64_t size, const string& action, int order_id);
-    virtual CallResult<bool>                        cancel_order   (const string& account_id, const string& code, int order_id);
-    virtual CallResult<bool>                        cancel_order   (const string& account_id, const string& code, const string& entrust_no);
-    virtual CallResult<string>                      query          (const string& account_id, const string& command, const string& params);
-    virtual TradeApi_Callback* set_callback(TradeApi_Callback* callback);
+    class SimTradeApi : public TradeApi {
+        friend SimStraletContext;
+    public:
+        SimTradeApi(SimStraletContext* ctx, vector<SimAccount*>& accounts)
+            : m_ctx(ctx)
+        {
+            for (auto& e : accounts)
+                m_accounts[e->m_tdata->account_id] = e;
+        }
 
-    SimAccount* get_account(const string& account_id) {
-        auto it = m_accounts.find(account_id);
-        return it != m_accounts.end() ? it->second : nullptr;
-    }
+        // TradeApi
+        virtual CallResult<const vector<AccountInfo>>   query_account_status();
+        virtual CallResult<const Balance>               query_balance  (const string& account_id);
+        virtual CallResult<const vector<Order>>         query_orders   (const string& account_id);
+        virtual CallResult<const vector<Trade>>         query_trades   (const string& account_id);
+        virtual CallResult<const vector<Position>>      query_positions(const string& account_id);
+        virtual CallResult<const OrderID>               place_order    (const string& account_id, const string& code, double price, int64_t size, const string& action, int order_id);
+        virtual CallResult<bool>                        cancel_order   (const string& account_id, const string& code, int order_id);
+        virtual CallResult<bool>                        cancel_order   (const string& account_id, const string& code, const string& entrust_no);
+        virtual CallResult<string>                      query          (const string& account_id, const string& command, const string& params);
+        virtual TradeApi_Callback* set_callback(TradeApi_Callback* callback);
 
-    void try_match();
+        SimAccount* get_account(const string& account_id) {
+            auto it = m_accounts.find(account_id);
+            return it != m_accounts.end() ? it->second : nullptr;
+        }
 
-    void move_to(int trading_day);
+        void try_match();
 
-    const unordered_map<string, SimAccount*> accounts() { return m_accounts; }
+        void move_to(int trading_day);
 
-private:
-    SimStraletContext* m_ctx;
-    unordered_map<string, SimAccount*> m_accounts;
-};
+        const unordered_map<string, SimAccount*> accounts() { return m_accounts; }
+
+    private:
+        SimStraletContext* m_ctx;
+        unordered_map<string, SimAccount*> m_accounts;
+    };
+
+} } }
 
 #endif
 
