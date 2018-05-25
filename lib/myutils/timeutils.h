@@ -5,7 +5,7 @@
 #include <string.h>
 #include <chrono>
 
-static inline int human_date(time_t t)
+static inline int fin_date(time_t t)
 {
     struct tm tm = *localtime(&t);
     //char datetime[20];
@@ -14,13 +14,13 @@ static inline int human_date(time_t t)
     return (tm.tm_year + 1900) * 10000 + (tm.tm_mon + 1) * 100 + tm.tm_mday;
 }
 
-static inline int human_time_seconds(time_t t)
+static inline int fin_time_seconds(time_t t)
 {
     struct tm tm = *localtime(&t);
     return tm.tm_hour * 10000 + tm.tm_min * 100 + tm.tm_sec;
 }
 
-static void human_datetime(int* date, int* time)
+static void fin_datetime(int* date, int* time)
 {
    std:: chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
 
@@ -32,16 +32,21 @@ static void human_datetime(int* date, int* time)
     auto midnight = std::chrono::system_clock::from_time_t(mktime(t));
 
     *date = (t->tm_year + 1900) * 10000 + (t->tm_mon + 1) * 100 + t->tm_mday;
-    *time = (int)std::chrono::duration_cast<std::chrono::milliseconds>(now - midnight).count();
+    int tmp = (int)std::chrono::duration_cast<std::chrono::milliseconds>(now - midnight).count();
+    int ms = tmp % 1000;  tmp /= 1000;
+    int s = tmp % 60; tmp /= 60;
+    int m = tmp % 60; tmp /= 60;
+    int h = tmp % 60;
+    *time = (h * 10000 + m * 100 + s) * 1000 + ms;
 }
 
-static inline int human_today()
+static inline int fin_today()
 {
     time_t t = time(NULL);
-    return human_date(t);
+    return fin_date(t);
 }
 
-static inline int human_nextday(int day)
+static inline int fin_nextday(int day)
 {
     struct tm tm;
     memset(&tm, 0, sizeof(tm));
@@ -49,10 +54,10 @@ static inline int human_nextday(int day)
     tm.tm_mon = (day/100)%100 - 1;
     tm.tm_year = (day/10000) - 1900;
     time_t t = mktime(&tm) + 3600 * 24;
-    return human_date(t);
+    return fin_date(t);
 }
 
-static inline int human_preday(int day)
+static inline int fin_preday(int day)
 {
     struct tm tm;
     memset(&tm, 0, sizeof(tm));
@@ -60,13 +65,13 @@ static inline int human_preday(int day)
     tm.tm_mon = (day/100)%100 - 1;
     tm.tm_year = (day/10000) - 1900;
     time_t t = mktime(&tm) - 3600 * 24;
-    return human_date(t);
+    return fin_date(t);
 }
 
-static inline int human_now_seconds()
+static inline int fin_now_seconds()
 {
     time_t t = time(NULL);
-    return human_time_seconds(t);
+    return fin_time_seconds(t);
 }
 
 static inline std::string today_str()

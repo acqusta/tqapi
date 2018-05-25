@@ -123,6 +123,7 @@ string utf8_to_gbk(const string& utf8)
     delete[] buf;
     return gbk;
 }
+
 std::string utf8_to_local(const std::string& utf8)
 {
     return utf8_to_gbk(utf8);

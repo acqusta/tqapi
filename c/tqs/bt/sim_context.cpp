@@ -30,6 +30,7 @@ void SimStraletContext::move_to(int trading_day)
 
     m_trading_day = trading_day;
     m_timers.clear();
+    m_events.clear();
 }
 
 int32_t SimStraletContext::trading_day()
@@ -47,9 +48,12 @@ system_clock::time_point SimStraletContext::cur_time_as_tp()
     return m_now_tp;
 }
 
-void SimStraletContext::post_event(const char* evt, void* data)
+void SimStraletContext::post_event(const char* name, void* data)
 {
-    // TODO:
+    auto evt = make_shared<EventData>();
+    evt->name = name;
+    evt->data = data;
+    m_events.push_back(evt);
 }
 
 void SimStraletContext::set_timer(Stralet* stralet, int32_t id, int32_t delay, void* data)
@@ -194,6 +198,13 @@ void SimStraletContext::run_one_day(Stralet* stralet)
         calc_next_timer_time(&dt2);
 
         set_sim_time(dt1.cmp(dt2) < 0 ? dt1 : dt2);
+
+        if (m_events.size()) {
+            auto events = m_events;
+            m_events.clear();
+            for (auto evt : events)
+                stralet->on_event(evt->name, evt->data);
+        }
 
         m_tapi->try_match();
 

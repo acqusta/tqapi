@@ -40,7 +40,10 @@ namespace TQuant.Stralet
             stralet.Receive(new FSMStraletBase.OnTimer(id, data));
         }
 
-        public override void OnEvent(String evt, Object data) { }
+        public override void OnEvent(String evt, long data)
+        {
+            stralet.Receive(new FSMStraletBase.OnEvent(evt, data));
+        }
 
         public override void OnOrderStatus(Order order)
         {
@@ -136,6 +139,18 @@ namespace TQuant.Stralet
             public OnTimer(int id, long data)
             {
                 this.Id = id;
+                this.Data = data;
+            }
+        }
+
+        public class OnEvent
+        {
+            public string Name { get; }
+            public long Data { get; }
+
+            public OnEvent(string name, long data)
+            {
+                this.Name = name;
                 this.Data = data;
             }
         }
@@ -440,6 +455,8 @@ namespace TQuant.Stralet
     public abstract class FsmStralet<TState, TData> : FSMStraletBase
     {
         private ILoggingAdapter _log { get { return Context.Logger; } }
+        private Dictionary<long, Object> tell_object_map = new Dictionary<long, object>();
+        private long tell_object_next_id = 0;
 
         public FsmStralet()
         {            
@@ -592,6 +609,14 @@ namespace TQuant.Stralet
         public void WhenUnhandled(StateFunction stateFunction)
         {
             HandleEvent = OrElse(stateFunction, HandleEventDefault);
+        }
+
+        // Post ?
+        public void Tell(Object any)
+        {
+            long id = ++this.tell_object_next_id;
+            this.tell_object_map[id] = any;
+            Context.PostEvent("__tell_evt__", id);
         }
 
         public void Initialize()
@@ -768,16 +793,30 @@ namespace TQuant.Stralet
                         Context.SetTimer(this.Stralet, timer.Id, timer.Interval, 0);
                     }
 
-                    ProcessMsg(timer);//#//.Message);
+                    message = timer;
                 }
-
-                if (this._stateTimout != null)
+                else
                 {
-                    id2timers.Remove(_stateTimout.Id);
-                    this._stateTimout = null;
+                    message = null;
                 }
-
-                return true;
+            }
+            else if (message is OnEvent)
+            {
+                var on_event = message as OnEvent;
+                if (on_event.Name == "__tell_evt__")
+                {
+                    long id = on_event.Data;
+                    Object real_msg;
+                    if (this.tell_object_map.TryGetValue(id, out real_msg))
+                    {
+                        this.tell_object_map.Remove(id);
+                        message = real_msg;
+                    }
+                    else
+                    {
+                        message = null;
+                    }
+                }
             }
 
             if (this._stateTimout != null)
@@ -786,8 +825,8 @@ namespace TQuant.Stralet
                 this._stateTimout = null;
             }
 
-            timer_id++;
-            ProcessMsg(message);
+            if (message != null)
+                ProcessMsg(message);
             return true;
         }
 

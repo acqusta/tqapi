@@ -79,9 +79,14 @@ namespace tquant { namespace stralet { namespace backtest {
             system_clock::time_point trigger_time;
         };
 
+        struct EventData {
+            string name;
+            void* data;
+        };
+
         vector<shared_ptr<TimerInfo>> m_timers;
+        list<shared_ptr<EventData>> m_events;
         vector<AlgoStralet*> m_algos;
-        Stralet* m_stralet;
         string m_mode;
     };
 

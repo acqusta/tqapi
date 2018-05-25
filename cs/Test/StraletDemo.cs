@@ -24,7 +24,7 @@ namespace Test
         }
         public override void OnBar(String cyle, Bar bar) { }
         public override void OnTimer(Int32 id, Int64 data) { }
-        public override void OnEvent(String evt, Object data) { }
+        public override void OnEvent(String evt, long data) { }
         public override void OnOrderStatus(Order order) { }
         public override void OnOrderTrade(Trade trade) { }
         public override void OnAccountStatus(AccountInfo account) { }

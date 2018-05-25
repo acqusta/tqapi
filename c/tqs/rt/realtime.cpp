@@ -128,12 +128,19 @@ namespace tquant { namespace stralet { namespace realtime {
             , m_tapi(nullptr)
             , m_mode("realtime")
         {
-            m_tradingday = human_today();
-            //DateTime now;
-            //human_datetime(&now.date, &now.time);
-            //if (now.time > 190000000) {
-            //    now.date == 
-            //}
+            // TODO: Should load trade calendar
+            time_t now;
+            now = time(&now);
+            tm *t = localtime(&now);
+            if (t->tm_hour >= 19) {
+                now += 24 * 3600;
+                t = localtime(&now);
+            }
+            while (t->tm_wday == 0 || t->tm_wday==6) {
+                now += 24 * 3600;
+                t = localtime(&now);
+            }
+            m_tradingday = fin_date(now);
 
             m_tqapi->data_api()->set_callback(this);
             m_tqapi->trade_api()->set_callback(this);
@@ -154,7 +161,7 @@ namespace tquant { namespace stralet { namespace realtime {
         virtual DateTime cur_time() override 
         {
             DateTime now;
-            human_datetime(&now.date, &now.time);
+            fin_datetime(&now.date, &now.time);
             return now;
         }
 
@@ -299,7 +306,10 @@ namespace tquant { namespace stralet { namespace realtime {
 
         char label[100];
 
-        sprintf(label, "%08d %06d.%03d %s| ", now.date, now.time / 1000, now.time % 1000, str_level[level]);
+        int h = now.time / 1000 / 10000;
+        int m = (now.time / 1000 / 100) % 100;
+        int s = (now.time / 1000) % 100;
+        sprintf(label, "%08d %02d:%02d:%02d.%03d %s| ", now.date, h, m, s, now.time % 1000, str_level[level]);
         cout << label;
         return cout;
     }
@@ -328,30 +338,41 @@ namespace tquant { namespace stralet { namespace realtime {
 
     void RealTimeStraletContext::on_market_quote(shared_ptr<const MarketQuote> quote)
     {
-        for (auto& algo : m_algos) algo->on_quote(quote);
-        m_stralet->on_quote(quote);
+        m_msgloop.PostTask([this, quote]() {
+            for (auto& algo : m_algos) algo->on_quote(quote);
+            m_stralet->on_quote(quote);
+        });
     }
 
     void RealTimeStraletContext::on_bar(const string& cycle, shared_ptr<const Bar> bar)
     {
-        for (auto& algo : m_algos) algo->on_bar(cycle.c_str(), bar);
-        m_stralet->on_bar(cycle.c_str(), bar);
+        m_msgloop.PostTask([this, cycle, bar]() {
+            for (auto& algo : m_algos) algo->on_bar(cycle.c_str(), bar);
+            m_stralet->on_bar(cycle.c_str(), bar);
+        });
     }
 
     void RealTimeStraletContext::on_order_status(shared_ptr<Order> order)
     {
-        for (auto& algo : m_algos) algo->on_order_status(order);
-        m_stralet->on_order_status(order);
+        m_msgloop.PostTask([this, order]() {
+            for (auto& algo : m_algos) algo->on_order_status(order);
+            m_stralet->on_order_status(order);
+        });
     }
+
     void RealTimeStraletContext::on_order_trade(shared_ptr<Trade> trade)
     {
-        for (auto& algo : m_algos) algo->on_order_trade(trade);
-        m_stralet->on_order_trade(trade);
+        m_msgloop.PostTask([this, trade]() {
+            for (auto& algo : m_algos) algo->on_order_trade(trade);
+            m_stralet->on_order_trade(trade);
+        });
     }
     void RealTimeStraletContext::on_account_status(shared_ptr<AccountInfo> account)
     {
-        for (auto& algo : m_algos) algo->on_account_status(account);
-        m_stralet->on_account_status(account);
+        m_msgloop.PostTask([this, account]() {
+            for (auto& algo : m_algos) algo->on_account_status(account);
+            m_stralet->on_account_status(account);
+        });
     }
 
     void run(const RealTimeConfig & a_cfg, function<Stralet*()> creator)

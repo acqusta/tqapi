@@ -26,7 +26,7 @@ namespace TQuant.Stralet
 
         TQuant.Stralet.FinDataTime CurTime { get; }
 
-        void PostEvent(String evt, Object data);
+        void PostEvent(String evt, long data);
 
         void SetTimer(Stralet stralet, int id, int delay, long data = 0);
 
@@ -75,7 +75,7 @@ namespace TQuant.Stralet
         public virtual void OnQuote(MarketQuote quote) { }
         public virtual void OnBar(String cycle, Bar bar) { }
         public virtual void OnTimer(Int32 id, Int64 data) { }
-        public virtual void OnEvent(String evt, Object data) { }
+        public virtual void OnEvent(String evt, long data) { }
         public virtual void OnOrderStatus(Order order) { }
         public virtual void OnOrderTrade(Trade trade) { }
         public virtual void OnAccountStatus(AccountInfo account) { }
@@ -241,11 +241,6 @@ namespace TQuant.Stralet
         //    stralet.SetContext(this);
         //}
 
-        public void PostEvent(string evt, object data)
-        {
-            throw new NotImplementedException();
-        }
-
         public String Mode { get; }
     }
 
@@ -254,11 +249,6 @@ namespace TQuant.Stralet
         TqsDll.DotNetStralet wrap = new TqsDll.DotNetStralet();
         StraletContextImpl ctx;
         internal IntPtr handle;
-
-        Object GetObjectByID(IntPtr id)
-        {
-            return null;
-        }
 
         public StraletWrap(Stralet stralet)
         {
@@ -283,7 +273,7 @@ namespace TQuant.Stralet
 
             wrap.OnEvent = (evt, data) =>
             {
-                stralet.OnEvent(evt, GetObjectByID(data));
+                stralet.OnEvent(evt, data.ToInt64());
             };
 
             wrap.OnOrderStatus = stralet.OnOrderStatus;

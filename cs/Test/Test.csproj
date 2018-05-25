@@ -74,7 +74,7 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>Test.Demo</StartupObject>
+    <StartupObject>Test.TestFSM</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
