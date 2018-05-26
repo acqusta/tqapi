@@ -60,10 +60,6 @@ namespace myutils {
 
         struct ConnectionSlot {
             atomic<uint64_t> client_id;          // 0 means no connection;
-            atomic<uint64_t> client_update_time; // client update time
-            atomic<uint64_t> svr_update_time;    // server check time
-            atomic<int32_t > req;
-            atomic<int32_t > rsp;
             atomic<int32_t > dead_flag;
             int32_t shmem_size;
             char    shmem_name[128];
@@ -72,10 +68,10 @@ namespace myutils {
         };
 
         struct ConnectionSlotInfo {
-            int64_t        slot_count;
-            int64_t        slot_size;          // Size of ConnectionInfo
-            char           sem_conn[128];
-            ConnectionSlot slots[20];
+            uint32_t       svr_port;
+            uint32_t       slot_count;
+            uint32_t       slot_size;          // Size of ConnectionInfo
+            ConnectionSlot slots[100];
         };
 
         IpcConnection();
@@ -87,6 +83,7 @@ namespace myutils {
         virtual void close() override;
         virtual void send(const char* data, size_t size) override;
         virtual void send(const std::string& data) override;
+        virtual bool is_connected() override;
 
     private:
         bool do_connect();
@@ -102,7 +99,6 @@ namespace myutils {
 
     private:
         string                      m_addr;
-        int64_t                     m_timeout;
         mutex                       m_send_mtx;
         Connection_Callback*        m_callback;
         volatile bool               m_should_exit;
@@ -118,6 +114,7 @@ namespace myutils {
         SharedSemaphore*            m_sem_send;
         SharedSemaphore*            m_sem_recv;
         system_clock::time_point    m_last_connect_time;
+        SOCKET                      m_socket;
     };
 }
 

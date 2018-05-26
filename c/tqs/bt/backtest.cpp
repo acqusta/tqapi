@@ -63,7 +63,7 @@ void run(const char* cfg_str, function<Stralet*()> creator)
 void run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
 {
     BackTestConfig cfg = a_cfg;
-    if (cfg.dapi_addr.empty())  cfg.dapi_addr = "tcp://127.0.0.1:10001"; //"ipc://tqc_10001";
+    if (cfg.dapi_addr.empty())  cfg.dapi_addr = "ipc://tqc_10001";
     if (cfg.accounts.empty())   cfg.accounts.push_back(AccountConfig("sim", 1e8, vector<Holding>()));
     if (cfg.data_level.empty()) cfg.data_level = "tk";
     if (cfg.result_dir.empty()) cfg.result_dir = "result";

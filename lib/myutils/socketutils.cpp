@@ -76,6 +76,16 @@ namespace myutils {
         if (s == INVALID_SOCKET)
             return false;
 
+#ifdef _WIN32
+        int v = 2000;
+        setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (char*)&v, sizeof(v));
+        setsockopt(s, SOL_SOCKET, SO_SNDTIMEO, (char*)&v, sizeof(v));
+#else
+        struct timeval timeout = { 2, 0 * 1000 };
+        setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+        setsockopt(s, SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeout, sizeof(timeout));
+#endif
+
         set_socket_nonblock(s, true);
 
         int r = connect(s, (sockaddr*)&addr, sizeof(addr));

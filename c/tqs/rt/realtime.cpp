@@ -378,7 +378,7 @@ namespace tquant { namespace stralet { namespace realtime {
     void run(const RealTimeConfig & a_cfg, function<Stralet*()> creator)
     {
         RealTimeConfig cfg = a_cfg;
-        if (cfg.tqapi_addr.empty())  cfg.tqapi_addr = "tcp://127.0.0.1:10001"; //"ipc://tqc_10001";
+        if (cfg.tqapi_addr.empty())  cfg.tqapi_addr = "ipc://tqc_10001";
         if (cfg.output_dir.empty()) cfg.output_dir = ".";
 
         //cout << "run stralet: " << cfg.output_dir << endl;

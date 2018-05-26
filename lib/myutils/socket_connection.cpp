@@ -273,3 +273,8 @@ void SocketConnection::send(const string& data)
 {
     send(data.c_str(), data.size());
 }
+
+bool SocketConnection::is_connected()
+{
+    return m_connected;
+}

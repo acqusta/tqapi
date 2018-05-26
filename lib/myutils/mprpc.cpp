@@ -122,6 +122,8 @@ namespace mprpc {
             do_send_heartbeat();
         }
 
+#if 0
+       // FIXME: how to check heartbeat timeout?
         if (now - m_last_hb_rsp_time > seconds(4)) {
             if (m_connected) {
                 m_connected = false;
@@ -130,7 +132,7 @@ namespace mprpc {
             m_last_hb_rsp_time = now;
             m_conn->reconnect();
         }
-
+#endif
         for (auto it = m_on_rsp_map.begin(); it != m_on_rsp_map.end(); ) {
             if (it->second.dead_time < now) {
                 it->second.promise->set_error(make_shared<pair<int, string>>(-1, "timeout"));
@@ -282,6 +284,8 @@ namespace mprpc {
 
     void MpRpcClient::do_send_heartbeat()
     {
+        if (!m_conn->is_connected()) return;
+
         int callid = ++m_cur_callid;
 
         MsgPackPacker pk_params;
@@ -339,7 +343,7 @@ namespace mprpc {
 
     bool MpRpcServer::send(shared_ptr<ClientConnection> conn, const void* data, size_t size)
     {
-        if (size < conn->max_raw_size()) {
+        if (size < (size_t)conn->max_raw_size()) {
             return conn->send((const char*)data, size);
         }
         else {

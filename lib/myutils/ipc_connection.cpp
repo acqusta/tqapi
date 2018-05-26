@@ -14,6 +14,7 @@
 #include "myutils/ipc_connection.h"
 #include "myutils/stringutils.h"
 #include "myutils/timeutils.h"
+#include "myutils/socketutils.h"
 
 using namespace myutils;
 
@@ -156,8 +157,7 @@ bool SharedSemaphore::post()
 }
 
 IpcConnection::IpcConnection()
-    : m_timeout(0)
-    , m_callback(nullptr)
+    : m_callback(nullptr)
     , m_should_exit(false)
     , m_connected(false)
     , m_my_id(0)
@@ -170,6 +170,7 @@ IpcConnection::IpcConnection()
     , m_slot(nullptr)
     , m_sem_send(nullptr)
     , m_sem_recv(nullptr)
+    , m_socket(INVALID_SOCKET)
 {
     m_msg_loop.PostDelayedTask(bind(&IpcConnection::check_connection, this), 500);
 }
@@ -184,20 +185,24 @@ void IpcConnection::recv_run()
     auto last_idle_time = system_clock::now();
     while (!m_should_exit) {
         if (m_slot->client_id != m_my_id)  break;
-        if ((int64_t)now_ms() - (int64_t)m_slot->svr_update_time > 5000 + m_timeout) break;
+        //if ((int64_t)now_ms() - (int64_t)m_slot->svr_update_time > 5000 + m_timeout) break;
 
-        switch (m_sem_recv->timed_wait(100)) {
+        switch (m_sem_recv->timed_wait(200)) {
         case 1:
-            m_slot->client_update_time = now_ms() + m_timeout;
             msg_loop().PostTask([this]() {
                 do_recv(); 
             });
             break;
         case 0:
-            m_slot->client_update_time = now_ms() + m_timeout;
             break;
         default:
             break;
+        }
+
+        {
+            uint64_t my_id;
+            int r = ::recv(m_socket, (char*)&my_id, sizeof(my_id), 0);
+            m_connected = r > 0 || is_EWOURLDBLOCK(r);
         }
 
         if (system_clock::now() - last_idle_time > seconds(1)) {
@@ -303,6 +308,11 @@ void IpcConnection::clear_data()
         delete m_sem_send;
         m_sem_send = nullptr;
     }
+
+    if (m_socket != INVALID_SOCKET) {
+        closesocket(m_socket);
+        m_socket = INVALID_SOCKET;
+    }
 }
 
 void IpcConnection::check_connection()
@@ -318,8 +328,9 @@ bool IpcConnection::do_connect()
 
     if (m_addr.empty()) return false;
 
-    if (system_clock::now() - m_last_connect_time < seconds(1))
+    if (system_clock::now() - m_last_connect_time < milliseconds(200))
         return false;
+
     m_last_connect_time = system_clock::now();
 
     clear_data();
@@ -327,75 +338,40 @@ bool IpcConnection::do_connect()
     do {
         vector<string> ss;
         split(m_addr, "?", &ss);
-        if (ss.size() == 2) {
-            vector<string> tmp;
-            split(ss[1], ",", &tmp);
-            for (auto s : tmp) {
-                if (strncmp(s.c_str(), "timeout=", 8) == 0) {
-                    m_timeout = atoll(s.c_str() + 8) * 1000;
-                }
-            }
-        }
-        else {
-            m_timeout = 0;
-        }
-        string addr = string("shm_tqc_v2_") + ss[0].substr(6);
+        string addr = string("shm_tq_ipc_") + ss[0].substr(6);
         m_svr_shmem = new myutils::FileMapping();
         if (!m_svr_shmem) break;
-        if (!m_svr_shmem->open_shmem(addr, sizeof(ConnectionSlotInfo), false)) {
-            //std::cerr << "can't open shmem " << addr << endl;
+        if (!m_svr_shmem->open_shmem(addr, sizeof(ConnectionSlotInfo), false))
             break;
-        }
 
         m_slot_info = (ConnectionSlotInfo*)m_svr_shmem->addr();
         if (m_slot_info->slot_size != sizeof(ConnectionSlot)) break;
 
-        m_my_id = myutils::random();
+        if (m_socket != INVALID_SOCKET)
+            closesocket(m_socket);
 
-        for (int i = 0; i < m_slot_info->slot_count; i++) {
-            auto slot = m_slot_info->slots + i;
-            uint64_t exp = 0;
-            if (slot->client_id.compare_exchange_strong(exp, m_my_id)) {
-                //std::cout << "Find empty slot " << i << endl;
-                m_slot = slot;
-                break;
-            }
-        }
-    
-        if (!m_slot) {
-            //std::cerr << "Can't find empty slot!" << endl;
+        m_socket = connect_socket("127.0.0.1", m_slot_info->svr_port);
+        if (m_socket == INVALID_SOCKET || !myutils::check_connect(m_socket, 2))
             break;
-        }
 
-        {
-            uint64_t exp = 0;
-            if (!m_slot->client_update_time.compare_exchange_strong(exp, now_ms() + m_timeout)) {
-                //std::cerr << "update_time is not zero" << endl;
-                break;
-            }
-        }
-
-        {
-            int32_t exp = 0;
-            if (!m_slot->req.compare_exchange_strong(exp, 1)) break;
-        }
-
-        auto sem = SharedSemaphore::open(m_slot_info->sem_conn);
-        if (sem) {
-            sem->post();
-            delete sem;
-        } else {
+        set_socket_nonblock(m_socket, false);
+        m_my_id = (uint64_t)myutils::random();
+        int r = ::send(m_socket, (const char*)&m_my_id, sizeof(m_my_id), 0);
+        if (r != sizeof(m_my_id))
             break;
-        }
 
-        {
-            auto begin_time = system_clock::now();
-            while (duration_cast<milliseconds>(system_clock::now() - begin_time).count() < 200) {
-                if (m_slot->rsp) break;
-            }
-            if (m_slot->rsp != 1)
+        uint64_t slot_pos = 0;
+        r = ::recv(m_socket, (char*)&slot_pos, sizeof(slot_pos), 0);
+        if (r != sizeof(slot_pos))
                 break;
-        }
+
+        if (slot_pos >= m_slot_info->slot_count) break;
+
+        auto slot = m_slot_info->slots + slot_pos;
+        if (slot->client_id != m_my_id) break;
+
+        m_slot = slot;
+        set_socket_nonblock(m_socket, true);
 
         m_my_shmem = new myutils::FileMapping();
         if (!m_my_shmem->open_shmem(m_slot->shmem_name, m_slot->shmem_size, false))
@@ -462,4 +438,10 @@ void IpcConnection::send(const char* data, size_t size)
         cout << "send error: no connection\n";
     }
 }
+
+bool IpcConnection::is_connected()
+{
+    return m_connected;
+}
+
 

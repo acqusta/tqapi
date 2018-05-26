@@ -36,6 +36,7 @@ public:
     virtual void close() override;
     virtual void send(const char* data, size_t size) override;
     virtual void send(const std::string& data) override;
+    virtual bool is_connected() override;
 
 private:
     void main_run();

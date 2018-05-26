@@ -20,6 +20,7 @@ public:
     virtual void close() = 0;
     virtual void send(const char* data, size_t size) = 0;
     virtual void send(const std::string& data) = 0;
+    virtual bool is_connected() = 0;
 };
 
 

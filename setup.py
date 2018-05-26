@@ -48,8 +48,8 @@ sources = [
 ]
 
 define_macros = [
-    ('MAJOR_VERSION', '1'),
-    ('MINOR_VERSION', '0')
+    ('MAJOR_VERSION', '0'),
+    ('MINOR_VERSION', '1')
 ]
     
 include_dirs = [
@@ -90,7 +90,7 @@ setup(packages = [ 'tquant' ],
       libraries = [ msgpack ],
       ext_modules = [module],
       name = 'tquant',
-      version = '0.1.9',
+      version = '0.1.10',
       description="Acqusta quantitative trading tools",
       author = "Xu Tiezhu",
       author_email = 'xutiezhu@gmail.com',
