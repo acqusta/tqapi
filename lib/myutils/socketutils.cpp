@@ -5,6 +5,10 @@
 #include <stdint.h>
 #include <string.h>
 #include <string>
+#ifdef __linux__
+# include <signal.h>
+#endif
+
 #include "myutils/stringutils.h"
 
 namespace myutils {
@@ -39,7 +43,10 @@ namespace myutils {
             assert(false);
     #else
         int flags = fcntl(socket, F_GETFL, 0);
-        flags |= O_NONBLOCK;
+	if (nonblock)
+            flags |= O_NONBLOCK;
+        else
+            flags &= ~O_NONBLOCK;  
         fcntl(socket, F_SETFL, flags);
     #endif
     }

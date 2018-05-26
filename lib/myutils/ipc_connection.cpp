@@ -363,8 +363,8 @@ bool IpcConnection::do_connect()
         uint64_t slot_pos = 0;
         r = ::recv(m_socket, (char*)&slot_pos, sizeof(slot_pos), 0);
         if (r != sizeof(slot_pos))
-                break;
-
+            break;
+	
         if (slot_pos >= m_slot_info->slot_count) break;
 
         auto slot = m_slot_info->slots + slot_pos;
