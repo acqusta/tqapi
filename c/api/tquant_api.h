@@ -39,6 +39,14 @@ namespace tquant {  namespace api {
             }
         }
 
+        void assign(const T& t, const char* code = nullptr) {
+            *(T*)this = t;
+            if (code) {
+                _code = code;
+                this->code = _code.c_str();
+            }
+        }
+
         void set_code(const string& a_code) {
             _code = a_code;
             this->_code = _code.c_str();

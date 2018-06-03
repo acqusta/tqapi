@@ -268,7 +268,8 @@ void perf_test(DataApi* dapi)
 
 void perf_test2(DataApi* dapi)
 {
-    const char* code = "RB.SHF";
+    //const char* code = "RB.SHF";
+    const char* code = "000001.SH";
     vector<string> codes = { code };
     while (true) {
         dapi->subscribe(codes);
@@ -283,15 +284,14 @@ void perf_test2(DataApi* dapi)
     auto bars = dapi->daily_bar(code, "", true);
     int date_count = 0;
     assert(bars.value);
+
+    for (int i =0; i< 50; i++)
     for (auto& bar : *bars.value) {
-        if (bar.date < 20170401) continue;
+        if (bar.date < 20180101) continue;
+        //if (bar.date > 20180601) break;
 
-        //auto ticks = dapi->bar(code, "1m", bar.date, false);
-
-        if (bar.date > 20170601) break;
-        auto ticks = dapi->tick(code, bar.date);
-
-        //cout << bar.date << endl;
+        auto ticks = dapi->bar(code, "1m", bar.date, true);
+        //auto ticks = dapi->tick(code, bar.date);
 
         if (ticks.value)
             total_count += ticks.value->size();
@@ -345,12 +345,13 @@ int main()
     TQuantApi* api = TQuantApi::create(addr);
 
     //perf_test(api->data_api());
-    //perf_test2(api->data_api());
+    perf_test2(api->data_api());
 
     //test_dapi(api);
-    test_dapi2(api->data_api());
+    //test_dapi2(api->data_api());
     //test_tapi(api->trade_api());
     getchar();
 
+    return 0;
 }
 ;

@@ -94,14 +94,13 @@ namespace tquant { namespace api { namespace impl {
                 return CallResult<const vector<Bar>>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
             const BinDataHead* bin_head = reinterpret_cast<const BinDataHead*>(rsp->result.via.bin.ptr);
-            //uint32_t bin_len = rsp->result.via.bin.size;
 
             if (bin_head->element_size < sizeof(RawBar))
                 return CallResult<const vector<Bar>>("-1,wrong data format");
-            auto bars = make_shared<vector<Bar>>();
+            auto bars = make_shared<vector<Bar>>(bin_head->element_count);
             const char* p = bin_head->data;
             for (uint32_t i = 0; i < bin_head->element_count; i++) {
-                bars->push_back(Bar(*reinterpret_cast<const RawBar*>(p), code));
+                (*bars)[i].assign(*reinterpret_cast<const RawBar*>(p), code.c_str());
                 p += bin_head->element_size;
             }
             return CallResult<const vector<Bar>>(bars);
