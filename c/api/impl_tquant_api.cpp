@@ -110,7 +110,51 @@ namespace tquant { namespace api { namespace impl {
 
 } } }
 
+#ifdef _WIN32
+static
+string ConvertErrorCodeToString(DWORD ErrorCode)
+{
+    HLOCAL LocalAddress = NULL;
+    FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
+        NULL, ErrorCode, 0, (char*)&LocalAddress, 0, NULL);
+
+    string ret((char*)LocalAddress);
+    LocalFree(LocalAddress);
+    return ret;
+}
+#endif
+
 namespace tquant { namespace api {
+
+    typedef TQuantApi* (*T_create_tqapi)(const char* str_params);
+
+    TQuantApi* creatae_embedapi(const string& addr)
+    {
+#ifdef _WIN32
+        vector<string> ss;
+        split(addr, "?", &ss);
+        const char* p = ss[0].c_str() + 8;
+        string module_name = string("embed_") + string(p);
+        HMODULE hModule = LoadLibraryA(module_name.c_str());
+        if (!hModule)
+            throw std::runtime_error(ConvertErrorCodeToString(GetLastError()));
+        auto create_tqapi = (T_create_tqapi)GetProcAddress(hModule, "create_tqapi");
+        if (!create_tqapi) {
+            FreeModule(hModule);
+            throw std::runtime_error(ConvertErrorCodeToString(GetLastError()));
+            return nullptr;
+        }
+        TQuantApi* tqapi = create_tqapi(addr.c_str());
+        if (!tqapi) {
+            FreeModule(hModule);
+            return nullptr;
+        }
+        // FIXME: How to free module?
+        return tqapi;
+#else
+        throw std::runtime_erro("to be implemented");
+#endif
+    }
 
     TQuantApi* TQuantApi::create(const string& addr)
     {
@@ -121,7 +165,10 @@ namespace tquant { namespace api {
             myutils::init_winsock2();
         }
 #endif
-        return new impl::TQuantApiImpl(addr);
+        if (strncmp(addr.c_str(), "embed://", 8) == 0)
+            return creatae_embedapi(addr);
+        else
+            return new impl::TQuantApiImpl(addr);
     }
 
 } }
