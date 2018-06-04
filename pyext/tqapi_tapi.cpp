@@ -127,6 +127,36 @@ PyObject* convert_account_status_list(const vector<AccountInfo>* accounts)
     return list;
 }
 
+PyObject* _wrap_tapi_create(PyObject* self, PyObject *args, PyObject* kwargs)
+{
+    const char* addr;
+
+    if (!PyArg_ParseTuple(args, "s", (char*)&addr))
+        return NULL;
+
+    auto api = create_trade_api(addr);
+    if (!api)
+        Py_RETURN_NONE;
+
+    auto wrap = new TradeApiWrap(api);
+
+    return PyLong_FromLongLong((int64_t)(wrap));
+}
+
+PyObject* _wrap_tapi_destroy(PyObject* self, PyObject *args, PyObject* kwargs)
+{
+    int64_t h;
+    if (!PyArg_ParseTuple(args, "L", &h))
+        return NULL;
+
+    if (h) {
+        auto wrap = reinterpret_cast<TradeApiWrap*>(h);
+        delete wrap;
+    }
+
+    Py_RETURN_TRUE;
+}
+
 PyObject* _wrap_tapi_place_order(PyObject* self, PyObject *args, PyObject* kwargs)
 {
     int64_t h;
@@ -142,8 +172,8 @@ PyObject* _wrap_tapi_place_order(PyObject* self, PyObject *args, PyObject* kwarg
 
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
 
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
-    auto r = wrap->trade_api()->place_order(account_id, code, price, size, action, (int32_t)order_id);
+    auto wrap = reinterpret_cast<TradeApiWrap*>(h);
+    auto r = wrap->m_tapi->place_order(account_id, code, price, size, action, (int32_t)order_id);
 
     if (r.value) {
         auto ordid = PyDict_New();
@@ -168,12 +198,12 @@ PyObject* _wrap_tapi_cancel_order(PyObject* self, PyObject *args, PyObject* kwar
 
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
 
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<TradeApiWrap*>(h);
     CallResult<bool> r("");
     if (order_id)
-        r = wrap->trade_api()->cancel_order(account_id, code, (int32_t)order_id);
+        r = wrap->m_tapi->cancel_order(account_id, code, (int32_t)order_id);
     else if (strlen(entrust_no))
-        r = wrap->trade_api()->cancel_order(account_id, code, entrust_no);
+        r = wrap->m_tapi->cancel_order(account_id, code, entrust_no);
     else
         r = CallResult<bool>("empty entrust_no and order_id");
 
@@ -194,9 +224,9 @@ PyObject* _wrap_tapi_query_orders(PyObject* self, PyObject *args, PyObject* kwar
 
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
 
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<TradeApiWrap*>(h);
     
-    auto r = wrap->trade_api()->query_orders(account_id);
+    auto r = wrap->m_tapi->query_orders(account_id);
 
     if (r.value)
         return Py_BuildValue("NO", convert_orders(r.value.get()), Py_None);
@@ -214,9 +244,9 @@ PyObject* _wrap_tapi_query_trades(PyObject* self, PyObject *args, PyObject* kwar
 
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
 
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<TradeApiWrap*>(h);
 
-    auto r = wrap->trade_api()->query_trades(account_id);
+    auto r = wrap->m_tapi->query_trades(account_id);
 
     if (r.value)
         return Py_BuildValue("NO", convert_trades(r.value.get()), Py_None);
@@ -234,9 +264,9 @@ PyObject* _wrap_tapi_query_positions(PyObject* self, PyObject *args, PyObject* k
 
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
 
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<TradeApiWrap*>(h);
 
-    auto r = wrap->trade_api()->query_positions(account_id);
+    auto r = wrap->m_tapi->query_positions(account_id);
 
     if (r.value)
         return Py_BuildValue("NO", convert_positions(r.value.get()), Py_None);
@@ -254,9 +284,9 @@ PyObject* _wrap_tapi_query_balance(PyObject* self, PyObject *args, PyObject* kwa
 
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
 
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<TradeApiWrap*>(h);
 
-    auto r = wrap->trade_api()->query_balance(account_id);
+    auto r = wrap->m_tapi->query_balance(account_id);
 
     if (r.value)
         return Py_BuildValue("NO", convert_balance(r.value.get()), Py_None);
@@ -272,7 +302,7 @@ PyObject* _wrap_tapi_set_callback(PyObject* self, PyObject *args, PyObject* kwar
         return NULL;
 
     if (h) {
-        auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+        auto wrap = reinterpret_cast<TradeApiWrap*>(h);
         wrap->m_tapi_cb = cb;
         Py_RETURN_TRUE;
     }
@@ -293,9 +323,9 @@ PyObject* _wrap_tapi_query(PyObject* self, PyObject *args, PyObject* kwargs)
 
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
 
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<TradeApiWrap*>(h);
 
-    auto r = wrap->trade_api()->query(account_id, cmd, params);
+    auto r = wrap->m_tapi->query(account_id, cmd, params);
 
     if (r.value)
         return Py_BuildValue("sO", r.value->c_str() , Py_None);
@@ -312,9 +342,9 @@ PyObject* _wrap_tapi_query_account_status(PyObject* self, PyObject *args, PyObje
 
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
 
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<TradeApiWrap*>(h);
 
-    auto r = wrap->trade_api()->query_account_status();
+    auto r = wrap->m_tapi->query_account_status();
 
     if (r.value)
         return Py_BuildValue("NO", convert_account_status_list(r.value.get()), Py_None);
@@ -324,7 +354,7 @@ PyObject* _wrap_tapi_query_account_status(PyObject* self, PyObject *args, PyObje
 
 
 // TradeApi_Callback
-void TQuantApiWrap::on_order_status(shared_ptr<Order> order)
+void TradeApiWrap::on_order_status(shared_ptr<Order> order)
 {
     if (m_tapi_cb.obj == Py_None) return;
 
@@ -336,7 +366,7 @@ void TQuantApiWrap::on_order_status(shared_ptr<Order> order)
     });
 }
 
-void TQuantApiWrap::on_order_trade(shared_ptr<Trade> trade)
+void TradeApiWrap::on_order_trade(shared_ptr<Trade> trade)
 {
     if (m_tapi_cb.obj == Py_None) return;
 
@@ -348,7 +378,7 @@ void TQuantApiWrap::on_order_trade(shared_ptr<Trade> trade)
     });
 }
 
-void TQuantApiWrap::on_account_status(shared_ptr<AccountInfo> account)
+void TradeApiWrap::on_account_status(shared_ptr<AccountInfo> account)
 {
     if (m_tapi_cb.obj == Py_None) return;
 

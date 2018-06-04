@@ -83,25 +83,31 @@ namespace tquant { namespace api { namespace impl {
         return true;
     }
 
-    class TradeApiImpl : public TradeApi {
-        MpRpcClient*        m_client;
-        unordered_set<string> m_sub_codes;
+    class MpRpcTradeApiImpl : public TradeApi, public MpRpcClient_Callback {
+        MpRpc_Connection*     m_conn;
         TradeApi_Callback*    m_callback;
     public:
-        TradeApiImpl(MpRpcClient* client)
-            : m_client(client)
+        MpRpcTradeApiImpl()
+            : m_conn(nullptr)
             , m_callback(nullptr)
         {}
 
-        virtual ~TradeApiImpl() override
+        virtual ~MpRpcTradeApiImpl() override
         {}
+
+        bool init(MpRpc_Connection* conn, const map<string, string> properties)
+        {
+            m_conn = conn;
+            m_conn->set_callback(this);
+            return true;
+        }
 
         virtual CallResult<const vector<AccountInfo>> query_account_status() override
         {
             MsgPackPacker pk;
             pk.pack_map(0);
 
-            auto rsp = m_client->call("tapi.account_status", pk.sb.data, pk.sb.size);
+            auto rsp = m_conn->m_client->call("tapi.account_status", pk.sb.data, pk.sb.size);
             if (!is_arr(rsp->result))
                 return CallResult<const vector<AccountInfo>>(builld_errmsg(rsp->err_code, rsp->err_msg));
     
@@ -123,7 +129,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map(1);
             pk.pack_map_item("account_id", account_id);
 
-            auto rsp = m_client->call("tapi.query_balance", pk.sb.data, pk.sb.size);
+            auto rsp = m_conn->m_client->call("tapi.query_balance", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
                 return CallResult<const Balance>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
@@ -147,7 +153,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map(1);
             pk.pack_map_item("account_id", account_id);
 
-            auto rsp = m_client->call("tapi.query_orders", pk.sb.data, pk.sb.size);
+            auto rsp = m_conn->m_client->call("tapi.query_orders", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
                 return CallResult<const vector<Order>>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
@@ -171,7 +177,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map(1);
             pk.pack_map_item("account_id", account_id);
 
-            auto rsp = m_client->call("tapi.query_trades", pk.sb.data, pk.sb.size);
+            auto rsp = m_conn->m_client->call("tapi.query_trades", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
                 return CallResult<const vector<Trade>>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
@@ -195,7 +201,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map(1);
             pk.pack_map_item("account_id", account_id);
 
-            auto rsp = m_client->call("tapi.query_positions", pk.sb.data, pk.sb.size);
+            auto rsp = m_conn->m_client->call("tapi.query_positions", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
                 return CallResult<const vector<Position>>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
@@ -248,7 +254,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map_item("action",      action);
             pk.pack_map_item("order_id",    order_id);
 
-            auto rsp = m_client->call("tapi.place_order", pk.sb.data, pk.sb.size);
+            auto rsp = m_conn->m_client->call("tapi.place_order", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
                 return CallResult<const OrderID>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
@@ -277,7 +283,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map_item("order_id",   order_id);
             pk.pack_map_item("code", code);
 
-            auto rsp = m_client->call("tapi.cancel_order", pk.sb.data, pk.sb.size);
+            auto rsp = m_conn->m_client->call("tapi.cancel_order", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
                 return CallResult<bool>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
@@ -298,7 +304,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map_item("entrust_no", entrust_no);
             pk.pack_map_item("code", code);
 
-            auto rsp = m_client->call("tapi.cancel_order", pk.sb.data, pk.sb.size);
+            auto rsp = m_conn->m_client->call("tapi.cancel_order", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
                 return CallResult<bool>(builld_errmsg(rsp->err_code, rsp->err_msg));
 

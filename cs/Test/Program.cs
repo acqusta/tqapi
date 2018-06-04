@@ -1,6 +1,10 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
+using System.Collections.Generic;
+
 using TQuant.Api;
+
 
 namespace Test
 {
@@ -296,16 +300,43 @@ namespace Test
             Console.Read();
         }
 
+        static void PerfTest2(DataApi dapi)
+        {
+            var codes = new List<String>();
+
+            var result = CSVReader.ParseCSV(File.ReadAllText(@"d:\\tmp\\000300.SH.csv"));
+            foreach (var line in result)
+            {
+                codes.Add(line[3]);
+            }
+            codes.RemoveAt(0);
+
+            dapi.Subscribe(new String[] { "000001.SH" });
+            dapi.Subscribe(codes.ToArray());
+
+            var begin_time = DateTime.Now;
+            foreach (var bar in dapi.GetDailyBar("000001.SH").Value)
+            {
+                if (bar.date < 20180101 || bar.date > 20180501) continue;
+                foreach (var code in codes)
+                    dapi.GetBar(code, "1m", bar.date);
+
+            }
+            var end_time = DateTime.Now;
+
+            Console.Out.WriteLine(String.Format("time: {0}", (end_time - begin_time).TotalSeconds));            
+        }
+
         static int Main(string[] args)
         {
-            var tqapi = TQuantApi.Create("tcp://127.0.0.1:10001");
-            var dapi = tqapi.GetDataApi();
-            var tapi = tqapi.GetTradeApi();
+            var dapi = TQuantApi.CreateDataApi("ipc://tqc_10001");
+            var tapi = TQuantApi.CreateTradeApi("ipc://tqc_10001");
             //TestDataApi(dapi);
-            TestDataApi2(dapi);
+            //TestDataApi2(dapi);
             //TestTradeApi(tapi);
-            PerfTest(dapi);
+            //PerfTest(dapi);
 
+            PerfTest2(dapi);
             return 0;
         }
     }

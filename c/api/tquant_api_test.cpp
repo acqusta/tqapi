@@ -53,18 +53,18 @@ public:
 
 MyCallback callback;
 
-void test_dapi(TQuantApi* api)
+void test_dapi(DataApi* dapi)
 {
     const char* code = "RB.SHF";// .CFE";
     vector<string> codes;
     codes.push_back(code);
     codes.push_back("RB1805.SHF");
 
-    api->data_api()->set_callback(&callback);
+    dapi->set_callback(&callback);
 
     {
         for (int i = 0; i < 100; i++) {
-            auto r = api->data_api()->subscribe(codes);
+            auto r = dapi->subscribe(codes);
             if (r.value) {
                 for (string code : *r.value) cout << "sub code: " << code << endl;
                 break;
@@ -77,7 +77,7 @@ void test_dapi(TQuantApi* api)
     }
 
     if (0) {
-        auto  r = api->data_api()->bar(code, "1m", 0, true);
+        auto  r = dapi->bar(code, "1m", 0, true);
         if (r.value) {
             for (auto& b : *r.value)
                 cout << code << "," << b.date << "," << b.time << ","
@@ -90,7 +90,7 @@ void test_dapi(TQuantApi* api)
     }
 
     if (1) {
-        auto  r = api->data_api()->daily_bar(code, "forward", true);
+        auto  r = dapi->daily_bar(code, "forward", true);
         if (r.value) {
             for (auto& b : *r.value)
                 cout << code << "," << b.date << ","
@@ -103,7 +103,7 @@ void test_dapi(TQuantApi* api)
     }
 
     if (1) {
-        auto r = api->data_api()->tick(code, 0);
+        auto r = dapi->tick(code, 0);
         if (r.value) {
             for (auto& t : *r.value)
                 cout << code << "," << t.date << "," << t.time << "," << t.last << "," << t.volume << endl;
@@ -114,7 +114,7 @@ void test_dapi(TQuantApi* api)
     }
 
     if (0) {
-        auto  r = api->data_api()->quote(code);
+        auto  r = dapi->quote(code);
         if (r.value) {
             auto q = r.value;
             cout << code << "," << q->date << "," << q->time << ","
@@ -134,7 +134,7 @@ void test_dapi(TQuantApi* api)
             20171113, 20171114, 20171115, 20171116, 20171117,
             20171120, 20171121, 20171122, 20171123, 20171124 };
         for (int i = 0; i < 15; i++) {
-            auto ticks = api->data_api()->tick(code, dates[i]);
+            auto ticks = dapi->tick(code, dates[i]);
             if (ticks.value) {
                 total_count += ticks.value->size();
                 //for (auto& t : *ticks.value)
@@ -252,7 +252,7 @@ void perf_test(DataApi* dapi)
             }
         }
 
-        size_t ms = duration_cast<milliseconds>(system_clock::now() - begin_time).count();
+        auto ms = duration_cast<milliseconds>(system_clock::now() - begin_time).count();
         cout << (ms*1.0/count) << endl;
     }
     {
@@ -261,15 +261,14 @@ void perf_test(DataApi* dapi)
         for (int i = 0; i < count; i++)
             dapi->quote("");
 
-        size_t ms = duration_cast<milliseconds>(system_clock::now() - begin_time).count();
+        auto ms = duration_cast<milliseconds>(system_clock::now() - begin_time).count();
         cout << (ms*1.0 / count) << endl;
     }
 }
 
 void perf_test2(DataApi* dapi)
 {
-    //const char* code = "RB.SHF";
-    const char* code = "000001.SH";
+    const char* code = "RB.SHF";
     vector<string> codes = { code };
     while (true) {
         dapi->subscribe(codes);
@@ -284,14 +283,15 @@ void perf_test2(DataApi* dapi)
     auto bars = dapi->daily_bar(code, "", true);
     int date_count = 0;
     assert(bars.value);
-
-    for (int i =0; i< 50; i++)
     for (auto& bar : *bars.value) {
-        if (bar.date < 20180101) continue;
-        //if (bar.date > 20180601) break;
+        if (bar.date < 20170401) continue;
 
-        auto ticks = dapi->bar(code, "1m", bar.date, true);
-        //auto ticks = dapi->tick(code, bar.date);
+        //auto ticks = dapi->bar(code, "1m", bar.date, false);
+
+        if (bar.date > 20170601) break;
+        auto ticks = dapi->tick(code, bar.date);
+
+        //cout << bar.date << endl;
 
         if (ticks.value)
             total_count += ticks.value->size();
@@ -300,7 +300,7 @@ void perf_test2(DataApi* dapi)
         date_count++;
     }
 
-    size_t used_time = duration_cast<microseconds>(system_clock::now() - begin_time).count();
+    auto used_time = duration_cast<microseconds>(system_clock::now() - begin_time).count();
     cout << "used time    : " << used_time << endl
         << "total records: " << total_count << endl
         << "total date   : " << date_count << endl
@@ -342,16 +342,15 @@ int main()
     const char* addr = "ipc://tqc_10001";
 
     std::cout << addr << endl;
-    TQuantApi* api = TQuantApi::create(addr);
+    DataApi* dapi = create_data_api(addr);
 
-    //perf_test(api->data_api());
-    perf_test2(api->data_api());
+    //perf_test(dapi);
+    //perf_test2(dapi);
 
     //test_dapi(api);
-    //test_dapi2(api->data_api());
+    test_dapi2(dapi);
     //test_tapi(api->trade_api());
     getchar();
 
-    return 0;
 }
 ;

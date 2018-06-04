@@ -1,6 +1,7 @@
 ﻿using System;
 
 using TQuant.Stralet;
+using TQuant.Stralet.StraletEvent;
 using TQuant.Api;
 
 namespace Test
@@ -52,9 +53,9 @@ namespace Test
 
         public State<State, IData> WorkingFunctions(Event<IData> evt)
         {
-            if (evt.FsmEvent is Timer)
+            if (evt.FsmEvent is OnTimer)
             {
-                var timer = evt.FsmEvent as Timer;
+                var timer = evt.FsmEvent as OnTimer;
                 Context.Logger.Info("OnTimer {0}", timer.Name);
                 return Stay();
             }
@@ -84,9 +85,9 @@ namespace Test
 
         public State<State, IData> UnhandledFunction(Event<IData> evt)
         {
-            if (evt.FsmEvent is Timer)
+            if (evt.FsmEvent is OnTimer)
             {
-                var timer = evt.FsmEvent as Timer;
+                var timer = evt.FsmEvent as OnTimer;
                 Context.Logger.Info("OnTimer {0}", timer.Name);
             }
             else if (evt.FsmEvent is OnFini)

@@ -20,17 +20,17 @@ namespace TQuant
                     public Int32 value_type;
                 }
 
-                [DllImport("tqapi.dll", EntryPoint = "tqapi_create", CallingConvention =CallingConvention.Cdecl)]
-                public static extern IntPtr tqapi_create(String addr);
+                [DllImport("tqapi.dll", EntryPoint = "dapi_create", CallingConvention =CallingConvention.Cdecl)]
+                public static extern IntPtr dapi_create(String addr);
 
-                [DllImport("tqapi.dll", EntryPoint = "tqapi_destroy", CallingConvention = CallingConvention.Cdecl)]
-                public static extern void tqapi_destroy(IntPtr h);
+                [DllImport("tqapi.dll", EntryPoint = "dapi_destroy", CallingConvention = CallingConvention.Cdecl)]
+                public static extern void dapi_destroy(IntPtr h);
 
-                [DllImport("tqapi.dll", EntryPoint = "tqapi_get_data_api", CallingConvention = CallingConvention.Cdecl)]
-                public static extern IntPtr tqapi_get_data_api(IntPtr h, String source);
+                [DllImport("tqapi.dll", EntryPoint = "tapi_create", CallingConvention = CallingConvention.Cdecl)]
+                public static extern IntPtr tapi_create(String addr);
 
-                [DllImport("tqapi.dll", EntryPoint = "tqapi_get_trade_api", CallingConvention = CallingConvention.Cdecl)]
-                public static extern IntPtr tqapi_get_trade_api(IntPtr h);
+                [DllImport("tqapi.dll", EntryPoint = "tapi_destroy", CallingConvention = CallingConvention.Cdecl)]
+                public static extern void tapi_destroy(IntPtr h);
 
                 [DllImport("tqapi.dll", EntryPoint = "dapi_get_bar", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr dapi_get_bar(IntPtr h, String code, String cycle,
@@ -125,7 +125,7 @@ namespace TQuant
             class DataApiImpl : DataApi
             {
                 IntPtr handle;
-                Object owner;
+                bool is_owner;
 
                 TqapiDll.DataApiOnMarketQuote on_quote;
                 TqapiDll.DataApiOnBar on_bar;
@@ -134,9 +134,9 @@ namespace TQuant
 
                 public event OnBarHandler OnBar;
 
-                public DataApiImpl(Object owner, IntPtr handle)
+                public DataApiImpl(IntPtr handle, bool is_owner)
                 {
-                    this.owner = owner;
+                    this.is_owner = is_owner;
                     this.handle = handle;
                     on_quote = (quote)      => { if (OnMarketQuote != null) OnMarketQuote(quote); };
                     on_bar   = (cycle, bar) => { if (OnBar != null) OnBar(cycle, bar);};
@@ -146,17 +146,11 @@ namespace TQuant
 
                 ~DataApiImpl()
                 {
-                    if (this.handle != IntPtr.Zero)
-                        TqapiDll.dapi_set_callback(this.handle, null, null);
-                }
-
-                public void Detach()
-                {
-                    if (this.handle != IntPtr.Zero)
+                    if (this.is_owner && this.handle != IntPtr.Zero)
                     {
                         TqapiDll.dapi_set_callback(this.handle, null, null);
+                        TqapiDll.dapi_destroy(this.handle);
                         this.handle = IntPtr.Zero;
-                        this.owner = null;
                     }
                 }
 
@@ -265,7 +259,7 @@ namespace TQuant
             class TradeApiImpl : TradeApi
             {
                 IntPtr handle;
-                TQuantApi tqapi;
+                bool is_owner;
 
                 TqapiDll.TradeApiOnOrderStatus on_order_status;
                 TqapiDll.TradeApiOnOrderTrade on_order_trade;
@@ -275,10 +269,10 @@ namespace TQuant
                 public event OnOrderTradeHandler OnOrderTrade;
                 public event OnAccountStatusHandler OnAccountStatus;
 
-                public TradeApiImpl(TQuantApi tqapi, IntPtr handle)
-                {
-                    this.tqapi = tqapi;
+                public TradeApiImpl(IntPtr handle, bool is_owner)
+                {                    
                     this.handle = handle;
+                    this.is_owner = is_owner;
                     on_order_status = (order)     => { if (OnOrderStatus != null) OnOrderStatus(order); };
                     on_order_trade = (trade)      => { if (OnOrderTrade  != null) OnOrderTrade(trade); };
                     on_account_status = (account) => { if (OnAccountStatus != null) OnAccountStatus(account); };
@@ -288,18 +282,22 @@ namespace TQuant
 
                 ~TradeApiImpl()
                 {
-                    if (this.handle != IntPtr.Zero)
-                        TqapiDll.tapi_set_callback(this.handle, null, null, null);
-                }
-
-                public void Detach()
-                {
-                    if (this.handle != IntPtr.Zero)
+                    if (this.is_owner && this.handle != IntPtr.Zero)
                     {
                         TqapiDll.tapi_set_callback(this.handle, null, null, null);
+                        TqapiDll.tapi_destroy(this.handle);
                         this.handle = IntPtr.Zero;
                     }
                 }
+
+                //public void Detach()
+                //{
+                //    if (this.handle != IntPtr.Zero)
+                //    {
+                //        TqapiDll.tapi_set_callback(this.handle, null, null, null);
+                //        this.handle = IntPtr.Zero;
+                //    }
+                //}
 
                 public CallResult<bool> CancelOrder(string account_id, string code, int order_id)
                 {

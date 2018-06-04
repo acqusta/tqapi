@@ -9,6 +9,7 @@
 #include "impl_tquant_api.h"
 #include "impl_data_api.h"
 #include "impl_trade_api.h"
+#include "tquant_api.h"
 
 namespace tquant { namespace api { namespace impl {
 
@@ -16,11 +17,13 @@ namespace tquant { namespace api { namespace impl {
     using namespace ::tquant::api;
     using namespace ::myutils;
 
-    class TQuantApiImpl : public TQuantApi, public MpRpcClient_Callback {
-        friend DataApiImpl;
-        friend TradeApiImpl;
-    public:
-        TQuantApiImpl(const string& params) {
+    MpRpc_Connection::MpRpc_Connection()
+        : m_callback(nullptr)
+        , m_client(nullptr)
+    {
+    }
+
+    bool MpRpc_Connection::connect(const string& params) {
 #if 0
             const char* p = strchr(params, '?');
             string addr;
@@ -44,70 +47,56 @@ namespace tquant { namespace api { namespace impl {
 #else
             string addr = params;
 #endif
-
             if (strncmp(addr.c_str(), "tcp://", 6) == 0) {
                 auto conn = make_shared<SocketConnection>();
                 m_client = new MpRpcClient(conn);
                 m_client->connect(addr, this);
+            return true;
             }
             else if (strncmp(addr.c_str(), "ipc://", 6) == 0) {
                 auto conn = make_shared<IpcConnection>();
                 m_client = new MpRpcClient(conn);
                 m_client->connect(addr, this);
+            return true;
             }
             else {
                 throw std::runtime_error("unknown addr");
+            return false;
             }
-
-            m_tapi = new TradeApiImpl(this->m_client);
         }
 
-        virtual ~TQuantApiImpl() override {
+    MpRpc_Connection::~MpRpc_Connection() {
             m_msgloop.close_loop();
-            for (auto e : m_dapi_map) delete e.second;
-            delete m_tapi;
             delete m_client;
         }
 
-        virtual TradeApi* trade_api() override { return m_tapi; }
-
-        virtual DataApi*  data_api(const string& source) override {
-            auto it = m_dapi_map.find(source);
-            if (it != m_dapi_map.end())
-                return it->second;
-            auto dapi = new DataApiImpl(this->m_client, source);
-            this->m_dapi_map[source] = dapi;
-            return dapi;
+    void MpRpc_Connection::on_connected() {
+        if (m_callback) m_callback->on_connected();
         }
 
-        virtual void on_connected() override {}
+    void MpRpc_Connection::on_disconnected()
+    {
+        if (m_callback) m_callback->on_disconnected();
+    }
 
-        virtual void on_disconnected() override {}
-
-        virtual void on_notification(shared_ptr<MpRpcMessage> rpcmsg) override
-        {
-            m_msgloop.msg_loop().PostTask([this, rpcmsg] {
-                if (strncmp(rpcmsg->method.c_str(), "dapi.", 5) == 0) {
-                    for (auto e : m_dapi_map)
-                        e.second->on_notification(rpcmsg);
-                }
-                else if (strncmp(rpcmsg->method.c_str(), "tapi.", 5) == 0) {
-                    m_tapi->on_notification(rpcmsg);
-                }
-                else {
-                    for (auto e : m_dapi_map)
-                        e.second->on_notification(rpcmsg);
-                    m_tapi->on_notification(rpcmsg);
-                }
+    void MpRpc_Connection::on_notification(shared_ptr<MpRpcMessage> rpcmsg)
+    {
+        m_msgloop.msg_loop().PostTask([this, rpcmsg] {
+            if (m_callback) m_callback->on_notification(rpcmsg);
+            //if (strncmp(rpcmsg->method.c_str(), "dapi.", 5) == 0) {
+            //    for (auto e : m_dapi_map)
+            //        e.second->on_notification(rpcmsg);
+            //}
+            //else if (strncmp(rpcmsg->method.c_str(), "tapi.", 5) == 0) {
+            //    m_tapi->on_notification(rpcmsg);
+            //}
+            //else {
+            //    for (auto e : m_dapi_map)
+            //        e.second->on_notification(rpcmsg);
+            //    m_tapi->on_notification(rpcmsg);
+            //}
             });
-        }
-    private:
-        MpRpcClient*                            m_client;
-        unordered_map<string, DataApiImpl*>     m_dapi_map;
-        TradeApiImpl*                           m_tapi;
-        loop::MsgLoopRun                        m_msgloop;
-    };
-
+    }
 } } }
 
 #ifdef _WIN32
@@ -126,37 +115,45 @@ string ConvertErrorCodeToString(DWORD ErrorCode)
 
 namespace tquant { namespace api {
 
-    typedef TQuantApi* (*T_create_tqapi)(const char* str_params);
+    typedef DataApi*  (*T_create_data_api)(const char* str_params);
+    typedef TradeApi* (*T_create_trade_api)(const char* str_params);
 
-    TQuantApi* creatae_embedapi(const string& addr)
+    // addr = "embed://tkapi/file://d:/tquant/md"
+
+    DataApi* creatae_embed_dapi(const char* addr)
     {
+        const char* p1 = addr + strlen("embed://");
+        const char* p2 = strchr(p1, '/');
+        if (!p2) return nullptr;
+        if (*(p2 + 1) == 0) return nullptr;
+
+        addr = p2 + 1;
+        string module_name = string("embed_") + string(p1, p2 - p1);
+
 #ifdef _WIN32
-        vector<string> ss;
-        split(addr, "?", &ss);
-        const char* p = ss[0].c_str() + 8;
-        string module_name = string("embed_") + string(p);
+
         HMODULE hModule = LoadLibraryA(module_name.c_str());
         if (!hModule)
             throw std::runtime_error(ConvertErrorCodeToString(GetLastError()));
-        auto create_tqapi = (T_create_tqapi)GetProcAddress(hModule, "create_tqapi");
-        if (!create_tqapi) {
+        auto create_data_api = (T_create_data_api)GetProcAddress(hModule, "create_data_api");
+        if (!create_data_api) {
             FreeModule(hModule);
             throw std::runtime_error(ConvertErrorCodeToString(GetLastError()));
             return nullptr;
         }
-        TQuantApi* tqapi = create_tqapi(addr.c_str());
-        if (!tqapi) {
+        DataApi* dapi = create_data_api(addr);
+        if (!dapi) {
             FreeModule(hModule);
             return nullptr;
         }
         // FIXME: How to free module?
-        return tqapi;
+        return dapi;
 #else
         throw std::runtime_erro("to be implemented");
 #endif
     }
 
-    TQuantApi* TQuantApi::create(const string& addr)
+    void init_socket()
     {
 #ifdef _WIN32
         static bool inited = false;
@@ -165,10 +162,75 @@ namespace tquant { namespace api {
             myutils::init_winsock2();
         }
 #endif
-        if (strncmp(addr.c_str(), "embed://", 8) == 0)
-            return creatae_embedapi(addr);
-        else
-            return new impl::TQuantApiImpl(addr);
     }
+
+    bool parse_addr(const string& addr, string* url, map<string, string>* properties)
+    {
+        vector<string> ss;
+        split(addr, "?", &ss);
+        *url = ss[0];
+        if (ss.size() > 1) {
+            split(ss[1], "&", &ss);
+            for (auto& s : ss) {
+                vector<string> tmp;
+                split(s, "=", &tmp);               
+                (*properties)[tmp[0]] = tmp.size() == 2 ? tmp[1] : "";
+            }
+        }
+        return true;
+    }
+
+    DataApi*  create_data_api(const string& addr)
+    {
+        init_socket();
+
+        if (strncmp(addr.c_str(), "embed://", 8)) {
+            string url;
+            map<string, string> properties;
+            if (!parse_addr(addr, &url, &properties)) return nullptr;
+
+            auto conn = new impl::MpRpc_Connection();
+            auto dapi = new impl::MpRpcDataApiImpl();
+
+            if (conn->connect(url) && dapi->init(conn, properties)) {
+                return dapi;
+            } else {
+                delete dapi;
+                delete conn;
+                return nullptr;
+            }
+        }
+        else {
+            return creatae_embed_dapi(addr.c_str());
+        }
+    }
+
+    TradeApi* create_trade_api(const string& addr)
+    {
+        init_socket();
+
+        if (strncmp(addr.c_str(), "embed://", 8)) {
+            string url;
+            map<string, string> properties;
+            if (!parse_addr(addr, &url, &properties)) return nullptr;
+
+            auto conn = new impl::MpRpc_Connection();
+            auto tapi = new impl::MpRpcTradeApiImpl();
+
+            if (conn->connect(url) && tapi->init(conn, properties)) {
+                return tapi;
+            }
+            else {
+                delete tapi;
+                delete conn;
+                return nullptr;
+            }
+        }
+        else {
+            return nullptr;
+        }
+
+    }
+
 
 } }

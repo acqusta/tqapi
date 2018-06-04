@@ -174,9 +174,10 @@ namespace tquant {  namespace api {
     };
 
     class DataApi {
-    protected:
-        virtual ~DataApi() {}
     public:   
+        DataApi() {}
+
+        virtual ~DataApi() {}
         /**
         * 取某交易日的某个代码的 ticks
         *
@@ -383,10 +384,10 @@ namespace tquant {  namespace api {
     };
 
     class TradeApi {
-    protected:
-        virtual ~TradeApi() {}
     public:
         TradeApi() { }
+
+        virtual ~TradeApi() {}
 
         /**
         * 查询帐号连接状态。
@@ -490,26 +491,30 @@ namespace tquant {  namespace api {
         virtual TradeApi_Callback* set_callback(TradeApi_Callback* callback) = 0;
     };
 
-    class TQuantApi {
-    public:        
-        virtual ~TQuantApi() {}
+    //class TQuantApi {
+    //public:        
+    //    virtual ~TQuantApi() {}
 
-        /**
-        * 取数据接口
-        *
-        * @return
-        */
-        virtual TradeApi* trade_api() = 0;
+    //    /**
+    //    * 取数据接口
+    //    *
+    //    * @return
+    //    */
+    //    virtual TradeApi* trade_api() = 0;
 
-        /**
-        *  取交易接口
-        *
-        * @return
-        */
-        virtual DataApi*  data_api(const string& source="") = 0;
+    //    /**
+    //    *  取交易接口
+    //    *
+    //    * @return
+    //    */
+    //    virtual DataApi*  data_api(const string& source="") = 0;
 
-        static _TQAPI_EXPORT TQuantApi* create(const string& addr);
-    };
+    //    static _TQAPI_EXPORT TQuantApi* create(const string& addr);
+    //};
+
+    _TQAPI_EXPORT DataApi*  create_data_api (const string& addr);
+
+    _TQAPI_EXPORT TradeApi* create_trade_api(const string& addr);
 
 } }
 

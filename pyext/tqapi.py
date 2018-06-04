@@ -21,11 +21,15 @@ def _add_index(df):
 
 class TradeApi:
     
-    def __init__(self, api):
-        self._api = api
+    def __init__(self, addr):
+        self._handle = _tqapi.tapi_create(addr)
         self._on_order_status   = None
         self._on_order_trade    = None
         self._on_account_status = None
+
+    def __del__(self):
+        if self._handle:
+            _tqapi.tapi_destroy(self._handle)
 
     def _on_callback(self, method, data):
         if method == "tapi.order_status_ind":
@@ -54,15 +58,15 @@ class TradeApi:
 
     def account_status(self):
         """Get trade account connection status"""
-        return _tqapi.tapi_query_account_status(self._api._handle)
+        return _tqapi.tapi_query_account_status(self._handle)
 
     def query_balance(self, account_id):
         """Get balance of one account."""
-        return _tqapi.tapi_query_balance(self._api._handle, str(account_id))
+        return _tqapi.tapi_query_balance(self._handle, str(account_id))
 
     def query_trades(self, account_id):
         """Get trades of one account."""
-        v, msg = _tqapi.tapi_query_trades(self._api._handle, str(account_id))
+        v, msg = _tqapi.tapi_query_trades(self._handle, str(account_id))
         if v is not None:
             return pd.DataFrame(v), msg
         else:
@@ -70,7 +74,7 @@ class TradeApi:
 
     def query_orders(self, account_id):
         """Get orders of one account."""
-        v, msg = _tqapi.tapi_query_orders(self._api._handle, str(account_id))
+        v, msg = _tqapi.tapi_query_orders(self._handle, str(account_id))
         if v is not None:
             return pd.DataFrame(v), msg
         else:
@@ -78,7 +82,7 @@ class TradeApi:
 
     def query_positions(self, account_id):
         """Get positions of one account."""
-        v, msg = _tqapi.tapi_query_positions(self._api._handle, str(account_id))
+        v, msg = _tqapi.tapi_query_positions(self._handle, str(account_id))
         if v is not None:
             return pd.DataFrame(v), msg
         else:
@@ -86,24 +90,27 @@ class TradeApi:
     
     def place_order(self, account_id, code, price, size, action, order_id=0):
         """Place an order and return entrust_no"""
-        return _tqapi.tapi_place_order(self._api._handle, str(account_id), str(code),
+        return _tqapi.tapi_place_order(self._handle, str(account_id), str(code),
                                        float(price), long(size), str(action), int(order_id))
             
     def cancel_order(self, account_id, code, entrust_no="", order_id=0):
         """Canel order"""
-        return _tqapi.tapi_cancel_order(self._api._handle, account_id, code, entrust_no, order_id)
+        return _tqapi.tapi_cancel_order(self._handle, account_id, code, entrust_no, order_id)
 
     def query(self, account_id, command, params=""):
         """common query"""
-        return _tqapi.tapi_query(self._api._handle, str(account_id), str(command), str(params))
+        return _tqapi.tapi_query(self._handle, str(account_id), str(command), str(params))
 
 class DataApi:
-    def __init__(self, api, handle):
-        self._api = api
-        self._handle = handle
+    def __init__(self, addr):
+        self._handle = _tqapi.dapi_create(addr)
         self._on_quote = None
         self._on_bar = None
         _tqapi.dapi_set_callback(self._handle, self._on_callback)
+
+    def __del__(self):
+        if self._handle:
+            _tqapi.dapi_destroy(self._handle)
 
     def _on_callback(self, method, data):
         try:
@@ -174,43 +181,3 @@ class DataApi:
             return (df, msg)
         else:
             return (v, msg)
-
-
-class TQuantApi:
-    def __init__(self, addr):
-        self._handle = _tqapi.tqapi_create(addr)
-        self._tapi = TradeApi(self)
-        self._mtx = threading.Lock()
-        self._dapi_map = {}
-        _tqapi.tapi_set_callback(self._handle, self._on_tapi_cb)
-
-    def __del__(self):
-        self.close()
-
-    def _on_tapi_cb(self, method, params):
-        self._tapi._on_callback(method, params)
-
-    def close(self):
-        if self._handle:
-            _tqapi.tqapi_destroy(self._handle)
-            self._handle = 0
-
-    def data_api(self, source=None):
-        if not source:
-            source = ""
-        self._mtx.acquire()
-        dapi = None
-        try:
-            dapi = self._dapi_map.get(source)
-            if not dapi:
-                h = _tqapi.tqapi_get_data_api(self._handle, source)
-                if h :
-                    dapi = DataApi(self, h)
-                    self._dapi_map[source] = dapi
-                    
-        finally:
-            self._mtx.release()
-        return dapi
-
-    def trade_api(self):
-        return self._tapi

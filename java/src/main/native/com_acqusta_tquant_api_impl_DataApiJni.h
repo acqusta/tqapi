@@ -9,6 +9,22 @@ extern "C" {
 #endif
 /*
  * Class:     com_acqusta_tquant_api_impl_DataApiJni
+ * Method:    create
+ * Signature: (Ljava/lang/String;)J
+ */
+JNIEXPORT jlong JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_create
+  (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     com_acqusta_tquant_api_impl_DataApiJni
+ * Method:    destroy
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_destroy
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     com_acqusta_tquant_api_impl_DataApiJni
  * Method:    getTick
  * Signature: (JLjava/lang/String;I)[Lcom/acqusta/tquant/api/DataApi/MarketQuote;
  */
@@ -62,14 +78,6 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_unsub
  */
 JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_setCallback
   (JNIEnv *, jclass, jlong, jobject);
-
-/*
- * Class:     com_acqusta_tquant_api_impl_DataApiJni
- * Method:    destroy
- * Signature: (J)V
- */
-JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_destroy
-  (JNIEnv *, jclass, jlong);
 
 #ifdef __cplusplus
 }

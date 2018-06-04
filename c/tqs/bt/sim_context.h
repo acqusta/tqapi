@@ -46,10 +46,10 @@ namespace tquant { namespace stralet { namespace backtest {
         virtual system_clock::time_point cur_time_as_tp() override;
         virtual void post_event(const char* evt, void* data) override;
 
-        virtual void set_timer (Stralet* stralet, int32_t id, int32_t delay, void* data) override;
-        virtual void kill_timer(Stralet* stralet, int32_t id) override;
+        virtual void set_timer (Stralet* stralet, int64_t id, int64_t delay, void* data) override;
+        virtual void kill_timer(Stralet* stralet, int64_t id) override;
 
-        virtual DataApi*  data_api(const char* source = nullptr) override;
+        virtual DataApi*  data_api() override;
         virtual TradeApi* trade_api() override;
 
         virtual ostream& logger(LogLevel level = LogLevel::INFO) override;
@@ -72,8 +72,8 @@ namespace tquant { namespace stralet { namespace backtest {
 
         struct TimerInfo {
             Stralet* stralet;
-            int32_t  id;
-            int32_t  delay;
+            int64_t  id;
+            int64_t  delay;
             void*    data;
             bool     is_dead;
             system_clock::time_point trigger_time;

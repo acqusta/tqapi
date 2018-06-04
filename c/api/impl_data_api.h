@@ -1,6 +1,8 @@
 #ifndef _DATA_API_IMPL_H
 #define _DATA_API_IMPL_H
 
+#include <map>
+#include "impl_tquant_api.h"
 
 namespace tquant { namespace api { namespace impl {
 
@@ -8,7 +10,7 @@ namespace tquant { namespace api { namespace impl {
     using namespace ::mprpc;
 
     class DataApiImpl;
-    class TradeApiImpl;
+    class MpRpcTradeApiImpl;
 
     static string builld_errmsg(int code, const string& msg)
     {
@@ -35,21 +37,33 @@ namespace tquant { namespace api { namespace impl {
         {}
     };
 
-    class DataApiImpl : public DataApi {
-        mprpc::MpRpcClient*   m_client;
+    class MpRpcDataApiImpl : public DataApi, public MpRpcClient_Callback {
+        MpRpc_Connection*     m_conn;
         DataApi_Callback*     m_callback;
         mutex                 m_mtx;
         string                m_source;
         unordered_map<string, SubInfo> m_sub_info_map;
     public:
-        DataApiImpl(mprpc::MpRpcClient* client, const string& source) 
-            : m_client(client)
+        MpRpcDataApiImpl()
+            : m_conn(nullptr)
             , m_callback(nullptr)
-            , m_source(source)
-        {}
+        {
+        }
 
-        virtual ~DataApiImpl() override
-        {}
+        bool init(MpRpc_Connection* conn, const map<string, string>& properties) {
+            auto it = properties.find("source");
+            if (it != properties.end())
+                m_source = it->second;
+
+            conn->set_callback(this);
+            m_conn = conn;
+            return true;
+        }
+
+        virtual ~MpRpcDataApiImpl() override
+        {
+            if (m_conn) delete m_conn;
+        }
 
         virtual CallResult<const vector<MarketQuote>> tick(const string& code, int trading_day) override
         {
@@ -60,7 +74,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map_item("_format",     "bin");
             pk.pack_map_item("source",      m_source);
 
-            auto rsp = m_client->call("dapi.tst", pk.sb.data, pk.sb.size);
+            auto rsp = m_conn->m_client->call("dapi.tst", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
                 return CallResult<const vector<MarketQuote>>(builld_errmsg(rsp->err_code, rsp->err_msg));
             
@@ -89,7 +103,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map_item("_format",     "bin");
             pk.pack_map_item("source",      m_source);
 
-            auto rsp = m_client->call("dapi.tsi", pk.sb.data, pk.sb.size);
+            auto rsp = m_conn->m_client->call("dapi.tsi", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
                 return CallResult<const vector<Bar>>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
@@ -117,7 +131,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map_item("_format",     "bin");
             pk.pack_map_item("source",       m_source);
 
-            auto rsp = m_client->call("dapi.tsi", pk.sb.data, pk.sb.size);
+            auto rsp = m_conn->m_client->call("dapi.tsi", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
                 return CallResult<const vector<DailyBar>>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
@@ -144,7 +158,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map_item("_format", "bin");
             pk.pack_map_item("source",  m_source);
 
-            auto rsp = m_client->call("dapi.tsq_quote", pk.sb.data, pk.sb.size);
+            auto rsp = m_conn->m_client->call("dapi.tsq_quote", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
                 return CallResult<const MarketQuote>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
@@ -208,7 +222,7 @@ namespace tquant { namespace api { namespace impl {
                 pk.pack_map_item("want_bin_fmt", true);
                 pk.pack_map_item("source",       e.first);
 
-                m_client->call("dapi.tsq_sub", pk.sb.data, pk.sb.size, 0);
+                m_conn->m_client->call("dapi.tsq_sub", pk.sb.data, pk.sb.size, 0);
             }
         }
 
@@ -228,7 +242,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map_item ("want_bin_fmt", true);
             pk.pack_map_item("source",        m_source);
 
-            auto rsp = m_client->call("dapi.tsq_sub", pk.sb.data, pk.sb.size);
+            auto rsp = m_conn->m_client->call("dapi.tsq_sub", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
                 return CallResult<const vector<string>>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
@@ -256,7 +270,7 @@ namespace tquant { namespace api { namespace impl {
             pk.pack_map_item("want_bin_fmt", true);
             pk.pack_map_item("source",       m_source);
 
-            auto rsp = m_client->call("dapi.tsq_unsub", pk.sb.data, pk.sb.size);
+            auto rsp = m_conn->m_client->call("dapi.tsq_unsub", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
                 return CallResult<const vector<string>>(builld_errmsg(rsp->err_code, rsp->err_msg));
 

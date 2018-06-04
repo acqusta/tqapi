@@ -44,24 +44,24 @@ void tqs_sc_post_event(void* h, const char* evt, void* data)
 }
 
 extern "C" _TQS_EXPORT
-void tqs_sc_set_timer(void* h, Stralet* stralet, int32_t id, int32_t delay, void* data)
+void tqs_sc_set_timer(void* h, Stralet* stralet, int64_t id, int64_t delay, void* data)
 {
     StraletContext* ctx = reinterpret_cast<StraletContext*>(h);
     ctx->set_timer(stralet, id, delay, data);
 }
 
 extern "C" _TQS_EXPORT
-void tqs_sc_kill_timer(void * h, Stralet* stralet, int32_t id)
+void tqs_sc_kill_timer(void * h, Stralet* stralet, int64_t id)
 {
     StraletContext* ctx = reinterpret_cast<StraletContext*>(h);
     ctx->kill_timer(stralet, id);
 }
 
 extern "C" _TQS_EXPORT
-DataApi*  tqs_sc_data_api(void*h, const char* source)
+DataApi*  tqs_sc_data_api(void*h)
 {
     StraletContext* ctx = reinterpret_cast<StraletContext*>(h);
-    return ctx->data_api(source);
+    return ctx->data_api();
 }
 
 extern "C" _TQS_EXPORT
@@ -117,7 +117,7 @@ struct DotNetStalet {
     void (*on_fini)          ();
     void (*on_quote)         (const MarketQuote* q);
     void (*on_bar)           (const char* cycle, const Bar* bar);
-    void (*on_timer)         (int32_t id, void* data);
+    void (*on_timer)         (int64_t id, void* data);
     void (*on_event)         (const char* evt, void* data);
     void (*on_order_status)  (const OrderWrap* order);
     void (*on_order_trade)   (const TradeWrap* trade);
@@ -152,7 +152,7 @@ public:
         m_stralet.on_bar(cycle, bar.get());
     }
 
-    virtual void on_timer(int32_t id, void* data) override {
+    virtual void on_timer(int64_t id, void* data) override {
         m_stralet.on_timer(id, data);
     }
 

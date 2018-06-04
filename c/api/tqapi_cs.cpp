@@ -9,38 +9,33 @@
 
 
 extern "C" _TQAPI_EXPORT
-void* tqapi_create(const char* addr)
+void* dapi_create(const char* addr)
 {
-    auto api = TQuantApi::create(addr);
+    auto api = create_data_api(addr);
     return reinterpret_cast<void*>(api);
 }
 
 extern "C" _TQAPI_EXPORT
-void tqapi_destroy(void* h)
+void dapi_destroy(void* h)
 {
-    auto api = reinterpret_cast<TQuantApi*>(h);
+    auto api = reinterpret_cast<DataApi*>(h);
     if (api)
         delete api;
 }
 
 extern "C" _TQAPI_EXPORT
-void* tqapi_get_data_api(void* h, const char* source)
+void* tapi_create(const char* addr)
 {
-    auto api = reinterpret_cast<TQuantApi*>(h);
-    if (!api) return nullptr;
-
-    auto dapi = api->data_api(source);
-    return reinterpret_cast<void*>(dapi);
+    auto api = create_trade_api(addr);
+    return reinterpret_cast<void*>(api);
 }
 
 extern "C" _TQAPI_EXPORT
-void* tqapi_get_trade_api(void* h)
+void tapi_destroy(void* h)
 {
-    auto api = reinterpret_cast<TQuantApi*>(h);
-    if (!api) return nullptr;
-
-    auto tapi = api->trade_api();
-    return reinterpret_cast<void*>(tapi);
+    auto api = reinterpret_cast<TradeApi*>(h);
+    if (api)
+        delete api;
 }
 
 extern "C" _TQAPI_EXPORT

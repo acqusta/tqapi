@@ -125,9 +125,6 @@ int run_ifhft()
 {
     realtime::RealTimeConfig cfg;
 
-    //cfg.tqapi_addr = "ipc://tqc_10001?timeout=30";
-    cfg.tqapi_addr = "tcp://127.0.0.1:10001";
-
     auto begin_time = system_clock::now();
 
     realtime::run(cfg, create_ifhft);

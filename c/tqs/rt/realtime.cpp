@@ -114,18 +114,16 @@ namespace tquant { namespace stralet { namespace realtime {
 
     struct TimerInfo {
         Stralet* stralet;
-        int32_t  id;
-        int32_t  delay;
+        int64_t  id;
+        int64_t  delay;
         void*    data;
         bool     is_dead;
     };
 
     class RealTimeStraletContext : public StraletContext, public DataApi_Callback, public TradeApi_Callback {
     public:
-        RealTimeStraletContext(TQuantApi* tqapi, Stralet* stralet)
-            : m_tqapi(tqapi)
-            , m_stralet(stralet)
-            , m_tapi(nullptr)
+        RealTimeStraletContext(DataApi* dapi, TradeApi* tapi, Stralet* stralet)
+            : m_stralet(stralet)
             , m_mode("realtime")
         {
             // TODO: Should load trade calendar
@@ -142,15 +140,16 @@ namespace tquant { namespace stralet { namespace realtime {
             }
             m_tradingday = fin_date(now);
 
-            m_tqapi->data_api()->set_callback(this);
-            m_tqapi->trade_api()->set_callback(this);
+            dapi->set_callback(this);
+            tapi->set_callback(this);
+            m_dapi_wrap = new DataApiWrap(dapi);
+            m_tapi_wrap = new TradeApiWrap(tapi);
         }
 
         ~RealTimeStraletContext()
         {
-            if (m_tapi) delete m_tapi;
-            for (auto e : m_dapi_map)
-                delete e.second;
+            if (m_tapi_wrap) delete m_tapi_wrap;
+            if (m_dapi_wrap) delete m_dapi_wrap;
         }
 
         virtual int32_t trading_day() override
@@ -174,11 +173,11 @@ namespace tquant { namespace stralet { namespace realtime {
 
         void timer_tigger(shared_ptr<TimerInfo> timer);
 
-        virtual void set_timer(Stralet* stralet, int32_t id, int32_t delay, void* data) override;
+        virtual void set_timer(Stralet* stralet, int64_t id, int64_t delay, void* data) override;
 
-        virtual void kill_timer(Stralet* stralet, int32_t id) override;
+        virtual void kill_timer(Stralet* stralet, int64_t id) override;
 
-        virtual DataApi*  data_api(const char* source = "") override;
+        virtual DataApi*  data_api() override;
 
         virtual TradeApi* trade_api() override;
 
@@ -203,9 +202,10 @@ namespace tquant { namespace stralet { namespace realtime {
 
     //private:
         int m_tradingday;
-        TQuantApi* m_tqapi;
-        TradeApiWrap* m_tapi;
-        unordered_map<string, DataApiWrap*>  m_dapi_map;
+        //DataApi*      m_dapi;
+        //TradeApi*     m_tapi;
+        TradeApiWrap* m_tapi_wrap;
+        DataApiWrap*  m_dapi_wrap;
 
         std::unordered_map<string, shared_ptr<TimerInfo>> m_timers;
         vector<AlgoStralet*> m_algos;
@@ -221,30 +221,17 @@ namespace tquant { namespace stralet { namespace realtime {
         m_msgloop.PostTask([this, evt_s, data]() { m_stralet->on_event(evt_s, data); });
     }
 
-    DataApi* RealTimeStraletContext::data_api(const char* source)
+    DataApi* RealTimeStraletContext::data_api()
     {
-        auto it = m_dapi_map.find(source);
-        if (it != m_dapi_map.end())
-            return it->second;
-
-        auto dapi = m_tqapi->data_api(source);
-        if (dapi) {
-            auto tmp = new DataApiWrap(dapi);
-            m_dapi_map[source] = tmp;
-            return tmp;
-        }
-        else {
-            return nullptr;
-        }
+        return m_dapi_wrap;
     }
 
     TradeApi* RealTimeStraletContext::trade_api()
     {
-        if (m_tapi) return m_tapi;
-        m_tapi = new TradeApiWrap(m_tqapi->trade_api());
-        return m_tapi;
+        return m_tapi_wrap;
     }
-    void RealTimeStraletContext::set_timer(Stralet* stralet, int32_t id, int32_t delay, void* data)
+
+    void RealTimeStraletContext::set_timer(Stralet* stralet, int64_t id, int64_t delay, void* data)
     {
         auto timer = make_shared<TimerInfo>();
         timer->stralet = stralet;
@@ -256,25 +243,25 @@ namespace tquant { namespace stralet { namespace realtime {
         char str_id[100];
         uint64_t tmp = (uint64_t)stralet;
 #ifdef _WIN32
-        sprintf(str_id, "%I64u%u", tmp, id);
+        sprintf(str_id, "%I64u%I64u", tmp, id);
 #else
-        sprintf(str_id, "%llu%u", tmp, id);
+        sprintf(str_id, "%llu%llu", tmp, id);
 #endif
         auto it = m_timers.find(str_id);
         if (it != m_timers.end())
             it->second->is_dead = true;
         m_timers[str_id] = timer;
-        m_msgloop.PostDelayedTask(bind(&RealTimeStraletContext::timer_tigger, this, timer), timer->delay);
+        m_msgloop.PostDelayedTask(bind(&RealTimeStraletContext::timer_tigger, this, timer), (uint32_t)timer->delay);
     }
 
-    void RealTimeStraletContext::kill_timer(Stralet* stralet, int32_t id)
+    void RealTimeStraletContext::kill_timer(Stralet* stralet, int64_t id)
     {
         char str_id[100];
         uint64_t tmp = (uint64_t)stralet;
 #ifdef _WIN32
-        sprintf(str_id, "%I64u%u", tmp, id);
+        sprintf(str_id, "%I64u%I64u", tmp, id);
 #else
-        sprintf(str_id, "%llu%u", tmp, id);
+        sprintf(str_id, "%llu%llu", tmp, id);
 #endif
         auto it = m_timers.find(str_id);
         if (it != m_timers.end()) {
@@ -288,7 +275,7 @@ namespace tquant { namespace stralet { namespace realtime {
         if (!timer->is_dead) {
             m_stralet->on_timer(timer->id, timer->data);
             if (!timer->is_dead)
-                m_msgloop.PostDelayedTask(bind(&RealTimeStraletContext::timer_tigger, this, timer), timer->delay);
+                m_msgloop.PostDelayedTask(bind(&RealTimeStraletContext::timer_tigger, this, timer), (uint32_t)timer->delay);
         }
     }
 
@@ -378,16 +365,18 @@ namespace tquant { namespace stralet { namespace realtime {
     void run(const RealTimeConfig & a_cfg, function<Stralet*()> creator)
     {
         RealTimeConfig cfg = a_cfg;
-        if (cfg.tqapi_addr.empty())  cfg.tqapi_addr = "ipc://tqc_10001";
+        if (cfg.data_api_addr.empty())   cfg.data_api_addr = "ipc://tqc_10001";
+        if (cfg.trade_api_addr.empty())  cfg.trade_api_addr = "ipc://tqc_10001";
         if (cfg.output_dir.empty()) cfg.output_dir = ".";
 
         //cout << "run stralet: " << cfg.output_dir << endl;
 
-        TQuantApi* tqapi = TQuantApi::create(cfg.tqapi_addr);
+        auto dapi = create_data_api(cfg.data_api_addr.c_str());
+        auto tapi = create_trade_api(cfg.data_api_addr.c_str());
 
         auto stralet = creator();
 
-        RealTimeStraletContext* sc = new RealTimeStraletContext(tqapi, stralet);
+        RealTimeStraletContext* sc = new RealTimeStraletContext(dapi, tapi, stralet);
 
         stralet->on_init(sc);
 
@@ -397,7 +386,8 @@ namespace tquant { namespace stralet { namespace realtime {
         stralet->on_fini();
         delete stralet;
         delete sc;
-        delete tqapi;
+        delete tapi;
+        delete dapi;
     }
 
     void run(const char* cfg_str, function<Stralet*()> creator)
@@ -414,8 +404,11 @@ namespace tquant { namespace stralet { namespace realtime {
         RealTimeConfig cfg;
         try {
             Json::Value empty;
-            Json::Value tqapi_addr = conf.get("tqapi_addr", empty);
-            if (tqapi_addr.isString()) cfg.tqapi_addr = tqapi_addr.asString();
+            Json::Value data_api_addr = conf.get("data_api_addr", empty);
+            if (data_api_addr.isString()) cfg.data_api_addr = data_api_addr.asString();
+
+            Json::Value trade_api_addr = conf.get("trade_api_addr", empty);
+            if (trade_api_addr.isString()) cfg.trade_api_addr = trade_api_addr.asString();
 
             Json::Value output_dir = conf.get("output_dir", empty);
             if (output_dir.isString())    cfg.output_dir = output_dir.asString();

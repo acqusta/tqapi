@@ -71,8 +71,7 @@ void run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
     cout << "backtest: " << cfg.begin_date << "-" << cfg.end_date << "," << cfg.data_level << endl
          << "          outdir " << cfg.result_dir << endl;
 
-    TQuantApi* tqapi = TQuantApi::create(cfg.dapi_addr);
-    DataApi* dapi = tqapi->data_api();
+    DataApi* dapi = create_data_api(cfg.dapi_addr.c_str());
 
     SimStraletContext* sc = new SimStraletContext();
     vector<SimAccount*> accounts;
@@ -96,6 +95,7 @@ void run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
     sc->init(sim_dapi, dl, sim_tapi);
 
     auto calendar = get_calendar(dapi);
+    //calendar.push_back(20180529);
     for (auto & date : calendar) {
         if (date < cfg.begin_date) continue;
         if (date > cfg.end_date) break;
@@ -116,7 +116,7 @@ void run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
     delete sc;
     delete sim_dapi;
     delete sim_tapi;
-    delete tqapi;
+    delete dapi;
 }
 
 } } }

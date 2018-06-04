@@ -12,58 +12,16 @@ namespace TQuant
     {
         public class TQuantApi
         {
-            IntPtr handle;
-            TradeApi tapi;
-            Dictionary<string, DataApiImpl> dapi_map = new Dictionary<string, DataApiImpl>();
-
-            TQuantApi(IntPtr h)
+            public static TradeApi CreateTradeApi(string addr)
             {
-                this.handle = h;
+                var h = TqapiDll.tapi_create(addr);
+                return h != IntPtr.Zero ? new TradeApiImpl(h, true) : null;
             }
 
-            /**
-            * 取数据接口
-            *
-            * @return
-            */
-            public TradeApi GetTradeApi()
+            public static DataApi CreateDataApi(string addr)
             {
-                if (tapi != null) return tapi;
-
-                var h = TqapiDll.tqapi_get_trade_api(this.handle);
-                if (h != IntPtr.Zero)
-                    tapi = new TradeApiImpl(this, h);
-
-                return tapi;
-            }
-
-            /**
-            *  取交易接口
-            *
-            * @return
-            */
-            public DataApi GetDataApi(string source = "")
-            {
-                if (dapi_map.ContainsKey(source))
-                    return dapi_map[source];
-
-                var h = TqapiDll.tqapi_get_data_api(this.handle, source);
-                if (h != IntPtr.Zero)
-                {
-                    var dapi = new DataApiImpl(this, h);
-                    dapi_map[source] = dapi;
-                    return dapi;
-                }
-                else
-                {
-                    return null;
-                }
-            }
-
-            public static TQuantApi Create(string addr)
-            {
-                IntPtr h = TqapiDll.tqapi_create(addr);
-                return h != null ? new TQuantApi(h) : null;
+                var h = TqapiDll.dapi_create(addr);
+                return h != IntPtr.Zero ? new DataApiImpl(h, true) : null;
             }
         }
     }

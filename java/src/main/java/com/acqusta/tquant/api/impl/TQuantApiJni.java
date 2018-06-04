@@ -4,39 +4,24 @@ import com.acqusta.tquant.api.DataApi;
 import com.acqusta.tquant.api.TQuantApi;
 import com.acqusta.tquant.api.TradeApi;
 
-public class TQuantApiJni {
-
+class TQuantApiJni {
     static {
-        //System.load("D:\\work\\github\\tqapi\\build\\java\\src\\main\\native\\Release\\tqapi_jni.dll");
+        System.load("D:\\work\\github\\tqapi\\build_x64\\dist\\java\\tqapi_jni.dll");
         //System.load("/Users/terryxu/work/tquant/tqapi/build/dist/java/libtqapi_jni.dylib");
-        System.loadLibrary("tqapi_jni");
+        //System.loadLibrary("tqapi_jni");
     }
 
-    public static native long create(String addr) throws Exception;
-
-    public static native void destroy(long handle);
-
-    public static native long getTradeApi(long handle);
-
-    public static native long getDataApi(long handle, String source);
-
-    long handle = 0;
-
-    TQuantApiJni(String addr) throws  Exception {
-        this.handle = create(addr);
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        if (handle != 0) {
-            destroy(handle);
-            handle = 0;
-        }
-        super.finalize();
-    }
+    public static void init() {}
 }
 
 class TradeApiJni {
+    static {
+        TQuantApiJni.init();
+    }
+
+    static native long create(String addr) throws Exception;
+
+    static native void destroy(long handle);
 
     static native TradeApi.AccountInfo[] queryAccountStatus  (long handle);
 
@@ -57,20 +42,17 @@ class TradeApiJni {
     static native String query(long handle, String account_id, String command, String params);
 
     static native void setCallback(long handle, TradeApi.Callback callback);
-
-    long handle = 0;
-
-    TradeApiJni(TQuantApiJni tqapi) throws  Exception {
-        this.handle = TQuantApiJni.getTradeApi(tqapi.handle);
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-    }
 }
 
-class DataApiJni {
+class DataApiJni extends TQuantApi {
+
+    static {
+        TQuantApiJni.init();
+    }
+
+    static native long create(String addr) throws Exception;
+
+    static native void destroy(long handle);
 
     static native DataApi.MarketQuote[] getTick(long handle, String code, int trading_day);
 
@@ -86,24 +68,6 @@ class DataApiJni {
 
     static native void setCallback(long handle, DataApi.Callback callback);
 
-    static native void destroy(long handle);
-
-    long handle = 0;
-    private TQuantApiJni tqapi; // Should keep a reference of TQuantApi!
-
-    DataApiJni(TQuantApiJni tqapi, String source) throws  Exception {
-        this.tqapi = tqapi;
-        this.handle = TQuantApiJni.getDataApi(tqapi.handle, source);
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        if (handle!=0) {
-            DataApiJni.destroy(handle);
-            handle = 0;
-        }
-        super.finalize();
-    }
 }
 
 class JniHelper {

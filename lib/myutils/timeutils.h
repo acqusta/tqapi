@@ -8,9 +8,6 @@
 static inline int fin_date(time_t t)
 {
     struct tm tm = *localtime(&t);
-    //char datetime[20];
-    //strftime(datetime, 15, "%Y%m%d", &tm);
-    //return atoi(datetime);
     return (tm.tm_year + 1900) * 10000 + (tm.tm_mon + 1) * 100 + tm.tm_mday;
 }
 
@@ -20,24 +17,18 @@ static inline int fin_time_seconds(time_t t)
     return tm.tm_hour * 10000 + tm.tm_min * 100 + tm.tm_sec;
 }
 
-static void fin_datetime(int* date, int* time)
+static void fin_datetime(int* date, int* time_ms)
 {
-   std:: chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+    time_t t; 
+    time(&t);
+    struct tm tm = *localtime(&t);
 
-    time_t tnow = std::chrono::system_clock::to_time_t(now);
-    tm *t = localtime(&tnow);
-    t->tm_hour = 0;
-    t->tm_min = 0;
-    t->tm_sec = 0;
-    auto midnight = std::chrono::system_clock::from_time_t(mktime(t));
+    *date = (tm.tm_year + 1900) * 10000 + (tm.tm_mon + 1) * 100 + tm.tm_mday;
+    *time_ms = (tm.tm_hour * 10000 + tm.tm_min * 100 + tm.tm_sec)*1000;
 
-    *date = (t->tm_year + 1900) * 10000 + (t->tm_mon + 1) * 100 + t->tm_mday;
-    int tmp = (int)std::chrono::duration_cast<std::chrono::milliseconds>(now - midnight).count();
-    int ms = tmp % 1000;  tmp /= 1000;
-    int s = tmp % 60; tmp /= 60;
-    int m = tmp % 60; tmp /= 60;
-    int h = tmp % 60;
-    *time = (h * 10000 + m * 100 + s) * 1000 + ms;
+    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+    *time_ms += millis % 1000;
 }
 
 static inline int fin_today()
