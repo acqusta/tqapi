@@ -4,21 +4,23 @@ namespace TestUI
 {
     class GlobalData
     {
-        static TQuantApi tqapi;
+        static DataApi dapi;
+        static TradeApi tapi;
 
         public static void Init()
         {
-            tqapi = TQuantApi.Create("tcp://127.0.0.1:10001");
+            dapi = TQuantApi.CreateDataApi("ipc://tqc_10001");
+            tapi = TQuantApi.CreateTradeApi("ipc://tqc_10001");
         }
 
         public static DataApi GetDataApi()
         {
-            return tqapi.GetDataApi();
+            return dapi;
         }
 
         public static TradeApi GetTradeApi()
         {
-            return tqapi.GetTradeApi();
+            return tapi;
         }
     }
 }

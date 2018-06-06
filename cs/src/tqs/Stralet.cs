@@ -4,6 +4,8 @@ using System.Runtime.InteropServices;
 using TQuant.Api;
 using TQuant.Api.Impl;
 using TQuant.Stralet.Impl;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace TQuant.Stralet
 {
@@ -21,7 +23,8 @@ namespace TQuant.Stralet
         ILoggingAdapter Logger { get; }
         //IStraletRef Self { get; }
 
-        //Props Props { get; }
+        Dictionary<String, Object> Props { get; }
+
         Int32 TradingDay { get; }
 
         TQuant.Stralet.FinDataTime CurTime { get; }
@@ -132,23 +135,13 @@ namespace TQuant.Stralet
             DataApi  = new DataApiImpl(TqsDll.tqs_sc_data_api(this.handle), false);
 
             this.Logger = new LogginAdpterImpl(this);
+
+            IntPtr str = TqsDll.tqs_sc_get_properties(h);
+            string properties = Marshal.PtrToStringAnsi(str);
+            Props = JsonConvert.DeserializeObject<Dictionary<string, object>>(properties);
         }
 
-        //internal void Detach()
-        //{
-        //    //foreach (var dapi in dapi_map)
-        //    //{
-        //    //    dapi.Value.Detach();
-        //    //}
-
-        //    //dapi_map.Clear();
-
-        //    //if (tapi != null)
-        //    //{
-        //    //    tapi.Detach();
-        //    //    tapi = null;
-        //    //}
-        //}
+        public Dictionary<string, object> Props { get; }
 
         public Int32 TradingDay { get { return trading_day; } }
 

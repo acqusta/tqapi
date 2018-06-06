@@ -26,7 +26,10 @@ namespace tquant {  namespace api {
     class TickDataHolder : public T {
         string _code;
     public:
-        TickDataHolder() {}
+        TickDataHolder() {
+            memset(this, 0, sizeof(T));
+        }
+
         TickDataHolder(const T& t, const string& a_code) : T(t), _code(a_code) {
             this->code = _code.c_str();
         }
@@ -491,30 +494,11 @@ namespace tquant {  namespace api {
         virtual TradeApi_Callback* set_callback(TradeApi_Callback* callback) = 0;
     };
 
-    //class TQuantApi {
-    //public:        
-    //    virtual ~TQuantApi() {}
-
-    //    /**
-    //    * 取数据接口
-    //    *
-    //    * @return
-    //    */
-    //    virtual TradeApi* trade_api() = 0;
-
-    //    /**
-    //    *  取交易接口
-    //    *
-    //    * @return
-    //    */
-    //    virtual DataApi*  data_api(const string& source="") = 0;
-
-    //    static _TQAPI_EXPORT TQuantApi* create(const string& addr);
-    //};
-
     _TQAPI_EXPORT DataApi*  create_data_api (const string& addr);
 
     _TQAPI_EXPORT TradeApi* create_trade_api(const string& addr);
+
+    _TQAPI_EXPORT void set_params(const string& key, const string& value);
 
 } }
 

@@ -11,6 +11,8 @@ class TQuantApiJni {
         //System.loadLibrary("tqapi_jni");
     }
 
+    public static native void setParams(String key, String value);
+
     public static void init() {}
 }
 

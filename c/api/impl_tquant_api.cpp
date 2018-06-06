@@ -6,6 +6,7 @@
 #include "myutils/socket_connection.h"
 #include "myutils/ipc_connection.h"
 #include "myutils/socketutils.h"
+#include "myutils/misc.h"
 #include "impl_tquant_api.h"
 #include "impl_data_api.h"
 #include "impl_trade_api.h"
@@ -24,46 +25,24 @@ namespace tquant { namespace api { namespace impl {
     }
 
     bool MpRpc_Connection::connect(const string& params) {
-#if 0
-            const char* p = strchr(params, '?');
-            string addr;
-            string source;
-            if (p) {
-                addr.assign(params, p - params);
-                p += 1;
-                vector<string> ss;
-                split(p, "&", &ss);
-                for (auto& s : ss) {
-                    vector<string> tmp;
-                    split(s, "=", &tmp);
-                    if (tmp[0] == "source") {
-                        source = tmp[1];
-                    }
-                }
-            }
-            else {
-                addr = params;
-            }
-#else
-            string addr = params;
-#endif
-            if (strncmp(addr.c_str(), "tcp://", 6) == 0) {
-                auto conn = make_shared<SocketConnection>();
-                m_client = new MpRpcClient(conn);
-                m_client->connect(addr, this);
+        string addr = params;
+        if (strncmp(addr.c_str(), "tcp://", 6) == 0) {
+            auto conn = make_shared<SocketConnection>();
+            m_client = new MpRpcClient(conn);
+            m_client->connect(addr, this);
             return true;
-            }
-            else if (strncmp(addr.c_str(), "ipc://", 6) == 0) {
-                auto conn = make_shared<IpcConnection>();
-                m_client = new MpRpcClient(conn);
-                m_client->connect(addr, this);
-            return true;
-            }
-            else {
-                throw std::runtime_error("unknown addr");
-            return false;
-            }
         }
+        else if (strncmp(addr.c_str(), "ipc://", 6) == 0) {
+            auto conn = make_shared<IpcConnection>();
+            m_client = new MpRpcClient(conn);
+            m_client->connect(addr, this);
+            return true;
+        }
+        else {
+            throw std::runtime_error("unknown addr");
+            return false;
+        }
+    }
 
     MpRpc_Connection::~MpRpc_Connection() {
             m_msgloop.close_loop();
@@ -83,20 +62,9 @@ namespace tquant { namespace api { namespace impl {
     {
         m_msgloop.msg_loop().PostTask([this, rpcmsg] {
             if (m_callback) m_callback->on_notification(rpcmsg);
-            //if (strncmp(rpcmsg->method.c_str(), "dapi.", 5) == 0) {
-            //    for (auto e : m_dapi_map)
-            //        e.second->on_notification(rpcmsg);
-            //}
-            //else if (strncmp(rpcmsg->method.c_str(), "tapi.", 5) == 0) {
-            //    m_tapi->on_notification(rpcmsg);
-            //}
-            //else {
-            //    for (auto e : m_dapi_map)
-            //        e.second->on_notification(rpcmsg);
-            //    m_tapi->on_notification(rpcmsg);
-            //}
-            });
+        });
     }
+
 } } }
 
 #ifdef _WIN32
@@ -120,6 +88,13 @@ namespace tquant { namespace api {
 
     // addr = "embed://tkapi/file://d:/tquant/md"
 
+    static unordered_map<string, string> g_params;
+
+    void set_params(const string& key, const string& value)
+    {
+        g_params[key] = value;
+    }
+
     DataApi* creatae_embed_dapi(const char* addr)
     {
         const char* p1 = addr + strlen("embed://");
@@ -132,15 +107,26 @@ namespace tquant { namespace api {
 
 #ifdef _WIN32
 
-        HMODULE hModule = LoadLibraryA(module_name.c_str());
+        string dirs = g_params["embed_path"];
+        vector<string> ss;
+        split(dirs, ";", &ss);
+        ss.push_back("");
+        HMODULE hModule = nullptr;
+        for (auto& path : ss) {
+            string dll_path = (!path.empty() ? (string(path) + "\\") : "") + module_name + ".dll";
+             hModule = LoadLibraryA(dll_path.c_str());
+             if (hModule) break;
+        }
         if (!hModule)
             throw std::runtime_error(ConvertErrorCodeToString(GetLastError()));
+
         auto create_data_api = (T_create_data_api)GetProcAddress(hModule, "create_data_api");
         if (!create_data_api) {
             FreeModule(hModule);
             throw std::runtime_error(ConvertErrorCodeToString(GetLastError()));
             return nullptr;
         }
+
         DataApi* dapi = create_data_api(addr);
         if (!dapi) {
             FreeModule(hModule);
@@ -164,30 +150,14 @@ namespace tquant { namespace api {
 #endif
     }
 
-    bool parse_addr(const string& addr, string* url, map<string, string>* properties)
-    {
-        vector<string> ss;
-        split(addr, "?", &ss);
-        *url = ss[0];
-        if (ss.size() > 1) {
-            split(ss[1], "&", &ss);
-            for (auto& s : ss) {
-                vector<string> tmp;
-                split(s, "=", &tmp);               
-                (*properties)[tmp[0]] = tmp.size() == 2 ? tmp[1] : "";
-            }
-        }
-        return true;
-    }
-
     DataApi*  create_data_api(const string& addr)
     {
         init_socket();
 
         if (strncmp(addr.c_str(), "embed://", 8)) {
             string url;
-            map<string, string> properties;
-            if (!parse_addr(addr, &url, &properties)) return nullptr;
+            unordered_map<string, string> properties;
+            if (!myutils:: parse_addr(addr, &url, &properties)) return nullptr;
 
             auto conn = new impl::MpRpc_Connection();
             auto dapi = new impl::MpRpcDataApiImpl();
@@ -211,8 +181,8 @@ namespace tquant { namespace api {
 
         if (strncmp(addr.c_str(), "embed://", 8)) {
             string url;
-            map<string, string> properties;
-            if (!parse_addr(addr, &url, &properties)) return nullptr;
+            unordered_map<string, string> properties;
+            if (!myutils::parse_addr(addr, &url, &properties)) return nullptr;
 
             auto conn = new impl::MpRpc_Connection();
             auto tapi = new impl::MpRpcTradeApiImpl();

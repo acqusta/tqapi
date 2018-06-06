@@ -12,6 +12,11 @@ namespace TQuant
     {
         public class TQuantApi
         {
+            public static void SetParams(string key, string value)
+            {
+                TqapiDll.tqapi_set_params(key, value);
+            }
+
             public static TradeApi CreateTradeApi(string addr)
             {
                 var h = TqapiDll.tapi_create(addr);

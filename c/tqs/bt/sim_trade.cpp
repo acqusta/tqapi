@@ -495,7 +495,6 @@ void SimAccount::try_buy(Order* order)
 {
     if (m_ctx->data_level() == BT_TICK) {
         auto q = m_ctx->data_api()->quote(order->code.c_str());
-        //if (q.value && q.value->last < order->entrust_price)
         if (q.value && q.value->ask1 <= order->entrust_price)
             make_trade(q.value->ask1, order);
     }
@@ -535,8 +534,8 @@ void SimAccount::try_short(Order* order)
     // fixme
     if (m_ctx->data_level() == BT_TICK) {
         auto q = m_ctx->data_api()->quote(order->code.c_str());
-        if (q.value && q.value->last > order->entrust_price)
-            make_trade(q.value->last, order);
+        if (q.value && q.value->bid1 >= order->entrust_price)
+            make_trade(q.value->bid1, order);
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
         auto bar = m_ctx->sim_dapi()->last_bar(order->code.c_str());
@@ -554,7 +553,7 @@ void SimAccount::try_cover(Order* order)
 {
     if (m_ctx->data_level() == BT_TICK) {
         auto q = m_ctx->data_api()->quote(order->code.c_str());
-        if (q.value && q.value->last < order->entrust_price)
+        if (q.value && q.value->ask1 < order->entrust_price)
             make_trade(q.value->last, order);
     }
     else if (m_ctx->data_level() == BT_BAR1M) {

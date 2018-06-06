@@ -181,3 +181,6 @@ class DataApi:
             return (df, msg)
         else:
             return (v, msg)
+
+def set_params(key, value):
+    _tqapi.set_params(str(key), str(value))

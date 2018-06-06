@@ -20,6 +20,9 @@ namespace TQuant
                     public Int32 value_type;
                 }
 
+                [DllImport("tqapi.dll", EntryPoint = "tqapi_set_params", CallingConvention = CallingConvention.Cdecl)]
+                public static extern void tqapi_set_params(String key, String value);
+
                 [DllImport("tqapi.dll", EntryPoint = "dapi_create", CallingConvention =CallingConvention.Cdecl)]
                 public static extern IntPtr dapi_create(String addr);
 
