@@ -46,8 +46,8 @@ namespace TQuant
                 [DllImport("tqs.dll", EntryPoint = "tqs_sc_log", CallingConvention = CallingConvention.Cdecl)]
                 public static extern void tqs_sc_log(IntPtr h, Int32 level, String str);
 
-                [DllImport("tqs.dll", EntryPoint = "tqs_get_parameter", CallingConvention = CallingConvention.Cdecl)]
-                public static extern String tqs_get_parameter(IntPtr h, String name, String def_value);
+                [DllImport("tqs.dll", EntryPoint = "tqs_sc_get_properties", CallingConvention = CallingConvention.Cdecl)]
+                public static extern IntPtr tqs_sc_get_properties(IntPtr h);
 
                 [DllImport("tqs.dll", EntryPoint = "tqs_sc_mode", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tqs_sc_mode(IntPtr h);

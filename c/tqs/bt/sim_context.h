@@ -2,6 +2,7 @@
 #define _SIM_CONTEXT_H
 
 #include <unordered_map>
+#include "jsoncpp/inc/json/json.h"
 #include "stralet.h"
 
 namespace tquant { namespace stralet { namespace backtest {
@@ -26,7 +27,7 @@ namespace tquant { namespace stralet { namespace backtest {
     public:
         SimStraletContext();
 
-        void init(SimDataApi* dapi, DataLevel level, SimTradeApi* tapi);
+        void init(SimDataApi* dapi, DataLevel level, SimTradeApi* tapi, Json::Value& properties);
 
         DataLevel data_level() { return m_data_level; }
 
@@ -54,7 +55,8 @@ namespace tquant { namespace stralet { namespace backtest {
 
         virtual ostream& logger(LogLevel level = LogLevel::INFO) override;
 
-        virtual string get_parameter(const char* name, const char* def_value) override;
+        virtual string get_property(const char* name, const char* def_value) override;
+        virtual const string& get_properties() override;
 
         virtual const string& mode() override;
 
@@ -85,9 +87,11 @@ namespace tquant { namespace stralet { namespace backtest {
         };
 
         vector<shared_ptr<TimerInfo>> m_timers;
-        list<shared_ptr<EventData>> m_events;
-        vector<AlgoStralet*> m_algos;
-        string m_mode;
+        list<shared_ptr<EventData>>   m_events;
+        vector<AlgoStralet*>          m_algos;
+        string                        m_mode;
+        Json::Value                   m_properties;
+        string                        m_properties_str;
     };
 
 } } }

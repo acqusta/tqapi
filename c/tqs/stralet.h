@@ -84,7 +84,8 @@ namespace tquant { namespace stralet {
 
         virtual ostream& logger(LogLevel level = LogLevel::INFO) = 0;
 
-        virtual string get_parameter(const char* name, const char* def_value) = 0;
+        virtual string        get_property(const char* name, const char* def_value) = 0;
+        virtual const string& get_properties() = 0;
 
         virtual const string& mode() = 0;
 

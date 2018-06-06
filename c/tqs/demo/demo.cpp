@@ -109,6 +109,7 @@ int test_ifhft()
     cfg.end_date = 20180330;
     cfg.data_level = "tk";
     cfg.accounts.push_back(backtest::AccountConfig("sim", 1e8));
+    cfg.properties = "{\"stock_code\":\"000001.SH\"}";
 
     auto begin_time = system_clock::now();
 
@@ -135,7 +136,7 @@ int run_ifhft()
 
 int main()
 {
-    //test_ifhft();
-    run_ifhft();
+    test_ifhft();
+    //run_ifhft();
     return 0;
 }
