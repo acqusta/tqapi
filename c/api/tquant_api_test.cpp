@@ -336,6 +336,31 @@ void test_dapi2(DataApi* dapi)
     }
 }
 
+void perf_test3(DataApi* dapi)
+{
+    const char* code = "600000.SH";
+    vector<string> codes = { code };
+    dapi->subscribe(codes);
+
+    auto begin_time = system_clock::now();
+
+    size_t total_count = 0;
+    for (int i = 0; i < 3000; i++) {
+        //auto ticks = dapi->tick(code, 0);
+        auto ticks = dapi->bar(code, "1m", 0, true);
+        if (ticks.value)
+            total_count += ticks.value->size();
+        //else
+        //    cout << "tick error: " << code << "," << bar.date << ": " << ticks.msg << endl;
+    }
+
+    size_t used_time = duration_cast<microseconds>(system_clock::now() - begin_time).count();
+    cout << "used time    : " << used_time << endl
+        << "total records: " << total_count << endl
+//        << "total date   : " << date_count << endl
+        << "time per code : " << (used_time / 3000) / 1000.0 << endl;
+
+}
 int main()
 {
     //const char* addr = "tcp://127.0.0.1:10001";
@@ -345,7 +370,8 @@ int main()
     TQuantApi* api = TQuantApi::create(addr);
 
     //perf_test(api->data_api());
-    perf_test2(api->data_api());
+    //perf_test2(api->data_api());
+    perf_test3(api->data_api());
 
     //test_dapi(api);
     //test_dapi2(api->data_api());

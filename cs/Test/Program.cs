@@ -280,19 +280,20 @@ namespace Test
 
             long begin_time = DateTime.Now.Ticks;
 
-            int count = 100000;
+            int count = 3000;
             for (var i = 0; i < count; i ++)
             {
-                var r = dapi.GetTick(code, 20180416);
+                Console.WriteLine(i);
+                var r = dapi.GetTick(code, 0);
                 //var r = dapi.GetBar(code, "1m", 20180416);
                 if (r.Value == null)
                     Console.WriteLine("GetTick error: " + r.Msg);
-                Thread.Sleep(10);
             }
 
             long end_time = DateTime.Now.Ticks;
 
-            Console.WriteLine("Used time: " + (end_time - begin_time) /10000.0 / count + "ms");
+            Console.WriteLine("Used time: " + (end_time - begin_time) / 10000.0  + "ms");
+            Console.WriteLine("Each time: " + (end_time - begin_time) /10000.0 / count + "ms");
             Console.Read();
         }
 
@@ -302,7 +303,7 @@ namespace Test
             var dapi = tqapi.GetDataApi();
             var tapi = tqapi.GetTradeApi();
             //TestDataApi(dapi);
-            TestDataApi2(dapi);
+            //TestDataApi2(dapi);
             //TestTradeApi(tapi);
             PerfTest(dapi);
 
