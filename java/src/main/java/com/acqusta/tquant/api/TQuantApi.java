@@ -2,8 +2,14 @@ package com.acqusta.tquant.api;
 
 import com.acqusta.tquant.api.impl.DataApiImpl;
 import com.acqusta.tquant.api.impl.TradeApiImpl;
+import com.acqusta.tquant.api.impl.TQuantApiImpl;
 
 public class TQuantApi {
+
+    public static void setParams(String key, String value)
+    {
+        TQuantApiImpl.setParams(key, value);
+    }
 
     /**
      * 创建 TradeApi

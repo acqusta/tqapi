@@ -50,7 +50,7 @@ namespace tquant { namespace api { namespace impl {
         {
         }
 
-        bool init(MpRpc_Connection* conn, const map<string, string>& properties) {
+        bool init(MpRpc_Connection* conn, const unordered_map<string, string>& properties) {
             auto it = properties.find("source");
             if (it != properties.end())
                 m_source = it->second;

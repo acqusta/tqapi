@@ -16,11 +16,13 @@ SimStraletContext::SimStraletContext()
 {
 }
 
-void SimStraletContext::init(SimDataApi* dapi, DataLevel level, SimTradeApi* tapi)
+void SimStraletContext::init(SimDataApi* dapi, DataLevel level, SimTradeApi* tapi, Json::Value& properties)
 {
     m_dapi = dapi;
     m_data_level = level;
     m_tapi = tapi;
+    m_properties = properties;
+    m_properties_str = m_properties.toStyledString();
 }
 
 
@@ -122,9 +124,25 @@ void SimStraletContext::unregister_algo(AlgoStralet* algo)
         m_algos.erase(it);
 }
 
-string SimStraletContext::get_parameter(const char* name, const char* def_value)
+string SimStraletContext::get_property(const char* name, const char* def_value)
 {
-    return "";
+    Json::Value empty;
+    Json::Value v = m_properties.get(name, empty);
+    switch (v.type()) {
+    case Json::ValueType::nullValue: return def_value;
+    case Json::ValueType::intValue:
+    case Json::ValueType::uintValue:
+    case Json::ValueType::realValue:
+    case Json::ValueType::stringValue:
+    case Json::ValueType::booleanValue: return v.asString();
+    default:
+        return v.toStyledString();
+    }
+}
+
+const string& SimStraletContext::get_properties()
+{
+    return m_properties_str;
 }
 
 const string& SimStraletContext::mode()

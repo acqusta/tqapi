@@ -183,7 +183,8 @@ namespace tquant { namespace stralet { namespace realtime {
 
         virtual ostream& logger(LogLevel level = LogLevel::INFO) override;
 
-        virtual string get_parameter(const char* name, const char* def_value) override;
+        virtual string        get_property(const char* name, const char* def_value) override;
+        virtual const string& get_properties() override;
 
         virtual const string& mode() override;
 
@@ -313,7 +314,12 @@ namespace tquant { namespace stralet { namespace realtime {
             m_algos.erase(it);
     }
 
-    string RealTimeStraletContext::get_parameter(const char* name, const char* def_value)
+    string RealTimeStraletContext::get_property(const char* name, const char* def_value)
+    {
+        return "";
+    }
+
+    const string& RealTimeStraletContext::get_properties()
     {
         return "";
     }

@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "misc.h"
-
+#include "stringutils.h"
 
 namespace myutils{
 
@@ -22,6 +22,22 @@ namespace myutils{
             g_generator.seed(system_clock::now().time_since_epoch().count());
         }
         return g_distribution(g_generator);
+    }
+
+    bool parse_addr(const string& addr, string* url, unordered_map<string, string>* properties)
+    {
+        vector<string> ss;
+        split(addr, "?", &ss);
+        *url = ss[0];
+        if (ss.size() > 1) {
+            split(ss[1], "&", &ss);
+            for (auto& s : ss) {
+                vector<string> tmp;
+                split(s, "=", &tmp);
+                (*properties)[tmp[0]] = tmp.size() == 2 ? tmp[1] : "";
+            }
+        }
+        return true;
     }
 
 

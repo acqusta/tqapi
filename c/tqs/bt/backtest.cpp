@@ -51,6 +51,8 @@ void run(const char* cfg_str, function<Stralet*()> creator)
         Json::Value result_dir = conf.get("result_dir", empty);
         if (result_dir.isString())    cfg.result_dir = result_dir.asString();
 
+        Json::Value properties = conf.get("properties", empty);
+        if (!properties.isNull()) cfg.properties = properties.toStyledString();
     }
     catch (exception& e) {
         cerr << "parse conf failure: " << e.what();
@@ -92,7 +94,16 @@ void run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
         return;
     }
 
-    sc->init(sim_dapi, dl, sim_tapi);
+    Json::Value properties;
+    if (cfg.properties.size()) {
+        Json::Reader reader;
+        if (!reader.parse(cfg.properties, properties)) {
+            cerr << "parse conf failure: " << reader.getFormattedErrorMessages();
+            return;
+        }
+    }
+
+    sc->init(sim_dapi, dl, sim_tapi, properties);
 
     auto calendar = get_calendar(dapi);
     //calendar.push_back(20180529);

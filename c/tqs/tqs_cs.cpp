@@ -83,9 +83,10 @@ void tqs_sc_log(void* h, int32_t level, const char* str)
 }
 
 extern "C" _TQS_EXPORT
-const char* tqs_sc_get_parameter(void* h, const char* name, const char* def_value)
+const char* tqs_sc_get_properties(void* h)
 {
-    return nullptr;
+    StraletContext* ctx = reinterpret_cast<StraletContext*>(h);
+    return ctx->get_properties().c_str();
 }
 
 extern "C" _TQS_EXPORT

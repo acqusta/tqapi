@@ -95,7 +95,7 @@ namespace tquant { namespace api { namespace impl {
         virtual ~MpRpcTradeApiImpl() override
         {}
 
-        bool init(MpRpc_Connection* conn, const map<string, string> properties)
+        bool init(MpRpc_Connection* conn, const unordered_map<string, string> properties)
         {
             m_conn = conn;
             m_conn->set_callback(this);

@@ -19,6 +19,8 @@ set(SRC
   com_acqusta_tquant_api_impl_DataApiJni.h
   com_acqusta_tquant_api_impl_TradeApiJni.cpp
   com_acqusta_tquant_api_impl_TradeApiJni.h
+  com_acqusta_tquant_api_impl_TQuantApiJni.cpp
+  com_acqusta_tquant_api_impl_TQuantApiJni.h
   )
 
 add_library(tqapi_jni SHARED ${SRC})

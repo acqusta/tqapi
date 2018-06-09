@@ -9,6 +9,12 @@
 
 
 extern "C" _TQAPI_EXPORT
+void tqapi_set_params(const char* key, const char* value)
+{
+    set_params(key, value);
+}
+
+extern "C" _TQAPI_EXPORT
 void* dapi_create(const char* addr)
 {
     auto api = create_data_api(addr);
@@ -41,7 +47,7 @@ void tapi_destroy(void* h)
 extern "C" _TQAPI_EXPORT
 void destroy_callresult(void* h)
 {
-    auto cr = reinterpret_cast<CallResultValueType*>(h);
+    auto cr = reinterpret_cast<CallResultWrap*>(h);
     delete cr;
 }
 
