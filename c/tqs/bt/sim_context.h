@@ -2,6 +2,7 @@
 #define _SIM_CONTEXT_H
 
 #include <unordered_map>
+#include "jsoncpp/inc/json/json.h"
 #include "stralet.h"
 
 namespace tquant { namespace stralet { namespace backtest {
@@ -26,7 +27,7 @@ namespace tquant { namespace stralet { namespace backtest {
     public:
         SimStraletContext();
 
-        void init(SimDataApi* dapi, DataLevel level, SimTradeApi* tapi);
+        void init(SimDataApi* dapi, DataLevel level, SimTradeApi* tapi, Json::Value& properties);
 
         DataLevel data_level() { return m_data_level; }
 
@@ -46,15 +47,16 @@ namespace tquant { namespace stralet { namespace backtest {
         virtual system_clock::time_point cur_time_as_tp() override;
         virtual void post_event(const char* evt, void* data) override;
 
-        virtual void set_timer (Stralet* stralet, int32_t id, int32_t delay, void* data) override;
-        virtual void kill_timer(Stralet* stralet, int32_t id) override;
+        virtual void set_timer (Stralet* stralet, int64_t id, int64_t delay, void* data) override;
+        virtual void kill_timer(Stralet* stralet, int64_t id) override;
 
-        virtual DataApi*  data_api(const char* source = nullptr) override;
+        virtual DataApi*  data_api() override;
         virtual TradeApi* trade_api() override;
 
         virtual ostream& logger(LogLevel level = LogLevel::INFO) override;
 
-        virtual string get_parameter(const char* name, const char* def_value) override;
+        virtual string get_property(const char* name, const char* def_value) override;
+        virtual const string& get_properties() override;
 
         virtual const string& mode() override;
 
@@ -72,8 +74,8 @@ namespace tquant { namespace stralet { namespace backtest {
 
         struct TimerInfo {
             Stralet* stralet;
-            int32_t  id;
-            int32_t  delay;
+            int64_t  id;
+            int64_t  delay;
             void*    data;
             bool     is_dead;
             system_clock::time_point trigger_time;
@@ -85,9 +87,11 @@ namespace tquant { namespace stralet { namespace backtest {
         };
 
         vector<shared_ptr<TimerInfo>> m_timers;
-        list<shared_ptr<EventData>> m_events;
-        vector<AlgoStralet*> m_algos;
-        string m_mode;
+        list<shared_ptr<EventData>>   m_events;
+        vector<AlgoStralet*>          m_algos;
+        string                        m_mode;
+        Json::Value                   m_properties;
+        string                        m_properties_str;
     };
 
 } } }

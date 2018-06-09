@@ -53,6 +53,55 @@ jobject convert_account_info(JNIEnv* env, jclass help_cls, jmethodID createAccou
 }
 
 /*
+* Class:     com_acqusta_tquant_api_impl_TradeApiJni
+* Method:    create
+* Signature: (Ljava/lang/String;)J
+*/
+JNIEXPORT jlong JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_create
+(JNIEnv *env, jclass cls, jstring addr)
+{
+    try {
+        const char* cs = env->GetStringUTFChars(addr, 0);
+        if (!cs)
+            return 0;
+        string s(cs);
+        env->ReleaseStringUTFChars(addr, cs);
+        auto api = create_trade_api(s);
+        if (api) {
+            auto wrap = new TradeApiWrap(api, env);
+            return reinterpret_cast<jlong>(wrap);
+        }
+        else {
+            return 0;
+        }
+    }
+    catch (const exception& e) {
+        throwJavaException(env, "%s", e.what());
+        return 0;
+    }
+}
+
+/*
+* Class:     com_acqusta_tquant_api_impl_TradeApiJni
+* Method:    destroy
+* Signature: (J)V
+*/
+JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_destroy
+(JNIEnv * env, jclass cls, jlong h)
+{
+    if (h) {
+        auto wrap = reinterpret_cast<TradeApiWrap*>(h);
+        if (!wrap) {
+            throwJavaException(env, "null handle");
+            return;
+        }
+        wrap->destroy(env);
+        delete wrap;
+    }
+}
+
+
+/*
  * Class:     com_acqusta_tquant_api_impl_TradeApiJni
  * Method:    queryAccountStatus
  * Signature: (J)[Lcom/acqusta/tquant/api/TradeApi/AccountInfo;
@@ -60,13 +109,13 @@ jobject convert_account_info(JNIEnv* env, jclass help_cls, jmethodID createAccou
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_queryAccountStatus
 (JNIEnv * env, jclass, jlong h)
 {
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<TradeApiWrap*>(h);
     if (!wrap) {
         throwJavaException(env, "null handle");
         return 0;
     }
 
-    auto r = wrap->api->trade_api()->query_account_status();
+    auto r = wrap->m_tapi->query_account_status();
     if (!r.value) {
         throwJavaException(env, "%s", r.msg.c_str());
         return 0;
@@ -96,13 +145,13 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_quer
 JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_queryBalance
   (JNIEnv *env, jclass, jlong h, jstring account_id)
 {
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<TradeApiWrap*>(h);
     if (!wrap) {
         throwJavaException(env, "null handle");
         return 0;
     }
 
-    auto r = wrap->api->trade_api()->query_balance(get_string(env, account_id));
+    auto r = wrap->m_tapi->query_balance(get_string(env, account_id));
     if (!r.value) {
         throwJavaException(env, "%s", r.msg.c_str());
         return 0;
@@ -136,13 +185,13 @@ JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_queryBala
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_queryOrders
   (JNIEnv * env, jclass, jlong h, jstring account_id)
 {
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<TradeApiWrap*>(h);
     if (!wrap) {
         throwJavaException(env, "null handle");
         return 0;
     }
 
-    auto r = wrap->api->trade_api()->query_orders(get_string(env, account_id));
+    auto r = wrap->m_tapi->query_orders(get_string(env, account_id));
     if (!r.value) {
         throwJavaException(env, "%s", r.msg.c_str());
         return 0;
@@ -174,13 +223,13 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_quer
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_queryTrades
     (JNIEnv * env, jclass, jlong h, jstring account_id)
 {
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<TradeApiWrap*>(h);
     if (!wrap) {
         throwJavaException(env, "null handle");
         return 0;
     }
 
-    auto r = wrap->api->trade_api()->query_trades(get_string(env, account_id));
+    auto r = wrap->m_tapi->query_trades(get_string(env, account_id));
     if (!r.value) {
         throwJavaException(env, "%s", r.msg.c_str());
         return 0;
@@ -212,13 +261,13 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_quer
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_queryPositions
     (JNIEnv * env, jclass, jlong h, jstring account_id)
 {
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<TradeApiWrap*>(h);
     if (!wrap) {
         throwJavaException(env, "null handle");
         return 0;
     }
 
-    auto r = wrap->api->trade_api()->query_positions(get_string(env, account_id));
+    auto r = wrap->m_tapi->query_positions(get_string(env, account_id));
     if (!r.value) {
         throwJavaException(env, "%s", r.msg.c_str());
         return 0;
@@ -267,7 +316,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_quer
 JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_placeOrder
   (JNIEnv *env, jclass cls, jlong h, jstring account_id, jstring code, jdouble price, jlong size, jstring action, jint order_id)
 {
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<TradeApiWrap*>(h);
     if (!wrap) {
         throwJavaException(env, "null handle");
         return 0;
@@ -277,7 +326,7 @@ JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_placeOrde
         string s_code       = get_string(env, code);
         string s_action     = get_string(env, action);
 
-        auto r = wrap->api->trade_api()->place_order(s_account_id, s_code, price, size, s_action, order_id);
+        auto r = wrap->m_tapi->place_order(s_account_id, s_code, price, size, s_action, order_id);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -300,7 +349,7 @@ JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_placeOrde
 JNIEXPORT jboolean JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_cancelOrder__JLjava_lang_String_2Ljava_lang_String_2I
   (JNIEnv *env, jclass cls, jlong h, jstring account_id, jstring code, jint order_id)
 {
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<TradeApiWrap*>(h);
     if (!wrap) {
         throwJavaException(env, "null handle");
         return 0;
@@ -309,7 +358,7 @@ JNIEXPORT jboolean JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_cancelOr
         string s_account_id = get_string(env, account_id);
         string s_code = get_string(env, code);
 
-        auto r = wrap->api->trade_api()->cancel_order(s_account_id, s_code, order_id);
+        auto r = wrap->m_tapi->cancel_order(s_account_id, s_code, order_id);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -331,7 +380,7 @@ JNIEXPORT jboolean JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_cancelOr
 JNIEXPORT jboolean JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_cancelOrder__JLjava_lang_String_2Ljava_lang_String_2Ljava_lang_String_2
   (JNIEnv *env, jclass cls, jlong h, jstring account_id, jstring code, jstring entrust_no)
 {
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<TradeApiWrap*>(h);
     if (!wrap) {
         throwJavaException(env, "null handle");
         return 0;
@@ -341,7 +390,7 @@ JNIEXPORT jboolean JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_cancelOr
         string s_code = get_string(env, code);
         string s_entrust_no = get_string(env, entrust_no);
 
-        auto r = wrap->api->trade_api()->cancel_order(s_account_id, s_code, s_entrust_no);
+        auto r = wrap->m_tapi->cancel_order(s_account_id, s_code, s_entrust_no);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -363,7 +412,7 @@ JNIEXPORT jboolean JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_cancelOr
 JNIEXPORT jstring JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_query
   (JNIEnv * env, jclass cls, jlong h, jstring account_id, jstring command, jstring params)
 {
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<TradeApiWrap*>(h);
     if (!wrap) {
         throwJavaException(env, "null handle");
         return 0;
@@ -373,7 +422,7 @@ JNIEXPORT jstring JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_query
         string s_command = get_string(env, command);
         string s_params = get_string(env, params);
 
-        auto r = wrap->api->trade_api()->query(s_account_id, s_command, s_params);
+        auto r = wrap->m_tapi->query(s_account_id, s_command, s_params);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -395,7 +444,7 @@ JNIEXPORT jstring JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_query
 JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_setCallback
     (JNIEnv * env, jclass cls, jlong h, jobject callback)
 {
-    auto wrap = reinterpret_cast<TQuantApiWrap*>(h);
+    auto wrap = reinterpret_cast<TradeApiWrap*>(h);
     if (!wrap) {
         throwJavaException(env, "null handle");
         return;
@@ -428,20 +477,20 @@ JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_setCallback
         }
 
         callback = env->NewGlobalRef(callback);
-        wrap->m_tapi_loop.msg_loop().PostTask([wrap, callback, onOrderStatus, onOrderTrade, onAccountStatus]() {
-            if (wrap->tapi_callback)
-                wrap->tapi_jenv->DeleteGlobalRef(wrap->tapi_callback);
-            wrap->tapi_callback      = callback;
-            wrap->tapi_onOrderStatus = onOrderStatus;
-            wrap->tapi_onOrderTrade  = onOrderTrade;
+        wrap->msg_loop().PostTask([wrap, callback, onOrderStatus, onOrderTrade, onAccountStatus]() {
+            if (wrap->m_tapi_callback)
+                wrap->jenv->DeleteGlobalRef(wrap->m_tapi_callback);
+            wrap->m_tapi_callback      = callback;
+            wrap->tapi_onOrderStatus   = onOrderStatus;
+            wrap->tapi_onOrderTrade    = onOrderTrade;
             wrap->tapi_onAccountStatus = onAccountStatus;
         });
     }
     else {
-        wrap->m_tapi_loop.msg_loop().PostTask([wrap]() {
-            if (wrap->tapi_callback) {
-                wrap->tapi_jenv->DeleteGlobalRef(wrap->tapi_callback);
-                wrap->tapi_callback = nullptr;
+        wrap->msg_loop().PostTask([wrap]() {
+            if (wrap->m_tapi_callback) {
+                wrap->jenv->DeleteGlobalRef(wrap->m_tapi_callback);
+                wrap->m_tapi_callback = nullptr;
                 wrap->tapi_onOrderStatus = nullptr;
                 wrap->tapi_onOrderTrade  = nullptr;
                 wrap->tapi_onAccountStatus = nullptr;
@@ -452,50 +501,50 @@ JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_setCallback
 }
 
 
-void TQuantApiWrap::on_order_status(shared_ptr<Order> order)
+void TradeApiWrap::on_order_status(shared_ptr<Order> order)
 {
-    if (!tapi_callback) return;
+    if (!m_tapi_callback) return;
 
-    m_tapi_loop.msg_loop().PostTask([this, order]() {
+    msg_loop().PostTask([this, order]() {
         try {
-            auto ord = convert_order(tapi_jenv, this->help_cls, createBar, order.get());
-            this->tapi_jenv->CallVoidMethod(tapi_callback, this->tapi_onOrderStatus, ord);
-            tapi_jenv->DeleteLocalRef(ord);
+            auto ord = convert_order(jenv, this->help_cls, createBar, order.get());
+            this->jenv->CallVoidMethod(m_tapi_callback, this->tapi_onOrderStatus, ord);
+            jenv->DeleteLocalRef(ord);
         }
         catch (const exception& e) {
-            throwJavaException(this->tapi_jenv, "exception: ", e.what());
+            throwJavaException(this->jenv, "exception: ", e.what());
         }
     });
 }
 
-void TQuantApiWrap::on_order_trade(shared_ptr<Trade> trade)
+void TradeApiWrap::on_order_trade(shared_ptr<Trade> trade)
 {
-    if (!tapi_callback) return;
+    if (!m_tapi_callback) return;
 
-    m_tapi_loop.msg_loop().PostTask([this, trade]() {
+    msg_loop().PostTask([this, trade]() {
         try {
-            auto trd = convert_trade(tapi_jenv, this->help_cls, createTrade, trade.get());
-            this->tapi_jenv->CallVoidMethod(tapi_callback, this->tapi_onOrderTrade, trd);
-            tapi_jenv->DeleteLocalRef(trd);
+            auto trd = convert_trade(jenv, this->help_cls, createTrade, trade.get());
+            this->jenv->CallVoidMethod(m_tapi_callback, this->tapi_onOrderTrade, trd);
+            jenv->DeleteLocalRef(trd);
         }
         catch (const exception& e) {
-            throwJavaException(this->tapi_jenv, "exception: ", e.what());
+            throwJavaException(this->jenv, "exception: ", e.what());
         }
     });
 }
 
-void TQuantApiWrap::on_account_status(shared_ptr<AccountInfo> account)
+void TradeApiWrap::on_account_status(shared_ptr<AccountInfo> account)
 {
-    if (!tapi_callback) return;
+    if (!m_tapi_callback) return;
 
-    m_tapi_loop.msg_loop().PostTask([this, account]() {
+    msg_loop().PostTask([this, account]() {
         try {
-            auto ord = convert_account_info(tapi_jenv, this->help_cls, createAccountInfo, account.get());
-            this->tapi_jenv->CallVoidMethod(tapi_callback, this->tapi_onAccountStatus, ord);
-            tapi_jenv->DeleteLocalRef(ord);
+            auto ord = convert_account_info(jenv, this->help_cls, createAccountInfo, account.get());
+            this->jenv->CallVoidMethod(m_tapi_callback, this->tapi_onAccountStatus, ord);
+            jenv->DeleteLocalRef(ord);
         }
         catch (const exception& e) {
-            throwJavaException(this->tapi_jenv, "exception: ", e.what());
+            throwJavaException(this->jenv, "exception: ", e.what());
         }
     });
 }

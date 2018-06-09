@@ -12,58 +12,21 @@ namespace TQuant
     {
         public class TQuantApi
         {
-            IntPtr handle;
-            TradeApi tapi;
-            Dictionary<string, DataApiImpl> dapi_map = new Dictionary<string, DataApiImpl>();
-
-            TQuantApi(IntPtr h)
+            public static void SetParams(string key, string value)
             {
-                this.handle = h;
+                TqapiDll.tqapi_set_params(key, value);
             }
 
-            /**
-            * 取数据接口
-            *
-            * @return
-            */
-            public TradeApi GetTradeApi()
+            public static TradeApi CreateTradeApi(string addr)
             {
-                if (tapi != null) return tapi;
-
-                var h = TqapiDll.tqapi_get_trade_api(this.handle);
-                if (h != IntPtr.Zero)
-                    tapi = new TradeApiImpl(this, h);
-
-                return tapi;
+                var h = TqapiDll.tapi_create(addr);
+                return h != IntPtr.Zero ? new TradeApiImpl(h, true) : null;
             }
 
-            /**
-            *  取交易接口
-            *
-            * @return
-            */
-            public DataApi GetDataApi(string source = "")
+            public static DataApi CreateDataApi(string addr)
             {
-                if (dapi_map.ContainsKey(source))
-                    return dapi_map[source];
-
-                var h = TqapiDll.tqapi_get_data_api(this.handle, source);
-                if (h != IntPtr.Zero)
-                {
-                    var dapi = new DataApiImpl(this, h);
-                    dapi_map[source] = dapi;
-                    return dapi;
-                }
-                else
-                {
-                    return null;
-                }
-            }
-
-            public static TQuantApi Create(string addr)
-            {
-                IntPtr h = TqapiDll.tqapi_create(addr);
-                return h != null ? new TQuantApi(h) : null;
+                var h = TqapiDll.dapi_create(addr);
+                return h != IntPtr.Zero ? new DataApiImpl(h, true) : null;
             }
         }
     }

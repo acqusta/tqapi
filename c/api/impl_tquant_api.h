@@ -10,6 +10,26 @@
 namespace tquant { namespace api { namespace impl {
 
     using namespace std;
+    using namespace mprpc;
+
+    class MpRpc_Connection : public MpRpcClient_Callback {
+    public:
+        MpRpc_Connection();
+        ~MpRpc_Connection();
+
+        bool connect(const string& addr);
+
+        void set_callback(MpRpcClient_Callback*  cb) { this->m_callback = cb; }
+
+        virtual void on_connected() override;
+        virtual void on_disconnected() override;
+        virtual void on_notification(shared_ptr<MpRpcMessage> rpcmsg) override;
+
+        MpRpcClient_Callback* m_callback;
+        MpRpcClient*          m_client;
+        loop::MsgLoopRun      m_msgloop;
+
+    };
 
 } } }
 

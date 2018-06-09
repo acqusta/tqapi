@@ -1,1 +1,2 @@
-from tqapi import TradeApi,DataApi,TQuantApi
+from tqapi import TradeApi,DataApi,set_params
+

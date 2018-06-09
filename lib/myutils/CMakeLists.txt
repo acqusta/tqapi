@@ -17,6 +17,8 @@ set(SRC
   ipc_connection.h
   unicode.cpp
   unicode.h
+  csvparser.cpp
+  csvparser.h
   timeutils.h
   loop/AsyncCall.h
   loop/MessageLoop.cpp

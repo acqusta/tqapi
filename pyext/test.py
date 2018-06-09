@@ -3,9 +3,7 @@ import sys
 import tquant as tq
 import time
 
-#tqapi = tqapi.TQuantApi('tcp://127.0.0.1:10001')
-tqapi = tq.TQuantApi('ipc://tqc_10001')
-dapi = tqapi.data_api()
+dapi = tq.DataApi('ipc://tqc_10001')
 dapi.bar('000001.SH', '1m')
 
 

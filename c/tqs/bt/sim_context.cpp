@@ -16,11 +16,13 @@ SimStraletContext::SimStraletContext()
 {
 }
 
-void SimStraletContext::init(SimDataApi* dapi, DataLevel level, SimTradeApi* tapi)
+void SimStraletContext::init(SimDataApi* dapi, DataLevel level, SimTradeApi* tapi, Json::Value& properties)
 {
     m_dapi = dapi;
     m_data_level = level;
     m_tapi = tapi;
+    m_properties = properties;
+    m_properties_str = m_properties.toStyledString();
 }
 
 
@@ -56,7 +58,7 @@ void SimStraletContext::post_event(const char* name, void* data)
     m_events.push_back(evt);
 }
 
-void SimStraletContext::set_timer(Stralet* stralet, int32_t id, int32_t delay, void* data)
+void SimStraletContext::set_timer(Stralet* stralet, int64_t id, int64_t delay, void* data)
 {
     auto triger_time = m_now_tp + milliseconds(delay);
     auto timer = make_shared<TimerInfo>();
@@ -70,7 +72,7 @@ void SimStraletContext::set_timer(Stralet* stralet, int32_t id, int32_t delay, v
     m_timers.push_back(timer);
 }
 
-void SimStraletContext::kill_timer(Stralet* stralet, int32_t id)
+void SimStraletContext::kill_timer(Stralet* stralet, int64_t id)
 {
     auto it = find_if(m_timers.begin(), m_timers.end(), [stralet, id](shared_ptr<TimerInfo>& x) {
         return x->stralet == stralet && x->id == id;
@@ -82,12 +84,9 @@ void SimStraletContext::kill_timer(Stralet* stralet, int32_t id)
     }
 }
 
-DataApi*  SimStraletContext::data_api(const char* source)
+DataApi*  SimStraletContext::data_api()
 {
-    if (source && *source != '\0')
-        return nullptr;
-    else
-        return m_dapi;
+    return m_dapi;
 }
 
 TradeApi* SimStraletContext::trade_api()
@@ -125,9 +124,25 @@ void SimStraletContext::unregister_algo(AlgoStralet* algo)
         m_algos.erase(it);
 }
 
-string SimStraletContext::get_parameter(const char* name, const char* def_value)
+string SimStraletContext::get_property(const char* name, const char* def_value)
 {
-    return "";
+    Json::Value empty;
+    Json::Value v = m_properties.get(name, empty);
+    switch (v.type()) {
+    case Json::ValueType::nullValue: return def_value;
+    case Json::ValueType::intValue:
+    case Json::ValueType::uintValue:
+    case Json::ValueType::realValue:
+    case Json::ValueType::stringValue:
+    case Json::ValueType::booleanValue: return v.asString();
+    default:
+        return v.toStyledString();
+    }
+}
+
+const string& SimStraletContext::get_properties()
+{
+    return m_properties_str;
 }
 
 const string& SimStraletContext::mode()
@@ -154,14 +169,12 @@ void SimStraletContext::calc_next_timer_time(DateTime* dt)
 void SimStraletContext::execute_timer(Stralet* stralet)
 {
     vector<shared_ptr<TimerInfo>> timers;
-    //for (auto& e : m_timers)
-    for (auto it = m_timers.begin(); it != m_timers.end(); ) {
+
+    for (auto it = m_timers.begin(); it != m_timers.end(); it++) {
         if ( (*it)->trigger_time <= m_now_tp) {
-            timers.push_back(*it);
-            it = m_timers.erase(it);
-        }
-        else {
-            it++;
+            auto& timer = (*it);
+            timers.push_back(timer);
+            timer->trigger_time = m_now_tp + milliseconds(timer->delay);
         }
     }
 

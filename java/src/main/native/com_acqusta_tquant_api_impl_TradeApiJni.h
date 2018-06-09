@@ -9,6 +9,22 @@ extern "C" {
 #endif
 /*
  * Class:     com_acqusta_tquant_api_impl_TradeApiJni
+ * Method:    create
+ * Signature: (Ljava/lang/String;)J
+ */
+JNIEXPORT jlong JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_create
+  (JNIEnv *, jclass, jstring);
+
+/*
+ * Class:     com_acqusta_tquant_api_impl_TradeApiJni
+ * Method:    destroy
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_destroy
+  (JNIEnv *, jclass, jlong);
+
+/*
+ * Class:     com_acqusta_tquant_api_impl_TradeApiJni
  * Method:    queryAccountStatus
  * Signature: (J)[Lcom/acqusta/tquant/api/TradeApi/AccountInfo;
  */

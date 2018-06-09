@@ -46,6 +46,8 @@ namespace tquant { namespace stralet { namespace backtest {
         vector<AccountConfig> accounts;
         string result_dir;
 
+        string properties;
+
         BackTestConfig() 
             : begin_date(0)
             , end_date(0)

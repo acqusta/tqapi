@@ -46,7 +46,7 @@ namespace tquant { namespace stralet {
         virtual void on_fini            () { }
         virtual void on_quote           (shared_ptr<const MarketQuote> q) { }
         virtual void on_bar             (const char* cycle, shared_ptr<const Bar> bar) { }
-        virtual void on_timer           (int32_t id, void* data) { }
+        virtual void on_timer           (int64_t id, void* data) { }
         virtual void on_event           (const string& evt, void* data) { }
         virtual void on_order_status    (shared_ptr<const Order> order) { }
         virtual void on_order_trade     (shared_ptr<const Trade> trade) { }
@@ -76,15 +76,16 @@ namespace tquant { namespace stralet {
         virtual system_clock::time_point cur_time_as_tp() = 0;
         virtual void post_event(const char* evt, void* data) = 0;
 
-        virtual void set_timer (Stralet* stralet, int32_t id, int32_t delay, void* data) = 0;
-        virtual void kill_timer(Stralet* stralet, int32_t id) = 0;
+        virtual void set_timer (Stralet* stralet, int64_t id, int64_t delay, void* data) = 0;
+        virtual void kill_timer(Stralet* stralet, int64_t id) = 0;
 
-        virtual DataApi*  data_api(const char* source = "") = 0;
+        virtual DataApi*  data_api() = 0;
         virtual TradeApi* trade_api() = 0;
 
         virtual ostream& logger(LogLevel level = LogLevel::INFO) = 0;
 
-        virtual string get_parameter(const char* name, const char* def_value) = 0;
+        virtual string        get_property(const char* name, const char* def_value) = 0;
+        virtual const string& get_properties() = 0;
 
         virtual const string& mode() = 0;
 

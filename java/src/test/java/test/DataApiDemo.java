@@ -1,19 +1,16 @@
 package test;
 
-import com.acqusta.tquant.api.TQuantApi;
 import com.acqusta.tquant.api.DataApi;
 import com.acqusta.tquant.api.DataApi.*;
+import com.acqusta.tquant.api.TQuantApi;
 
 public class DataApiDemo {
 
-    private TQuantApi api = null;
     private DataApi dapi = null;
 
     DataApiDemo() throws Exception {
 
-        //api = new TQuantApi("tcp://127.0.0.1:10001");
-        api = new TQuantApi("ipc://tqc_10001");
-        dapi = api.getDataApi("");
+        dapi = TQuantApi.createDataApi("ipc://tqc_10001");
 
         dapi.setCallback(new Callback() {
             @Override
@@ -193,7 +190,7 @@ public class DataApiDemo {
     }
 
     void test() {
-        testSubscribe();
+        //testSubscribe();
         testQuote();
         testBar();
         testTick();

@@ -6,16 +6,22 @@ import javax.xml.transform.Source;
 
 public class DataApiImpl implements DataApi {
 
-    private DataApiJni dapi;
+    private long handle;
 
-    public DataApiImpl(TQuantApiJni tqapi, String source) throws Exception {
-        this.dapi = new DataApiJni(tqapi, source);
+    public DataApiImpl(String addr) throws Exception {
+        this.handle = DataApiJni.create(addr);
     }
-    
+
+    @Override
+    public void finalize()
+    {
+        DataApiJni.destroy(this.handle);
+    }
+
     @Override
     public CallResult<MarketQuote[]> getTick(String code, int trading_day) {
         try {
-            return new CallResult(DataApiJni.getTick(dapi.handle, code, trading_day), "");
+            return new CallResult(DataApiJni.getTick(this.handle, code, trading_day), "");
         }catch (Exception e) {
             return new CallResult(null, e.getMessage());
         }
@@ -24,7 +30,7 @@ public class DataApiImpl implements DataApi {
     @Override
     public CallResult<DailyBar[]> getDailyBar (String code, String price_adj, Boolean align) {
         try {
-            return new CallResult(DataApiJni.getDailyBar(dapi.handle, code, price_adj, align), "");
+            return new CallResult(DataApiJni.getDailyBar(this.handle, code, price_adj, align), "");
         }catch (Exception e) {
             return new CallResult(null, e.getMessage());
         }
@@ -33,7 +39,7 @@ public class DataApiImpl implements DataApi {
     @Override
     public CallResult<Bar[]> getBar(String code, String cycle, int trading_day, Boolean align) {
         try {
-            return new CallResult(DataApiJni.getBar(dapi.handle, code,  cycle, trading_day, align), "");
+            return new CallResult(DataApiJni.getBar(this.handle, code,  cycle, trading_day, align), "");
         }catch (Exception e) {
             return new CallResult(null, e.getMessage());
         }
@@ -42,7 +48,7 @@ public class DataApiImpl implements DataApi {
     @Override
     public CallResult<MarketQuote> getQuote(String code) {
         try {
-            return new CallResult(DataApiJni.getQuote(dapi.handle, code), "");
+            return new CallResult(DataApiJni.getQuote(this.handle, code), "");
         }catch (Exception e) {
             return new CallResult(null, e.getMessage());
         }
@@ -51,7 +57,7 @@ public class DataApiImpl implements DataApi {
     @Override
     public CallResult<String[]> subscribe(String[] codes) {
         try {
-            return new CallResult(DataApiJni.subscribe(dapi.handle, codes), "");
+            return new CallResult(DataApiJni.subscribe(this.handle, codes), "");
         }catch (Exception e) {
             return new CallResult(null, e.getMessage());
         }
@@ -60,7 +66,7 @@ public class DataApiImpl implements DataApi {
     @Override
     public CallResult<String[]> unsubscribe(String[] codes) {
         try {
-            return new CallResult(DataApiJni.unsubscribe(dapi.handle, codes), "");
+            return new CallResult(DataApiJni.unsubscribe(this.handle, codes), "");
         }catch (Exception e) {
             return new CallResult(null, e.getMessage());
         }
@@ -68,6 +74,6 @@ public class DataApiImpl implements DataApi {
 
     @Override
     public void setCallback(Callback callback) {
-        DataApiJni.setCallback(dapi.handle, callback);
+        DataApiJni.setCallback(this.handle, callback);
     }
 }

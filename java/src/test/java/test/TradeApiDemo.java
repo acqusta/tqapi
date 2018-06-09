@@ -6,9 +6,7 @@ import com.acqusta.tquant.api.TradeApi.*;
 
 public class TradeApiDemo{
 
-    TQuantApi api = new TQuantApi("tcp://127.0.0.1:10001");
-
-    TradeApi tapi = api.getTradeApi();
+    TradeApi tapi = TQuantApi.createTradeApi("ipc://tqc_10001");
 
     String account_id = "glsc";
 

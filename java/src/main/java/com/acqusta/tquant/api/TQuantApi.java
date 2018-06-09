@@ -1,35 +1,30 @@
 package com.acqusta.tquant.api;
 
+import com.acqusta.tquant.api.impl.DataApiImpl;
+import com.acqusta.tquant.api.impl.TradeApiImpl;
 import com.acqusta.tquant.api.impl.TQuantApiImpl;
 
 public class TQuantApi {
 
-    private TQuantApiImpl impl;
+    public static void setParams(String key, String value)
+    {
+        TQuantApiImpl.setParams(key, value);
+    }
+
     /**
-     * 初始化 TQuantApi
+     * 创建 TradeApi
      * @param addr 服务器地址，取值通常为 tcp://127.0.0.1:10082
      */
-    public TQuantApi(String addr) throws Exception{
-        impl = new TQuantApiImpl(addr);
+    public static TradeApi createTradeApi(String addr) throws Exception{
+        return new TradeApiImpl(addr);
     }
 
     /**
-     * 取数据接口
+     * 创建 DataApi
      *
      * @return
      */
-    public TradeApi getTradeApi() {
-        return impl.getTradeApi();
+    public static DataApi  createDataApi(String addr) throws Exception{
+        return new DataApiImpl(addr);
     }
-
-    /**
-     *  取交易接口
-     *
-     * @return
-     */
-    public DataApi  getDataApi(String source) {
-        return impl.getDataApi(source);
-    }
-
-
 }

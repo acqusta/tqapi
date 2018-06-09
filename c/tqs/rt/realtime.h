@@ -12,7 +12,8 @@ namespace tquant { namespace stralet { namespace realtime {
     using namespace tquant::stralet;
 
     struct RealTimeConfig {
-        string tqapi_addr;
+        string data_api_addr;
+        string trade_api_addr;
         string output_dir;
     };
 

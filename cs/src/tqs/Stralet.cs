@@ -4,6 +4,8 @@ using System.Runtime.InteropServices;
 using TQuant.Api;
 using TQuant.Api.Impl;
 using TQuant.Stralet.Impl;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace TQuant.Stralet
 {
@@ -21,18 +23,17 @@ namespace TQuant.Stralet
         ILoggingAdapter Logger { get; }
         //IStraletRef Self { get; }
 
-        //Props Props { get; }
+        Dictionary<String, Object> Props { get; }
+
         Int32 TradingDay { get; }
 
         TQuant.Stralet.FinDataTime CurTime { get; }
 
         void PostEvent(String evt, long data);
 
-        void SetTimer(Stralet stralet, int id, int delay, long data = 0);
+        void SetTimer(Stralet stralet, long id, long delay, long data = 0);
 
-        void KillTimer(Stralet stralet, int id);
-
-        DataApi GetDataApi(String source = "");
+        void KillTimer(Stralet stralet, long id);
 
         DataApi DataApi { get; }
 
@@ -64,7 +65,6 @@ namespace TQuant.Stralet
 
         internal void _OnDestroy()
         {
-            this.ctx.Detach();
             this.ctx = null;
             this.wrap = null;
         }
@@ -120,8 +120,8 @@ namespace TQuant.Stralet
     {
         private IntPtr handle;
         private int trading_day;
-        private Dictionary<string, DataApiImpl> dapi_map = new Dictionary<string, DataApiImpl>();
-        private TradeApiImpl tapi = null;
+        //private DataApiImpl  dapi = null;
+        //private TradeApiImpl tapi = null;
 
         public StraletContextImpl(IntPtr h)
         {
@@ -131,24 +131,17 @@ namespace TQuant.Stralet
             IntPtr mode = TqsDll.tqs_sc_mode(this.handle);
             this.Mode = Marshal.PtrToStringAnsi(mode);
 
+            TradeApi = new TradeApiImpl(TqsDll.tqs_sc_trade_api(this.handle), false);
+            DataApi  = new DataApiImpl(TqsDll.tqs_sc_data_api(this.handle), false);
+
             this.Logger = new LogginAdpterImpl(this);
+
+            IntPtr str = TqsDll.tqs_sc_get_properties(h);
+            string properties = Marshal.PtrToStringAnsi(str);
+            Props = JsonConvert.DeserializeObject<Dictionary<string, object>>(properties);
         }
 
-        internal void Detach()
-        {
-            foreach (var dapi in dapi_map)
-            {
-                dapi.Value.Detach();
-            }
-
-            dapi_map.Clear();
-
-            if (tapi != null)
-            {
-                tapi.Detach();
-                tapi = null;
-            }
-        }
+        public Dictionary<string, object> Props { get; }
 
         public Int32 TradingDay { get { return trading_day; } }
 
@@ -159,57 +152,19 @@ namespace TQuant.Stralet
             TqsDll.tqs_sc_post_event(this.handle, evt, new IntPtr(data));
         }
 
-        public void SetTimer(Stralet stralet, Int32 id, Int32 delay, long data)
+        public void SetTimer(Stralet stralet, long id, long delay, long data = 0)
         {
             TqsDll.tqs_sc_set_timer(this.handle, stralet._Handle, id, delay, new IntPtr(data));
         }
 
-        public void KillTimer(Stralet stralet, Int32 id)
+        public void KillTimer(Stralet stralet, long id)
         {
             TqsDll.tqs_sc_kill_timer(this.handle, stralet._Handle, id);
         }
 
-        public DataApi GetDataApi(String source = "")
-        {
-            if (source == null) source = "";
+        public DataApi DataApi { get; }
 
-            if (dapi_map.ContainsKey(source))
-                return dapi_map[source];
-
-            var h = TqsDll.tqs_sc_data_api(this.handle, source);
-            if (h != IntPtr.Zero)
-            {
-                var dapi = new DataApiImpl(this, h);
-                dapi_map[source] = dapi;
-                return dapi;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        public DataApi DataApi
-        {
-            get
-            {
-                return GetDataApi();
-            }
-        }
-
-        public TradeApi TradeApi
-        {
-            get
-            {
-                if (tapi != null) return tapi;
-
-                var h = TqsDll.tqs_sc_trade_api(this.handle);
-                if (h != IntPtr.Zero)
-                    tapi = new TradeApiImpl(null, h);
-
-                return tapi;
-            }
-        }
+        public TradeApi TradeApi { get; }
 
         public void Log(String str)
         {

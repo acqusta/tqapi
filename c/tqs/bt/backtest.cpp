@@ -51,6 +51,8 @@ void run(const char* cfg_str, function<Stralet*()> creator)
         Json::Value result_dir = conf.get("result_dir", empty);
         if (result_dir.isString())    cfg.result_dir = result_dir.asString();
 
+        Json::Value properties = conf.get("properties", empty);
+        if (!properties.isNull()) cfg.properties = properties.toStyledString();
     }
     catch (exception& e) {
         cerr << "parse conf failure: " << e.what();
@@ -71,8 +73,7 @@ void run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
     cout << "backtest: " << cfg.begin_date << "-" << cfg.end_date << "," << cfg.data_level << endl
          << "          outdir " << cfg.result_dir << endl;
 
-    TQuantApi* tqapi = TQuantApi::create(cfg.dapi_addr);
-    DataApi* dapi = tqapi->data_api();
+    DataApi* dapi = create_data_api(cfg.dapi_addr.c_str());
 
     SimStraletContext* sc = new SimStraletContext();
     vector<SimAccount*> accounts;
@@ -93,9 +94,19 @@ void run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
         return;
     }
 
-    sc->init(sim_dapi, dl, sim_tapi);
+    Json::Value properties;
+    if (cfg.properties.size()) {
+        Json::Reader reader;
+        if (!reader.parse(cfg.properties, properties)) {
+            cerr << "parse conf failure: " << reader.getFormattedErrorMessages();
+            return;
+        }
+    }
+
+    sc->init(sim_dapi, dl, sim_tapi, properties);
 
     auto calendar = get_calendar(dapi);
+    //calendar.push_back(20180529);
     for (auto & date : calendar) {
         if (date < cfg.begin_date) continue;
         if (date > cfg.end_date) break;
@@ -116,7 +127,7 @@ void run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
     delete sc;
     delete sim_dapi;
     delete sim_tapi;
-    delete tqapi;
+    delete dapi;
 }
 
 } } }

@@ -13,6 +13,38 @@ static inline PyObject* convert_bars       (const vector<Bar>* b);
 static inline PyObject* convert_dailybars  (const vector<DailyBar>* b);
 static inline PyObject* convert_ticks      (const vector<MarketQuote>* ticks);
 
+
+PyObject* _wrap_dapi_create(PyObject* self, PyObject *args, PyObject* kwargs)
+{
+    const char* addr;
+
+    if (!PyArg_ParseTuple(args, "s", (char*)&addr))
+        return NULL;
+
+    auto api = create_data_api(addr);
+    if (!api)
+        Py_RETURN_NONE;
+
+    auto wrap = new DataApiWrap(api);
+
+    return PyLong_FromLongLong((int64_t)(wrap));
+}
+
+PyObject* _wrap_dapi_destroy(PyObject* self, PyObject *args, PyObject* kwargs)
+{
+    int64_t h;
+    if (!PyArg_ParseTuple(args, "L", &h))
+        return NULL;
+
+    if (h) {
+        auto wrap = reinterpret_cast<DataApiWrap*>(h);
+        delete wrap;
+    }
+
+    Py_RETURN_TRUE;
+}
+
+
 PyObject* _wrap_dapi_set_callback(PyObject* self, PyObject *args, PyObject* kwargs)
 {
     int64_t h;
@@ -198,7 +230,7 @@ void DataApiWrap::on_market_quote(shared_ptr<const MarketQuote> quote)
 {
     if (m_dapi_cb.obj == Py_None) return;
 
-    m_tqapi->msg_loop().PostTask([this, quote]() {
+    msg_loop().PostTask([this, quote]() {
         auto gstate = PyGILState_Ensure();
         PyObject* obj = convert_quote(quote.get());
         call_callback(this->m_dapi_cb.obj, "dapi.quote", obj);
@@ -210,7 +242,7 @@ void DataApiWrap::on_bar(const string& cycle, shared_ptr<const Bar> bar)
 {
     if (m_dapi_cb.obj != Py_None) return;
 
-    m_tqapi->msg_loop().PostTask([this, cycle, bar]() {
+    msg_loop().PostTask([this, cycle, bar]() {
         auto gstate = PyGILState_Ensure();
         PyObject* obj = Py_BuildValue("sN", cycle.c_str(), convert_bar(bar.get()));
         call_callback(this->m_dapi_cb.obj, "dapi.bar", obj);

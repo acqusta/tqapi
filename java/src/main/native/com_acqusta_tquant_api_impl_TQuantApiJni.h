@@ -9,35 +9,11 @@ extern "C" {
 #endif
 /*
  * Class:     com_acqusta_tquant_api_impl_TQuantApiJni
- * Method:    create
- * Signature: (Ljava/lang/String;)J
+ * Method:    setParams
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)V
  */
-JNIEXPORT jlong JNICALL Java_com_acqusta_tquant_api_impl_TQuantApiJni_create
-  (JNIEnv *, jclass, jstring);
-
-/*
- * Class:     com_acqusta_tquant_api_impl_TQuantApiJni
- * Method:    destroy
- * Signature: (J)V
- */
-JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_TQuantApiJni_destroy
-  (JNIEnv *, jclass, jlong);
-
-/*
- * Class:     com_acqusta_tquant_api_impl_TQuantApiJni
- * Method:    getTradeApi
- * Signature: (J)J
- */
-JNIEXPORT jlong JNICALL Java_com_acqusta_tquant_api_impl_TQuantApiJni_getTradeApi
-  (JNIEnv *, jclass, jlong);
-
-/*
- * Class:     com_acqusta_tquant_api_impl_TQuantApiJni
- * Method:    getDataApi
- * Signature: (JLjava/lang/String;)J
- */
-JNIEXPORT jlong JNICALL Java_com_acqusta_tquant_api_impl_TQuantApiJni_getDataApi
-  (JNIEnv *, jclass, jlong, jstring);
+JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_TQuantApiJni_setParams
+  (JNIEnv *, jclass, jstring, jstring);
 
 #ifdef __cplusplus
 }

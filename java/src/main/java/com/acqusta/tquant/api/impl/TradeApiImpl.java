@@ -6,14 +6,17 @@ public class TradeApiImpl implements TradeApi {
 
     private Callback callback = null;
 
-    private TQuantApiJni tqapi;
-
     private long handle;
-    public TradeApiImpl(TQuantApiJni tqapi) {
-        this.tqapi = tqapi;
-        this.handle = TQuantApiJni.getTradeApi(this.tqapi.handle);
+
+    public TradeApiImpl(String addr) throws Exception {
+        this.handle = TradeApiJni.create(addr);
     }
 
+    @Override
+    public void finalize()
+    {
+        TradeApiJni.destroy(this.handle);
+    }
 
     @Override
     public CallResult<AccountInfo[]> queryAccountStatus() {

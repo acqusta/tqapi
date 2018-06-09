@@ -36,8 +36,8 @@ class IFHftStralet : public Stralet {
 public:
     virtual void on_init  (StraletContext* sc) override;
     virtual void on_quote (shared_ptr<const MarketQuote> quote) override;
-    virtual void on_timer(int32_t id, void* data) override;
-    virtual void on_fini() override;
+    virtual void on_timer (int64_t id, void* data) override;
+    virtual void on_fini  () override;
 
     virtual void on_order_status(shared_ptr<const Order> order);
     virtual void on_order_trade(shared_ptr<const Trade> trade);
@@ -65,7 +65,6 @@ void IFHftStralet::on_init(StraletContext* sc)
 {
     Stralet::on_init(sc);
 
-    return;
     sc->logger() << "on_init: " << sc->trading_day() << endl;
     m_account_id  = "sim";
 
@@ -329,7 +328,7 @@ void IFHftStralet::clear_data()
     m_close_oid = nullptr;
 }
 
-void IFHftStralet::on_timer(int32_t id, void* data)
+void IFHftStralet::on_timer(int64_t id, void* data)
 {
     DateTime dt = m_ctx->cur_time();
 
