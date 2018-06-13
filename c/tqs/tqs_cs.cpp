@@ -44,17 +44,17 @@ void tqs_sc_post_event(void* h, const char* evt, void* data)
 }
 
 extern "C" _TQS_EXPORT
-void tqs_sc_set_timer(void* h, Stralet* stralet, int64_t id, int64_t delay, void* data)
+void tqs_sc_set_timer(void* h, int64_t id, int64_t delay, void* data)
 {
     StraletContext* ctx = reinterpret_cast<StraletContext*>(h);
-    ctx->set_timer(stralet, id, delay, data);
+    ctx->set_timer(id, delay, data);
 }
 
 extern "C" _TQS_EXPORT
-void tqs_sc_kill_timer(void * h, Stralet* stralet, int64_t id)
+void tqs_sc_kill_timer(void * h, int64_t id)
 {
     StraletContext* ctx = reinterpret_cast<StraletContext*>(h);
-    ctx->kill_timer(stralet, id);
+    ctx->kill_timer(id);
 }
 
 extern "C" _TQS_EXPORT
@@ -96,33 +96,10 @@ const char* tqs_sc_mode(void* h)
     return ctx->mode().c_str();
 }
 
-extern "C" _TQS_EXPORT
-void tqs_sc_register_algo(void* h, AlgoStralet* algo)
-{
-    StraletContext* ctx = reinterpret_cast<StraletContext*>(h);
-    ctx->register_algo(algo);
-}
-
-extern "C" _TQS_EXPORT
-void tqs_sc_unregister_algo(void* h, AlgoStralet* algo)
-{
-    StraletContext* ctx = reinterpret_cast<StraletContext*>(h);
-    ctx->unregister_algo(algo);
-}
-
 struct DotNetStalet {
-    //StraletContext* (*ctx)();
-    //void (*on_create)        ();
     void (*on_destroy)       ();
-    void (*on_init)          (StraletContext* sc);
-    void (*on_fini)          ();
-    void (*on_quote)         (const MarketQuote* q);
-    void (*on_bar)           (const char* cycle, const Bar* bar);
-    void (*on_timer)         (int64_t id, void* data);
-    void (*on_event)         (const char* evt, void* data);
-    void (*on_order_status)  (const OrderWrap* order);
-    void (*on_order_trade)   (const TradeWrap* trade);
-    void (*on_account_status)(const AccountInfoWrap* account);
+    void (*set_context)      (StraletContext* sc);
+    void (*on_event)         (int evt_id, void* data);
 };
 
 class StraletWrap : public Stralet {
@@ -136,44 +113,73 @@ public:
         m_stralet.on_destroy();
     }
 
-    virtual void on_init(StraletContext* sc) {
-        Stralet::on_init(sc);
-        m_stralet.on_init(sc);
-    }
+    struct TimerWrap {
+        int64_t id;
+        void*   data;
+    };
 
-    virtual void on_fini() override {
-        m_stralet.on_fini();
-    }
+    struct EventWrap {
+        const char* name;
+        void*       data;
+    };
 
-    virtual void on_quote(shared_ptr<const MarketQuote> q) override {
-        m_stralet.on_quote(q.get());
-    }
+    virtual void on_event(shared_ptr<StraletEvent> evt)
+    {
+        switch (evt->evt_id) {
+        case STRALET_EVENT_ID::ON_INIT:
+            m_stralet.set_context(m_ctx);
+            m_stralet.on_event(evt->evt_id, nullptr);
+            break;
+        case STRALET_EVENT_ID::ON_FINI:
+            m_stralet.on_event(evt->evt_id, nullptr);
+            break;
+        case STRALET_EVENT_ID::ON_QUOTE: {
+            auto on_quote = reinterpret_cast<OnQuote*>(evt.get());
+            m_stralet.on_event(evt->evt_id, (void*)on_quote->quote.get());
+            break;
+        }
+        case STRALET_EVENT_ID::ON_BAR: {
+            auto on_bar = reinterpret_cast<OnBar*>(evt.get());
+            m_stralet.on_event(evt->evt_id, (void*)on_bar->bar.get());
+            break;
+        }
+        case STRALET_EVENT_ID::ON_TIMER: {
+            auto on_timer = reinterpret_cast<OnTimer*>(evt.get());
+            TimerWrap timer;
+            timer.id = on_timer->id;
+            timer.data = on_timer->data;
 
-    virtual void on_bar(const char* cycle, shared_ptr<const Bar> bar) override {
-        m_stralet.on_bar(cycle, bar.get());
-    }
+            m_stralet.on_event(evt->evt_id, &timer);
+            break;
+        }
+        case STRALET_EVENT_ID::ON_EVENT: {
+            auto on_event = reinterpret_cast<OnEvent*>(evt.get());
+            EventWrap event;
+            event.name = on_event->name.c_str();
+            event.data = on_event->data;
 
-    virtual void on_timer(int64_t id, void* data) override {
-        m_stralet.on_timer(id, data);
-    }
-
-    virtual void on_event(const string& evt, void* data) override {
-        m_stralet.on_event(evt.c_str(), data);
-    }
-
-    virtual void on_order_status(shared_ptr<const Order> order) override {
-        auto v = OrderWrap(*order);
-        m_stralet.on_order_status(&v);
-    }
-
-    virtual void on_order_trade(shared_ptr<const Trade> trade) override {
-        auto v = TradeWrap(*trade);
-        m_stralet.on_order_trade(&v);
-    }
-
-    virtual void on_account_status(shared_ptr<const AccountInfo> account) override {
-        auto v = AccountInfoWrap(*account);
-        m_stralet.on_account_status(&v);
+            m_stralet.on_event(evt->evt_id, &event);
+            break;
+        }
+        case STRALET_EVENT_ID::ON_ORDER: {
+            auto on_order = reinterpret_cast<OnOrder*>(evt.get());
+            OrderWrap order(*on_order->order);
+            m_stralet.on_event(evt->evt_id, &order);
+            break;
+        }
+        case STRALET_EVENT_ID::ON_TRADE: {
+            auto on_trade = reinterpret_cast<OnTrade*>(evt.get());
+            TradeWrap trade(*on_trade->trade);
+            m_stralet.on_event(evt->evt_id, &trade);
+            break;
+        }
+        case STRALET_EVENT_ID::ON_ACCOUNT_STATUS: {
+            auto on_account = reinterpret_cast<OnAccountStatus*>(evt.get());
+            AccountInfoWrap account(*on_account->account);
+            m_stralet.on_event(evt->evt_id, &account);
+            break;
+        }
+        }
     }
 };
 

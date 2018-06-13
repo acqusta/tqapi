@@ -20,18 +20,17 @@ struct AccountInfoWrap {
     const char* msg;              // 状态信息，如登录失败原因
     const char* account_type;     // 帐号类型，如 stock, ctp
 
-    AccountInfoWrap(const AccountInfo& orig)
-    {
-        m_orig = make_shared<AccountInfo>(orig);
-        account_id   = _T( m_orig->account_id   );
-        broker       = _T( m_orig->broker       );
-        account      = _T( m_orig->account      );
-        status       = _T( m_orig->status       );
-        msg          = _T( m_orig->msg          );
-        account_type = _T( m_orig->account_type );
-    }
+    AccountInfo m_orig;
 
-    shared_ptr<AccountInfo> m_orig;
+    AccountInfoWrap(const AccountInfo& orig) : m_orig(orig)
+    {
+        account_id   = _T( m_orig.account_id   );
+        broker       = _T( m_orig.broker       );
+        account      = _T( m_orig.account      );
+        status       = _T( m_orig.status       );
+        msg          = _T( m_orig.msg          );
+        account_type = _T( m_orig.account_type );
+    }
 };
 
 struct BalanceWrap {
@@ -43,18 +42,17 @@ struct BalanceWrap {
     double      float_pnl;        // 浮动盈亏
     double      close_pnl;        // 实现盈亏
 
-    shared_ptr<Balance> m_orig;
+    Balance m_orig;
 
-    BalanceWrap(const Balance& orig)
+    BalanceWrap(const Balance& bal) : m_orig(bal)
     {
-        m_orig = make_shared<Balance>(orig);
-        account_id      = _T( m_orig->account_id   );
-        fund_account    = _T( m_orig->fund_account );
-        init_balance    = m_orig->init_balance         ;
-        enable_balance  = m_orig->enable_balance       ;
-        margin          = m_orig->margin               ;
-        float_pnl       = m_orig->float_pnl            ;
-        close_pnl       = m_orig->close_pnl            ;
+        account_id      = _T( m_orig.account_id   );
+        fund_account    = _T( m_orig.fund_account );
+        init_balance    = m_orig.init_balance      ;
+        enable_balance  = m_orig.enable_balance    ;
+        margin          = m_orig.margin            ;
+        float_pnl       = m_orig.float_pnl         ;
+        close_pnl       = m_orig.close_pnl         ;
     }
 };
 
@@ -74,25 +72,24 @@ struct OrderWrap {
     const char* status_msg;       // 状态消息
     int32_t     order_id;         // 自定义订单编号
 
-    shared_ptr<Order> m_orig;
+    Order m_orig;
 
-    OrderWrap(const Order& orig)
+    OrderWrap(const Order& order) : m_orig(order)
     {
-        m_orig = make_shared<Order>(orig);
-        account_id     = _T( m_orig->account_id     );
-        code           = _T( m_orig->code           );
-        name           = _T( m_orig->name           );
-        entrust_no     = _T( m_orig->entrust_no     );
-        entrust_action = _T( m_orig->entrust_action );
-        entrust_price  = m_orig->entrust_price         ;
-        entrust_size   = m_orig->entrust_size          ;
-        entrust_date   = m_orig->entrust_date          ;
-        entrust_time   = m_orig->entrust_time          ;
-        fill_price     = m_orig->fill_price            ;
-        fill_size      = m_orig->fill_size             ;
-        status         = _T( m_orig->status      );
-        status_msg     = _T( m_orig->status_msg  );
-        order_id       = m_orig->order_id              ;
+        account_id     = _T( m_orig.account_id     );
+        code           = _T( m_orig.code           );
+        name           = _T( m_orig.name           );
+        entrust_no     = _T( m_orig.entrust_no     );
+        entrust_action = _T( m_orig.entrust_action );
+        entrust_price  = m_orig.entrust_price         ;
+        entrust_size   = m_orig.entrust_size          ;
+        entrust_date   = m_orig.entrust_date          ;
+        entrust_time   = m_orig.entrust_time          ;
+        fill_price     = m_orig.fill_price            ;
+        fill_size      = m_orig.fill_size             ;
+        status         = _T( m_orig.status      )     ;
+        status_msg     = _T( m_orig.status_msg  )     ;
+        order_id       = m_orig.order_id              ;
     }
 };
 
@@ -108,21 +105,20 @@ struct TradeWrap {
     int32_t     fill_date;        // 成交日期
     int32_t     fill_time;        // 成交时间
 
-    shared_ptr<Trade> m_orig;
+    Trade m_orig;
 
-    TradeWrap(const Trade& orig)
+    TradeWrap(const Trade& trade) : m_orig(trade)
     {
-        m_orig = make_shared<Trade>(orig);
-        account_id     = _T( m_orig->account_id     );
-        code           = _T( m_orig->code           );
-        name           = _T( m_orig->name           );
-        entrust_no     = _T( m_orig->entrust_no     );
-        entrust_action = _T( m_orig->entrust_action );
-        fill_no        = _T( m_orig->fill_no        );
-        fill_size      = m_orig->fill_size              ;
-        fill_price     = m_orig->fill_price             ;
-        fill_date      = m_orig->fill_date              ;
-        fill_time      = m_orig->fill_time              ;
+        account_id     = _T( m_orig.account_id     );
+        code           = _T( m_orig.code           );
+        name           = _T( m_orig.name           );
+        entrust_no     = _T( m_orig.entrust_no     );
+        entrust_action = _T( m_orig.entrust_action );
+        fill_no        = _T( m_orig.fill_no        );
+        fill_size      = m_orig.fill_size           ;
+        fill_price     = m_orig.fill_price          ;
+        fill_date      = m_orig.fill_date           ;
+        fill_time      = m_orig.fill_time           ;
     }
 };
 
@@ -210,18 +206,18 @@ struct CallResultWrap {
 };
 
 enum CallResultValueType {
-    BAR_ARRAY = 1,
-    QUOTE_ARRAY,
-    DAILYBAR_ARRAY,
-    QUOTE_VALUE,
-    STRING_VALUE,
-    ACCOUNT_INFO_ARRAY,
-    POSITION_ARRAY,
-    ORDER_ARRAY,
-    TRADE_ARRAY,
-    ORDER_ID_VALUE,
-    BOOL_VALUE,
-    BALANCE_VALUE
+    VT_BAR_ARRAY = 1,
+    VT_QUOTE_ARRAY,
+    VT_DAILYBAR_ARRAY,
+    VT_QUOTE,
+    VT_STRING,
+    VT_ACCOUNT_INFO_ARRAY,
+    VT_POSITION_ARRAY,
+    VT_ORDER_ARRAY,
+    VT_TRADE_ARRAY,
+    VT_ORDER_ID,
+    VT_BOOL,
+    VT_BALANCE
 };
 
 #pragma pack()

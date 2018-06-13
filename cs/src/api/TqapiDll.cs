@@ -112,7 +112,6 @@ namespace TQuant
                                                             TradeApiOnOrderTrade on_order_trade,
                                                             TradeApiOnAccountStatus on_account_status);
 
-
                 public static T[] CopyArray<T>(CallResultWrap r)
                 {
                     T[] ar = new T[r.element_count];

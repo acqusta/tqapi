@@ -64,7 +64,7 @@ CallResultWrap* dapi_get_bar(void* h, const char* code, const char* cycle, int t
         cr->value = reinterpret_cast<const void*>(cr->bars->data());
         cr->element_size = sizeof(Bar);
         cr->element_count = (int32_t)cr->bars->size();
-        cr->value_type = BAR_ARRAY;
+        cr->value_type = VT_BAR_ARRAY;
     }
     else {
         cr->_msg = r.msg;
@@ -86,7 +86,7 @@ CallResultWrap* dapi_get_daily_bar(void* h, const char* code, const char* price_
         cr->value = reinterpret_cast<const void*>(cr->daily_bars->data());
         cr->element_size = sizeof(DailyBar);
         cr->element_count = (int32_t)cr->daily_bars->size();
-        cr->value_type = DAILYBAR_ARRAY;
+        cr->value_type = VT_DAILYBAR_ARRAY;
     }
     else {
         cr->_msg = r.msg;
@@ -108,7 +108,7 @@ CallResultWrap* dapi_get_tick(void* h, const char* code, int trading_day)
         cr->value = reinterpret_cast<const void*>(cr->quotes->data());
         cr->element_size = sizeof(MarketQuote);
         cr->element_count = (int32_t)cr->quotes->size();
-        cr->value_type = QUOTE_ARRAY;
+        cr->value_type = VT_QUOTE_ARRAY;
     }
     else {
         cr->_msg = r.msg;
@@ -130,7 +130,7 @@ CallResultWrap* dapi_get_quote(void* h, const char* code)
         cr->value = reinterpret_cast<const void*>(cr->quote.get());
         cr->element_size = sizeof(MarketQuote);
         cr->element_count = 1;
-        cr->value_type = QUOTE_VALUE;
+        cr->value_type = VT_QUOTE;
     }
     else {
         cr->_msg = r.msg;
@@ -160,7 +160,7 @@ CallResultWrap* dapi_subscribe(void* h, const char* codes)
 
         cr->text  = str;
         cr->value = cr->text.c_str();
-        cr->value_type = STRING_VALUE;
+        cr->value_type = VT_STRING;
     }
     else {
         cr->_msg = r.msg;
@@ -190,7 +190,7 @@ CallResultWrap* dapi_unsubscribe(void* h, const char* codes)
 
         cr->text = str;
         cr->value = cr->text.c_str();
-        cr->value_type = STRING_VALUE;
+        cr->value_type = VT_STRING;
     }
     else {
         cr->_msg = r.msg;
@@ -259,7 +259,7 @@ CallResultWrap* tapi_query_account_status(void* h)
         cr->value = reinterpret_cast<const void*>(cr->account_infos->data());
         cr->element_size = sizeof(AccountInfoWrap);
         cr->element_count = (int32_t)cr->account_infos->size();
-        cr->value_type = ACCOUNT_INFO_ARRAY;
+        cr->value_type = VT_ACCOUNT_INFO_ARRAY;
     }
     else 
     {
@@ -282,7 +282,7 @@ CallResultWrap* tapi_query_balance(void* h, const char* account_id)
         cr->value = reinterpret_cast<const void*>(cr->balance.get());
         cr->element_size = sizeof(BalanceWrap);
         cr->element_count = 1;
-        cr->value_type = BALANCE_VALUE;
+        cr->value_type = VT_BALANCE;
     }
     else {
         cr->_msg = r.msg;
@@ -308,7 +308,7 @@ CallResultWrap* tapi_query_positions(void* h, const char* account_id)
         cr->value = reinterpret_cast<const void*>(cr->positions->data());
         cr->element_size = sizeof(PositionWrap);
         cr->element_count = (int32_t)cr->positions->size();
-        cr->value_type = POSITION_ARRAY;
+        cr->value_type = VT_POSITION_ARRAY;
     }
     else {
         cr->_msg = r.msg;
@@ -333,7 +333,7 @@ CallResultWrap* tapi_query_orders(void* h, const char* account_id)
         cr->value = reinterpret_cast<const void*>(cr->orders->data());
         cr->element_size = sizeof(OrderWrap);
         cr->element_count = (int32_t)cr->orders->size();
-        cr->value_type = ORDER_ARRAY;
+        cr->value_type = VT_ORDER_ARRAY;
     }
     else {
         cr->_msg = r.msg;
@@ -358,7 +358,7 @@ CallResultWrap* tapi_query_trades(void* h, const char* account_id)
         cr->value = reinterpret_cast<const void*>(cr->trades->data());
         cr->element_size = sizeof(TradeWrap);
         cr->element_count = (int32_t)cr->trades->size();
-        cr->value_type = TRADE_ARRAY;
+        cr->value_type = VT_TRADE_ARRAY;
     }
     else {
         cr->_msg = r.msg;
@@ -385,7 +385,7 @@ CallResultWrap* tapi_place_order(void* h, const char* account_id,
         cr->value = reinterpret_cast<const void*>(cr->order_id.get());
         cr->element_size = sizeof(OrderID);
         cr->element_count = 1;
-        cr->value_type = ORDER_ID_VALUE;
+        cr->value_type = VT_ORDER_ID;
     }
     else {
         cr->_msg = r.msg;
@@ -410,7 +410,7 @@ CallResultWrap* tapi_cancel_order1(void* h, const char* account_id,
         cr->value = reinterpret_cast<const void*>(cr->bool_value.get());
         cr->element_size = sizeof(bool);
         cr->element_count = 1;
-        cr->value_type = BOOL_VALUE;
+        cr->value_type = VT_BOOL;
     }
     else {
         cr->_msg = r.msg;
@@ -434,7 +434,7 @@ CallResultWrap* tapi_cancel_order2(void* h, const char* account_id,
         cr->value = reinterpret_cast<const void*>(cr->bool_value.get());
         cr->element_size = sizeof(bool);
         cr->element_count = 1;
-        cr->value_type = BOOL_VALUE;
+        cr->value_type = VT_BOOL;
     }
     else {
         cr->_msg = r.msg;
@@ -455,7 +455,7 @@ CallResultWrap* tapi_query(void* h, const char* account_id, const char* command,
     if (r.value) {
         cr->text = _T(*r.value);
         cr->value = cr->text.c_str();
-        cr->value_type = STRING_VALUE;
+        cr->value_type = VT_STRING;
     }
     else {
         cr->_msg = r.msg;
@@ -522,4 +522,3 @@ void tapi_set_callback(void*h,
             delete old_cb;
     }
 }
-

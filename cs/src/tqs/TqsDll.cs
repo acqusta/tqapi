@@ -17,6 +17,41 @@ namespace TQuant
 
         namespace Impl
         {
+            [StructLayout(LayoutKind.Sequential)]
+            struct TimerWrap
+            {
+                public Int64  id;
+                public IntPtr data;
+            };
+
+            [StructLayout(LayoutKind.Sequential)]
+            struct EventWrap
+            {
+                public string name;
+                public IntPtr data;
+            };
+
+            [StructLayout(LayoutKind.Sequential)]
+            struct BarWrap
+            {
+                public string cycle;
+                public IntPtr bar;
+            };
+
+            class STRALET_EVENT_ID
+            {
+                public const int ZERO_ID  = 0;
+                public const int ON_INIT  = 1;
+                public const int ON_FINI  = 2;
+                public const int ON_QUOTE = 3;
+                public const int ON_BAR   = 4;
+                public const int ON_TIMER = 5;
+                public const int ON_EVENT = 6;
+                public const int ON_ORDER = 7;
+                public const int ON_TRADE = 8;
+                public const int ON_ACCOUNT_STATUS = 9;
+            };
+
             class TqsDll
             {
                 [DllImport("tqs.dll", EntryPoint = "tqs_sc_trading_day", CallingConvention =CallingConvention.Cdecl)]
@@ -32,10 +67,10 @@ namespace TQuant
                 public static extern void tqs_sc_post_event(IntPtr h, String evt, IntPtr data);
 
                 [DllImport("tqs.dll", EntryPoint = "tqs_sc_set_timer", CallingConvention = CallingConvention.Cdecl)]
-                public static extern void tqs_sc_set_timer(IntPtr h, IntPtr stralet, Int64 id, Int64 delay, IntPtr data);
+                public static extern void tqs_sc_set_timer(IntPtr h, Int64 id, Int64 delay, IntPtr data);
 
                 [DllImport("tqs.dll", EntryPoint = "tqs_sc_data_api", CallingConvention = CallingConvention.Cdecl)]
-                public static extern void tqs_sc_kill_timer(IntPtr h, IntPtr stralet, Int64 id);
+                public static extern void tqs_sc_kill_timer(IntPtr h, Int64 id);
 
                 [DllImport("tqs.dll", EntryPoint = "tqs_sc_data_api", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tqs_sc_data_api(IntPtr h);
@@ -52,62 +87,27 @@ namespace TQuant
                 [DllImport("tqs.dll", EntryPoint = "tqs_sc_mode", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tqs_sc_mode(IntPtr h);
 
-                [DllImport("tqs.dll", EntryPoint = "tqs_sc_register_algo", CallingConvention = CallingConvention.Cdecl)]
-                public static extern IntPtr tqs_sc_register_algo(IntPtr h, IntPtr algo);
-
-                [DllImport("tqs.dll", EntryPoint = "tqs_sc_unregister_algo", CallingConvention = CallingConvention.Cdecl)]
-                public static extern IntPtr tqs_sc_unregister_algo(IntPtr h, IntPtr algo);
-
                 [DllImport("tqs.dll", EntryPoint = "tqs_stralet_create", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tqs_stralet_create(ref DotNetStralet stralet);
 
                 [DllImport("tqs.dll", EntryPoint = "tqs_stralet_destroy", CallingConvention = CallingConvention.Cdecl)]
                 public static extern void tqs_stralet_destroy(IntPtr stralet);
 
-
                 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
                 public delegate void StraletOnDestroy();
 
                 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-                public delegate void StraletOnInit(IntPtr sc);
+                public delegate void StraletSetContext(IntPtr sc);
 
                 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-                public delegate void StraletOnFini();
-
-                [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-                public delegate void StraletOnQuote(MarketQuote quote);
-
-                [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-                public delegate void StraletOnBar(String cycle, Bar bar);
-
-                [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-                public delegate void StraletOnTimer(Int32 id, IntPtr data);
-
-                [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-                public delegate void StraletOnEvent(String evt, IntPtr data);
-
-                [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-                public delegate void StraletOnOrderStatus(Order status);
-
-                [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-                public delegate void StraletOnOrderTrade(Trade trade);
-
-                [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-                public delegate void StraletOnAccountStatus(AccountInfo info);
+                public delegate void StraletOnEvent(Int32 evt_id, IntPtr sc);
 
                 [StructLayout(LayoutKind.Sequential)]
                 public struct DotNetStralet
                 {
                     public StraletOnDestroy         OnDestroy;
-                    public StraletOnInit            OnInit;
-                    public StraletOnFini            OnFini;
-                    public StraletOnQuote           OnQuote;
-                    public StraletOnBar             OnBar;
-                    public StraletOnTimer           OnTimer;
+                    public StraletSetContext        SetContext;
                     public StraletOnEvent           OnEvent;
-                    public StraletOnOrderStatus     OnOrderStatus;
-                    public StraletOnOrderTrade      OnTrade;
-                    public StraletOnAccountStatus   OnAccountStatus;
                 }
 
                 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

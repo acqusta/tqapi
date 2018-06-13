@@ -11,10 +11,6 @@ set(SRC
   bt/sim_data.h
   bt/sim_trade.cpp
   bt/sim_trade.h
-  # algo/algo_pm.cpp
-  # algo/algo_pm.h
-  # algo/algo_twap.cpp
-  # algo/algo_vwap.cpp
   stralet.cpp
   stralet.h
   tqs_cs.cpp
@@ -38,7 +34,6 @@ add_executable(tqs_demo
   demo/demo.cpp
   demo/demo_rbreaker.cpp
   demo/demo_doublema.cpp
-  demo/demo_ifhft.cpp
 )
 
 target_link_libraries(tqs_demo

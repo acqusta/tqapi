@@ -262,7 +262,7 @@ namespace TQuant.Stralet
         }
     }
 
-    public interface FsmContext
+    public interface IFsmContext
     {
         bool IsTimerActive(string name);
         void ClearTimers();
@@ -273,18 +273,19 @@ namespace TQuant.Stralet
     }
 
     #endregion
-    public class Fsm<TState, TData>
+    public class BaseFsm<TState, TData>
     {
-        private FsmContext fsm_context;
+        private IFsmContext fsm_context;
 
-        public Fsm()
+        public BaseFsm()
         {
         }
 
-        public void SetFsmContext(FsmContext context)
+        public void SetFsmContext(IFsmContext context)
         {
             this.fsm_context = context;
         }
+
         public class OnTimer
         {
             public string Name { get; }
@@ -297,28 +298,12 @@ namespace TQuant.Stralet
             }
         }
 
-        //public class OnEvent
-        //{
-        //    public string Name { get; }
-        //    public object Data { get; }
-
-        //    public OnEvent(string name, object data)
-        //    {
-        //        this.Name = name;
-        //        this.Data = data;
-        //    }
-        //}
-
         public class IllegalStateException : Exception
         {
             public IllegalStateException(string message) : base(message)//, innerException)
             {
             }
         }
-
-        //private ILoggingAdapter _log { get { return Context.Logger; } }
-        //private Dictionary<long, Object> tell_object_map = new Dictionary<long, object>();
-        //private long tell_object_next_id = 0;
 
         public delegate State<TState, TData> StateFunction(Event<TData> fsmEvent);
 
@@ -380,20 +365,6 @@ namespace TQuant.Stralet
 
         public void SetTimer(string name, object msg, TimeSpan timeout, bool repeat = false)
         {
-            //if (DebugEvent)
-            //    _log.Debug($"setting {(repeat ? "repeating" : "")} timer {name}/{timeout}: {msg}");
-
-            //Timer timer;
-            //if (name2timers.TryGetValue(name, out timer))
-            //{
-            //    name2timers.Remove(name);
-            //    id2timers.Remove(timer.Id);
-            //    fsm_context.KillTimer(timer.Id);
-            //}
-            //timer = new Timer(name, msg, (int)timeout.TotalMilliseconds, repeat, ++this.timer_id);
-
-            //id2timers[timer.Id] = timer;
-            //name2timers[timer.Name] = timer;
             fsm_context.SetTimer(name, msg, timeout, repeat);
         }
 
@@ -403,16 +374,6 @@ namespace TQuant.Stralet
         /// <param name="name">The name of the timer to cancel.</param>
         public void KillTimer(string name)
         {
-            //if (DebugEvent)
-            //    _log.Debug($"Cancelling timer {name}");
-
-            //Timer timer;
-            //if (name2timers.TryGetValue(name, out timer))
-            //{
-            //    name2timers.Remove(name);
-            //    id2timers.Remove(timer.Id);
-            //    fsm_context.KillTimer(timer.Id);
-            //}
             fsm_context.KillTimer(name);
         }
 
@@ -521,16 +482,6 @@ namespace TQuant.Stralet
         #region Internal implementation details
 
         /// <summary>
-        /// Retrieves the support needed to interact with an actor's listeners.
-        /// </summary>
-        //public ListenerSupport Listeners { get; } = new ListenerSupport();
-
-        /// <summary>
-        /// Can be set to enable debugging on certain actions taken by the FSM
-        /// </summary>
-        protected bool DebugEvent;
-
-        /// <summary>
         /// FSM state data and current timeout handling
         /// </summary>
         private State<TState, TData> _currentState;
@@ -626,13 +577,6 @@ namespace TQuant.Stralet
 
         public bool Receive(object message)
         {
-            // TODO:
-            //if (this._stateTimout != null)
-            //{
-            //    id2timers.Remove(_stateTimout.Id);
-            //    this._stateTimout = null;
-            //}
-
             if (message != null)
                 ProcessMsg(message);
             return true;
@@ -646,11 +590,6 @@ namespace TQuant.Stralet
 
         private void ProcessEvent(Event<TData> fsmEvent)
         {
-            //if (DebugEvent)
-            //{
-            //    _log.Debug("processing {0} in state {2}", fsmEvent, StateName);
-            //}
-
             var stateFunc = _stateFunctions[_currentState.StateName];
             var oldState = _currentState;
 
@@ -667,11 +606,6 @@ namespace TQuant.Stralet
             }
 
             ApplyState(nextState);
-
-            //if (DebugEvent && !Equals(oldState, nextState))
-            //{
-            //    _log.Debug("transition {0} -> {1}", oldState, nextState);
-            //}
         }
 
         private void ApplyState(State<TState, TData> nextState)
@@ -734,43 +668,14 @@ namespace TQuant.Stralet
             }
         }
 
+
         ///// <summary>
-        ///// Call the <see cref="OnTermination"/> hook if you want to retain this behavior.
-        ///// When overriding make sure to call base.PostStop();
-        ///// 
-        ///// Please note that this method is called by default from <see cref="ActorBase.PreRestart"/> so
-        ///// override that one if <see cref="OnTermination"/> shall not be called during restart.
+        ///// By default, <see cref="Failure"/> is logged at error level and other
+        ///// reason types are not logged. It is possible to override this behavior.
         ///// </summary>
-        //protected void PostStop()
+        ///// <param name="reason">TBD</param>
+        //protected virtual void LogTermination(Reason reason)
         //{
-        //    /*
-        //     * Setting this instance's state to Terminated does no harm during restart, since
-        //     * the new instance will initialize fresh using StartWith.
-        //     */
-        //    Terminate(Stay().WithStopReason(Shutdown.Instance));
-        //    //base.PostStop();
         //}
-
-
-        /// <summary>
-        /// By default, <see cref="Failure"/> is logged at error level and other
-        /// reason types are not logged. It is possible to override this behavior.
-        /// </summary>
-        /// <param name="reason">TBD</param>
-        protected virtual void LogTermination(Reason reason)
-        {
-            //var failure = reason as Failure;
-            //if (failure != null)
-            //{
-            //    if (failure.Cause is Exception)
-            //    {
-            //        _log.Error(failure.Cause as Exception, "terminating due to Failure");
-            //    }
-            //    else
-            //    {
-            //        _log.Error(failure.Cause.ToString());
-            //    }
-            //}
-        }
     }
 }

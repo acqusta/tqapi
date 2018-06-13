@@ -59,23 +59,39 @@ class RBreakerStralet : public Stralet {
     string contract = "CU.SHF";
 
 public:
-    virtual void on_init(StraletContext* sc) override;
-    virtual void on_bar(const char* cycle, shared_ptr<const Bar> bar) override;
-    virtual void on_fini() override;
+    virtual void on_event(shared_ptr<StraletEvent> evt) override;
+    void on_init();
+    void on_bar(const char* cycle, shared_ptr<const Bar> bar);
+    void on_fini();
 
     int cancel_unfinished_order();
 
     void place_order(const string& code, double price, int64_t size, const string action);
 };
 
-void RBreakerStralet::on_init(StraletContext* sc)
+void RBreakerStralet::on_event(shared_ptr<StraletEvent> evt)
 {
-    Stralet::on_init(sc);
+    switch (evt->evt_id) {
+    case STRALET_EVENT_ID::ON_INIT:
+        on_init();
+        break;
+    case STRALET_EVENT_ID::ON_FINI:
+        on_fini();
+        break;
+    case STRALET_EVENT_ID::ON_BAR: {
+        auto on_bar = evt->as<OnBar>();
+        this->on_bar(on_bar->cycle.c_str(), on_bar->bar);
+        break;
+    }
+    }
+}
 
-    sc->logger() << "on_init: " << sc->trading_day() << endl;
+void RBreakerStralet::on_init()
+{
+    ctx()->logger() << "on_init: " << ctx()->trading_day() << endl;
     // TODO: 从配置中得到要交易的商品期货，然后从主力合约映射表中得到今日交易的合约
-    sc->data_api()->subscribe(vector<string>{contract});
-    //sc->data_api()->subscribe(vector<string>{"000001.SH"});
+    ctx()->data_api()->subscribe(vector<string>{contract});
+    //ctx()->data_api()->subscribe(vector<string>{"000001.SH"});
 
     // TODO: 从上个交易日价格计算出今天的价格区间
 }

@@ -52,10 +52,10 @@ namespace TQuant.Stralet
 
         internal class _OnTimer
         {
-            public int Id { get; }
+            public long Id { get; }
             public long Data { get; }
 
-            public _OnTimer(int id, long data)
+            public _OnTimer(long id, long data)
             {
                 this.Id = id;
                 this.Data = data;
@@ -79,67 +79,74 @@ namespace TQuant.Stralet
     {
         private IFsmStralet stralet;
 
-        private IStraletContext context;
-
         public FsmStraletWrap(IFsmStralet stralet)
         {
             this.stralet = stralet;
         }
 
-        public override void OnInit(IStraletContext sc)
+        public override void OnEvent(Object evt)
         {
-            context = sc;
-            stralet.SetContext(context);
-            stralet.Receive(StraletEvent.OnInit.Instance);
+            stralet.Receive(evt);
         }
 
-        public override void OnFini()
-        {
-            stralet.Receive(StraletEvent.OnFini.Instance);
-        }
-
-        public override void OnQuote(MarketQuote quote)
-        {
-            stralet.Receive(new StraletEvent.OnQuote(quote));
-        }
-        public override void OnBar(String cycle, Bar bar)
-        {
-            stralet.Receive(new StraletEvent.OnBar(cycle, bar));
-        }
-        public override void OnTimer(Int32 id, long data)
-        {
-            stralet.Receive(new StraletEvent._OnTimer(id, data));
-        }
-
-        public override void OnEvent(String evt, long data)
-        {
-            stralet.Receive(new StraletEvent._OnEvent(evt, data));
-        }
-
-        public override void OnOrderStatus(Order order)
-        {
-            stralet.Receive(new StraletEvent.OnOrder(order));
-        }
-
-        public override void OnOrderTrade(Trade trade)
-        {
-            stralet.Receive(new StraletEvent.OnTrade(trade));
-        }
-
-        public override void OnAccountStatus(AccountInfo account)
-        {
-        }
     }
 
     public interface IFsmStralet
     {
-        void SetContext(IStraletContext ctx);
+        //void SetContext(IStraletContext ctx);
         Stralet Stralet { get; }
         bool Receive(object message);
     }
 
+    public interface IFsmStraletContext<TState, TDate> : IStraletContext, IFsmContext
+    { }
 
-    class FsmContextImpl<TState, TData> : FsmContext
+    class FsmStraletContextImpl<TState, TData> : FsmContextImpl<TState, TData>, IStraletContext, IFsmStraletContext<TState, TData>
+    {
+        private FsmStralet<TState, TData> stralet;
+        private IStraletContext sc { get { return stralet.stralet.Context; } }
+
+        public FsmStraletContextImpl(FsmStralet<TState, TData> stralet) : base(stralet)
+        {
+            this.stralet = stralet;
+        }
+
+        public FinDataTime CurTime {  get { return sc.CurTime; } }
+
+        public DataApi DataApi { get { return sc.DataApi; } }
+
+        public ILoggingAdapter Logger { get { return this.sc.Logger; } }
+
+        public string Mode {  get { return this.sc.Mode; } }
+        
+        public Dictionary<string, object> Props { get { return this.sc.Props; } }
+
+        public TradeApi TradeApi { get { return this.sc.TradeApi; } }
+
+        public int TradingDay { get { return this.sc.TradingDay; } }
+
+        public void KillTimer(long id)
+        {
+            this.sc.KillTimer(id);
+        }
+
+        public void PostEvent(string evt, long data)
+        {
+            this.sc.PostEvent(evt, data);
+        }
+
+        public void SetTimer(long id, long delay, long data = 0)
+        {
+            this.sc.SetTimer(id, delay, data);
+        }
+
+        public void Stop()
+        {
+            this.sc.Stop();
+        }
+    }
+
+    class FsmContextImpl<TState, TData> : IFsmContext
     {
         class Timer
         {
@@ -150,10 +157,10 @@ namespace TQuant.Stralet
                 Interval = interval;
                 Name = name;
                 Id = id;
-                OnTimer = new Fsm<TState, TData>.OnTimer(Name, Message);
+                OnTimer = new BaseFsm<TState, TData>.OnTimer(Name, Message);
             }
 
-            public Fsm<TState, TData>.OnTimer OnTimer { get; }
+            public BaseFsm<TState, TData>.OnTimer OnTimer { get; }
             public string Name { get; }
             public object Message { get; }
             public bool Repeat { get; }
@@ -181,7 +188,7 @@ namespace TQuant.Stralet
             {
                 name2timers.Remove(name);
                 id2timers.Remove(timer.Id);
-                this.stralet.Context.KillTimer(stralet.Stralet, timer.Id);
+                this.stralet.Context.KillTimer(timer.Id);
             }
         }
 
@@ -192,13 +199,13 @@ namespace TQuant.Stralet
             {
                 name2timers.Remove(name);
                 id2timers.Remove(timer.Id);
-                this.stralet.Context.KillTimer(stralet.Stralet, timer.Id);
+                this.stralet.Context.KillTimer(timer.Id);
             }
             timer = new Timer(name, data, (int)timeout.TotalMilliseconds, repeat, ++this.timer_id);
 
             id2timers[timer.Id] = timer;
             name2timers[timer.Name] = timer;
-            this.stralet.Context.SetTimer(stralet.Stralet, timer.Id, timer.Interval, 0);
+            this.stralet.Context.SetTimer(timer.Id, timer.Interval, 0);
         }
 
         public bool IsTimerActive(string name)
@@ -209,7 +216,7 @@ namespace TQuant.Stralet
         public void ClearTimers()
         {
             foreach (var timer in this.id2timers.Values)
-                this.stralet.Context.KillTimer(stralet.Stralet, timer.Id);
+                this.stralet.Context.KillTimer(timer.Id);
             this.id2timers.Clear();
             this.name2timers.Clear();
         }
@@ -240,7 +247,7 @@ namespace TQuant.Stralet
                     {
                         id2timers.Remove(timer.Id);
                         name2timers.Remove(timer.Name);
-                        this.stralet.Context.KillTimer(this.stralet.Stralet, timer.Id);
+                        this.stralet.Context.KillTimer(timer.Id);
                     }
 
                     return timer.OnTimer;
@@ -277,28 +284,21 @@ namespace TQuant.Stralet
 
     }
 
-    public class FsmStralet<TState, TData> : Fsm<TState, TData>, IFsmStralet
+    public class FsmStralet<TState, TData> : BaseFsm<TState, TData>, IFsmStralet
     {
-        private FsmStraletWrap stralet;
-        private FsmContextImpl<TState, TData> fsm_context;
+        internal FsmStraletWrap stralet;
+        private FsmStraletContextImpl<TState, TData> fsm_context;
 
         protected FsmStralet()
         {
             this.stralet = new FsmStraletWrap(this);
-            this.fsm_context = new FsmContextImpl<TState, TData>(this);
+            this.fsm_context = new FsmStraletContextImpl<TState, TData>(this);
             base.SetFsmContext(fsm_context);
         }
 
         public Stralet Stralet { get { return stralet; } }
 
-        public IStraletContext Context { get { return ctx; } }
-
-        internal IStraletContext ctx;
-
-        public void SetContext(IStraletContext ctx)
-        {
-            this.ctx = ctx;
-        }
+        public IFsmStraletContext<TState, TData> Context { get { return fsm_context; } }
 
         public bool Receive(object message)
         {

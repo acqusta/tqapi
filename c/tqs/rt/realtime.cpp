@@ -113,7 +113,6 @@ namespace tquant { namespace stralet { namespace realtime {
     };
 
     struct TimerInfo {
-        Stralet* stralet;
         int64_t  id;
         int64_t  delay;
         void*    data;
@@ -173,9 +172,9 @@ namespace tquant { namespace stralet { namespace realtime {
 
         void timer_tigger(shared_ptr<TimerInfo> timer);
 
-        virtual void set_timer(Stralet* stralet, int64_t id, int64_t delay, void* data) override;
+        virtual void set_timer(int64_t id, int64_t delay, void* data) override;
 
-        virtual void kill_timer(Stralet* stralet, int64_t id) override;
+        virtual void kill_timer(int64_t id) override;
 
         virtual DataApi*  data_api() override;
 
@@ -187,10 +186,6 @@ namespace tquant { namespace stralet { namespace realtime {
         virtual const string& get_properties() override;
 
         virtual const string& mode() override;
-
-        virtual void register_algo(AlgoStralet* algo) override;
-
-        virtual void unregister_algo(AlgoStralet* algo) override;
 
         // DataApi Callback
         virtual void on_market_quote(shared_ptr<const MarketQuote> quote) override;
@@ -208,8 +203,7 @@ namespace tquant { namespace stralet { namespace realtime {
         TradeApiWrap* m_tapi_wrap;
         DataApiWrap*  m_dapi_wrap;
 
-        std::unordered_map<string, shared_ptr<TimerInfo>> m_timers;
-        vector<AlgoStralet*> m_algos;
+        std::unordered_map<int64_t, shared_ptr<TimerInfo>> m_timers;
         Stralet* m_stralet;
 
         loop::MessageLoop m_msgloop;
@@ -218,8 +212,8 @@ namespace tquant { namespace stralet { namespace realtime {
 
     void RealTimeStraletContext::post_event(const char* evt, void* data)
     {
-        string evt_s(evt);
-        m_msgloop.PostTask([this, evt_s, data]() { m_stralet->on_event(evt_s, data); });
+        auto on_event = make_shared<OnEvent>(evt, data);
+        m_msgloop.PostTask([this, on_event]() { m_stralet->on_event(on_event); });
     }
 
     DataApi* RealTimeStraletContext::data_api()
@@ -232,39 +226,25 @@ namespace tquant { namespace stralet { namespace realtime {
         return m_tapi_wrap;
     }
 
-    void RealTimeStraletContext::set_timer(Stralet* stralet, int64_t id, int64_t delay, void* data)
+    void RealTimeStraletContext::set_timer(int64_t id, int64_t delay, void* data)
     {
         auto timer = make_shared<TimerInfo>();
-        timer->stralet = stralet;
         timer->id = id;
         timer->delay = delay;
         timer->data = data;
         timer->is_dead = false;
 
-        char str_id[100];
-        uint64_t tmp = (uint64_t)stralet;
-#ifdef _WIN32
-        sprintf(str_id, "%I64u%I64u", tmp, id);
-#else
-        sprintf(str_id, "%llu%llu", tmp, id);
-#endif
-        auto it = m_timers.find(str_id);
+        auto it = m_timers.find(id);
         if (it != m_timers.end())
             it->second->is_dead = true;
-        m_timers[str_id] = timer;
+
+        m_timers[id] = timer;
         m_msgloop.PostDelayedTask(bind(&RealTimeStraletContext::timer_tigger, this, timer), (uint32_t)timer->delay);
     }
 
-    void RealTimeStraletContext::kill_timer(Stralet* stralet, int64_t id)
+    void RealTimeStraletContext::kill_timer(int64_t id)
     {
-        char str_id[100];
-        uint64_t tmp = (uint64_t)stralet;
-#ifdef _WIN32
-        sprintf(str_id, "%I64u%I64u", tmp, id);
-#else
-        sprintf(str_id, "%llu%llu", tmp, id);
-#endif
-        auto it = m_timers.find(str_id);
+        auto it = m_timers.find(id);
         if (it != m_timers.end()) {
             it->second->is_dead = true;
             m_timers.erase(it);
@@ -274,7 +254,7 @@ namespace tquant { namespace stralet { namespace realtime {
     void RealTimeStraletContext::timer_tigger(shared_ptr<TimerInfo> timer)
     {
         if (!timer->is_dead) {
-            m_stralet->on_timer(timer->id, timer->data);
+            m_stralet->on_event(make_shared<OnTimer>(timer->id, timer->data));
             if (!timer->is_dead)
                 m_msgloop.PostDelayedTask(bind(&RealTimeStraletContext::timer_tigger, this, timer), (uint32_t)timer->delay);
         }
@@ -302,18 +282,6 @@ namespace tquant { namespace stralet { namespace realtime {
         return cout;
     }
 
-    void RealTimeStraletContext::register_algo(AlgoStralet* algo)
-    {
-        m_algos.push_back(algo);
-    }
-
-    void RealTimeStraletContext::unregister_algo(AlgoStralet* algo)
-    {
-        auto it = find(m_algos.begin(), m_algos.end(), algo);
-        if (it != m_algos.end())
-            m_algos.erase(it);
-    }
-
     string RealTimeStraletContext::get_property(const char* name, const char* def_value)
     {
         return "";
@@ -321,7 +289,8 @@ namespace tquant { namespace stralet { namespace realtime {
 
     const string& RealTimeStraletContext::get_properties()
     {
-        return "";
+        static string  s = "";
+        return s;
     }
 
     const string& RealTimeStraletContext::mode()
@@ -332,39 +301,36 @@ namespace tquant { namespace stralet { namespace realtime {
     void RealTimeStraletContext::on_market_quote(shared_ptr<const MarketQuote> quote)
     {
         m_msgloop.PostTask([this, quote]() {
-            for (auto& algo : m_algos) algo->on_quote(quote);
-            m_stralet->on_quote(quote);
+            m_stralet->on_event(make_shared<OnQuote>(quote));
         });
     }
 
     void RealTimeStraletContext::on_bar(const string& cycle, shared_ptr<const Bar> bar)
     {
-        m_msgloop.PostTask([this, cycle, bar]() {
-            for (auto& algo : m_algos) algo->on_bar(cycle.c_str(), bar);
-            m_stralet->on_bar(cycle.c_str(), bar);
+        auto on_bar = make_shared<OnBar>(cycle, bar);
+        m_msgloop.PostTask([this, on_bar]() {
+            m_stralet->on_event(on_bar);
         });
     }
 
     void RealTimeStraletContext::on_order_status(shared_ptr<Order> order)
     {
         m_msgloop.PostTask([this, order]() {
-            for (auto& algo : m_algos) algo->on_order_status(order);
-            m_stralet->on_order_status(order);
+            m_stralet->on_event(make_shared<OnOrder>(order));
         });
     }
 
     void RealTimeStraletContext::on_order_trade(shared_ptr<Trade> trade)
     {
         m_msgloop.PostTask([this, trade]() {
-            for (auto& algo : m_algos) algo->on_order_trade(trade);
-            m_stralet->on_order_trade(trade);
+            m_stralet->on_event(make_shared<OnTrade>(trade));
         });
     }
     void RealTimeStraletContext::on_account_status(shared_ptr<AccountInfo> account)
     {
         m_msgloop.PostTask([this, account]() {
-            for (auto& algo : m_algos) algo->on_account_status(account);
-            m_stralet->on_account_status(account);
+            auto evt = make_shared<OnAccountStatus>(account);
+            m_stralet->on_event(evt);
         });
     }
 
@@ -384,12 +350,12 @@ namespace tquant { namespace stralet { namespace realtime {
 
         RealTimeStraletContext* sc = new RealTimeStraletContext(dapi, tapi, stralet);
 
-        stralet->on_init(sc);
-
+        stralet->set_context(sc);
+        stralet->on_event(make_shared<OnInit>());
         loop::RunLoop run(&sc->m_msgloop);
         run.Run();
+        stralet->on_event(make_shared<OnFini>());
 
-        stralet->on_fini();
         delete stralet;
         delete sc;
         delete tapi;

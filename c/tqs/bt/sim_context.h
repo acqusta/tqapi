@@ -39,7 +39,7 @@ namespace tquant { namespace stralet { namespace backtest {
         void move_to(int trading_day);
         void run_one_day(Stralet* stralet);
         void calc_next_timer_time(DateTime* dt);
-        void execute_timer(Stralet*);
+        void execute_timer();
         void set_sim_time(const DateTime& dt);
 
         virtual int32_t trading_day() override;
@@ -47,8 +47,8 @@ namespace tquant { namespace stralet { namespace backtest {
         virtual system_clock::time_point cur_time_as_tp() override;
         virtual void post_event(const char* evt, void* data) override;
 
-        virtual void set_timer (Stralet* stralet, int64_t id, int64_t delay, void* data) override;
-        virtual void kill_timer(Stralet* stralet, int64_t id) override;
+        virtual void set_timer (int64_t id, int64_t delay, void* data) override;
+        virtual void kill_timer(int64_t id) override;
 
         virtual DataApi*  data_api() override;
         virtual TradeApi* trade_api() override;
@@ -59,10 +59,6 @@ namespace tquant { namespace stralet { namespace backtest {
         virtual const string& get_properties() override;
 
         virtual const string& mode() override;
-
-        virtual void register_algo(AlgoStralet* algo) override;
-        virtual void unregister_algo(AlgoStralet* algo) override;
-
     private:
         SimDataApi*  m_dapi;
         SimTradeApi* m_tapi;
@@ -73,7 +69,7 @@ namespace tquant { namespace stralet { namespace backtest {
         DateTime m_now;
 
         struct TimerInfo {
-            Stralet* stralet;
+            //Stralet* stralet;
             int64_t  id;
             int64_t  delay;
             void*    data;
@@ -86,9 +82,9 @@ namespace tquant { namespace stralet { namespace backtest {
             void* data;
         };
 
-        vector<shared_ptr<TimerInfo>> m_timers;
+        Stralet*                      m_stralet;
+        unordered_map<int64_t, shared_ptr<TimerInfo>> m_timers;
         list<shared_ptr<EventData>>   m_events;
-        vector<AlgoStralet*>          m_algos;
         string                        m_mode;
         Json::Value                   m_properties;
         string                        m_properties_str;
