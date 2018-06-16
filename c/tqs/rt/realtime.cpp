@@ -18,17 +18,17 @@ namespace tquant { namespace stralet { namespace realtime {
             : m_dapi(dapi)
         {}
 
-        virtual CallResult<const vector<MarketQuote>> tick(const string& code, int trading_day) override
+        virtual CallResult<const MarketQuoteArray> tick(const string& code, int trading_day) override
         {
             return m_dapi->tick(code, trading_day);
         }
 
-        virtual CallResult<const vector<Bar>> bar(const string& code, const string& cycle, int trading_day, bool align) override
+        virtual CallResult<const BarArray> bar(const string& code, const string& cycle, int trading_day, bool align) override
         {
             return m_dapi->bar(code, cycle, trading_day, align);
         }
 
-        virtual CallResult<const vector<DailyBar>> daily_bar(const string& code, const string& price_adj, bool align) override
+        virtual CallResult<const DailyBarArray> daily_bar(const string& code, const string& price_adj, bool align) override
         {
             return m_dapi->daily_bar(code, price_adj, align);
         }

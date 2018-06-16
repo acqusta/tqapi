@@ -65,7 +65,7 @@ namespace tquant { namespace api { namespace impl {
             if (m_conn) delete m_conn;
         }
 
-        virtual CallResult<const vector<MarketQuote>> tick(const string& code, int trading_day) override
+        virtual CallResult<const MarketQuoteArray> tick(const string& code, int trading_day) override
         {
             mprpc::MsgPackPacker pk;
             pk.pack_map(4);
@@ -76,23 +76,24 @@ namespace tquant { namespace api { namespace impl {
 
             auto rsp = m_conn->m_client->call("dapi.tst", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
-                return CallResult<const vector<MarketQuote>>(builld_errmsg(rsp->err_code, rsp->err_msg));
+                return CallResult<const MarketQuoteArray>(builld_errmsg(rsp->err_code, rsp->err_msg));
             
             const BinDataHead* bin_head = reinterpret_cast<const BinDataHead*>(rsp->result.via.bin.ptr);
             //uint32_t bin_len = rsp->result.via.bin.size;
 
             if (bin_head->element_size < sizeof(RawMarketQuote))
-                return CallResult<const vector<MarketQuote>>("-1,wrong data format");
-            auto ticks = make_shared<vector<MarketQuote>>();
+                return CallResult<const MarketQuoteArray>("-1,wrong data format");
+            auto ticks = make_shared<MarketQuoteArray>(code, bin_head->element_count);
             const char* p = bin_head->data;
+
             for (uint32_t i = 0; i < bin_head->element_count; i++) {
-                ticks->push_back(MarketQuote(*reinterpret_cast<const RawMarketQuote*>(p), code));
+                ticks->push_back(*reinterpret_cast<const RawMarketQuote*>(p));
                 p += bin_head->element_size;
             }
-            return CallResult<const vector<MarketQuote>>(ticks);
+            return CallResult<const MarketQuoteArray>(ticks);
         }
 
-        virtual CallResult<const vector<Bar>> bar(const string& code, const string& cycle, int trading_day, bool align) override
+        virtual CallResult<const BarArray> bar(const string& code, const string& cycle, int trading_day, bool align) override
         {
             MsgPackPacker pk;
             pk.pack_map(6);
@@ -105,22 +106,24 @@ namespace tquant { namespace api { namespace impl {
 
             auto rsp = m_conn->m_client->call("dapi.tsi", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
-                return CallResult<const vector<Bar>>(builld_errmsg(rsp->err_code, rsp->err_msg));
+                return CallResult<const BarArray>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
             const BinDataHead* bin_head = reinterpret_cast<const BinDataHead*>(rsp->result.via.bin.ptr);
 
             if (bin_head->element_size < sizeof(RawBar))
-                return CallResult<const vector<Bar>>("-1,wrong data format");
-            auto bars = make_shared<vector<Bar>>(bin_head->element_count);
+                return CallResult<const BarArray>("-1,wrong data format");
+
+            auto bars = make_shared<BarArray>(code, bin_head->element_count);
+
             const char* p = bin_head->data;
             for (uint32_t i = 0; i < bin_head->element_count; i++) {
-                (*bars)[i].assign(*reinterpret_cast<const RawBar*>(p), code.c_str());
+                bars->push_back(*reinterpret_cast<const RawBar*>(p));
                 p += bin_head->element_size;
             }
-            return CallResult<const vector<Bar>>(bars);
+            return CallResult<const BarArray>(bars);
         }
 
-        virtual CallResult<const vector<DailyBar>> daily_bar(const string& code, const string& price_adj, bool align) override
+        virtual CallResult<const DailyBarArray> daily_bar(const string& code, const string& price_adj, bool align) override
         {
             MsgPackPacker pk;
             pk.pack_map(6);
@@ -133,21 +136,22 @@ namespace tquant { namespace api { namespace impl {
 
             auto rsp = m_conn->m_client->call("dapi.tsi", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
-                return CallResult<const vector<DailyBar>>(builld_errmsg(rsp->err_code, rsp->err_msg));
+                return CallResult<const DailyBarArray>(builld_errmsg(rsp->err_code, rsp->err_msg));
 
             const BinDataHead* bin_head = reinterpret_cast<const BinDataHead*>(rsp->result.via.bin.ptr);
             //uint32_t bin_len = rsp->result.via.bin.size;
 
             if (bin_head->element_size < sizeof(RawDailyBar))
-                return CallResult<const vector<DailyBar>>("-1,wrong data format");
+                return CallResult<const DailyBarArray>("-1,wrong data format");
 
-            auto bars = make_shared<vector<DailyBar>>();
+            auto bars = make_shared<DailyBarArray>(code, bin_head->element_count);
+
             const char* p = bin_head->data;
             for (uint32_t i = 0; i < bin_head->element_count; i++) {
-                bars->push_back(DailyBar(*reinterpret_cast<const RawDailyBar*>(p), code));
+                bars->push_back(*reinterpret_cast<const RawDailyBar*>(p));
                 p += bin_head->element_size;
             }
-            return CallResult<const vector<DailyBar>>(bars);
+            return CallResult<const DailyBarArray>(bars);
         }
 
         virtual CallResult<const MarketQuote> quote(const string& code) override

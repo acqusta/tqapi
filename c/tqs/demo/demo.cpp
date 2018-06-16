@@ -24,12 +24,13 @@ public:
         case STRALET_EVENT_ID::ON_QUOTE:
         {
             auto q = evt->as<OnQuote>()->quote;
-            ctx()->logger() << "on_quote: " << q->code << "," << q->date << "," << q->time << "," << q->last << endl;
+            //ctx()->logger() << "on_quote: " << q->code << "," << q->date << "," << q->time << "," << q->last << endl;
+            break;
         }
         case STRALET_EVENT_ID::ON_BAR:
         {
             auto bar = evt->as<OnBar>()->bar;
-            ctx()->logger() << "on_bar: " << bar->code << "," << bar->date << "," << bar->time << "," << bar->close << endl;
+            //ctx()->logger() << "on_bar: " << bar->code << "," << bar->date << "," << bar->time << "," << bar->close << endl;
             break;
         }
         case STRALET_EVENT_ID::ON_ORDER:

@@ -19,17 +19,17 @@ namespace tquant { namespace stralet { namespace backtest {
     struct TickCache {
         int64_t       pos;
         int64_t       size;
-        MarketQuote** first;
-        MarketQuote** last;
-        shared_ptr<const vector<MarketQuote>> ticks;
+        //MarketQuote** first;
+        //MarketQuote** last;
+        shared_ptr<const MarketQuoteArray> ticks;
     };
 
     struct BarTickCache {
         int64_t pos;
         int64_t size;
-        Bar**   first;
-        Bar**   last;
-        shared_ptr<const vector<Bar>> bars;
+        //Bar**   first;
+        //Bar**   last;
+        shared_ptr<const BarArray> bars;
     };
 
     class SimDataApi : public DataApi {
@@ -42,20 +42,20 @@ namespace tquant { namespace stralet { namespace backtest {
         {
         }
 
-        virtual CallResult<const vector<MarketQuote>> tick       (const string& code, int trading_day) override;
-        virtual CallResult<const vector<Bar>>         bar        (const string& code, const string& cycle, int trading_day, bool align) override;
-        virtual CallResult<const vector<DailyBar>>    daily_bar  (const string& code, const string& price_adj, bool align) override;
-        virtual CallResult<const MarketQuote>         quote      (const string& code) override;
-        virtual CallResult<const vector<string>>      subscribe  (const vector<string>& codes) override;
-        virtual CallResult<const vector<string>>      unsubscribe(const vector<string>& codes) override;
+        virtual CallResult<const MarketQuoteArray> tick       (const string& code, int trading_day) override;
+        virtual CallResult<const BarArray>         bar        (const string& code, const string& cycle, int trading_day, bool align) override;
+        virtual CallResult<const DailyBarArray>    daily_bar  (const string& code, const string& price_adj, bool align) override;
+        virtual CallResult<const MarketQuote>      quote      (const string& code) override;
+        virtual CallResult<const vector<string>>   subscribe  (const vector<string>& codes) override;
+        virtual CallResult<const vector<string>>   unsubscribe(const vector<string>& codes) override;
 
         virtual DataApi_Callback* set_callback(DataApi_Callback* callback) override;
 
         void calc_nex_time(DateTime* dt);
 
         shared_ptr<MarketQuote> next_quote(const string& code);
-        shared_ptr<Bar> next_bar(const string & code);
-        const Bar* last_bar(const string & code);
+        shared_ptr<Bar>         next_bar(const string & code);
+        const RawBar*           last_bar(const string & code);
 
         DataApi* dapi() { return m_dapi; }
 

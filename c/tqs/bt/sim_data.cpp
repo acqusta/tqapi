@@ -28,57 +28,62 @@ static int cmp_time(int date_1, int time_1, int date_2, int time_2)
     return 1;
 }
 
-CallResult<const vector<MarketQuote>> SimDataApi::tick(const string& code, int trading_day)
+CallResult<const MarketQuoteArray> SimDataApi::tick(const string& code, int trading_day)
 {
     if (trading_day == 0 || trading_day == m_ctx->trading_day()) {
         auto it = m_tick_caches.find(code);
         if (it == m_tick_caches.end())
-            return CallResult<const vector<MarketQuote>>("-1,no tick data");
+            return CallResult<const MarketQuoteArray>("-1,no tick data");
         if (it->second.pos < 0)
-            return CallResult<const vector<MarketQuote>>("-1,not arrive yet");
-        return CallResult<const vector<MarketQuote>>(it->second.ticks);
+            return CallResult<const MarketQuoteArray>("-1,not arrive yet");
+        return CallResult<const MarketQuoteArray>(it->second.ticks);
     }
     else {
         return m_dapi->tick(code, trading_day);
     }
 }
 
-CallResult<const vector<Bar>> SimDataApi::bar(const string& code, const string& cycle, int trading_day, bool align)
+CallResult<const BarArray> SimDataApi::bar(const string& code, const string& cycle, int trading_day, bool align)
 {
     if (cycle != "1m")
-        return CallResult<const vector<Bar>>("-1,unsupported cycle");
+        return CallResult<const BarArray>("-1,unsupported cycle");
 
     if (!align)
-        return CallResult<const vector<Bar>>("-1,bactest's bar should be aligned");
+        return CallResult<const BarArray>("-1,bactest's bar should be aligned");
 
     if (trading_day == 0 || trading_day == m_ctx->trading_day()) {
         auto it = m_bar_caches.find(code);
         if (it == m_bar_caches.end())
-            return CallResult<const vector<Bar>>("-1,no bar data");
+            return CallResult<const BarArray>("-1,no bar data");
         if (it->second.pos < 0)
-            return CallResult<const vector<Bar>>("-1,not arrive yet");
-        return CallResult<const vector<Bar>>(it->second.bars);
+            return CallResult<const BarArray>("-1,not arrive yet");
+        return CallResult<const BarArray>(it->second.bars);
     }
     else if (trading_day < m_ctx->trading_day())
         return m_dapi->bar(code, cycle, trading_day, align);
     else
-        return CallResult<const vector<Bar>>("-1,try to get data after current trading_day");
+        return CallResult<const BarArray>("-1,try to get data after current trading_day");
 }
 
-CallResult<const vector<DailyBar>> SimDataApi::daily_bar(const string& code, const string& price_adj, bool align)
+CallResult<const DailyBarArray> SimDataApi::daily_bar(const string& code, const string& price_adj, bool align)
 {
     // TODO: get it from cache.
     auto r = m_dapi->daily_bar(code, price_adj, align);
     if (r.value) {
         auto today = m_ctx->trading_day();
         auto bars = r.value;
-        auto it = find_if(bars->begin(), bars->end(), [today](const DailyBar& b) { return b.date >= today; });
-        if (it == bars->end())
+        int pos = 0;
+        for (pos = 0; pos < bars->size(); pos++)
+            if (bars->at(pos).date > today) break;
+        if ( pos == 0 || pos == bars->size()) {
             // Shouldn't happen?
-            return CallResult<const vector<DailyBar> > ("-1,no data");
+            return CallResult<const DailyBarArray >("-1,no data");
+        }
         else {
-            auto new_bars = make_shared<vector<DailyBar>>(bars->begin(), it-1);
-            return CallResult<const vector<DailyBar>>(new_bars);
+            auto new_bars = make_shared<DailyBarArray>(code, pos - 1);
+            for (int i = 0; i < pos - 1; i++)
+                new_bars->push_back(bars->at(i));
+            return CallResult<const DailyBarArray>(new_bars);
         }
     }
     else {
@@ -111,7 +116,7 @@ CallResult<const MarketQuote> SimDataApi::quote(const string& code)
             return CallResult<const MarketQuote>("-1,no tick data");
         if (it->second.pos < 0)
             return CallResult<const MarketQuote>("-1,not arrive yet");
-        auto q = make_shared<MarketQuote>(it->second.ticks->at(it->second.pos));
+        auto q = make_shared<MarketQuote>(it->second.ticks->at(it->second.pos), code);
         return CallResult<const MarketQuote>(q);
     }
     else {
@@ -139,34 +144,29 @@ CallResult<const vector<string>> SimDataApi::subscribe(const vector<string>& old
             }
 
             auto bars = r.value;
-            auto it = find_if(bars->begin(), bars->end(), [&dt](const Bar& a){
-                return cmp_time(a.date, a.time, dt.date, dt.time) >= 0; 
-            });
-            int64_t pos = -1;
-            if (it == bars->end()) {
-                pos = bars->size() - 1;
+            int pos = -1;
+            if (bars->size()) {
+                for (pos = 0; pos < bars->size(); pos++) {
+                    auto b = &bars->at(pos);
+                    int v = cmp_time(b->date, b->time, dt.date, dt.time);
+                    if (v == 0)
+                        break;
+                    else if (v > 0) {
+                        pos--;
+                        break;
+                    }
+                }
+                if (pos == bars->size()) {
+                    pos = bars->size() - 1;
+                }
             }
-            else {
-                if (cmp_time(it->date, it->time, dt.date, dt.time) == 0)
-                    pos = it - bars->begin();
-                else
-                    pos = it - bars->begin() - 1;
-            }
-
             BarTickCache cache;
             cache.pos  = pos;
             cache.bars = bars;
             cache.size = bars->size();
-#ifdef _WIN32
-            cache.first = (Bar**)&cache.bars->_Myfirst();
-            cache.last  = (Bar**)&cache.bars->_Mylast();
-#else
-            VectorImpl<Bar>* impl = (VectorImpl<Bar>*)cache.bars.get();
-            cache.first = &impl->_M_start;
-            cache.last  = &impl->_M_finish;
-#endif
-            // set size = 0;
-            *cache.last = *cache.first + pos + 1;
+            ((BarArray*)cache.bars.get())->set_size(0);
+
+            //*cache.last = *cache.first + pos + 1;
             m_bar_caches[code] = cache;
         }
     }
@@ -178,32 +178,25 @@ CallResult<const vector<string>> SimDataApi::subscribe(const vector<string>& old
             if (!r.value) continue;
 
             auto ticks = r.value;
-            auto it = find_if(ticks->begin(), ticks->end(), [&dt](const MarketQuote& a) {
-                return cmp_time(a.date, a.time, dt.date, dt.time) >= 0;
-            });
-            int64_t pos = -1;
-            if (it == ticks->end()) {
-                pos = (int64_t)ticks->size() - 1;
-            }
-            else {
-                if (cmp_time(it->date, it->time, dt.date, dt.time) == 0)
-                    pos = it - ticks->begin();
-                else
-                    pos = it - ticks->begin() - 1;
+            int pos = -1;
+            if (ticks->size() > 0) {
+                for (pos = 0; pos < ticks->size(); pos++) {
+                    auto a = &ticks->at(pos);
+                    int v = cmp_time(a->date, a->time, dt.date, dt.time);
+                    if (v == 0) break;
+                    else if (v > 0) {
+                        pos--; break;
+                    }
+                }
+                if (pos == ticks->size())
+                    pos = ticks->size() - 1;
             }
 
             TickCache cache;
             cache.pos = pos;
             cache.ticks = ticks;
             cache.size  = ticks->size();
-#ifdef _WIN32
-            cache.first = (MarketQuote**)&cache.ticks->_Myfirst();
-            cache.last  = (MarketQuote**)&cache.ticks->_Mylast();
-#else
-            assert(false);
-#endif
-            // set size = 0;
-            *cache.last = *cache.first + pos + 1;
+            ((TickArray*)cache.ticks.get())->set_size(0);
             m_tick_caches[code] = cache;
         }
     }
@@ -254,7 +247,7 @@ void SimDataApi::calc_nex_time(DateTime* dt)
         //                cache->bars->data() + cache->pos;
 
         if (cache->pos + 1 < cache->size) {
-            const Bar* bar = cache->bars->data() + cache->pos + 1;
+            auto bar = &cache->bars->at(cache->pos + 1);
             if (cmp_time(date, time, bar->date, bar->time) > 0) {
                 date = bar->date;
                 time = bar->time;
@@ -265,8 +258,7 @@ void SimDataApi::calc_nex_time(DateTime* dt)
     for (auto& e : m_tick_caches) {
         auto cache = &e.second;
         if (cache->pos + 1 < cache->size) {
-            const MarketQuote* q = cache->ticks->data() + cache->pos + 1;
-            //nullptr; // cache->ticks->data() + cache->pos;
+            auto q = &cache->ticks->at(cache->pos + 1);
 
             if (cmp_time(date, time, q->date, q->time) > 0) {
                 date = q->date;
@@ -289,10 +281,10 @@ shared_ptr<MarketQuote> SimDataApi::next_quote(const string& code)
     DateTime dt = m_ctx->cur_time();
 
     if (cache->pos + 1 >= cache->size) return nullptr;
-    auto q = cache->ticks->data() + cache->pos + 1;
+    auto q = &cache->ticks->at(cache->pos + 1);
     if (cmp_time(q->date, q->time, dt.date, dt.time) <= 0) {
         cache->pos += 1;
-        *cache->last = *cache->last + 1;
+        ((TickArray*)cache->ticks.get())->set_size(cache->pos);
         return make_shared<MarketQuote>(*q);
     }
     else {
@@ -310,10 +302,10 @@ shared_ptr<Bar> SimDataApi::next_bar(const string& code)
     DateTime dt = m_ctx->cur_time();
 
     if (cache->pos + 1 >= cache->size) return nullptr;
-    auto bar = cache->bars->data() + cache->pos + 1;
+    auto bar = &cache->bars->at(cache->pos + 1);
     if (cmp_time(bar->date, bar->time, dt.date, dt.time) <= 0) {
         cache->pos += 1;
-        *cache->last = *cache->last + 1;
+        ((TickArray*)cache->bars.get())->set_size(cache->pos);
         return make_shared<Bar>(*bar);
     }
     else {
@@ -321,14 +313,14 @@ shared_ptr<Bar> SimDataApi::next_bar(const string& code)
     }
 }
 
-const Bar* SimDataApi::last_bar(const string & code)
+const RawBar* SimDataApi::last_bar(const string & code)
 {
     auto it = m_bar_caches.find(code);
     if (it == m_bar_caches.end())
         return nullptr;
 
-    auto cache = it->second;
-    return cache.pos >= 0 ? &cache.bars->at(cache.pos) : nullptr;
+    auto cache = &it->second;
+    return cache->pos >= 0 ? &cache->bars->at(cache->pos) : nullptr;
 }
 
 void SimDataApi::move_to(int trading_day)

@@ -22,9 +22,12 @@ if (WIN32)
     include_directories(
       D:/WinPython-64bit-2.7.10.3/python-2.7.10.amd64/include
       D:/WinPython-64bit-2.7.10.3/python-2.7.10.amd64/Lib/site-packages/numpy/core/include
+      D:/WinPython-64bit-2.7.13.1Zero/python-2.7.13.amd64/include
+      D:/WinPython-64bit-2.7.13.1Zero/python-2.7.13.amd64/Lib/site-packages/numpy/core/include
       )
     link_directories(
       D:/WinPython-64bit-2.7.10.3/python-2.7.10.amd64/libs
+      D:/WinPython-64bit-2.7.13.1Zero/python-2.7.13.amd64/libs
       )
   else()
     include_directories(

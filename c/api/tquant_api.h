@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <exception>
 
 #ifdef _WIN32
 #  ifdef _TQAPI_DLL
@@ -34,6 +35,10 @@ namespace tquant {  namespace api {
             this->code = _code.c_str();
         }
 
+        TickDataHolder(const T& t) : T(t), _code(t.code) {
+            this->code = _code.c_str();
+        }
+
         TickDataHolder(const TickDataHolder<T>& t) {
             *this = t;
             if (t.code){
@@ -53,6 +58,69 @@ namespace tquant {  namespace api {
         void set_code(const string& a_code) {
             _code = a_code;
             this->_code = _code.c_str();
+        }
+    };
+
+    struct TickArray {
+        TickArray(size_t type_size, size_t max_size)
+            : _type_size((int)type_size)
+            , _size(0)
+        {
+            _data = new uint8_t[type_size* max_size];
+        }
+
+        TickArray()
+            : _type_size(0)
+            , _data(nullptr)
+        {}
+
+        ~TickArray() {
+            if (_data)
+                delete[] _data;
+        }
+
+        const uint8_t*  data() const        { return _data; }
+        int             type_size() const   { return _type_size; }
+        int             size() const        { return _size; }
+        const string&   code() const        { return _code; }
+
+        void set_code(const string& code)   { _code = code; }
+
+        // Be careful!
+        void set_size(int size) { _size = size; }
+    protected:
+        uint8_t*    _data;
+        int         _type_size;
+        int         _size;
+        string      _code;
+
+    };
+
+    template <class T>
+    struct _TickArray : public TickArray {
+
+        _TickArray(const string& code, size_t max_size)
+            : TickArray(sizeof(T), max_size)
+        {
+            set_code(code);
+        }
+
+        T& operator[] (size_t i) const {
+            if (i < this->_size)
+                return *reinterpret_cast<T*>(_data + _type_size*i);
+            else
+                throw std::runtime_error("wrong index");
+        }
+        T&  at(size_t i) const {
+            return *reinterpret_cast<T*>(_data + _type_size*i);
+        }
+
+        template< class T>
+        void push_back(const T& t) {
+            auto t2 = reinterpret_cast<T*>(_data + _type_size * _size);
+            *t2 = t;
+            t2->code = _code.c_str();
+            _size++;
         }
     };
 
@@ -147,6 +215,11 @@ namespace tquant {  namespace api {
 
 #pragma pack()
 
+    typedef _TickArray<RawMarketQuote> MarketQuoteArray;
+    typedef _TickArray<RawBar>         BarArray;
+    typedef _TickArray<RawDailyBar>    DailyBarArray;
+
+
     /**
     *  数据查询接口
     *
@@ -156,7 +229,7 @@ namespace tquant {  namespace api {
     */
     class DataApi_Callback {
     public:
-        virtual ~DataApi_Callback() { }
+        virtual ~DataApi_Callback()  { }
         virtual void on_market_quote (shared_ptr<const MarketQuote> quote) = 0;
         virtual void on_bar          (const string& cycle, shared_ptr<const Bar> bar) = 0;
     };
@@ -190,7 +263,7 @@ namespace tquant {  namespace api {
         * @param trading_day
         * @return
         */
-        virtual CallResult<const vector<MarketQuote>> tick(const string& code, int trading_day) = 0;
+        virtual CallResult<const MarketQuoteArray> tick(const string& code, int trading_day) = 0;
 
         /**
         * 取某个代码的Bar
@@ -204,7 +277,7 @@ namespace tquant {  namespace api {
         * @param align         是否对齐
         * @return
         */
-        virtual CallResult<const vector<Bar>> bar(const string& code, const string& cycle, int trading_day, bool align) = 0;
+        virtual CallResult<const BarArray> bar(const string& code, const string& cycle, int trading_day, bool align) = 0;
 
         /**
         * 取某个代码的日线
@@ -217,7 +290,7 @@ namespace tquant {  namespace api {
         * @param align         是否对齐
         * @return
         */
-        virtual CallResult<const vector<DailyBar>> daily_bar(const string& code, const string& price_adj, bool align) = 0;
+        virtual CallResult<const DailyBarArray> daily_bar(const string& code, const string& price_adj, bool align) = 0;
 
         /**
         * 取当前的行情快照

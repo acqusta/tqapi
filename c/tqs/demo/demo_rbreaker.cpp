@@ -179,10 +179,12 @@ void RBreakerStralet::on_bar(const char* cycle, shared_ptr<const Bar> bar)
         double low = 100000000.0;
         double close = 0.0;
         auto r = ctx()->data_api()->bar(contract.c_str(), "1m", 0, true);
-        for (auto & b : *r.value) {
-            if (b.high > high) high = b.high;
-            if (b.low < low)   low = b.low;
-            close = b.close;
+        //for (auto & b : *r.value) {
+        for (int i =0; i < r.value->size(); i++) {
+            auto b = &r.value->at(i);
+            if (b->high > high) high = b->high;
+            if (b->low < low)   low  = b->low;
+            close = b->close;
         }
         price_range = calc_price_range(high, low, close);
         return;

@@ -192,17 +192,17 @@ struct CallResultWrap {
 
     string  _msg;
     string text;
-    shared_ptr<const vector<Bar>> bars;
-    shared_ptr<const vector<DailyBar>> daily_bars;
-    shared_ptr<const vector<MarketQuote>> quotes;
-    shared_ptr<const MarketQuote> quote;
-    shared_ptr<vector<PositionWrap>> positions;
-    shared_ptr<vector<OrderWrap>> orders;
-    shared_ptr<vector<TradeWrap>> trades;
+    shared_ptr<const BarArray>          bars;
+    shared_ptr<const DailyBarArray>     daily_bars;
+    shared_ptr<const MarketQuoteArray>  quotes;
+    shared_ptr<const MarketQuote>       quote;
+    shared_ptr<vector<PositionWrap>>    positions;
+    shared_ptr<vector<OrderWrap>>       orders;
+    shared_ptr<vector<TradeWrap>>       trades;
     shared_ptr<vector<AccountInfoWrap>> account_infos;
-    shared_ptr<OrderIDWrap>  order_id;
-    shared_ptr<BalanceWrap> balance;
-    shared_ptr<bool> bool_value;
+    shared_ptr<OrderIDWrap>             order_id;
+    shared_ptr<BalanceWrap>             balance;
+    shared_ptr<bool>                    bool_value;
 };
 
 enum CallResultValueType {

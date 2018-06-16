@@ -5,7 +5,7 @@
 using namespace std;
 using namespace tquant::api;
 
-jobject convert_quote(JNIEnv* env, jclass help_cls, jmethodID createMarketQuote, const tquant::api::MarketQuote* q)
+jobject convert_quote(JNIEnv* env, jclass help_cls, jmethodID createMarketQuote, const tquant::api::RawMarketQuote* q)
 {    
     return env->CallStaticObjectMethod(help_cls, createMarketQuote,
         LocalRef(env, env->NewStringUTF(q->code)).m_obj,
@@ -70,7 +70,7 @@ jobject convert_quote(JNIEnv* env, jclass help_cls, jmethodID createMarketQuote,
 }
 
 
-jobject convert_bar(JNIEnv* env, jclass help_cls, jmethodID createBar, const tquant::api::Bar* bar)
+jobject convert_bar(JNIEnv* env, jclass help_cls, jmethodID createBar, const tquant::api::RawBar* bar)
 {
     return env->CallStaticObjectMethod(help_cls, createBar,
                     LocalRef(env, env->NewStringUTF(bar->code)).m_obj,
