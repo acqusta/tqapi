@@ -276,6 +276,7 @@ namespace mprpc {
 
     class MpRpcClient_Callback {
     public:
+        virtual ~MpRpcClient_Callback() {}
         virtual void on_connected    () {}
         virtual void on_disconnected () {}
         virtual void on_notification (shared_ptr<MpRpcMessage> rpcmsg) {}

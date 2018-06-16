@@ -82,7 +82,7 @@ void test_dapi(DataApi* dapi)
     if (0) {
         auto  r = dapi->bar(code, "1m", 0, true);
         if (r.value) {
-            for (int i = 0; i < r.value->size(); i++) {
+            for (size_t i = 0; i < r.value->size(); i++) {
                 auto& b = r.value->at(i);
                 cout << code << "," << b.date << "," << b.time << ","
                     << b.open << "," << b.high << "," << b.low << "," << b.close << ","
@@ -97,7 +97,7 @@ void test_dapi(DataApi* dapi)
     if (1) {
         auto  r = dapi->daily_bar(code, "forward", true);
         if (r.value) {
-            for (int i = 0; i < r.value->size(); i++) {
+            for (size_t i = 0; i < r.value->size(); i++) {
                 auto& b = r.value->at(i);
                 cout << code << "," << b.date << ","
                     << b.open << "," << b.high << "," << b.low << "," << b.close << ","
@@ -113,7 +113,7 @@ void test_dapi(DataApi* dapi)
         auto r = dapi->tick(code, 0);
         if (r.value) {
             //for (auto& t : *r.value)
-            for (int i = 0; i < r.value->size(); i++) {
+            for (size_t i = 0; i < r.value->size(); i++) {
                 auto& t = r.value->at(i);
                 cout << code << "," << t.date << "," << t.time << "," << t.last << "," << t.volume << endl;
             }

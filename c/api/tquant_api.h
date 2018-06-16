@@ -71,8 +71,8 @@ namespace tquant {  namespace api {
         }
 
         TickArray()
-            : _type_size(0)
-            , _data(nullptr)
+            : _data(nullptr)
+            , _type_size(0)
         {}
 
         ~TickArray() {
@@ -81,8 +81,8 @@ namespace tquant {  namespace api {
         }
 
         const uint8_t*  data() const        { return _data; }
-        int             type_size() const   { return _type_size; }
-        int             size() const        { return _size; }
+        size_t          type_size() const   { return _type_size; }
+        size_t          size() const        { return _size; }
         const string&   code() const        { return _code; }
 
         void set_code(const string& code)   { _code = code; }
@@ -116,7 +116,6 @@ namespace tquant {  namespace api {
             return *reinterpret_cast<T*>(_data + _type_size*i);
         }
 
-        template< class T>
         void push_back(const T& t) {
             auto t2 = reinterpret_cast<T*>(_data + _type_size * _size);
             *t2 = t;
