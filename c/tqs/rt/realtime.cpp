@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unordered_map>
+#include <algorithm>
 #include "realtime.h"
 #include "myutils/timeutils.h"
 #include "myutils/unicode.h"
@@ -246,7 +247,7 @@ namespace tquant { namespace stralet { namespace realtime {
 #ifdef _WIN32
         sprintf(str_id, "%I64u%I64u", tmp, id);
 #else
-        sprintf(str_id, "%llu%llu", tmp, id);
+        sprintf(str_id, "%lu%lu", tmp, id);
 #endif
         auto it = m_timers.find(str_id);
         if (it != m_timers.end())
@@ -262,7 +263,7 @@ namespace tquant { namespace stralet { namespace realtime {
 #ifdef _WIN32
         sprintf(str_id, "%I64u%I64u", tmp, id);
 #else
-        sprintf(str_id, "%llu%llu", tmp, id);
+        sprintf(str_id, "%lu%lu", tmp, id);
 #endif
         auto it = m_timers.find(str_id);
         if (it != m_timers.end()) {
@@ -316,12 +317,14 @@ namespace tquant { namespace stralet { namespace realtime {
 
     string RealTimeStraletContext::get_property(const char* name, const char* def_value)
     {
-        return "";
+        static string s;
+        return s;
     }
 
     const string& RealTimeStraletContext::get_properties()
     {
-        return "";
+        static string s;
+        return s;
     }
 
     const string& RealTimeStraletContext::mode()

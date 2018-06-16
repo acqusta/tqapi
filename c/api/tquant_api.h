@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <cstring>
 
 #ifdef _WIN32
 #  ifdef _TQAPI_DLL
@@ -27,7 +28,7 @@ namespace tquant {  namespace api {
         string _code;
     public:
         TickDataHolder() {
-            memset(this, 0, sizeof(T));
+            std::memset(this, 0, sizeof(T));
         }
 
         TickDataHolder(const T& t, const string& a_code) : T(t), _code(a_code) {
