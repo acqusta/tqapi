@@ -36,6 +36,7 @@ sources = [
     "lib/myutils/ipc_connection.cpp",
     "lib/myutils/misc.cpp",
     "lib/myutils/mprpc.cpp",
+    "lib/myutils/csvparser.cpp",
     "lib/myutils/socket_connection.cpp",
     "lib/myutils/socketutils.cpp",
     "lib/myutils/loop/MessageLoop.cpp",

@@ -131,7 +131,7 @@ namespace tquant { namespace api {
         // FIXME: How to free module?
         return dapi;
 #else
-        throw std::runtime_erro("to be implemented");
+        throw std::runtime_error("to be implemented");
 #endif
     }
 

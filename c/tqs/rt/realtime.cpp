@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unordered_map>
+#include <algorithm>
 #include "realtime.h"
 #include "myutils/timeutils.h"
 #include "myutils/unicode.h"
@@ -284,7 +285,8 @@ namespace tquant { namespace stralet { namespace realtime {
 
     string RealTimeStraletContext::get_property(const char* name, const char* def_value)
     {
-        return "";
+        static string s;
+        return s;
     }
 
     const string& RealTimeStraletContext::get_properties()

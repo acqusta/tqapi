@@ -1,6 +1,7 @@
 #ifndef _SIM_CONTEXT_H
 #define _SIM_CONTEXT_H
 
+#include <list>
 #include <unordered_map>
 #include "jsoncpp/inc/json/json.h"
 #include "stralet.h"
