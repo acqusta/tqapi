@@ -7,30 +7,44 @@ using namespace tquant::stralet;
 
 class MyStralet : public Stralet {
 public:
-    virtual void on_init(StraletContext* ctx) override {
-        Stralet::on_init(ctx);
-        //cout << "on_init: " << ctx->trading_day() << endl;
-        vector<string> codes = { "000001.SH", "600000.SH", "000001.SZ", "399001.SZ" };
-        ctx->data_api()->subscribe(codes);
-    }
-
-    virtual void on_fini() override {
-        //cout << "on_fini: " << ctx()->trading_day() << endl;
-    }
-
-    virtual void on_quote(shared_ptr<MarketQuote> q) {
-        //cout << "on_quote: " << q->code << "," << q->date << "," << q->time << "," << q->last << endl;
-    }
-
-    virtual void on_bar(const char* cycle, shared_ptr<const Bar> bar) override {
-        //cout << "on_bar: " << bar->code << "," << bar->date << "," << bar->time << "," << bar->close << endl;
-    }
-
-    virtual void on_order_status(shared_ptr<const Order> order) override {
-        cout << "on_order_status: " << order->code << "," << order->entrust_action << "," << order->status << endl;
-    }
-    virtual void on_order_trade(shared_ptr<const Trade> trade) override {
-        cout << "on_order_trade: " << trade->code << "," << trade->entrust_action << "," << trade->fill_price << endl;
+    virtual void on_event(shared_ptr<StraletEvent> evt) {
+        switch (evt->evt_id) {
+        case STRALET_EVENT_ID::ON_INIT:
+        {
+            ctx()->logger() << "on_init: " << ctx()->trading_day() << endl;
+            vector<string> codes = { "000001.SH", "600000.SH", "000001.SZ", "399001.SZ" };
+            ctx()->data_api()->subscribe(codes);
+            break;
+        }
+        case STRALET_EVENT_ID::ON_FINI:
+        {
+            ctx()->logger() << "on_fini: " << ctx()->trading_day() << endl;
+            break;
+        }
+        case STRALET_EVENT_ID::ON_QUOTE:
+        {
+            auto q = evt->as<OnQuote>()->quote;
+            ctx()->logger() << "on_quote: " << q->code << "," << q->date << "," << q->time << "," << q->last << endl;
+        }
+        case STRALET_EVENT_ID::ON_BAR:
+        {
+            auto bar = evt->as<OnBar>()->bar;
+            ctx()->logger() << "on_bar: " << bar->code << "," << bar->date << "," << bar->time << "," << bar->close << endl;
+            break;
+        }
+        case STRALET_EVENT_ID::ON_ORDER:
+        {
+            auto order = evt->as<OnOrder>()->order;
+            cout << "on_order: " << order->code << "," << order->entrust_action << "," << order->status << endl;
+            break;
+        }
+        case STRALET_EVENT_ID::ON_TRADE:
+        {
+            auto trade = evt->as<OnTrade>()->trade;
+            cout << "on_trade: " << trade->code << "," << trade->entrust_action << "," << trade->fill_price << endl;
+            break;
+        }
+        }
     }
 };
 
@@ -98,45 +112,8 @@ int test3()
     return 0;
 }
 
-Stralet *create_ifhft();
-
-int test_ifhft()
-{
-    backtest::BackTestConfig cfg;
-    //cfg.dapi_addr = "tcp://127.0.0.1:10001";
-    cfg.dapi_addr = "ipc://tqc_10001?timeout=30";
-    cfg.begin_date = 20180101;
-    cfg.end_date = 20180330;
-    cfg.data_level = "tk";
-    cfg.accounts.push_back(backtest::AccountConfig("sim", 1e8));
-    cfg.properties = "{\"stock_code\":\"000001.SH\"}";
-
-    auto begin_time = system_clock::now();
-
-    backtest::run(cfg, create_ifhft);
-
-    auto end_time = system_clock::now();
-    cout << "used time: " << duration_cast<milliseconds>(end_time - begin_time).count() << "ms\n";
-
-    getchar();
-    return 0;
-}
-
-int run_ifhft()
-{
-    realtime::RealTimeConfig cfg;
-
-    auto begin_time = system_clock::now();
-
-    realtime::run(cfg, create_ifhft);
-
-    getchar();
-    return 0;
-}
-
 int main()
 {
-    test_ifhft();
-    //run_ifhft();
+    test1();
     return 0;
 }

@@ -58,28 +58,24 @@ void SimStraletContext::post_event(const char* name, void* data)
     m_events.push_back(evt);
 }
 
-void SimStraletContext::set_timer(Stralet* stralet, int64_t id, int64_t delay, void* data)
+void SimStraletContext::set_timer(int64_t id, int64_t delay, void* data)
 {
     auto triger_time = m_now_tp + milliseconds(delay);
     auto timer = make_shared<TimerInfo>();
-    timer->stralet = stralet;
     timer->id      = id;
     timer->delay   = delay;
     timer->data    = data;
     timer->is_dead = false;
     timer->trigger_time = triger_time;
 
-    m_timers.push_back(timer);
+    m_timers[id] = timer;
 }
 
-void SimStraletContext::kill_timer(Stralet* stralet, int64_t id)
+void SimStraletContext::kill_timer(int64_t id)
 {
-    auto it = find_if(m_timers.begin(), m_timers.end(), [stralet, id](shared_ptr<TimerInfo>& x) {
-        return x->stralet == stralet && x->id == id;
-    });
-
+    auto it = m_timers.find(id);
     if (it != m_timers.end()) {
-        it->get()->is_dead = true;
+        it->second->is_dead = true;
         m_timers.erase(it);
     }
 }
@@ -110,18 +106,6 @@ ostream& SimStraletContext::logger(LogLevel level)
     sprintf(label, "%08d %06d.%03d %s| ", now.date, now.time / 1000, now.time % 1000, str_level[level]);
     cout << label;
     return cout;
-}
-
-void SimStraletContext::register_algo(AlgoStralet* algo)
-{
-    m_algos.push_back(algo);
-}
-
-void SimStraletContext::unregister_algo(AlgoStralet* algo)
-{
-    auto it = find(m_algos.begin(), m_algos.end(), algo);
-    if (it != m_algos.end())
-        m_algos.erase(it);
 }
 
 string SimStraletContext::get_property(const char* name, const char* def_value)
@@ -159,20 +143,20 @@ void SimStraletContext::calc_next_timer_time(DateTime* dt)
         return;
     }
 
-    auto tp = (*m_timers.begin())->trigger_time;
-    for (auto& e : m_timers)
-        if (e->trigger_time < tp) tp = e->trigger_time;
-
+    auto tp = m_timers.begin()->second->trigger_time;
+    for (auto& e : m_timers) {
+        if (e.second->trigger_time < tp) tp = e.second->trigger_time;
+    }
     *dt = tp_to_dt(tp);
 }
 
-void SimStraletContext::execute_timer(Stralet* stralet)
+void SimStraletContext::execute_timer()
 {
     vector<shared_ptr<TimerInfo>> timers;
 
     for (auto it = m_timers.begin(); it != m_timers.end(); it++) {
-        if ( (*it)->trigger_time <= m_now_tp) {
-            auto& timer = (*it);
+        auto& timer = it->second;
+        if ( timer->trigger_time <= m_now_tp) {            
             timers.push_back(timer);
             timer->trigger_time = m_now_tp + milliseconds(timer->delay);
         }
@@ -180,7 +164,7 @@ void SimStraletContext::execute_timer(Stralet* stralet)
 
     for (auto& t : timers) {
         if (!t->is_dead)
-            stralet->on_timer(t->id, t->data);
+            m_stralet->on_event(make_shared<OnTimer>(t->id, t->data));
     }
 }
 
@@ -198,12 +182,15 @@ SimAccount* SimStraletContext::get_account(const string& account_id)
 
 void SimStraletContext::run_one_day(Stralet* stralet)
 {
+    m_stralet = stralet;
+
     DateTime end_dt(m_trading_day, HMS(15, 0, 0));
 
     // FIXME: ²»Ö§³ÖÒ¹ÅÌ¡£
     set_sim_time(DateTime(m_trading_day, HMS(8, 50)));
 
-    stralet->on_init(this);
+    stralet->set_context(this);
+    stralet->on_event(make_shared<OnInit>());
 
     while (m_now.cmp(end_dt) < 0) {
         DateTime dt1, dt2;
@@ -216,7 +203,7 @@ void SimStraletContext::run_one_day(Stralet* stralet)
             auto events = m_events;
             m_events.clear();
             for (auto evt : events)
-                stralet->on_event(evt->name, evt->data);
+                stralet->on_event(make_shared<OnEvent>(evt->name, evt->data));
         }
 
         m_tapi->try_match();
@@ -226,17 +213,15 @@ void SimStraletContext::run_one_day(Stralet* stralet)
             {
                 auto ind_list = act->m_ord_status_ind_list;
                 act->m_ord_status_ind_list.clear();
-                for (auto& ind : ind_list) {
-                    for (auto& algo : m_algos) algo->on_order_status(ind);
-                    stralet->on_order_status(ind);
+                for (auto& ind : ind_list) {                    
+                    stralet->on_event(make_shared<OnOrder>(ind));
                 }
             }
             {
                 auto ind_list = act->m_trade_ind_list;
                 act->m_trade_ind_list.clear();
                 for (auto& ind : ind_list) {
-                    for (auto& algo : m_algos) algo->on_order_trade(ind);
-                    stralet->on_order_trade(ind);
+                    stralet->on_event(make_shared<OnTrade>(ind));
                 }
             }
         }
@@ -248,8 +233,7 @@ void SimStraletContext::run_one_day(Stralet* stralet)
                 quotes.push_back(q);
         }
         for (auto & q : quotes) {
-            for (auto& algo : m_algos) algo->on_quote(q);
-            stralet->on_quote(q);
+            stralet->on_event(make_shared<OnQuote>(q));
         }
 
         vector<shared_ptr<Bar>> bars;
@@ -261,12 +245,11 @@ void SimStraletContext::run_one_day(Stralet* stralet)
 
         for (auto& bar : bars) {
             const char* cycle = "1m";
-            for (auto& algo : m_algos) algo->on_bar(cycle, bar);
-            stralet->on_bar(cycle, bar);
+            stralet->on_event(make_shared<OnBar>(cycle, bar));
         }
 
-        execute_timer(stralet);
+        execute_timer();
     }
 
-    stralet->on_fini();
+    stralet->on_event(make_shared<OnFini>());
 }

@@ -97,17 +97,13 @@ namespace tquant { namespace api {
 
     DataApi* creatae_embed_dapi(const char* addr)
     {
-        const char* p1 = addr + strlen("embed://");
-        const char* p2 = strchr(p1, '/');
-        if (!p2) return nullptr;
-        if (*(p2 + 1) == 0) return nullptr;
-
-        addr = p2 + 1;
-        string module_name = string("embed_") + string(p1, p2 - p1);
+        const char* p = strstr(addr, "://");
+        if (!p) return nullptr;
+        string module_name = string("tqapi_") + string(addr, p - addr);
 
 #ifdef _WIN32
 
-        string dirs = g_params["embed_path"];
+        string dirs = g_params["plugin_path"];
         vector<string> ss;
         split(dirs, ";", &ss);
         ss.push_back("");
@@ -127,7 +123,7 @@ namespace tquant { namespace api {
             return nullptr;
         }
 
-        DataApi* dapi = create_data_api(addr);
+        DataApi* dapi = create_data_api(p+3);
         if (!dapi) {
             FreeModule(hModule);
             return nullptr;
@@ -154,7 +150,10 @@ namespace tquant { namespace api {
     {
         init_socket();
 
-        if (strncmp(addr.c_str(), "embed://", 8)) {
+        //if (strncmp(addr.c_str(), "embed://", 8)) {
+        if (strncmp(addr.c_str(), "tcp://", 6) == 0 ||
+            strncmp(addr.c_str(), "ipc://", 6) == 0) 
+        {
             string url;
             unordered_map<string, string> properties;
             if (!myutils:: parse_addr(addr, &url, &properties)) return nullptr;

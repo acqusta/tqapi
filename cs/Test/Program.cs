@@ -288,7 +288,7 @@ namespace Test
             for (var i = 0; i < count; i ++)
             {
                 if ( i % 100 == 0) Console.WriteLine(i);
-                var r = dapi.GetTick(code, 0);
+                var r = dapi.GetTick(code, 20180612);
                 //var r = dapi.GetBar(code, "1m");
                 if (r.Value == null)
                     Console.WriteLine("GetTick error: " + r.Msg);

@@ -2,32 +2,41 @@
 using System.Collections.Generic;
 using TQuant.Api;
 using TQuant.Stralet;
+using TQuant.Stralet.StraletEvent;
 
 namespace Test
 {
     class StraletDemo : Stralet
-    {        
-        public override void OnInit(IStraletContext sc)
+    {
+        public override void OnEvent(object evt)
         {
-            sc.Logger.Info("OnInit: " + sc.TradingDay);
-            sc.DataApi.Subscribe( new String[]{ "000001.SH", "600000.SH","399001.SZ"});
+            if (evt is OnInit)
+            {
+                OnInit();
+            }
+            else if (evt is OnFini)
+            {
+                OnFini();
+            }
+            else if (evt is OnQuote)
+            {
+                OnQuote((evt as OnQuote).Quote);
+            }
+        }
+        public void OnInit()
+        {
+            Context.Logger.Info(String.Format("OnInit: {0}", Context.TradingDay));
+            Context.DataApi.Subscribe( new String[]{ "000001.SH", "600000.SH","399001.SZ"});
         }
 
-        public override void OnFini()
+        public void OnFini()
         {
-            //ctx.Log("OnFini: " + ctx.TradingDay);
+            Context.Logger.Info(String.Format("OnFini: {0}", Context.TradingDay));
         }
-        public override void OnQuote(MarketQuote quote)
+        public void OnQuote(MarketQuote quote)
         {
-            //var str = String.Format("on_quote {0} {1} {2} {3}", quote.code, quote.time, quote.last, quote.volume);
-            //ctx.Log(str);
+            Context.Logger.Info(String.Format("on_quote {0} {1} {2} {3}", quote.code, quote.time, quote.last, quote.volume));
         }
-        public override void OnBar(String cyle, Bar bar) { }
-        public override void OnTimer(Int32 id, Int64 data) { }
-        public override void OnEvent(String evt, long data) { }
-        public override void OnOrderStatus(Order order) { }
-        public override void OnOrderTrade(Trade trade) { }
-        public override void OnAccountStatus(AccountInfo account) { }
     }
 
 

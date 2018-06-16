@@ -280,7 +280,7 @@ unordered_map<string, vector<CodeMapping>> g_code_maping_map;
 void load_codemap()
 {
     csv::Parser parser("d:/tquant/tqc/tmp/code_mapping.csv");
-    for (int i = 0; i < parser.rowCount(); i++) {
+    for (uint32_t i = 0; i < parser.rowCount(); i++) {
         CodeMapping mapping;
         auto& row = parser.getRow(i);
         mapping.code = row[0];
@@ -413,7 +413,7 @@ int main()
     //const char* addr = "tcp://127.0.0.1:10001";
     const char* addr = "ipc://tqc_10001";
     //const char* addr = "embed://tkapi/file://d:/tquant/tqc?hisdata_only=true";
-    set_params("embed_path", "d:/tquant/");
+    set_params("plugin_path", "d:/tquant/");
 
     std::cout << addr << endl;
     DataApi* dapi = create_data_api(addr);

@@ -16,9 +16,11 @@ static inline int HMS(int h, int m, int s = 0, int ms = 0) { return h * 10000000
 
 class DoubleMAStralet : public Stralet {
 public:
-    virtual void on_init(StraletContext* sc) override;
-    virtual void on_bar(const char* cycle, shared_ptr<const Bar> bar) override;
-    virtual void on_fini() override;
+    virtual void on_event(shared_ptr<StraletEvent> evt) override;
+
+    void on_init();
+    void on_bar(const char* cycle, shared_ptr<const Bar> bar);
+    void on_fini();
 
     int cancel_unfinished_order();
 
@@ -30,17 +32,32 @@ private:
     size_t m_slow_ma_len = 0;
 };
 
-void DoubleMAStralet::on_init(StraletContext* sc)
+void DoubleMAStralet::on_event(shared_ptr<StraletEvent> evt)
 {
-    Stralet::on_init(sc);
+    switch (evt->evt_id) {
+    case STRALET_EVENT_ID::ON_INIT:
+        on_init();
+        break;
+    case STRALET_EVENT_ID::ON_FINI:
+        on_fini();
+        break;
+    case STRALET_EVENT_ID::ON_BAR: {
+        auto on_bar = evt->as<OnBar>();
+        this->on_bar(on_bar->cycle.c_str(), on_bar->bar);
+        break;
+    }
+    }
+}
 
-    sc->logger() << "on_init: " << sc->trading_day() << endl;
+void DoubleMAStralet::on_init()
+{
+    ctx()->logger() << "on_init: " << ctx()->trading_day() << endl;
     m_fast_ma_len = 5;
     m_slow_ma_len = 10;
     m_account_id  = "sim";
     m_contract    = "RB.SHF";
 
-    auto r = sc->data_api()->subscribe(vector<string>{m_contract});
+    auto r = ctx()->data_api()->subscribe(vector<string>{m_contract});
     assert(r.value);
 
 }
