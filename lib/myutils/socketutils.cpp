@@ -17,6 +17,16 @@ namespace myutils {
     using namespace std::chrono;
 
 #ifdef _WIN32
+
+    class Winsock2Initialization {
+    public:
+        Winsock2Initialization() {
+            init_winsock2();
+        }
+    };
+
+    static Winsock2Initialization g_sock2_init;
+
     void init_winsock2()
     {
         WORD wVersionRequested;

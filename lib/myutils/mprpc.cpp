@@ -461,9 +461,7 @@ namespace mprpc {
         unique_lock<recursive_mutex> lock(m_conn_map_lock);
 
         auto it = m_conn_map.find(conn_id);
-        if (it != m_conn_map.end()) {
-            //auto conn = it->second;
+        if (it != m_conn_map.end())
             m_conn_map.erase(it);
-        }
     }
 }
