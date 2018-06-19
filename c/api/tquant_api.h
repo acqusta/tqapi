@@ -67,6 +67,7 @@ namespace tquant {  namespace api {
             : _type_size((int)type_size)
             , _size(0)
         {
+            if (max_size)
             _data = new uint8_t[type_size* max_size];
         }
 
@@ -89,12 +90,24 @@ namespace tquant {  namespace api {
 
         // Be careful!
         void set_size(int size) { _size = size; }
+
+        void assign(const char* code, uint8_t* data, int type_size, int size) {
+            if (this->_data) delete[] this->_data;
+            this->_data      = data;
+            this->_type_size = type_size;
+            this->_size      = size;
+            this->_code      = code;
+
+            uint8_t* p = this->_data;
+            for (int i = 0; i < _size; i++) {
+                *((const char**)p) = _code.c_str();
+            }
+        }
     protected:
         uint8_t*    _data;
         int         _type_size;
         int         _size;
         string      _code;
-
     };
 
     template <class T>
@@ -409,8 +422,9 @@ namespace tquant {  namespace api {
         double  fill_price;       // 成交价格
         int32_t fill_date;        // 成交日期
         int32_t fill_time;        // 成交时间
+        int32_t order_id;         // 自定义订单编号
 
-        Trade() : fill_size(0), fill_price(0.0), fill_date(0), fill_time(0)
+        Trade() : fill_size(0), fill_price(0.0), fill_date(0), fill_time(0), order_id(0)
         {}
     };
 
