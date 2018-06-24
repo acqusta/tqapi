@@ -22,3 +22,7 @@ cs/tqapi.VC.VC.opendb
 cs/myjob/*
 *.opendb
 setup.cfg
+cs/**/*.pdb
+cs/**/*.dll
+cs/**/*.xml
+cs/**/*.exe

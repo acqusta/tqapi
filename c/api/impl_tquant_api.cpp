@@ -135,6 +135,45 @@ namespace tquant { namespace api {
 #endif
     }
 
+    TradeApi* creatae_embed_tapi(const char* addr)
+    {
+        const char* p = strstr(addr, "://");
+        if (!p) return nullptr;
+        string module_name = string("tqapi_") + string(addr, p - addr);
+
+#ifdef _WIN32
+
+        string dirs = g_params["plugin_path"];
+        vector<string> ss;
+        split(dirs, ";", &ss);
+        ss.push_back("");
+        HMODULE hModule = nullptr;
+        for (auto& path : ss) {
+            string dll_path = (!path.empty() ? (string(path) + "\\") : "") + module_name + ".dll";
+            hModule = LoadLibraryA(dll_path.c_str());
+            if (hModule) break;
+        }
+        if (!hModule)
+            throw std::runtime_error(ConvertErrorCodeToString(GetLastError()));
+
+        auto create_trade_api = (T_create_trade_api)GetProcAddress(hModule, "create_trade_api");
+        if (!create_trade_api) {
+            FreeModule(hModule);
+            throw std::runtime_error(ConvertErrorCodeToString(GetLastError()));
+            return nullptr;
+        }
+
+        TradeApi* tapi = create_trade_api(p + 3);
+        if (!tapi) {
+            FreeModule(hModule);
+            return nullptr;
+        }
+        // FIXME: How to free module?
+        return tapi;
+#else
+        throw std::runtime_error("to be implemented");
+#endif
+    }
     void init_socket()
     {
 #ifdef _WIN32
@@ -178,7 +217,8 @@ namespace tquant { namespace api {
     {
         init_socket();
 
-        if (strncmp(addr.c_str(), "embed://", 8)) {
+        if (strncmp(addr.c_str(), "tcp://", 6) == 0 ||
+            strncmp(addr.c_str(), "ipc://", 6) == 0) {
             string url;
             unordered_map<string, string> properties;
             if (!myutils::parse_addr(addr, &url, &properties)) return nullptr;
@@ -196,7 +236,7 @@ namespace tquant { namespace api {
             }
         }
         else {
-            return nullptr;
+            return creatae_embed_tapi(addr.c_str());
         }
 
     }
