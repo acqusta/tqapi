@@ -157,65 +157,65 @@ namespace TestUI
                 var tick = this.ticks[i];
 
                 string sdate = String.Format("{0}-{1:D2}-{2:D2}",
-                    tick.date / 10000, (tick.date / 100) % 100, (tick.date % 100));
+                    tick.Date / 10000, (tick.Date / 100) % 100, (tick.Date % 100));
 
                 string stime = String.Format("{0}:{1:D2}:{2:D2}.{3:D3}",
-                    tick.time / 10000000, (tick.time / 100000) % 100,
-                    (tick.time / 1000) % 100, (tick.time % 1000));
+                    tick.Time / 10000000, (tick.Time / 100000) % 100,
+                    (tick.Time / 1000) % 100, (tick.Time % 1000));
 
                 ListViewItem item = new ListViewItem();
                 item.Text = i.ToString();
                 item.SubItems.Add(sdate);
                 item.SubItems.Add(stime);
-                item.SubItems.Add(String.Format(price_fmt, tick.pre_close));
-                item.SubItems.Add(String.Format(price_fmt, tick.open));
-                item.SubItems.Add(String.Format(price_fmt, tick.high));
-                item.SubItems.Add(String.Format(price_fmt, tick.low));
-                item.SubItems.Add(String.Format(price_fmt, tick.last));
-                item.SubItems.Add(String.Format("{0:N0}", tick.volume / 100));
-                item.SubItems.Add(String.Format("{0:N0}", (long)tick.turnover));
-                item.SubItems.Add(String.Format("{0:N0}", (tick.volume - volume)/100));
+                item.SubItems.Add(String.Format(price_fmt, tick.PreClose));
+                item.SubItems.Add(String.Format(price_fmt, tick.Open));
+                item.SubItems.Add(String.Format(price_fmt, tick.High));
+                item.SubItems.Add(String.Format(price_fmt, tick.Low));
+                item.SubItems.Add(String.Format(price_fmt, tick.Last));
+                item.SubItems.Add(String.Format("{0:N0}", tick.Volume / 100));
+                item.SubItems.Add(String.Format("{0:N0}", (long)tick.Turnover));
+                item.SubItems.Add(String.Format("{0:N0}", (tick.Volume - volume)/100));
                 // item.SubItems.Add(String.Format("{0:N0}", (long)(tick.turnover - turnover)));
-                if (tick.volume != volume)
-                    item.SubItems.Add(String.Format(price_fmt, (tick.turnover - turnover) / (tick.volume - volume)));
+                if (tick.Volume != volume)
+                    item.SubItems.Add(String.Format(price_fmt, (tick.Turnover - turnover) / (tick.Volume - volume)));
                 else
                     item.SubItems.Add("");
 
                 if (dt != DataType.INDEX) { 
                     if (dt != DataType.FUTURE)
                     {
-                        item.SubItems.Add(String.Format(price_fmt, tick.ask5)); item.SubItems.Add(String.Format("{0}", tick.ask_vol5 / 100));
-                        item.SubItems.Add(String.Format(price_fmt, tick.ask4)); item.SubItems.Add(String.Format("{0}", tick.ask_vol4 / 100));
-                        item.SubItems.Add(String.Format(price_fmt, tick.ask3)); item.SubItems.Add(String.Format("{0}", tick.ask_vol3 / 100));
-                        item.SubItems.Add(String.Format(price_fmt, tick.ask2)); item.SubItems.Add(String.Format("{0}", tick.ask_vol2 / 100));
-                        item.SubItems.Add(String.Format(price_fmt, tick.ask1)); item.SubItems.Add(String.Format("{0}", tick.ask_vol1 / 100));
-                        item.SubItems.Add(String.Format(price_fmt, tick.bid1)); item.SubItems.Add(String.Format("{0}", tick.ask_vol1 / 100));
+                        item.SubItems.Add(String.Format(price_fmt, tick.Ask5)); item.SubItems.Add(String.Format("{0}", tick.AskVol5 / 100));
+                        item.SubItems.Add(String.Format(price_fmt, tick.Ask4)); item.SubItems.Add(String.Format("{0}", tick.AskVol4 / 100));
+                        item.SubItems.Add(String.Format(price_fmt, tick.Ask3)); item.SubItems.Add(String.Format("{0}", tick.AskVol3 / 100));
+                        item.SubItems.Add(String.Format(price_fmt, tick.Ask2)); item.SubItems.Add(String.Format("{0}", tick.AskVol2 / 100));
+                        item.SubItems.Add(String.Format(price_fmt, tick.Ask1)); item.SubItems.Add(String.Format("{0}", tick.AskVol1 / 100));
+                        item.SubItems.Add(String.Format(price_fmt, tick.Bid1)); item.SubItems.Add(String.Format("{0}", tick.AskVol1 / 100));
                     }
                     else
                     {
-                        item.SubItems.Add(String.Format(price_fmt, tick.ask1)); item.SubItems.Add(String.Format("{0}", tick.ask_vol1));
-                        item.SubItems.Add(String.Format(price_fmt, tick.bid1)); item.SubItems.Add(String.Format("{0}", tick.ask_vol1));
+                        item.SubItems.Add(String.Format(price_fmt, tick.Ask1)); item.SubItems.Add(String.Format("{0}", tick.AskVol1));
+                        item.SubItems.Add(String.Format(price_fmt, tick.Bid1)); item.SubItems.Add(String.Format("{0}", tick.AskVol1));
                     }
 
 
                     if (dt != DataType.FUTURE)
                     {
-                        item.SubItems.Add(String.Format(price_fmt, tick.bid2)); item.SubItems.Add(String.Format("{0}", tick.ask_vol2 / 100));
-                        item.SubItems.Add(String.Format(price_fmt, tick.bid3)); item.SubItems.Add(String.Format("{0}", tick.ask_vol3 / 100));
-                        item.SubItems.Add(String.Format(price_fmt, tick.bid4)); item.SubItems.Add(String.Format("{0}", tick.ask_vol4 / 100));
-                        item.SubItems.Add(String.Format(price_fmt, tick.bid5)); item.SubItems.Add(String.Format("{0}", tick.ask_vol5 / 100));
+                        item.SubItems.Add(String.Format(price_fmt, tick.Bid2)); item.SubItems.Add(String.Format("{0}", tick.AskVol2 / 100));
+                        item.SubItems.Add(String.Format(price_fmt, tick.Bid3)); item.SubItems.Add(String.Format("{0}", tick.AskVol3 / 100));
+                        item.SubItems.Add(String.Format(price_fmt, tick.Bid4)); item.SubItems.Add(String.Format("{0}", tick.AskVol4 / 100));
+                        item.SubItems.Add(String.Format(price_fmt, tick.Bid5)); item.SubItems.Add(String.Format("{0}", tick.AskVol5 / 100));
                     }
 
                     if (dt == DataType.FUTURE)
                     {
-                        item.SubItems.Add(String.Format("{0:N0}", tick.oi));
-                        item.SubItems.Add(String.Format("{0:N0}", tick.pre_oi));
-                        item.SubItems.Add(String.Format(price_fmt, tick.settle));
-                        item.SubItems.Add(String.Format(price_fmt, tick.pre_settle));
+                        item.SubItems.Add(String.Format("{0:N0}", tick.Oi));
+                        item.SubItems.Add(String.Format("{0:N0}", tick.PreOi));
+                        item.SubItems.Add(String.Format(price_fmt, tick.Settle));
+                        item.SubItems.Add(String.Format(price_fmt, tick.PreSettle));
                     }
                 }
-                volume   = tick.volume;
-                turnover = tick.turnover;
+                volume   = tick.Volume;
+                turnover = tick.Turnover;
 
                 lvitem_cache[i] = item;
             }
@@ -239,13 +239,13 @@ namespace TestUI
 
             for (int i = 0; i < bars.Length; i++)
             {
-                prices[i] = bars[i].close;
-                times[i] = bars[i].time;
-                volumes[i] = bars[i].volume;
+                prices[i] = bars[i].Close;
+                times[i] = bars[i].Time;
+                volumes[i] = bars[i].Volume;
             }
 
-            double pre_close = this.ticks[0].pre_close;
-            int trading_day = this.ticks[0].trading_day;
+            double pre_close = this.ticks[0].PreClose;
+            int trading_day = this.ticks[0].TradingDay;
             trendChart1.SetData(code, trading_day, pre_close, prices, volumes, times);
 
         }
@@ -295,7 +295,7 @@ namespace TestUI
                 if (idx < this.ticks.Length)
                 {
                     var tick = this.ticks[idx];
-                    trendChart1.SetCrossLinePos(tick.last, tick.time);
+                    trendChart1.SetCrossLinePos(tick.Last, tick.Time);
                 }
             }
         }
@@ -313,7 +313,7 @@ namespace TestUI
                 if (bars != null)
                 {
                     foreach (var b in bars)
-                        trading_day_set.Add(b.date);
+                        trading_day_set.Add(b.Date);
                 }
             }
 

@@ -70,7 +70,7 @@ namespace TestUI
             this.brick_width = 100;
             this.brick_height = 60;
             int max_time_interval = (int)((Width - 2*sidebar_width - 10) *1.0 / brick_width * 60 * 1000);
-            var end_time = IntTimeToMillis(ticks[ticks.Length - 1].time);
+            var end_time = IntTimeToMillis(ticks[ticks.Length - 1].Time);
 
             var begin_pos = 0;
 
@@ -80,12 +80,12 @@ namespace TestUI
             {
                 //if (ticks[i].time > 113000000 && ticks[i].time < 130000000) continue;
 
-                max_price = Math.Max(ticks[i].last, max_price);
-                min_price = Math.Min(ticks[i].last, min_price);
+                max_price = Math.Max(ticks[i].Last, max_price);
+                min_price = Math.Min(ticks[i].Last, min_price);
 
                 //if (ticks[i].time < 1130000)
                 //{
-                    if (IntTimeToMillis(ticks[i].time) < end_time - max_time_interval)
+                    if (IntTimeToMillis(ticks[i].Time) < end_time - max_time_interval)
                     {
                         begin_pos = i;
                         break;
@@ -126,7 +126,7 @@ namespace TestUI
 
         private void DrawTimeBar(Graphics g, int begin_pos)
         {
-            int begin_time = ticks[begin_pos].time;
+            int begin_time = ticks[begin_pos].Time;
             Font font = new Font("SimSun", 9F, System.Drawing.FontStyle.Regular);
 
             var y = Height - timebar_height;
@@ -227,7 +227,7 @@ namespace TestUI
 
             float x0 = sidebar_width;
             float y0 = brick_height * (brick_v_count - 2) + titlebar_height;
-            var begin_time = IntTimeToMillis(ticks[begin_pos].time);
+            var begin_time = IntTimeToMillis(ticks[begin_pos].Time);
 
             Pen yellow_pen = new Pen(Color.Yellow);
 
@@ -236,8 +236,8 @@ namespace TestUI
             {
                 var tick = ticks[i];
                 var p = new PointF(
-                        (float)(x0 + (IntTimeToMillis(tick.time) - begin_time) *1f / 60000 * brick_width),
-                        (float)(y0 - (tick.last - min_price) / (max_price - min_price) * brick_height * (brick_v_count - 2))
+                        (float)(x0 + (IntTimeToMillis(tick.Time) - begin_time) *1f / 60000 * brick_width),
+                        (float)(y0 - (tick.Last - min_price) / (max_price - min_price) * brick_height * (brick_v_count - 2))
                     );
 
                 if (real_length != 0)
@@ -264,25 +264,25 @@ namespace TestUI
             float x0 = sidebar_width;
             float y0 = Height - timebar_height;
 
-            var begin_time = IntTimeToMillis(ticks[begin_pos].time);
+            var begin_time = IntTimeToMillis(ticks[begin_pos].Time);
 
             long max_vol = 0;
-            long last_vol = ticks[begin_pos].volume;
+            long last_vol = ticks[begin_pos].Volume;
             for (int i = begin_pos + 1; i < ticks.Length; i++)
             {
-                max_vol = Math.Max(ticks[i].volume - last_vol, max_vol);
-                last_vol = ticks[i].volume;
+                max_vol = Math.Max(ticks[i].Volume - last_vol, max_vol);
+                last_vol = ticks[i].Volume;
             }
 
             Pen yellow_pen = new Pen(Color.Yellow);
-            last_vol = ticks[begin_pos].volume;
+            last_vol = ticks[begin_pos].Volume;
             for (int i = begin_pos + 1; i < ticks.Length; i++)
             {
                 var tick = ticks[i];
-                float x = (float)(x0 + (IntTimeToMillis(tick.time) - begin_time) * 1f / 60000 * brick_width);
-                float y = (float)(y0 - (tick.volume - last_vol) * 1f / max_vol * brick_height * 2);
+                float x = (float)(x0 + (IntTimeToMillis(tick.Time) - begin_time) * 1f / 60000 * brick_width);
+                float y = (float)(y0 - (tick.Volume - last_vol) * 1f / max_vol * brick_height * 2);
                 g.DrawLine(yellow_pen, x, y, x, y0);
-                last_vol = tick.volume;
+                last_vol = tick.Volume;
             }
         }
 

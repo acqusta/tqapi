@@ -64,11 +64,12 @@ namespace tquant {  namespace api {
 
     struct TickArray {
         TickArray(size_t type_size, size_t max_size)
-            : _type_size((int)type_size)
+            : _data(nullptr)
+            , _type_size((int)type_size)
             , _size(0)
         {
             if (max_size)
-            _data = new uint8_t[type_size* max_size];
+                _data = new uint8_t[type_size* max_size];
         }
 
         TickArray()
@@ -101,6 +102,7 @@ namespace tquant {  namespace api {
             uint8_t* p = this->_data;
             for (int i = 0; i < _size; i++) {
                 *((const char**)p) = _code.c_str();
+                p += _type_size;
             }
         }
     protected:

@@ -435,7 +435,7 @@ void IpcConnection::send(const char* data, size_t size)
         }
     }
     else {
-        cout << "send error: no connection\n";
+        //cout << "send error: no connection\n";
     }
 }
 

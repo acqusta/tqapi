@@ -12,87 +12,87 @@ namespace TQuant
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class MarketQuote
         {
-            public String code;
+            public String Code;
 #if X86
             public Int32 _padding_1;
 #endif
-            public Int32  date;
-            public Int32  time;
-            public Int64  recv_time;
-            public Int32  trading_day;
-            public Double open;
-            public Double high;
-            public Double low;
-            public Double close;
-            public Double last;
-            public Double high_limit;
-            public Double low_limit;
-            public Double pre_close;
-            public Int64  volume;
-            public Double turnover;
-            public Double ask1;
-            public Double ask2;
-            public Double ask3;
-            public Double ask4;
-            public Double ask5;
-            public Double bid1;
-            public Double bid2;
-            public Double bid3;
-            public Double bid4;
-            public Double bid5;
-            public Int64  ask_vol1;
-            public Int64  ask_vol2;
-            public Int64  ask_vol3;
-            public Int64  ask_vol4;
-            public Int64  ask_vol5;
-            public Int64  bid_vol1;
-            public Int64  bid_vol2;
-            public Int64  bid_vol3;
-            public Int64  bid_vol4;
-            public Int64  bid_vol5;
-            public Double settle;
-            public Double pre_settle;
-            public Int64  oi;
-            public Int64  pre_oi;
+            public Int32  Date;
+            public Int32  Time;
+            public Int64  RecvTime;
+            public Int32  TradingDay;
+            public Double Open;
+            public Double High;
+            public Double Low;
+            public Double Close;
+            public Double Last;
+            public Double HighLimit;
+            public Double LowLimit;
+            public Double PreClose;
+            public Int64  Volume;
+            public Double Turnover;
+            public Double Ask1;
+            public Double Ask2;
+            public Double Ask3;
+            public Double Ask4;
+            public Double Ask5;
+            public Double Bid1;
+            public Double Bid2;
+            public Double Bid3;
+            public Double Bid4;
+            public Double Bid5;
+            public Int64  AskVol1;
+            public Int64  AskVol2;
+            public Int64  AskVol3;
+            public Int64  AskVol4;
+            public Int64  AskVol5;
+            public Int64  BidVol1;
+            public Int64  BidVol2;
+            public Int64  BidVol3;
+            public Int64  BidVol4;
+            public Int64  BidVol5;
+            public Double Settle;
+            public Double PreSettle;
+            public Int64  Oi;
+            public Int64  PreOi;
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class Bar
         {
-            public String code;
+            public String Code;
 #if X86
             public Int32 _padding_1;
 #endif
-            public Int32  date;
-            public Int32  time;
-            public Int32  trading_day;
-            public Double open;
-            public Double high;
-            public Double low;
-            public Double close;
-            public Int64  volume;
-            public Double turnover;
-            public Int64  oi;
+            public Int32  Date;
+            public Int32  Time;
+            public Int32  TradingDay;
+            public Double Open;
+            public Double High;
+            public Double Low;
+            public Double Close;
+            public Int64  Volume;
+            public Double Turnover;
+            public Int64  Oi;
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         public class DailyBar
         {
-            public String code;
+            public String Code;
 #if X86
             public Int32 _padding_1;
 #endif
-            public Int32  date;
-            public Double open;
-            public Double high;
-            public Double low;
-            public Double close;
-            public Int64  volume;
-            public Double turnover;
-            public Int64  oi;
-            public Double settle;
-            public Double pre_close;
-            public Double pre_settle;
+            public Int32  Date;
+            public Double Open;
+            public Double High;
+            public Double Low;
+            public Double Close;
+            public Int64  Volume;
+            public Double Turnover;
+            public Int64  OI;
+            public Double Settle;
+            public Double PreClose;
+            public Double PreSettle;
             //Double _padding;
         }
 

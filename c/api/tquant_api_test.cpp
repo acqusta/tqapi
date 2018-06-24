@@ -8,6 +8,7 @@
 #include "tquant_api.h"
 #include "myutils/timeutils.h"
 #include "myutils/csvparser.h"
+#include "myutils/unicode.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -172,8 +173,8 @@ void test_tapi(TradeApi* tapi)
         auto r = tapi->query_account_status();
         if (r.value) {
             for (auto & act : *r.value) {
-                cout << act.account_id << "|" << act.account << "|" << act.account_type << "|"
-                    << act.broker << "|" << act.status << "|" << act.msg << endl;
+                cout << act.account_id << "|" << utf8_to_local(act.broker) << "|" << act.account << "|"
+                    << act.account_type << "|" << act.status << "|" << act.msg << endl;
             }
         }
     }
@@ -221,7 +222,7 @@ void test_tapi(TradeApi* tapi)
         auto r = tapi->query_orders("glsc");
         if (r.value) {
             for (auto& ord : *r.value) {
-                cout << "Order: " << ord.account_id << "|" << ord.code << "|" << ord.name << "|"
+                cout << "Order: " << ord.account_id << "|" << ord.code << "|" << utf8_to_local(ord.name) << "|"
                     << ord.entrust_no << "|" << ord.entrust_action << "|" << ord.entrust_price << "|"
                     << ord.entrust_size << "|" << ord.fill_price << "|"
                     << ord.entrust_date << "|" << ord.entrust_time << "|"
@@ -242,7 +243,7 @@ void test_tapi(TradeApi* tapi)
             cout << "place_order result: " << r.value->entrust_no << "," << r.value->order_id << endl;
         }
         else {
-            cout << "place_order error: " << r.msg << endl;
+            cout << "place_order error: " << utf8_to_local(r.msg) << endl;
         }
     }
 }
@@ -400,10 +401,16 @@ void perf_test3(DataApi* dapi)
 
     size_t total_count = 0;
     for (int i = 0; i < 3000; i++) {
-        //auto ticks = dapi->tick(code, 0);
-        auto ticks = dapi->bar(code, "1m", 0, true);
-        if (ticks.value)
+        //auto ticks = dapi->tick(code, 20);
+        auto ticks = dapi->bar(code, "1m", 20180601, true);
+        if (ticks.value) {
             total_count += ticks.value->size();
+            for (int n = 0; n < ticks.value->size(); n++) {
+                auto b = &ticks.value->at(n);
+                cout << "bar: " << b->code << "," << b->date << "," << b->time << "," << b->open <<"," << b->high <<"," << b->low << "," << b->close << endl;
+            }
+
+        }
         //else
         //    cout << "tick error: " << code << "," << bar.date << ": " << ticks.msg << endl;
     }
@@ -417,21 +424,35 @@ void perf_test3(DataApi* dapi)
 }
 int main()
 {
-    //const char* addr = "tcp://127.0.0.1:10001";
-    const char* addr = "ipc://tqc_10001";
-    //const char* addr = "embed://tkapi/file://d:/tquant/tqc?hisdata_only=true";
-    set_params("plugin_path", "d:/tquant/");
+    {
+        //const char* addr = "tcp://127.0.0.1:10001";
+        //const char* addr = "ipc://tqc_10001";
+        const char* addr = "mdapi://file://d:/tquant/tqc?hisdata_only=true";
+        set_params("plugin_path", "D:\\tquant\\md\\bin;D:\\tquant\\trade\\bin;D:\\tquant\\trade\\bin_x64");
 
-    std::cout << addr << endl;
-    DataApi* dapi = create_data_api(addr);
+        std::cout << addr << endl;
 
-    //perf_test(api->data_api());
-    //perf_test2(api->data_api());
-    perf_test3(dapi);
+        DataApi* dapi = create_data_api(addr);
+        //perf_test(api->data_api());
+        //perf_test2(api->data_api());
+        perf_test3(dapi);
 
-    //test_dapi(dapi);
-    //test_dapi2(dapi);
-    //test_tapi(api->trade_api());
+        //test_dapi(dapi);
+        //test_dapi2(dapi);
+        delete dapi;
+    }
+    {
+        const char* addr = "tradeapi://tcp://127.0.0.1:10202";
+
+        set_params("plugin_path", "D:\\tquant\\md\\bin;D:\\tquant\\trade\\bin;D:\\tquant\\trade\\bin_x64");
+
+        std::cout << addr << endl;
+
+        TradeApi* tapi = create_trade_api(addr);
+        test_tapi(tapi);
+        delete tapi;
+    }
+    
     getchar();
 
 }

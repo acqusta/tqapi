@@ -46,23 +46,23 @@ namespace TestUI
 
             for (int i = 0; i < bars.Length; i++)
             {
-                prices[i]  = bars[i].close;
-                times[i]   = bars[i].time;
-                volumes[i] = bars[i].volume;
+                prices[i]  = bars[i].Close;
+                times[i]   = bars[i].Time;
+                volumes[i] = bars[i].Volume;
             }
 
             double pre_close = 0.0;
             var q = dapi.GetQuote(code).Value;
-            if (q != null && q.trading_day == bars[0].trading_day)
-                pre_close = q.pre_close;
+            if (q != null && q.TradingDay == bars[0].TradingDay)
+                pre_close = q.PreClose;
 
             var daily_bars = dapi.GetDailyBar(code).Value;
             for (int i = daily_bars.Length - 1; i >= 0; i--)
             {
                 // FXIME: no pre_close in daily_bar!
-                if (daily_bars[i].date < bars[0].trading_day)
+                if (daily_bars[i].Date < bars[0].TradingDay)
                 {
-                    pre_close = daily_bars[i].close;
+                    pre_close = daily_bars[i].Close;
                     break;
                 }
             }
@@ -98,7 +98,7 @@ namespace TestUI
                 tick_chart.Dock = DockStyle.Fill;
             }
 
-            tick_chart.SetData(code, ticks[0].trading_day, ticks);
+            tick_chart.SetData(code, ticks[0].TradingDay, ticks);
 
             tick_chart.Visible = true;
             top_chart = tick_chart;
@@ -162,35 +162,35 @@ namespace TestUI
             double low2 = 1e8;
             foreach (var tick in ticks)
             {
-                if (tick.volume == 0) continue;
+                if (tick.Volume == 0) continue;
 
-                int bar_date = tick.trading_day;
-                int bar_time = bartime(tick.time, cycle);
+                int bar_date = tick.TradingDay;
+                int bar_time = bartime(tick.Time, cycle);
 
-                high2 = tick.high;
-                low2 = tick.low;
+                high2 = tick.High;
+                low2 = tick.Low;
 
                 if (cur_bar != null)
                 {
-                    if (bar_date < cur_bar.date || (bar_date == cur_bar.date && bar_time < cur_bar.time))
+                    if (bar_date < cur_bar.Date || (bar_date == cur_bar.Date && bar_time < cur_bar.Time))
                         continue;
 
                     // Ignore quotes having same volume and less volume
-                    if (total_volume >= tick.volume)
+                    if (total_volume >= tick.Volume)
                         continue;
 
-                    if (cur_bar.date == bar_date && cur_bar.time == bar_time)
+                    if (cur_bar.Date == bar_date && cur_bar.Time == bar_time)
                     {
                         //cur_bar.open = cur_bar.open;
-                        cur_bar.high      = Math.Max(cur_bar.high, tick.last);
-                        cur_bar.low       = Math.Min(cur_bar.low, tick.last);
-                        cur_bar.close     = tick.last;
-                        cur_bar.volume   += tick.volume - total_volume;
-                        cur_bar.turnover += tick.turnover - total_turnover;
-                        cur_bar.oi        = tick.oi;
+                        cur_bar.High      = Math.Max(cur_bar.High, tick.Last);
+                        cur_bar.Low       = Math.Min(cur_bar.Low, tick.Last);
+                        cur_bar.Close     = tick.Last;
+                        cur_bar.Volume   += tick.Volume - total_volume;
+                        cur_bar.Turnover += tick.Turnover - total_turnover;
+                        cur_bar.Oi        = tick.Oi;
 
-                        total_volume = tick.volume;
-                        total_turnover    = tick.turnover;
+                        total_volume = tick.Volume;
+                        total_turnover    = tick.Turnover;
 
                         continue;
                     }
@@ -201,27 +201,27 @@ namespace TestUI
                 if (cur_bar != null)
                 {
                     if (Math.Abs(high1 - high2) > 0.000001)
-                        if (high2 > cur_bar.high) cur_bar.high = high2;
+                        if (high2 > cur_bar.High) cur_bar.High = high2;
 
                     if (Math.Abs(low1 - low2) > 0.000001)
-                        if (low2 < cur_bar.low) cur_bar.low = low2;
+                        if (low2 < cur_bar.Low) cur_bar.Low = low2;
                 }
 
                 Bar bar = new Bar();
-                bar.trading_day = tick.trading_day;
-                bar.date        = bar_date;
-                bar.time        = bar_time;
-                bar.close       = bar.high = bar.low = bar.open = tick.last;
-                bar.volume      = tick.volume - total_volume;
-                bar.turnover    = tick.turnover - total_turnover;
-                bar.oi          = tick.oi;
-                bar.code        = tick.code;
+                bar.TradingDay = tick.TradingDay;
+                bar.Date        = bar_date;
+                bar.Time        = bar_time;
+                bar.Close       = bar.High = bar.Low = bar.Open = tick.Last;
+                bar.Volume      = tick.Volume - total_volume;
+                bar.Turnover    = tick.Turnover - total_turnover;
+                bar.Oi          = tick.Oi;
+                bar.Code        = tick.Code;
 
-                total_volume   = tick.volume;
-                total_turnover = tick.turnover;
+                total_volume   = tick.Volume;
+                total_turnover = tick.Turnover;
 
-                high2 = high1 = tick.high;
-                low2 = low1 = tick.low;
+                high2 = high1 = tick.High;
+                low2 = low1 = tick.Low;
 
                 cur_bar = bar;
 

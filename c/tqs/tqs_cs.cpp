@@ -123,6 +123,11 @@ public:
         void*       data;
     };
 
+    struct BarWrap {
+        const char*     cycle;
+        const RawBar*   bar;
+    };
+
     virtual void on_event(shared_ptr<StraletEvent> evt)
     {
         switch (evt->evt_id) {
@@ -140,7 +145,10 @@ public:
         }
         case STRALET_EVENT_ID::ON_BAR: {
             auto on_bar = reinterpret_cast<OnBar*>(evt.get());
-            m_stralet.on_event(evt->evt_id, (void*)on_bar->bar.get());
+            BarWrap bar;
+            bar.cycle = on_bar->cycle.c_str();
+            bar.bar   = on_bar->bar.get();
+            m_stralet.on_event(evt->evt_id, (void*)&bar);
             break;
         }
         case STRALET_EVENT_ID::ON_TIMER: {

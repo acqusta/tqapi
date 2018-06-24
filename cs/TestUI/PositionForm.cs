@@ -54,7 +54,7 @@ namespace TestUI
 
             foreach (var act in accounts)
             {
-                var r = tapi.QueryPositions(act.account_id);
+                var r = tapi.QueryPositions(act.AccountId);
                 if (r.Value == null)
                 {
                     MessageBox.Show(r.Msg, "Error");
@@ -70,22 +70,22 @@ namespace TestUI
             {
                 ListViewItem item = new ListViewItem();
                 item.Text = ""; // i.ToString();
-                item.SubItems.Add(pos.account_id);
-                item.SubItems.Add(pos.code);
-                item.SubItems.Add(pos.name);
-                item.SubItems.Add(pos.current_size.ToString());
-                item.SubItems.Add(pos.enable_size.ToString());
-                item.SubItems.Add(pos.init_size.ToString());
-                item.SubItems.Add(pos.today_size.ToString());
-                item.SubItems.Add(pos.frozen_size.ToString());
-                item.SubItems.Add(pos.side);
-                item.SubItems.Add(pos.cost.ToString());
-                item.SubItems.Add(pos.cost_price.ToString());
-                item.SubItems.Add(pos.last_price.ToString());
-                item.SubItems.Add(pos.float_pnl.ToString()).ForeColor = pos.last_price > pos.cost_price ? Color.Red : Color.Green;
-                item.SubItems.Add(pos.close_pnl.ToString());
-                item.SubItems.Add(pos.margin.ToString());
-                item.SubItems.Add(pos.commission.ToString());
+                item.SubItems.Add(pos.AccountId);
+                item.SubItems.Add(pos.Code);
+                item.SubItems.Add(pos.Name);
+                item.SubItems.Add(pos.CurrentSize.ToString());
+                item.SubItems.Add(pos.EnableSize.ToString());
+                item.SubItems.Add(pos.InitSize.ToString());
+                item.SubItems.Add(pos.TodaySize.ToString());
+                item.SubItems.Add(pos.FrozenSize.ToString());
+                item.SubItems.Add(pos.Side);
+                item.SubItems.Add(pos.Cost.ToString());
+                item.SubItems.Add(pos.CostPrice.ToString());
+                item.SubItems.Add(pos.LastPrice.ToString());
+                item.SubItems.Add(pos.FloatPnl.ToString()).ForeColor = pos.LastPrice > pos.CostPrice ? Color.Red : Color.Green;
+                item.SubItems.Add(pos.ClosePnl.ToString());
+                item.SubItems.Add(pos.Margin.ToString());
+                item.SubItems.Add(pos.Commission.ToString());
 
                 listView1.Items.Add(item);
             }

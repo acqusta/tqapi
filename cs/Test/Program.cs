@@ -17,11 +17,11 @@ namespace Test
                 if (r.Value != null)
                 {
                     foreach (var bar in r.Value)
-                        Console.WriteLine(bar.code + "|"
-                            + bar.date + "|" + bar.time + "|"
-                            + bar.open + "|" + bar.high + "|"
-                            + bar.low + "|" + bar.close + "|"
-                            + bar.volume + "|" + bar.turnover);
+                        Console.WriteLine(bar.Code + "|"
+                            + bar.Date + "|" + bar.Time + "|"
+                            + bar.Open + "|" + bar.High + "|"
+                            + bar.Low + "|" + bar.Close + "|"
+                            + bar.Volume + "|" + bar.Turnover);
                     Console.WriteLine("bars : " + r.Value.Length);
                 }
                 else
@@ -34,11 +34,11 @@ namespace Test
                 if (r.Value != null)
                 {
                     foreach (var tick in r.Value)
-                        Console.WriteLine(tick.code + "|"
-                            + tick.date + "|" + tick.time + "|"
-                            + tick.open + "|" + tick.high + "|"
-                            + tick.low + "|" + tick.close + "|"
-                            + tick.volume + "|" + tick.turnover);
+                        Console.WriteLine(tick.Code + "|"
+                            + tick.Date + "|" + tick.Time + "|"
+                            + tick.Open + "|" + tick.High + "|"
+                            + tick.Low + "|" + tick.Close + "|"
+                            + tick.Volume + "|" + tick.Turnover);
                     Console.Write("ticks: " + r.Value.Length);
                 }
             }
@@ -47,11 +47,11 @@ namespace Test
                 if (r.Value != null)
                 {
                     foreach (var bar in r.Value)
-                        Console.WriteLine(bar.code + "|"
-                            + bar.date + "|"
-                            + bar.open + "|" + bar.high + "|"
-                            + bar.low + "|" + bar.close + "|"
-                            + bar.volume + "|" + bar.turnover);
+                        Console.WriteLine(bar.Code + "|"
+                            + bar.Date + "|"
+                            + bar.Open + "|" + bar.High + "|"
+                            + bar.Low + "|" + bar.Close + "|"
+                            + bar.Volume + "|" + bar.Turnover);
                     Console.WriteLine("dailybars : " + r.Value.Length);
                 }
                 else
@@ -64,39 +64,39 @@ namespace Test
 
         static void OnAccountStatus(AccountInfo account)
         {
-            Console.WriteLine("on_account: " + account.account_id + "," + account.status);
+            Console.WriteLine("on_account: " + account.AccountId + "," + account.Status);
         }
 
         static void OnOrderStatus(Order order)
         {
             Console.WriteLine("on_order: "
-                        + order.account_id + ","
-                        + order.code + ","
-                        + order.entrust_action + ","
-                        + order.entrust_price + ","
-                        + order.entrust_size + ","
-                        + order.entrust_date + ","
-                        + order.entrust_time + ","
-                        + order.entrust_no + ","
-                        + order.fill_price + ","
-                        + order.fill_size + ","
-                        + order.status + ","
-                        + order.status_msg
+                        + order.AccountId + ","
+                        + order.Code + ","
+                        + order.EntrustAction + ","
+                        + order.EntrustPrice + ","
+                        + order.EntrustSize + ","
+                        + order.EntrustDate + ","
+                        + order.EntrustTime + ","
+                        + order.EntrustNo + ","
+                        + order.FillPrice + ","
+                        + order.FillSize + ","
+                        + order.Status + ","
+                        + order.StatusMsg
                         );
         }
 
         static void OnOrderTrade(Trade trade)
         {
             Console.WriteLine("on_trade: "
-                        + trade.account_id + ","
-                        + trade.fill_date + ","
-                        + trade.fill_time + ","
-                        + trade.code + ","
-                        + trade.entrust_action + ","
-                        + trade.entrust_no + ","
-                        + trade.fill_price + ","
-                        + trade.fill_size + ","
-                        + trade.fill_no
+                        + trade.AccountId + ","
+                        + trade.FillDate + ","
+                        + trade.FillTime + ","
+                        + trade.Code + ","
+                        + trade.EntrustAction + ","
+                        + trade.EntrustNo + ","
+                        + trade.FillPrice + ","
+                        + trade.FillSize + ","
+                        + trade.FillNo
                         );
         }
 
@@ -112,8 +112,8 @@ namespace Test
                 {
                     foreach (var act in r.Value)
                     {
-                        Console.WriteLine("account: " + act.account_id + ","
-                            + act.broker + "," + act.account_id + "," + act.account_type);
+                        Console.WriteLine("account: " + act.AccountId + ","
+                            + act.Broker + "," + act.AccountId + "," + act.AccountType);
                     }
                 }
                 else
@@ -128,11 +128,11 @@ namespace Test
                 {
                     var bal = r.Value;
                     Console.WriteLine("balance: "
-                        + bal.init_balance + ","
-                        + bal.enable_balance + ","
-                        + bal.margin + ","
-                        + bal.float_pnl + ","
-                        + bal.close_pnl
+                        + bal.InitBalance + ","
+                        + bal.EnableBalance + ","
+                        + bal.Margin + ","
+                        + bal.FloatPnl + ","
+                        + bal.ClosePnl
                         );
                 }
                 else
@@ -147,13 +147,13 @@ namespace Test
                     foreach (var pos in r.Value)
                     {
                         Console.WriteLine("position: "
-                            + pos.code + ","
-                            + pos.name + ","
-                            + pos.side + ","
-                            + pos.init_size + ","
-                            + pos.enable_size + ","
-                            + pos.current_size + ","
-                            + pos.today_size
+                            + pos.Code + ","
+                            + pos.Name + ","
+                            + pos.Side + ","
+                            + pos.InitSize + ","
+                            + pos.EnableSize + ","
+                            + pos.CurrentSize + ","
+                            + pos.TodaySize
                             );
                     }
                 }
@@ -169,18 +169,18 @@ namespace Test
                     foreach (var ord in r.Value)
                     {
                         Console.WriteLine("order: "
-                            + ord.account_id + ","
-                            + ord.code + ","
-                            + ord.entrust_action + ","
-                            + ord.entrust_price + ","
-                            + ord.entrust_size + ","
-                            + ord.entrust_date + ","
-                            + ord.entrust_time + ","
-                            + ord.entrust_no + ","
-                            + ord.fill_price + ","
-                            + ord.fill_size + ","
-                            + ord.status + ","
-                            + ord.status_msg
+                            + ord.AccountId + ","
+                            + ord.Code + ","
+                            + ord.EntrustAction + ","
+                            + ord.EntrustPrice + ","
+                            + ord.EntrustSize + ","
+                            + ord.EntrustDate + ","
+                            + ord.EntrustTime + ","
+                            + ord.EntrustNo + ","
+                            + ord.FillPrice + ","
+                            + ord.FillSize + ","
+                            + ord.Status + ","
+                            + ord.StatusMsg
                             );
                     }
                 }
@@ -196,15 +196,15 @@ namespace Test
                     foreach (var trade in r.Value)
                     {
                         Console.WriteLine("order: "
-                            + trade.account_id + ","
-                            + trade.fill_date + ","
-                            + trade.fill_time + ","
-                            + trade.code + ","
-                            + trade.entrust_action + ","
-                            + trade.entrust_no + ","
-                            + trade.fill_price + ","
-                            + trade.fill_size + ","
-                            + trade.fill_no
+                            + trade.AccountId + ","
+                            + trade.FillDate + ","
+                            + trade.FillTime + ","
+                            + trade.Code + ","
+                            + trade.EntrustAction + ","
+                            + trade.EntrustNo + ","
+                            + trade.FillPrice + ","
+                            + trade.FillSize + ","
+                            + trade.FillNo
                             );
                     }
                 }
@@ -219,7 +219,7 @@ namespace Test
                 if (r.Value != null)
                 {
                     var oid = r.Value;
-                    Console.WriteLine("PlaceOrder result: " + oid.entrust_no + "," + oid.order_id);
+                    Console.WriteLine("PlaceOrder result: " + oid.EntrustNo + "," + oid.OrderId);
                 }
                 else
                 {
@@ -228,7 +228,7 @@ namespace Test
 
                 if (r.Value != null)
                 {
-                    var r2 = tapi.CancelOrder("glsc", "000001.SH", r.Value.entrust_no);
+                    var r2 = tapi.CancelOrder("glsc", "000001.SH", r.Value.EntrustNo);
                     if (r2.Value)
                     {
                         Console.WriteLine("CancelOrder result: " + r2.Value);
@@ -249,14 +249,14 @@ namespace Test
 
         static void OnMarketQuote(MarketQuote quote)
         {
-            Console.WriteLine("on_quote: " + quote.date + "," + quote.time + ","
-                + quote.code + "," + quote.last + "," + quote.volume);
+            Console.WriteLine("on_quote: " + quote.Date + "," + quote.Time + ","
+                + quote.Code + "," + quote.Last + "," + quote.Volume);
         }
 
         static void OnBar(String cycle, Bar bar)
         {
-            Console.WriteLine("on_bar: " + cycle + "," + bar.date + "," + bar.time + ","
-                + bar.code + "," + bar.open + "," + bar.high + "," + bar.low + "," + bar.close);
+            Console.WriteLine("on_bar: " + cycle + "," + bar.Date + "," + bar.Time + ","
+                + bar.Code + "," + bar.Open + "," + bar.High + "," + bar.Low + "," + bar.Close);
         }
 
         static void TestDataApi2(DataApi dapi)
@@ -318,9 +318,9 @@ namespace Test
             var begin_time = DateTime.Now;
             foreach (var bar in dapi.GetDailyBar("000001.SH").Value)
             {
-                if (bar.date < 20180101 || bar.date > 20180501) continue;
+                if (bar.Date < 20180101 || bar.Date > 20180501) continue;
                 foreach (var code in codes)
-                    dapi.GetBar(code, "1m", bar.date);
+                    dapi.GetBar(code, "1m", bar.Date);
 
             }
             var end_time = DateTime.Now;

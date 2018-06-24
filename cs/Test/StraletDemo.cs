@@ -35,7 +35,7 @@ namespace Test
         }
         public void OnQuote(MarketQuote quote)
         {
-            Context.Logger.Info(String.Format("on_quote {0} {1} {2} {3}", quote.code, quote.time, quote.last, quote.volume));
+            Context.Logger.Info(String.Format("on_quote {0} {1} {2} {3}", quote.Code, quote.Time, quote.Last, quote.Volume));
         }
     }
 
@@ -47,32 +47,31 @@ namespace Test
             return new StraletDemo();
         }
 
-        static void Test()
+        static int Test()
         {
             BackTest.Config cfg = new BackTest.Config();
-            cfg.data_level = "tk";
+            cfg.data_level = "1m";
             cfg.begin_date = 20180101;
-            cfg.end_date = 20180501;
+            cfg.end_date = 20180102;
 
             TQuant.Stralet.BackTest.Run(cfg, CreateStralet);
+            return 0;
         }
 
-        static void Run()
+        static int Run()
         {
             RealTime.Config cfg = new RealTime.Config();
 
             TQuant.Stralet.RealTime.Run(cfg, CreateStralet);
+            return 0;
         }
 
         public static int Main(string[] args)
         {
-            //return MyIfSpreadTradeMain.Main(args);
-            //return MyIfSpreadTrade2Main.Main(args);
-            //return MyIfSpreadTrade3Stralet.MyIfSpreadTrade3Main.Main(args);
-            //return TestFSM.Main(args);
-
-            Run();
-            return 1;
+            if (args.Length >= 1 && args[0] == "realtime")
+                return Run();
+            else
+                return Test();
         }
     }
     

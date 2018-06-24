@@ -62,23 +62,23 @@ namespace Test
             else if (evt.FsmEvent is OnQuote)
             {
                 var quote = (evt.FsmEvent as OnQuote).Quote;
-                Context.Logger.Info("OnQuoe {0} {1} {2} {3}", quote.time, quote.code, quote.last, quote.volume);
+                Context.Logger.Info("OnQuoe {0} {1} {2} {3}", quote.Time, quote.Code, quote.Last, quote.Volume);
                 return Stay();
             }
             else if (evt.FsmEvent is OnOrder)
             {
                 var order = (evt.FsmEvent as OnOrder).Order;
                 Context.Logger.Info("OnOrder {0} {1} {2} {3} {4} {5} {6}", 
-                    order.account_id, order.code, order.entrust_action, order.entrust_no,
-                    order.order_id, order.status, order.status_msg);
+                    order.AccountId, order.Code, order.EntrustAction, order.EntrustNo,
+                    order.OrderId, order.Status, order.StatusMsg);
                 return Stay();
             }
             else if (evt.FsmEvent is OnTrade)
             {
                 var trade = (evt.FsmEvent as OnTrade).Trade;
                 Context.Logger.Info("OnTrade {0} {1} {2} {3} {4} {5:F2} {6} {7}",
-                    trade.account_id, trade.code, trade.entrust_action, trade.entrust_no, trade.fill_no,
-                    trade.fill_price, trade.fill_size, trade.fill_time);
+                    trade.AccountId, trade.Code, trade.EntrustAction, trade.EntrustNo, trade.FillNo,
+                    trade.FillPrice, trade.FillSize, trade.FillTime);
             }
             return null;
         }

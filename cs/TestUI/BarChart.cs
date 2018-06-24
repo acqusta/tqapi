@@ -41,7 +41,7 @@ namespace TestUI
         public void SetData(String code, Bar[] bars, int bar_cycle)
         {
             this.code = code;
-            this.trading_day = bars[0].trading_day;
+            this.trading_day = bars[0].TradingDay;
             this.bars = bars;
             this.bar_cycle = bar_cycle;
             this.Invalidate();
@@ -81,8 +81,8 @@ namespace TestUI
 
             for (int i = bars.Length - 1; i >= begin_pos; i--)
             {
-                max_price = Math.Max(bars[i].high, max_price);
-                min_price = Math.Min(bars[i].low, min_price);
+                max_price = Math.Max(bars[i].High, max_price);
+                min_price = Math.Min(bars[i].Low, min_price);
             }
 
             g.Clear(Color.Black);
@@ -109,7 +109,7 @@ namespace TestUI
 
         private void DrawTimeBar(Graphics g, int begin_pos)
         {
-            int begin_time = bars[begin_pos].time;
+            int begin_time = bars[begin_pos].Time;
             Font font = new Font("SimSun", 9F, System.Drawing.FontStyle.Regular);
 
             var y = Height - timebar_height;
@@ -221,15 +221,15 @@ namespace TestUI
             {
                 var bar = bars[i];
                 float x        = x0 + (i - begin_pos) * (bar_width + 2) + bar_width/2;
-                float y_top    = (float)(y0 - (bar.high - min_price) / (max_price - min_price) * bar_area_height);
-                float y_bottom = (float)(y0 - (bar.low - min_price) / (max_price - min_price) * bar_area_height);
+                float y_top    = (float)(y0 - (bar.High - min_price) / (max_price - min_price) * bar_area_height);
+                float y_bottom = (float)(y0 - (bar.Low - min_price) / (max_price - min_price) * bar_area_height);
 
                 float r_x_left  =  x - bar_width/2;
                 float r_x_right = x + bar_width/2;
-                float r_y_open  = (float)(y0 - (bar.open - min_price) / (max_price - min_price) * bar_area_height);
-                float r_y_close = (float)(y0 - (bar.close - min_price) / (max_price - min_price) * bar_area_height);
+                float r_y_open  = (float)(y0 - (bar.Open - min_price) / (max_price - min_price) * bar_area_height);
+                float r_y_close = (float)(y0 - (bar.Close - min_price) / (max_price - min_price) * bar_area_height);
 
-                if (bar.open < bar.close)
+                if (bar.Open < bar.Close)
                 {
                     g.DrawLine(red_pen, x, y_top, x, y_bottom);
                     g.FillRectangle(Brushes.Black, r_x_left, r_y_close, bar_width, r_y_open - r_y_close);
@@ -248,21 +248,21 @@ namespace TestUI
             float x0 = sidebar_width;
             float y0 = Height - timebar_height;
 
-            var begin_time = IntTimeToMillis(bars[begin_pos].time);
+            var begin_time = IntTimeToMillis(bars[begin_pos].Time);
 
             long max_vol = 0;
             for (int i = begin_pos; i < bars.Length; i++)
             {
-                max_vol = Math.Max(bars[i].volume, max_vol);
+                max_vol = Math.Max(bars[i].Volume, max_vol);
             }
 
             for (int i = begin_pos; i < bars.Length; i++)
             {
                 var bar = bars[i];
                 float x = x0 + (i - begin_pos) * (bar_width + 2);
-                float y_top = y0 - (float)(bar.volume * 1.0f / max_vol * brick_height * 2);
+                float y_top = y0 - (float)(bar.Volume * 1.0f / max_vol * brick_height * 2);
 
-                if (bar.open < bar.close)
+                if (bar.Open < bar.Close)
                     g.DrawRectangle(red_pen, x, y_top, bar_width - 1, y0 - y_top);
                 else
                     g.FillRectangle(green_brush, x, y_top, bar_width - 1, y0 - y_top);

@@ -62,7 +62,7 @@ CallResultWrap* dapi_get_bar(void* h, const char* code, const char* cycle, int t
     if (r.value) {
         cr->bars = r.value;
         cr->value = reinterpret_cast<const void*>(cr->bars->data());
-        cr->element_size = sizeof(Bar);
+        cr->element_size = sizeof(RawBar);
         cr->element_count = (int32_t)cr->bars->size();
         cr->value_type = VT_BAR_ARRAY;
     }
@@ -84,7 +84,7 @@ CallResultWrap* dapi_get_daily_bar(void* h, const char* code, const char* price_
     if (r.value) {
         cr->daily_bars = r.value;
         cr->value = reinterpret_cast<const void*>(cr->daily_bars->data());
-        cr->element_size = sizeof(DailyBar);
+        cr->element_size = sizeof(RawDailyBar);
         cr->element_count = (int32_t)cr->daily_bars->size();
         cr->value_type = VT_DAILYBAR_ARRAY;
     }
@@ -106,7 +106,7 @@ CallResultWrap* dapi_get_tick(void* h, const char* code, int trading_day)
     if (r.value) {
         cr->quotes = r.value;
         cr->value = reinterpret_cast<const void*>(cr->quotes->data());
-        cr->element_size = sizeof(MarketQuote);
+        cr->element_size = sizeof(RawMarketQuote);
         cr->element_count = (int32_t)cr->quotes->size();
         cr->value_type = VT_QUOTE_ARRAY;
     }
@@ -128,7 +128,7 @@ CallResultWrap* dapi_get_quote(void* h, const char* code)
     if (r.value) {
         cr->quote = r.value;
         cr->value = reinterpret_cast<const void*>(cr->quote.get());
-        cr->element_size = sizeof(MarketQuote);
+        cr->element_size = sizeof(RawMarketQuote);
         cr->element_count = 1;
         cr->value_type = VT_QUOTE;
     }
