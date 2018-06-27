@@ -1,6 +1,7 @@
 #ifndef _MYUTILS_SHMEM_QUEUE_H
 #define _MYUTILS_SHMEM_QUEUE_H
 
+#include <iostream>
 #include <assert.h>
 #include <atomic>
 #include <chrono>
@@ -59,11 +60,13 @@ namespace myutils {
                         char* p = m_data;
                         memcpy(p, (char*)&len, 4);
                         memcpy(p + 4, data, size);
-                        m_write_pos += (int32_t)size + 4;
+                        m_write_pos = (int32_t)size + 4;
                         ret = true;
                     }
                     else {
-                        assert(false);
+                        //assert(false);
+                        ret = false;
+                        //return false;
                     }
                 }
                 else if (m_read_pos - m_write_pos > (int32_t)size + 4) {
@@ -77,7 +80,7 @@ namespace myutils {
                     ret = true;
                 }
                 m_rw_mtx--;
-                return true;
+                return ret;
             }
         } while (system_clock::now() - begin_time < milliseconds(10));
 
@@ -96,7 +99,11 @@ namespace myutils {
                     int32_t pkt_size = *(int32_t*)p;
                     *data = p + 4;
                     *size = pkt_size;
-                    assert(pkt_size <= m_write_pos - m_read_pos);
+                    //assert(pkt_size + 4 <= m_write_pos - m_read_pos);
+                    if (pkt_size + 4 > m_write_pos - m_read_pos) {
+                        cout << pkt_size << "," << m_write_pos << "," << m_read_pos << endl;
+                        assert(0);
+                    }
                     ret = true;
                 }
                 else if (m_read_pos > m_write_pos) {
@@ -104,7 +111,11 @@ namespace myutils {
                     int32_t pkt_size = *(int32_t*)p;
                     *data = p + 4;
                     *size = pkt_size;
-                    assert(*size == m_data_realsize - m_read_pos);
+                    //assert( pkt_size + 4 <= m_data_size - m_read_pos);
+                    if ( pkt_size + 4 > m_data_size - m_read_pos) {
+                        cout << *size << "," << m_data_realsize << "," << m_read_pos;
+                        assert(false);
+                    }
                     ret = true;
                 }
                 m_rw_mtx--;

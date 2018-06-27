@@ -82,7 +82,7 @@ void MessageLoop::Run(RunLoop* run)
             }
 
             if (!found) {
-                m_queue_cond.wait_for(lock, milliseconds(100));
+                m_queue_cond.wait_for(lock, milliseconds(1));
                 continue;
             }
         }

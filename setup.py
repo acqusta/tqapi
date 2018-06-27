@@ -36,6 +36,7 @@ sources = [
     "lib/myutils/ipc_connection.cpp",
     "lib/myutils/misc.cpp",
     "lib/myutils/mprpc.cpp",
+    "lib/myutils/unicode.cpp",
     "lib/myutils/csvparser.cpp",
     "lib/myutils/socket_connection.cpp",
     "lib/myutils/socketutils.cpp",
@@ -44,8 +45,7 @@ sources = [
     "pyext/tqapi_tapi.cpp",
     "pyext/tqapi_dapi.cpp",
     "pyext/tqapi_py.cpp",
-    "c/api/impl_tquant_api.cpp",
-    "c/api/tquant_api_test.cpp",
+    "c/api/impl_tquant_api.cpp"
 ]
 
 define_macros = [
@@ -91,7 +91,7 @@ setup(packages = [ 'tquant' ],
       libraries = [ msgpack ],
       ext_modules = [module],
       name = 'tquant',
-      version = '0.1.11',
+      version = '0.1.12',
       description="Acqusta quantitative trading tools",
       author = "Xu Tiezhu",
       author_email = 'xutiezhu@gmail.com',

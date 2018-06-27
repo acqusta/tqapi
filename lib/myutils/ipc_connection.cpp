@@ -20,7 +20,9 @@ using namespace myutils;
 
 SharedSemaphore::SharedSemaphore()
 #ifdef _WIN32
-    : m_hEvent(nullptr)
+    : m_hSemaphore(nullptr)
+#elif defined(__linux__)
+    : m_sem(nullptr)
 #else
     : m_data(nullptr)
 #endif
@@ -30,19 +32,31 @@ SharedSemaphore::SharedSemaphore()
 SharedSemaphore::~SharedSemaphore()
 {
 #ifdef _WIN32
-    if (m_hEvent) CloseHandle(m_hEvent);
+    if (m_hSemaphore) CloseHandle(m_hSemaphore);
+#elif defined(__linux__)
+    if (m_sem && m_sem != SEM_FAILED)
+        sem_close(m_sem);
 #endif
 }
 
 SharedSemaphore*  SharedSemaphore::create(const char* name)
 {
 #ifdef _WIN32
-    HANDLE hEvent  = CreateEventA(NULL, TRUE, FALSE, name);
-    if (hEvent != nullptr) {
+    HANDLE h = CreateSemaphoreA(NULL, 0, 1000000, name);
+    if (h != nullptr) {
         auto sem = new SharedSemaphore();
-        sem->m_hEvent = hEvent;
+        sem->m_hSemaphore = h;
         return sem;
     } else {
+        return nullptr;
+    }
+#elif defined(__linux__)
+    auto sem = new SharedSemaphore();
+    sem->m_sem = sem_open(name, O_CREAT, 0666, 0);
+    if (sem->m_sem != SEM_FAILED) {
+        return sem;
+    } else {
+        delete sem;
         return nullptr;
     }
 #else
@@ -67,14 +81,22 @@ SharedSemaphore*  SharedSemaphore::create(const char* name)
 
 SharedSemaphore* SharedSemaphore::open(const char* name)
 {
-#ifdef _WIN32
-    
-    auto hEvent = OpenEventA(EVENT_ALL_ACCESS, FALSE, name);
-    if (hEvent != nullptr) {
+#ifdef _WIN32    
+    HANDLE h = OpenSemaphoreA(SEMAPHORE_ALL_ACCESS, FALSE, name);
+    if (h != nullptr) {
         auto sem = new SharedSemaphore();
-        sem->m_hEvent = hEvent;
+        sem->m_hSemaphore = h;
         return sem;
     } else {
+        return nullptr;
+    }
+#elif defined(__linux__)
+    auto sem = new SharedSemaphore();
+    sem->m_sem = sem_open(name, 0);
+    if (sem->m_sem != SEM_FAILED) {
+        return sem;
+    } else {
+        delete sem;
         return nullptr;
     }
 #else
@@ -90,19 +112,38 @@ SharedSemaphore* SharedSemaphore::open(const char* name)
 int SharedSemaphore::timed_wait(int timeout_ms)
 {
 #ifdef _WIN32
-    switch(WaitForSingleObject(m_hEvent, timeout_ms)){
+    switch(WaitForSingleObject(m_hSemaphore, timeout_ms)){
     case WAIT_OBJECT_0:
-        ResetEvent(m_hEvent);
         return 1;
     case WAIT_TIMEOUT:
         return 0;
     default:
         return -1;
     }
-#else
+    
+#elif defined(__linux__)
+
     struct timeval now;
     struct timespec outtime;
 
+    gettimeofday(&now, NULL);
+    memset(&outtime, 0, sizeof(outtime));
+    outtime.tv_sec  = now.tv_sec + timeout_ms/1000;
+    outtime.tv_nsec = now.tv_usec * 1000 + (timeout_ms%1000) * 1000000;
+    outtime.tv_sec  += outtime.tv_nsec / 1000000000;
+    outtime.tv_nsec %= 1000000000;
+    int r = sem_timedwait(m_sem, &outtime);
+    //cout << "wait " << r << "," << m_data->count << "," << timeout_ms << endl;
+    switch(r) {
+    case 0:            return 1;
+    case ETIMEDOUT:    return 0;
+    case EAGAIN:       return 0;
+    default:           return -1;
+    }
+
+#else
+    struct timeval now;
+    struct timespec outtime;
 
     pthread_mutex_lock(&m_data->mtx);
 
@@ -114,16 +155,22 @@ int SharedSemaphore::timed_wait(int timeout_ms)
         outtime.tv_sec  += outtime.tv_nsec / 1000000000;
         outtime.tv_nsec %= 1000000000;
         int r = pthread_cond_timedwait(&m_data->cond, &m_data->mtx, &outtime);
-        if (m_data->count>0)
+        int ret = 0;
+        //cout << "wait " << r << "," << m_data->count << "," << timeout_ms << endl;
+        if (m_data->count > 0) {
             m_data->count--;
+            ret = 1;
+        }
         pthread_mutex_unlock (&m_data->mtx);
+
         switch(r) {
-        case 0:            return 1;
+        case 0:            return ret;
         case ETIMEDOUT:    return 0;
         default:           return -1;
         }
 
     } else {
+        //cout << "wait has value " << m_data->count << endl;
         m_data->count--;
         pthread_mutex_unlock (&m_data->mtx);
         return 1;
@@ -137,16 +184,19 @@ int SharedSemaphore::timed_wait(int timeout_ms)
 bool SharedSemaphore::post()
 {
 #ifdef _WIN32
-    if (m_hEvent) {
-        SetEvent(m_hEvent);
+    if (m_hSemaphore) {
+        ReleaseSemaphore(m_hSemaphore, 1, NULL);
         return true;
     } else {
         return false;
     }
+#elif defined(__linux__)
+    return sem_post(m_sem) == 0;
 #else
     if (m_data) {
         pthread_mutex_lock(&m_data->mtx);
         m_data->count++;
+        //cout << "post " << m_data->count << endl;
         pthread_cond_signal(&m_data->cond);
         pthread_mutex_unlock(&m_data->mtx);
         return true;
@@ -172,7 +222,8 @@ IpcConnection::IpcConnection()
     , m_sem_recv(nullptr)
     , m_socket(INVALID_SOCKET)
 {
-    m_msg_loop.PostDelayedTask(bind(&IpcConnection::check_connection, this), 500);
+    m_msg_loop.PostDelayedTask(bind(&IpcConnection::check_connection, this),  500);
+    m_msg_loop.PostDelayedTask(bind(&IpcConnection::on_idle_timer,    this), 1000);
 }
 
 IpcConnection::~IpcConnection()
@@ -182,12 +233,10 @@ IpcConnection::~IpcConnection()
 
 void IpcConnection::recv_run()
 {
-    auto last_idle_time = system_clock::now();
     while (!m_should_exit) {
         if (m_slot->client_id != m_my_id)  break;
-        //if ((int64_t)now_ms() - (int64_t)m_slot->svr_update_time > 5000 + m_timeout) break;
-
-        switch (m_sem_recv->timed_wait(200)) {
+#if 1
+        switch (m_sem_recv->timed_wait(1)) {
         case 1:
             msg_loop().PostTask([this]() {
                 do_recv(); 
@@ -198,18 +247,9 @@ void IpcConnection::recv_run()
         default:
             break;
         }
-
-        {
-            uint64_t my_id;
-            int r = ::recv(m_socket, (char*)&my_id, sizeof(my_id), 0);
-            m_connected = r > 0 || is_EWOURLDBLOCK(r);
-        }
-
-        if (system_clock::now() - last_idle_time > seconds(1)) {
-            msg_loop().PostTask([this]() {
-                if (m_callback) m_callback->on_idle(); 
-            });
-        }
+#else
+        do_recv();
+#endif
     }
     
     msg_loop().PostTask([this]() {
@@ -241,8 +281,8 @@ void IpcConnection::do_recv()
         }
     }
 
-    if (m_recv_queue->poll(&data, &size))
-        m_msg_loop.PostTask(bind(&IpcConnection::do_recv, this));
+    //if (m_recv_queue->poll(&data, &size))
+    //    m_msg_loop.PostTask(bind(&IpcConnection::do_recv, this));
 }
 
 bool IpcConnection::connect(const string& addr, Connection_Callback* callback)
@@ -317,9 +357,20 @@ void IpcConnection::clear_data()
 
 void IpcConnection::check_connection()
 {
+    uint64_t my_id;
+    int r = ::recv(m_socket, (char*)&my_id, sizeof(my_id), 0);
+    m_connected = r > 0 || is_EWOURLDBLOCK(r);
+
     if (!m_connected) do_connect();
 
     m_msg_loop.PostDelayedTask(bind(&IpcConnection::check_connection, this), 500);
+}
+
+void IpcConnection::on_idle_timer()
+{
+    m_msg_loop.PostDelayedTask(bind(&IpcConnection::on_idle_timer, this), 1000);
+    if (m_callback)
+        m_callback->on_idle();
 }
 
 bool IpcConnection::do_connect() 
@@ -377,8 +428,8 @@ bool IpcConnection::do_connect()
         if (!m_my_shmem->open_shmem(m_slot->shmem_name, m_slot->shmem_size, false))
             break;
 
-        m_sem_recv = SharedSemaphore::create(m_slot->sem_send);
-        m_sem_send = SharedSemaphore::create(m_slot->sem_recv);
+        m_sem_recv = SharedSemaphore::open(m_slot->sem_send);
+        m_sem_send = SharedSemaphore::open(m_slot->sem_recv);
         if (!m_sem_recv || !m_sem_send) break;
 
         ShmemHead* head = (ShmemHead*)m_my_shmem->addr();
@@ -424,7 +475,7 @@ void IpcConnection::send(const char* data, size_t size)
             m_sem_send->post();
         }
         else {
-            cout << "send error: failed to push\n";
+            //cout << "send error: failed to push\n";
             msg_loop().PostTask([this]() {
                 if (m_connected) {
                     m_connected = false;

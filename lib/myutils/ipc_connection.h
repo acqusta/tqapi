@@ -8,7 +8,7 @@
 #include <thread>
 #include <mutex>
 #ifndef _WIN32
-//#include <semaphore.h>
+#include <semaphore.h>
 #include <pthread.h>
 #endif
 #include "myutils/connection.h"
@@ -38,7 +38,9 @@ namespace myutils {
         bool post();
 
 #ifdef _WIN32
-        HANDLE m_hEvent;
+        HANDLE m_hSemaphore;
+#elif defined(__linux__)
+        sem_t* m_sem;
 #else
         struct PthreadData {
             pthread_cond_t  cond;
@@ -91,6 +93,7 @@ namespace myutils {
         void recv_run();
         void clear_data();
         void check_connection();
+        void on_idle_timer();
 
         inline void set_conn_stat(bool connected) {
             unique_lock<mutex> lock(m_send_mtx);
