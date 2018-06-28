@@ -400,14 +400,15 @@ void perf_test3(DataApi* dapi)
     auto begin_time = system_clock::now();
 
     size_t total_count = 0;
-    for (int i = 0; i < 3000; i++) {
+    int loop = 1000;
+    for (int i = 0; i < loop; i++) {
         //auto ticks = dapi->tick(code, 20);
-        auto ticks = dapi->bar(code, "1m", 20180601, true);
+        auto ticks = dapi->bar(code, "1m", 0, true);
         if (ticks.value) {
             total_count += ticks.value->size();
             for (int n = 0; n < ticks.value->size(); n++) {
                 auto b = &ticks.value->at(n);
-                cout << "bar: " << b->code << "," << b->date << "," << b->time << "," << b->open <<"," << b->high <<"," << b->low << "," << b->close << endl;
+                //cout << "bar: " << b->code << "," << b->date << "," << b->time << "," << b->open <<"," << b->high <<"," << b->low << "," << b->close << endl;
             }
 
         }
@@ -419,29 +420,43 @@ void perf_test3(DataApi* dapi)
     cout << "used time    : " << used_time << endl
         << "total records: " << total_count << endl
 //        << "total date   : " << date_count << endl
-        << "time per code : " << (used_time / 3000) / 1000.0 << endl;
-
+         << "time per code : " << (used_time / 1000.0) / loop << " millis" <<endl;
 }
-int main()
+
+int main(int argc, const char** argv)
 {
     {
-        //const char* addr = "tcp://127.0.0.1:10001";
-        //const char* addr = "ipc://tqc_10001";
-        const char* addr = "mdapi://file://d:/tquant/tqc?hisdata_only=true";
-        set_params("plugin_path", "D:\\tquant\\md\\bin;D:\\tquant\\trade\\bin;D:\\tquant\\trade\\bin_x64");
 
-        std::cout << addr << endl;
+        const char* addr[3] = {
+            "ipc://tqc_10001",
+            "tcp://127.0.0.1:10001"
+        };
 
-        DataApi* dapi = create_data_api(addr);
+#ifdef _WIN32        
+        addr[2] = "mdapi://file://d:/tquant/tqc?hisdata_only=true";
+        set_params("plugin_path", "D:\\tquant\\md\\bin;D:\\tquant\\trade\\bin;D:\\tquant\\trade\\bin_x64;");
+
+#else
+        addr[2] = "mdapi://file:///opt/tquant/md";
+        set_params("plugin_path", "/opt/tquant/md/lib");
+#endif
+
+
+        int i = 0;
+        if (argc>1) i = atoi(argv[1]);
+        std::cout << addr[i] << endl;
+        
+        DataApi* dapi = create_data_api(addr[i]);
         //perf_test(api->data_api());
         //perf_test2(api->data_api());
         perf_test3(dapi);
-
+        
         //test_dapi(dapi);
         //test_dapi2(dapi);
         delete dapi;
+
     }
-    {
+    if (0) {
         const char* addr = "tradeapi://tcp://127.0.0.1:10202";
 
         set_params("plugin_path", "D:\\tquant\\md\\bin;D:\\tquant\\trade\\bin;D:\\tquant\\trade\\bin_x64");

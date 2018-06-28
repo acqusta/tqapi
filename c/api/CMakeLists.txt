@@ -12,10 +12,15 @@ set(SRC
 
 add_library(tqapi-static STATIC ${SRC})
 
+if (UNIX)
+  set(DL_LIB dl)
+endif()
+
 target_link_libraries(tqapi-static
   myutils
   msgpack
   snappy
+  ${DL_LIB}
   ${COMMON_LIB}
 )
 
@@ -26,6 +31,7 @@ target_link_libraries(tqapi
   myutils
   msgpack
   snappy
+  ${DL_LIB}
   ${COMMON_LIB}
 )
 

@@ -36,6 +36,10 @@ set(SRC
   tqs/tqs_cs.cpp
 )
 
+if (UNIX)
+  set (DL_LIB dl)
+endif()
+
 # Static library
 add_library(tqapi-static STATIC ${SRC})
 target_link_libraries(tqapi-static
@@ -43,6 +47,7 @@ target_link_libraries(tqapi-static
   myutils
   msgpack
   snappy
+  ${DL_LIB}
   ${COMMON_LIB}
 )
 
@@ -53,6 +58,7 @@ target_link_libraries(tqapi
   myutils
   msgpack
   snappy
+  ${DL_LIB}
   ${COMMON_LIB}
 )
 target_compile_definitions(tqapi PRIVATE _TQAPI_DLL_IMPL=1)

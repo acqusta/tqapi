@@ -79,7 +79,6 @@ namespace tquant { namespace api { namespace impl {
                 return CallResult<const MarketQuoteArray>(builld_errmsg(rsp->err_code, rsp->err_msg));
             
             const BinDataHead* bin_head = reinterpret_cast<const BinDataHead*>(rsp->result.via.bin.ptr);
-            //uint32_t bin_len = rsp->result.via.bin.size;
 
             if (bin_head->element_size < sizeof(RawMarketQuote))
                 return CallResult<const MarketQuoteArray>("-1,wrong data format");

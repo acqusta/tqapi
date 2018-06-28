@@ -133,12 +133,16 @@ int SharedSemaphore::timed_wait(int timeout_ms)
     outtime.tv_sec  += outtime.tv_nsec / 1000000000;
     outtime.tv_nsec %= 1000000000;
     int r = sem_timedwait(m_sem, &outtime);
-    //cout << "wait " << r << "," << m_data->count << "," << timeout_ms << endl;
-    switch(r) {
-    case 0:            return 1;
-    case ETIMEDOUT:    return 0;
-    case EAGAIN:       return 0;
-    default:           return -1;
+    //cout << "wait " << r << "," << errno  << "," << timeout_ms << endl;
+    if (r == -1) {
+        switch(errno) {
+        case ETIMEDOUT:    return 0;
+        case EAGAIN:       return 0;
+        case EINTR:       return 0;
+        default:           return -1;
+        }
+    } else {
+        return 1;
     }
 
 #else
@@ -236,7 +240,7 @@ void IpcConnection::recv_run()
     while (!m_should_exit) {
         if (m_slot->client_id != m_my_id)  break;
 #if 1
-        switch (m_sem_recv->timed_wait(1)) {
+        switch (m_sem_recv->timed_wait(100)) {
         case 1:
             msg_loop().PostTask([this]() {
                 do_recv(); 

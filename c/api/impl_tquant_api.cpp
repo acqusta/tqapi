@@ -1,16 +1,20 @@
 #include <sstream>
 #include <unordered_set>
-#include "tquant_api.h"
+#ifndef _WIN32
+# include <dlfcn.h>
+#endif
+
 #include "myutils/stringutils.h"
 #include "myutils/mprpc.h"
 #include "myutils/socket_connection.h"
 #include "myutils/ipc_connection.h"
 #include "myutils/socketutils.h"
 #include "myutils/misc.h"
+#include "tquant_api.h"
 #include "impl_tquant_api.h"
 #include "impl_data_api.h"
 #include "impl_trade_api.h"
-#include "tquant_api.h"
+
 
 namespace tquant { namespace api { namespace impl {
 
@@ -68,8 +72,7 @@ namespace tquant { namespace api { namespace impl {
 } } }
 
 #ifdef _WIN32
-static
-string ConvertErrorCodeToString(DWORD ErrorCode)
+static string ConvertErrorCodeToString(DWORD ErrorCode)
 {
     HLOCAL LocalAddress = NULL;
     FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
@@ -86,8 +89,6 @@ namespace tquant { namespace api {
     typedef DataApi*  (*T_create_data_api)(const char* str_params);
     typedef TradeApi* (*T_create_trade_api)(const char* str_params);
 
-    // addr = "embed://tkapi/file://d:/tquant/md"
-
     static unordered_map<string, string> g_params;
 
     void set_params(const string& key, const string& value)
@@ -102,7 +103,6 @@ namespace tquant { namespace api {
         string module_name = string("tqapi_") + string(addr, p - addr);
 
 #ifdef _WIN32
-
         string dirs = g_params["plugin_path"];
         vector<string> ss;
         split(dirs, ";", &ss);
@@ -131,7 +131,34 @@ namespace tquant { namespace api {
         // FIXME: How to free module?
         return dapi;
 #else
-        throw std::runtime_error("to be implemented");
+        string dirs = g_params["plugin_path"];
+        vector<string> ss;
+        split(dirs, ":", &ss);
+        ss.push_back("");
+        void * h = nullptr;
+        for (auto& path : ss) {
+            string dll_path = (!path.empty() ? (string(path) + "/lib") : "lib") + module_name + ".so";
+            cout << "dlopen " << dll_path << endl;
+            h = dlopen(dll_path.c_str(), RTLD_LAZY);
+            if (h) break;
+        }
+        if (!h)
+            throw std::runtime_error("Can't load library " + module_name);
+
+        auto create_data_api = (T_create_data_api)dlsym(h, "create_data_api");
+        if (!create_data_api) {
+            dlclose(h);
+            throw std::runtime_error("No create_data_api in " + module_name);
+            return nullptr;
+        }
+
+        DataApi* dapi = create_data_api(p+3);
+        if (!dapi) {
+            dlclose(h);
+            return nullptr;
+        }
+        // FIXME: How to free module?
+        return dapi;
 #endif
     }
 
@@ -171,7 +198,34 @@ namespace tquant { namespace api {
         // FIXME: How to free module?
         return tapi;
 #else
-        throw std::runtime_error("to be implemented");
+        string dirs = g_params["plugin_path"];
+        vector<string> ss;
+        split(dirs, ":", &ss);
+        ss.push_back("");
+        void * h = nullptr;
+        for (auto& path : ss) {
+            string dll_path = (!path.empty() ? (string(path) + "/lib") : "lib") + module_name + ".so";
+            cout << "dlopen " << dll_path << endl;
+            h = dlopen(dll_path.c_str(), RTLD_LAZY);
+            if (h) break;
+        }
+        if (!h)
+            throw std::runtime_error("Can't load library " + module_name);
+
+        auto create_trade_api = (T_create_trade_api)dlsym(h, "create_trade_api");
+        if (!create_trade_api) {
+            dlclose(h);
+            throw std::runtime_error("No create_trade_api in " + module_name);
+            return nullptr;
+        }
+
+        TradeApi* tapi = create_trade_api(p + 3);
+        if (!tapi) {
+            dlclose(h);
+            return nullptr;
+        }
+        // FIXME: How to free module?
+        return tapi;
 #endif
     }
     void init_socket()
@@ -189,7 +243,6 @@ namespace tquant { namespace api {
     {
         init_socket();
 
-        //if (strncmp(addr.c_str(), "embed://", 8)) {
         if (strncmp(addr.c_str(), "tcp://", 6) == 0 ||
             strncmp(addr.c_str(), "ipc://", 6) == 0) 
         {
