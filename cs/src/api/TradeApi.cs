@@ -72,8 +72,8 @@ namespace TQuant
 		public class Trade
         {
             public String AccountId;       // 帐号编号
-            public String Code;             // 证券代码
-            public String Name;             // 证券名称
+            public String Code;            // 证券代码
+            public String Name;            // 证券名称
             public String EntrustNo;       // 委托编号
             public String EntrustAction;   // 委托动作
             public String FillNo;          // 成交编号
@@ -81,6 +81,7 @@ namespace TQuant
             public Double FillPrice;       // 成交价格
             public Int32  FillDate;        // 成交日期
             public Int32  FillTime;        // 成交时间
+            public Int32  OrderId;         // 订单编号
         }
 
         public struct Side

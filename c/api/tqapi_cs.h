@@ -46,6 +46,15 @@ struct BalanceWrap {
 
     BalanceWrap(const Balance& bal) : m_orig(bal)
     {
+        assign();
+    }
+    BalanceWrap(const BalanceWrap& rhs) : m_orig(rhs.m_orig)
+    {
+        assign();
+    }
+
+    void assign()
+    {
         account_id      = _T( m_orig.account_id   );
         fund_account    = _T( m_orig.fund_account );
         init_balance    = m_orig.init_balance      ;
@@ -76,6 +85,16 @@ struct OrderWrap {
 
     OrderWrap(const Order& order) : m_orig(order)
     {
+        assign();
+    }
+
+    OrderWrap(const OrderWrap& rhs) : m_orig(rhs.m_orig)
+    {
+        assign();
+    }
+
+    void assign()
+    {
         account_id     = _T( m_orig.account_id     );
         code           = _T( m_orig.code           );
         name           = _T( m_orig.name           );
@@ -104,10 +123,21 @@ struct TradeWrap {
     double      fill_price;       // 成交价格
     int32_t     fill_date;        // 成交日期
     int32_t     fill_time;        // 成交时间
+    int32_t     order_id;         // 订单编号
 
     Trade m_orig;
 
     TradeWrap(const Trade& trade) : m_orig(trade)
+    {
+        assign();
+    }
+
+    TradeWrap(const TradeWrap& rhs) : m_orig(rhs.m_orig)
+    {
+        assign();
+    }
+
+    void assign()
     {
         account_id     = _T( m_orig.account_id     );
         code           = _T( m_orig.code           );
@@ -119,6 +149,7 @@ struct TradeWrap {
         fill_price     = m_orig.fill_price          ;
         fill_date      = m_orig.fill_date           ;
         fill_time      = m_orig.fill_time           ;
+        order_id       = m_orig.order_id            ;
     }
 };
 
@@ -142,9 +173,18 @@ struct PositionWrap {
 
     shared_ptr<Position> m_orig;
 
-    PositionWrap(const Position& orig)
+    PositionWrap(const Position& orig) :  m_orig(make_shared<Position>(orig))
     {
-        m_orig = make_shared<Position>(orig);
+        assign();
+    }
+
+    PositionWrap(const PositionWrap& rhs) : m_orig(rhs.m_orig)
+    {
+        assign();
+    }
+
+    void assign()
+    {
         account_id    = _T( m_orig->account_id );
         code          = _T( m_orig->code       );
         name          = _T( m_orig->name       );
@@ -170,9 +210,18 @@ struct OrderIDWrap {
     
     shared_ptr<OrderID> m_orig;
 
-    OrderIDWrap(const OrderID& orig)
+    OrderIDWrap(const OrderID& orig): m_orig(make_shared<OrderID>(orig))
     {
-        m_orig = make_shared<OrderID>(orig);
+        assign();
+    }
+
+    OrderIDWrap(const OrderIDWrap& rhs) : m_orig(rhs.m_orig)
+    {
+        assign();
+    }
+
+    void assign()
+    {
         entrust_no = _T(m_orig->entrust_no);
         order_id   = m_orig->order_id;
     }

@@ -20,13 +20,13 @@ namespace loop {
     void asyncCallResult(MessageLoop* loop, shared_ptr < AsyncCallResult<T_Req, T_Rsp> > result, shared_ptr<T_Rsp> rsp)
     {
         result->rsp = rsp;
-        loop->QuitNow();
+        loop->quit_now();
     }
 
     template <class T_Req, class T_Rsp>
     void notifyAysnCallResult(shared_ptr<MessageLoop> loop, shared_ptr<AsyncCallResult<T_Req, T_Rsp> > result, shared_ptr<T_Rsp> rsp)
     {
-        loop->PostTask(std::bind(&asyncCallResult<T_Req, T_Rsp>, loop.get(), result, rsp));
+        loop->post_task(std::bind(&asyncCallResult<T_Req, T_Rsp>, loop.get(), result, rsp));
     }
 
     //template <class T_Req, class T_Rsp>
@@ -37,7 +37,7 @@ namespace loop {
     //    shared_ptr<MessageLoop> loop(new MessageLoop());
     //    auto asyncCallResult = shared_ptr<AsyncCallResult<T_Req, T_Rsp> >(new AsyncCallResult<T_Req, T_Rsp>());
     //    std::function< void(shared_ptr<T_Rsp>)> callback = std::bind(&notifyAysnCallResult<T_Req, T_Rsp>, loop, asyncCallResult, std::placeholders::_1);
-    //    loop->PostTask(std::bind(func, req, callback));
+    //    loop->post_task(std::bind(func, req, callback));
     //    RunLoop run(loop.get());
     //    run.Run();
     //    return asyncCallResult->rsp;
@@ -51,7 +51,7 @@ namespace loop {
         shared_ptr<MessageLoop> loop(new MessageLoop());
         auto asyncCallResult = shared_ptr<AsyncCallResult<T_Req, T_Rsp> >(new AsyncCallResult<T_Req, T_Rsp>());
         std::function< void(shared_ptr<T_Rsp>)> callback = std::bind(&notifyAysnCallResult<T_Req, T_Rsp>, loop, asyncCallResult, std::placeholders::_1);
-        loop->PostTask(std::bind(func, req, &callback));
+        loop->post_task(std::bind(func, req, &callback));
         RunLoop run(loop.get());
         run.Run();
         return asyncCallResult->rsp;

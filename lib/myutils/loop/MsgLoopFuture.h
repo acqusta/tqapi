@@ -100,7 +100,7 @@ namespace loop {
             while (m_lock != 0) {}
             if (m_success.second) {
                 auto msgloop = m_success.first ? m_success.first : m_msgloop;
-                msgloop->PostTask(std::bind(m_success.second, value));
+                msgloop->post_task(std::bind(m_success.second, value));
             }
         }
 
@@ -108,7 +108,7 @@ namespace loop {
             while (m_lock != 0) {}
             if (m_failure.second) {
                 auto msgloop = m_failure.first ? m_failure.first : m_msgloop;
-                msgloop->PostTask(std::bind(m_failure.second, error));
+                msgloop->post_task(std::bind(m_failure.second, error));
             }
         }
 

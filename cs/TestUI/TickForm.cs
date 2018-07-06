@@ -172,10 +172,10 @@ namespace TestUI
                 item.SubItems.Add(String.Format(price_fmt, tick.High));
                 item.SubItems.Add(String.Format(price_fmt, tick.Low));
                 item.SubItems.Add(String.Format(price_fmt, tick.Last));
-                item.SubItems.Add(String.Format("{0:N0}", tick.Volume / 100));
+                item.SubItems.Add(String.Format("{0:N0}", dt != DataType.FUTURE ? tick.Volume / 100 : tick.Volume));
                 item.SubItems.Add(String.Format("{0:N0}", (long)tick.Turnover));
-                item.SubItems.Add(String.Format("{0:N0}", (tick.Volume - volume)/100));
-                // item.SubItems.Add(String.Format("{0:N0}", (long)(tick.turnover - turnover)));
+                item.SubItems.Add(String.Format("{0:N0}", dt != DataType.FUTURE ? (tick.Volume - volume)/100 : (tick.Volume - volume)));
+
                 if (tick.Volume != volume)
                     item.SubItems.Add(String.Format(price_fmt, (tick.Turnover - turnover) / (tick.Volume - volume)));
                 else

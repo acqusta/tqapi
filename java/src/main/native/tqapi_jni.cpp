@@ -130,7 +130,7 @@ JniHelper::JniHelper(JNIEnv* env)
 
     env->GetJavaVM(&this->jvm);
 
-    msg_loop().PostTask([this]() {
+    msg_loop().post_task([this]() {
         int r = jvm->GetEnv((void**)&jenv, JNI_VERSION_1_6);
         if (r == JNI_EDETACHED)
             jvm->AttachCurrentThreadAsDaemon((void**)&jenv, nullptr);
@@ -146,7 +146,7 @@ JniHelper::~JniHelper()
 
 void JniHelper::destroy(JNIEnv* env)
 {
-    msg_loop().PostTask([this]() {
+    msg_loop().post_task([this]() {
         jvm->DetachCurrentThread();
     });
 

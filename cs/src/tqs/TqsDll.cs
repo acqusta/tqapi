@@ -61,15 +61,12 @@ namespace TQuant
                 public static extern FinDataTime tqs_sc_cur_time(IntPtr h);
 
                 [DllImport("tqapi.dll", EntryPoint = "tqs_sc_post_event", CallingConvention = CallingConvention.Cdecl)]
-                public static extern IntPtr tqapi_get_data_api(IntPtr h);
-
-                [DllImport("tqapi.dll", EntryPoint = "tqs_sc_post_event", CallingConvention = CallingConvention.Cdecl)]
                 public static extern void tqs_sc_post_event(IntPtr h, String evt, IntPtr data);
 
                 [DllImport("tqapi.dll", EntryPoint = "tqs_sc_set_timer", CallingConvention = CallingConvention.Cdecl)]
                 public static extern void tqs_sc_set_timer(IntPtr h, Int64 id, Int64 delay, IntPtr data);
 
-                [DllImport("tqapi.dll", EntryPoint = "tqs_sc_data_api", CallingConvention = CallingConvention.Cdecl)]
+                [DllImport("tqapi.dll", EntryPoint = "tqs_sc_kill_timer", CallingConvention = CallingConvention.Cdecl)]
                 public static extern void tqs_sc_kill_timer(IntPtr h, Int64 id);
 
                 [DllImport("tqapi.dll", EntryPoint = "tqs_sc_data_api", CallingConvention = CallingConvention.Cdecl)]

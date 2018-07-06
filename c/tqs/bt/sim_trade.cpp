@@ -442,7 +442,7 @@ void SimAccount::make_trade(double fill_price, Order* order)
         //this->m_ctx->logger() << "enable_balance -= " << fill_size * fill_price << endl;
     }
     else {
-        pos->frozen_size -= order->entrust_size;
+        pos->frozen_size  -= order->entrust_size;
         pos->current_size -= fill_size;
         pos->enable_size  -= fill_size; // TODO: check if it is right
         assert(pos->enable_size >= 0);
@@ -486,16 +486,40 @@ void SimAccount::make_trade(double fill_price, Order* order)
     trade->fill_date      = dt.date;
     trade->fill_time      = dt.time;
     trade->fill_no        = fill_no;
+    trade->order_id       = order->order_id;
 
     m_tdata->trades[trade->fill_no] = trade;
     m_trade_ind_list.push_back(make_shared<Trade>(*trade));
+}
+
+bool SimAccount::check_quote_time(const MarketQuote* quote, const Order* order)
+{
+    DateTime entrust_time(order->entrust_date, order->entrust_time);
+    if (DateTime(quote->date, quote->time).cmp(entrust_time) > 0)
+        return true;
+
+    const char* p = strchr(order->code.c_str(), '.');
+    if (p == nullptr) return true;
+    p++;
+
+    if (strcmp(p, "SH") == 0 || strcmp(p, "SZ") == 0) {
+        return m_ctx->cur_time().sub(entrust_time) >= seconds(5);
+    }
+    else {
+        // 按照500毫秒对齐，然后保证当前时间和下单时间中有一个行情
+        // 如果没有新行情，假设经过一个tick行情没有变化，可以撮合
+        DateTime cur_time = m_ctx->cur_time();
+        DateTime a(cur_time.date, (cur_time.time / 500)*500); 
+        DateTime b(order->entrust_date, (order->entrust_time / 500) * 500);
+        return a.sub(b) >= milliseconds(500);
+    }
 }
 
 void SimAccount::try_buy(Order* order)
 {
     if (m_ctx->data_level() == BT_TICK) {
         auto q = m_ctx->data_api()->quote(order->code.c_str());
-        if (q.value && q.value->ask1 <= order->entrust_price)
+        if (q.value && q.value->ask1 <= order->entrust_price && check_quote_time(q.value.get(), order))
             make_trade(q.value->ask1, order);
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
@@ -514,7 +538,7 @@ void SimAccount::try_sell(Order* order)
 {
     if (m_ctx->data_level() == BT_TICK) {
         auto q = m_ctx->data_api()->quote(order->code.c_str());
-        if (q.value && q.value->bid1 >= order->entrust_price)
+        if (q.value && q.value->bid1 >= order->entrust_price && check_quote_time(q.value.get(), order))
             make_trade(q.value->bid1, order);
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
@@ -534,7 +558,7 @@ void SimAccount::try_short(Order* order)
     // fixme
     if (m_ctx->data_level() == BT_TICK) {
         auto q = m_ctx->data_api()->quote(order->code.c_str());
-        if (q.value && q.value->bid1 >= order->entrust_price)
+        if (q.value && q.value->bid1 >= order->entrust_price && check_quote_time(q.value.get(), order))
             make_trade(q.value->bid1, order);
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
@@ -553,7 +577,7 @@ void SimAccount::try_cover(Order* order)
 {
     if (m_ctx->data_level() == BT_TICK) {
         auto q = m_ctx->data_api()->quote(order->code.c_str());
-        if (q.value && q.value->ask1 < order->entrust_price)
+        if (q.value && q.value->ask1 < order->entrust_price && check_quote_time(q.value.get(), order))
             make_trade(q.value->last, order);
     }
     else if (m_ctx->data_level() == BT_BAR1M) {

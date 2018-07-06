@@ -23,11 +23,17 @@ namespace tquant { namespace stralet {
         DateTime(int a_date, int a_time) : date(a_date), time(a_time)
         {}
 
-        int cmp(const DateTime& dt) {
+        int cmp(const DateTime& dt) const {
             if (this->date < dt.date) return -1;
             if (this->date == dt.date) return this->time - dt.time;
             return 1;
         }
+
+        milliseconds sub(const DateTime& dt) const;
+
+        static DateTime from_timepoint(system_clock::time_point  tp);
+
+        system_clock::time_point to_timepoint() const;
     };
 
     enum STRALET_EVENT_ID {

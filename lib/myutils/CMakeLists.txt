@@ -1,6 +1,7 @@
 project(myutils)
 
 set(SRC 
+  concurrentqueue.h
   mprpc.cpp
   mprpc.h
   shm_queue.h
@@ -15,6 +16,8 @@ set(SRC
   misc.h
   ipc_connection.cpp
   ipc_connection.h
+  ipc_common.cpp
+  ipc_common.h
   unicode.cpp
   unicode.h
   csvparser.cpp

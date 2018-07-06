@@ -26,7 +26,7 @@ namespace loop {
 
         void close_loop() {
             if (m_thread) {
-                m_msg_loop.PostTask(bind(&loop::MessageLoop::QuitNow, &m_msg_loop));
+                m_msg_loop.post_task(bind(&loop::MessageLoop::quit_now, &m_msg_loop));
                 if (m_thread->joinable())
                     m_thread->join();
                 delete m_thread;
@@ -44,8 +44,8 @@ namespace loop {
     private:
 
         void run() {
-            RunLoop run(&m_msg_loop);
-            run.Run();
+            RunLoop run_loop(&m_msg_loop);
+            run_loop.run();
         }
 
         std::thread*  m_thread;
