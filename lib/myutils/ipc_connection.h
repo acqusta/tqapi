@@ -10,8 +10,8 @@
 #include "myutils/filemapping.h"
 #include "myutils/shm_queue.h"
 #include "myutils/socketutils.h"
-#include "loop/MsgRunLoop.h"
-#include "ipc_common.h"
+#include "myutils/ipc_common.h"
+#include "myutils/loop/MsgRunLoop.h"
 
 #ifndef _WIN32
 static_assert( sizeof(pthread_mutex_t) + sizeof(pthread_cond_t) < 128, "shared semaphore in ConnectionInfo");

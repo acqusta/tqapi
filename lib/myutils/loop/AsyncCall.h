@@ -52,8 +52,7 @@ namespace loop {
         auto asyncCallResult = shared_ptr<AsyncCallResult<T_Req, T_Rsp> >(new AsyncCallResult<T_Req, T_Rsp>());
         std::function< void(shared_ptr<T_Rsp>)> callback = std::bind(&notifyAysnCallResult<T_Req, T_Rsp>, loop, asyncCallResult, std::placeholders::_1);
         loop->post_task(std::bind(func, req, &callback));
-        RunLoop run(loop.get());
-        run.Run();
+        RunLoop(loop.get()).run();
         return asyncCallResult->rsp;
     }
 
