@@ -265,10 +265,11 @@ namespace tquant {  namespace api {
     };
 
     class DataApi {
-    public:   
+    public:
         DataApi() {}
 
         virtual ~DataApi() {}
+
         /**
         * 取某交易日的某个代码的 ticks
         *
@@ -575,6 +576,7 @@ namespace tquant {  namespace api {
         * @return
         */
         virtual CallResult<string> query(const string& account_id, const string& command, const string& params) = 0;
+
         /**
         * 设置 TradeApi.Callback
         *
