@@ -34,6 +34,7 @@ sources = [
     "lib/snappy/snappy.cc",
     "lib/myutils/filemapping.cpp",
     "lib/myutils/ipc_connection.cpp",
+    "lib/myutils/ipc_common.cpp",
     "lib/myutils/misc.cpp",
     "lib/myutils/mprpc.cpp",
     "lib/myutils/unicode.cpp",

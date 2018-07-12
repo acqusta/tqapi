@@ -428,7 +428,7 @@ JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_setCallback
         }
 
         callback = env->NewGlobalRef(callback);
-        wrap->msg_loop().PostTask([wrap, callback, onMarketQuote, onBar]() {
+        wrap->msg_loop().post_task([wrap, callback, onMarketQuote, onBar]() {
             if (wrap->m_dapi_callback)
                 wrap->jenv->DeleteGlobalRef(wrap->m_dapi_callback);
 
@@ -438,7 +438,7 @@ JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_setCallback
         });
     }
     else {
-        wrap->msg_loop().PostTask([wrap]() {
+        wrap->msg_loop().post_task([wrap]() {
             if (wrap->m_dapi_callback) {
                 wrap->jenv->DeleteGlobalRef(wrap->m_dapi_callback);
                 wrap->m_dapi_callback = nullptr;
@@ -453,7 +453,7 @@ void DataApiWrap::on_market_quote(shared_ptr<const MarketQuote> quote)
 {
     if (!m_dapi_callback) return;
 
-    msg_loop().PostTask([this, quote]() {
+    msg_loop().post_task([this, quote]() {
         try {
             if (jenv) {
                 auto q = convert_quote(jenv, help_cls, createMarketQuote, quote.get());
@@ -470,7 +470,7 @@ void DataApiWrap::on_bar(const string& cycle, shared_ptr<const Bar> bar)
 {
     if (!m_dapi_callback) return;
 
-    msg_loop().PostTask([this, cycle, bar]() {
+    msg_loop().post_task([this, cycle, bar]() {
         try {
             if (jenv) {
                 auto py_cycle = jenv->NewStringUTF(cycle.c_str());

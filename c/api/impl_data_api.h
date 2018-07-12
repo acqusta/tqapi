@@ -185,7 +185,7 @@ namespace tquant { namespace api { namespace impl {
 
             string new_codes;
             string source;
-            uint64_t sub_hash;
+            uint64_t sub_hash = 0;
             mp_map_get(result, "sub_hash", (int64_t*)&sub_hash);
             mp_map_get(result, "sub_codes", &new_codes);
             mp_map_get(result, "source",    &source);

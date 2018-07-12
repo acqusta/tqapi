@@ -358,7 +358,7 @@ void TradeApiWrap::on_order_status(shared_ptr<Order> order)
 {
     if (m_tapi_cb.obj == Py_None) return;
 
-    m_msg_loop.PostTask([this, order]() {
+    m_msg_loop.post_task([this, order]() {
         auto gstate = PyGILState_Ensure();
         PyObject* obj = convert_order(order.get());
         call_callback(this->m_tapi_cb.obj, "tapi.order_status_ind", obj);
@@ -370,7 +370,7 @@ void TradeApiWrap::on_order_trade(shared_ptr<Trade> trade)
 {
     if (m_tapi_cb.obj == Py_None) return;
 
-    m_msg_loop.PostTask([this, trade]() {
+    m_msg_loop.post_task([this, trade]() {
         auto gstate = PyGILState_Ensure();
         PyObject* obj = convert_trade(trade.get());
         call_callback(this->m_tapi_cb.obj, "tapi.order_trade_ind", obj);
@@ -382,7 +382,7 @@ void TradeApiWrap::on_account_status(shared_ptr<AccountInfo> account)
 {
     if (m_tapi_cb.obj == Py_None) return;
 
-    m_msg_loop.PostTask([this, account]() {
+    m_msg_loop.post_task([this, account]() {
         auto gstate = PyGILState_Ensure();
         PyObject* obj = convert_account_status(account.get());
         call_callback(this->m_tapi_cb.obj, "tapi.account_status_ind", obj);

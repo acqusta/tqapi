@@ -477,7 +477,7 @@ JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_setCallback
         }
 
         callback = env->NewGlobalRef(callback);
-        wrap->msg_loop().PostTask([wrap, callback, onOrderStatus, onOrderTrade, onAccountStatus]() {
+        wrap->msg_loop().post_task([wrap, callback, onOrderStatus, onOrderTrade, onAccountStatus]() {
             if (wrap->m_tapi_callback)
                 wrap->jenv->DeleteGlobalRef(wrap->m_tapi_callback);
             wrap->m_tapi_callback      = callback;
@@ -487,7 +487,7 @@ JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_setCallback
         });
     }
     else {
-        wrap->msg_loop().PostTask([wrap]() {
+        wrap->msg_loop().post_task([wrap]() {
             if (wrap->m_tapi_callback) {
                 wrap->jenv->DeleteGlobalRef(wrap->m_tapi_callback);
                 wrap->m_tapi_callback = nullptr;
@@ -505,7 +505,7 @@ void TradeApiWrap::on_order_status(shared_ptr<Order> order)
 {
     if (!m_tapi_callback) return;
 
-    msg_loop().PostTask([this, order]() {
+    msg_loop().post_task([this, order]() {
         try {
             auto ord = convert_order(jenv, this->help_cls, createBar, order.get());
             this->jenv->CallVoidMethod(m_tapi_callback, this->tapi_onOrderStatus, ord);
@@ -521,7 +521,7 @@ void TradeApiWrap::on_order_trade(shared_ptr<Trade> trade)
 {
     if (!m_tapi_callback) return;
 
-    msg_loop().PostTask([this, trade]() {
+    msg_loop().post_task([this, trade]() {
         try {
             auto trd = convert_trade(jenv, this->help_cls, createTrade, trade.get());
             this->jenv->CallVoidMethod(m_tapi_callback, this->tapi_onOrderTrade, trd);
@@ -537,7 +537,7 @@ void TradeApiWrap::on_account_status(shared_ptr<AccountInfo> account)
 {
     if (!m_tapi_callback) return;
 
-    msg_loop().PostTask([this, account]() {
+    msg_loop().post_task([this, account]() {
         try {
             auto ord = convert_account_info(jenv, this->help_cls, createAccountInfo, account.get());
             this->jenv->CallVoidMethod(m_tapi_callback, this->tapi_onAccountStatus, ord);

@@ -104,7 +104,7 @@ namespace mprpc {
     {
         m_cur_callid = 0;
 
-        msg_loop().PostDelayedTask(bind(&MpRpcClient::on_check_timer, this), 100);
+        msg_loop().post_delayed_task(bind(&MpRpcClient::on_check_timer, this), 100);
     }
 
     MpRpcClient::~MpRpcClient()
@@ -114,7 +114,7 @@ namespace mprpc {
 
     void MpRpcClient::on_check_timer()
     {
-        msg_loop().PostDelayedTask(bind(&MpRpcClient::on_check_timer, this), 100);
+        msg_loop().post_delayed_task(bind(&MpRpcClient::on_check_timer, this), 100);
 
         auto now = system_clock::now();
         if (now - m_last_hb_time > seconds(2)) {
@@ -146,7 +146,7 @@ namespace mprpc {
 
     void MpRpcClient::on_conn_status(bool connected)
     {
-        msg_loop().PostTask([this, connected]() {
+        msg_loop().post_task([this, connected]() {
             m_connected = connected;
 
             if (m_connected)
@@ -168,7 +168,7 @@ namespace mprpc {
 
         rpcmsg->recv_time = system_clock::now();
 
-        msg_loop().PostTask([this, rpcmsg]() {
+        msg_loop().post_task([this, rpcmsg]() {
             if (rpcmsg->method == ".sys.heartbeat") {
                 m_last_hb_rsp_time = system_clock::now();
                 if (!m_connected) {
@@ -205,7 +205,7 @@ namespace mprpc {
             this_thread::sleep_for(milliseconds(10));
         }
 
-        m_msg_loop.PostTask([this, callback]() { this->m_callback = callback; });
+        m_msg_loop.post_task([this, callback]() { this->m_callback = callback; });
         return m_connected;
     }
 
@@ -227,7 +227,7 @@ namespace mprpc {
         auto msg = make_shared<string>(pk.sb.data, pk.sb.size);
         auto prom = make_shared<AsyncCallPromise>(&this->m_msg_loop);
 
-        this->msg_loop().PostTask([this, prom, callid, timeout_ms, msg]() {
+        this->msg_loop().post_task([this, prom, callid, timeout_ms, msg]() {
             m_conn->send(msg->data(), msg->size());
             m_on_rsp_map[callid] = OnRspHandler(prom, system_clock::now() + milliseconds(timeout_ms));
         });

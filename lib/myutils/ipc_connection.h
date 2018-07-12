@@ -2,20 +2,16 @@
 #define _MYUTILS_IPC_CONNECTION_H
 
 #include <atomic>
-#include <list>
 #include <string>
 #include <memory>
 #include <thread>
 #include <mutex>
-#ifndef _WIN32
-#include <semaphore.h>
-#include <pthread.h>
-#endif
 #include "myutils/connection.h"
 #include "myutils/filemapping.h"
 #include "myutils/shm_queue.h"
 #include "myutils/socketutils.h"
-#include "loop/MsgRunLoop.h"
+#include "myutils/ipc_common.h"
+#include "myutils/loop/MsgRunLoop.h"
 
 #ifndef _WIN32
 static_assert( sizeof(pthread_mutex_t) + sizeof(pthread_cond_t) < 128, "shared semaphore in ConnectionInfo");
@@ -25,31 +21,6 @@ namespace myutils {
 
     using namespace std;
     using namespace std::chrono;
-
-    class SharedSemaphore {
-        SharedSemaphore();
-    public:
-        ~SharedSemaphore();        
-
-        static SharedSemaphore* create(const char* name_or_mem);
-        static SharedSemaphore* open(const char* name_or_mem);
-
-        int  timed_wait(int timeout_ms);
-        bool post();
-
-#ifdef _WIN32
-        HANDLE m_hSemaphore;
-#elif defined(__linux__)
-        sem_t* m_sem;
-#else
-        struct PthreadData {
-            pthread_cond_t  cond;
-            pthread_mutex_t mtx;
-            int32_t        count;
-        };
-        PthreadData* m_data;
-#endif
-    };
 
     class IpcConnection : public Connection, public loop::MsgLoopRun {
     public:

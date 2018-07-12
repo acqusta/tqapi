@@ -214,7 +214,7 @@ namespace tquant { namespace stralet { namespace realtime {
     void RealTimeStraletContext::post_event(const char* evt, void* data)
     {
         auto on_event = make_shared<OnEvent>(evt, data);
-        m_msgloop.PostTask([this, on_event]() { m_stralet->on_event(on_event); });
+        m_msgloop.post_task([this, on_event]() { m_stralet->on_event(on_event); });
     }
 
     DataApi* RealTimeStraletContext::data_api()
@@ -240,7 +240,7 @@ namespace tquant { namespace stralet { namespace realtime {
             it->second->is_dead = true;
 
         m_timers[id] = timer;
-        m_msgloop.PostDelayedTask(bind(&RealTimeStraletContext::timer_tigger, this, timer), (uint32_t)timer->delay);
+        m_msgloop.post_delayed_task(bind(&RealTimeStraletContext::timer_tigger, this, timer), (uint32_t)timer->delay);
     }
 
     void RealTimeStraletContext::kill_timer(int64_t id)
@@ -257,7 +257,7 @@ namespace tquant { namespace stralet { namespace realtime {
         if (!timer->is_dead) {
             m_stralet->on_event(make_shared<OnTimer>(timer->id, timer->data));
             if (!timer->is_dead)
-                m_msgloop.PostDelayedTask(bind(&RealTimeStraletContext::timer_tigger, this, timer), (uint32_t)timer->delay);
+                m_msgloop.post_delayed_task(bind(&RealTimeStraletContext::timer_tigger, this, timer), (uint32_t)timer->delay);
         }
     }
 
@@ -302,7 +302,7 @@ namespace tquant { namespace stralet { namespace realtime {
 
     void RealTimeStraletContext::on_market_quote(shared_ptr<const MarketQuote> quote)
     {
-        m_msgloop.PostTask([this, quote]() {
+        m_msgloop.post_task([this, quote]() {
             m_stralet->on_event(make_shared<OnQuote>(quote));
         });
     }
@@ -310,27 +310,27 @@ namespace tquant { namespace stralet { namespace realtime {
     void RealTimeStraletContext::on_bar(const string& cycle, shared_ptr<const Bar> bar)
     {
         auto on_bar = make_shared<OnBar>(cycle, bar);
-        m_msgloop.PostTask([this, on_bar]() {
+        m_msgloop.post_task([this, on_bar]() {
             m_stralet->on_event(on_bar);
         });
     }
 
     void RealTimeStraletContext::on_order_status(shared_ptr<Order> order)
     {
-        m_msgloop.PostTask([this, order]() {
+        m_msgloop.post_task([this, order]() {
             m_stralet->on_event(make_shared<OnOrder>(order));
         });
     }
 
     void RealTimeStraletContext::on_order_trade(shared_ptr<Trade> trade)
     {
-        m_msgloop.PostTask([this, trade]() {
+        m_msgloop.post_task([this, trade]() {
             m_stralet->on_event(make_shared<OnTrade>(trade));
         });
     }
     void RealTimeStraletContext::on_account_status(shared_ptr<AccountInfo> account)
     {
-        m_msgloop.PostTask([this, account]() {
+        m_msgloop.post_task([this, account]() {
             auto evt = make_shared<OnAccountStatus>(account);
             m_stralet->on_event(evt);
         });
@@ -354,8 +354,8 @@ namespace tquant { namespace stralet { namespace realtime {
 
         stralet->set_context(sc);
         stralet->on_event(make_shared<OnInit>());
-        loop::RunLoop run(&sc->m_msgloop);
-        run.Run();
+        loop::RunLoop(&sc->m_msgloop).run();
+
         stralet->on_event(make_shared<OnFini>());
 
         delete stralet;

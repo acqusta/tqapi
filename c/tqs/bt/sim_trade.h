@@ -49,6 +49,8 @@ namespace tquant { namespace stralet { namespace backtest {
         void try_short(Order* order);
         void try_cover(Order* order);
         void try_sell (Order* order);
+        
+        inline bool check_quote_time(const MarketQuote* quote, const Order* order);
 
         void make_trade     (double price, Order* order);
         Position* get_position(const string& code, const string& side);

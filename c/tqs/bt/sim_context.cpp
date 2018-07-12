@@ -147,7 +147,7 @@ void SimStraletContext::calc_next_timer_time(DateTime* dt)
     for (auto& e : m_timers) {
         if (e.second->trigger_time < tp) tp = e.second->trigger_time;
     }
-    *dt = tp_to_dt(tp);
+    *dt = DateTime::from_timepoint(tp);
 }
 
 void SimStraletContext::execute_timer()
@@ -171,7 +171,7 @@ void SimStraletContext::execute_timer()
 void SimStraletContext::set_sim_time(const DateTime& dt)
 {
     m_now = dt;
-    m_now_tp = dt_to_tp(m_now.date, m_now.time);
+    m_now_tp = DateTime(m_now.date, m_now.time).to_timepoint();
 }
 
 SimAccount* SimStraletContext::get_account(const string& account_id)
@@ -199,11 +199,35 @@ void SimStraletContext::run_one_day(Stralet* stralet)
 
         set_sim_time(dt1.cmp(dt2) < 0 ? dt1 : dt2);
 
+        // Set latest quotes before try_match
+        vector<shared_ptr<MarketQuote>> quotes;
+        for (auto& code : m_dapi->m_codes) {
+            auto q = m_dapi->next_quote(code);
+            if (q)
+                quotes.push_back(q);
+        }
+
+        vector<shared_ptr<Bar>> bars;
+        for (auto& code : m_dapi->m_codes) {
+            auto bar = m_dapi->next_bar(code);
+            if (bar)
+                bars.push_back(bar);
+        }
+
+        // ×¢ÒâÊÂ¼þË³Ðò: event -> quote -> bar -> (try_match) -> order -> trade
         if (m_events.size()) {
             auto events = m_events;
             m_events.clear();
             for (auto evt : events)
                 stralet->on_event(make_shared<OnEvent>(evt->name, evt->data));
+        }
+
+        for (auto & q : quotes)
+            stralet->on_event(make_shared<OnQuote>(q));
+
+        for (auto& bar : bars) {
+            const char* cycle = "1m";
+            stralet->on_event(make_shared<OnBar>(cycle, bar));
         }
 
         m_tapi->try_match();
@@ -224,28 +248,6 @@ void SimStraletContext::run_one_day(Stralet* stralet)
                     stralet->on_event(make_shared<OnTrade>(ind));
                 }
             }
-        }
-
-        vector<shared_ptr<MarketQuote>> quotes;
-        for (auto& code : m_dapi->m_codes) {
-            auto q = m_dapi->next_quote(code);
-            if (q)
-                quotes.push_back(q);
-        }
-        for (auto & q : quotes) {
-            stralet->on_event(make_shared<OnQuote>(q));
-        }
-
-        vector<shared_ptr<Bar>> bars;
-        for (auto& code : m_dapi->m_codes) {
-            auto bar = m_dapi->next_bar(code);
-            if (bar)
-                bars.push_back(bar);
-        }
-
-        for (auto& bar : bars) {
-            const char* cycle = "1m";
-            stralet->on_event(make_shared<OnBar>(cycle, bar));
         }
 
         execute_timer();

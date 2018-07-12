@@ -64,7 +64,7 @@ namespace tquant { namespace api { namespace impl {
 
     void MpRpc_Connection::on_notification(shared_ptr<MpRpcMessage> rpcmsg)
     {
-        m_msgloop.msg_loop().PostTask([this, rpcmsg] {
+        m_msgloop.msg_loop().post_task([this, rpcmsg] {
             if (m_callback) m_callback->on_notification(rpcmsg);
         });
     }
