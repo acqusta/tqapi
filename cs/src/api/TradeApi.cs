@@ -177,10 +177,11 @@ namespace TQuant
             * @param price         委托价格
             * @param size          委托数量
             * @param action        委托动作
+            * @param price_type    价格类型
             * @param order_id      自定义订单编号，不为0表示有值
             * @return OrderID      订单ID
             */
-            CallResult<OrderID> PlaceOrder(string account_id, string code, double price, long size, string action, int order_id = 0);
+            CallResult<OrderID> PlaceOrder(string account_id, string code, double price, long size, string action, string price_type = "", int order_id = 0);
 
             /**
             * 根据订单号撤单

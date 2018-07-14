@@ -87,9 +87,9 @@ namespace tquant { namespace stralet { namespace realtime {
             return m_tapi->query_positions(account_id);
         }
 
-        virtual CallResult<const OrderID> place_order(const string& account_id, const string& code, double price, int64_t size, const string& action, int order_id) override
+        virtual CallResult<const OrderID> place_order(const string& account_id, const string& code, double price, int64_t size, const string& action, const string& price_type, int order_id) override
         {
-            return m_tapi->place_order(account_id, code, price, size, action, order_id);
+            return m_tapi->place_order(account_id, code, price, size, action, price_type, order_id);
         }
 
         virtual CallResult<bool> cancel_order(const string& account_id, const string& code, int order_id) override

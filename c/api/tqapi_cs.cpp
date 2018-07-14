@@ -373,12 +373,13 @@ CallResultWrap* tapi_place_order(void* h, const char* account_id,
                                  double price,
                                  int64_t size,
                                  const char* action,
+                                 const char* price_type,
                                  int32_t order_id)
 {
     auto tapi = reinterpret_cast<TradeApi*>(h);
     assert(tapi);
 
-    auto r = tapi->place_order(account_id, code, price, size, action, order_id);
+    auto r = tapi->place_order(account_id, code, price, size, action, price_type, order_id);
     CallResultWrap* cr = new CallResultWrap();
     if (r.value) {
         cr->order_id = make_shared<OrderIDWrap>(*r.value);

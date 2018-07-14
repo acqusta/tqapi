@@ -314,7 +314,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_quer
  * Signature: (JLjava/lang/String;Ljava/lang/String;DJLjava/lang/String;I)Lcom/acqusta/tquant/api/TradeApi/OrderID;
  */
 JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_placeOrder
-  (JNIEnv *env, jclass cls, jlong h, jstring account_id, jstring code, jdouble price, jlong size, jstring action, jint order_id)
+  (JNIEnv *env, jclass cls, jlong h, jstring account_id, jstring code, jdouble price, jlong size, jstring action, jstring price_type, jint order_id)
 {
     auto wrap = reinterpret_cast<TradeApiWrap*>(h);
     if (!wrap) {
@@ -325,8 +325,9 @@ JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_placeOrde
         string s_account_id = get_string(env, account_id);
         string s_code       = get_string(env, code);
         string s_action     = get_string(env, action);
+        string s_price_type = get_string(env, price_type);
 
-        auto r = wrap->m_tapi->place_order(s_account_id, s_code, price, size, s_action, order_id);
+        auto r = wrap->m_tapi->place_order(s_account_id, s_code, price, size, s_action, s_price_type, order_id);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;

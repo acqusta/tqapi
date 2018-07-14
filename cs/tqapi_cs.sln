@@ -4,7 +4,7 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{2573FB2B-329D-41D0-816C-FAA5549BF612}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tqapi_cs", "src\tqapi_cs.csproj", "{BEB1CE43-7F22-45ED-A096-46C1A2E6D242}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TQuantApi", "src\TQuantApi.csproj", "{BEB1CE43-7F22-45ED-A096-46C1A2E6D242}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestUI", "TestUI\TestUI.csproj", "{07C11F95-F0C7-4259-A5EE-D682C5CC6010}"
 EndProject

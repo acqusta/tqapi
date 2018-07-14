@@ -88,10 +88,11 @@ class TradeApi:
         else:
             return (None, msg)
     
-    def place_order(self, account_id, code, price, size, action, order_id=0):
+    def place_order(self, account_id, code, price, size, action, price_type="", order_id=0):
         """Place an order and return entrust_no"""
         return _tqapi.tapi_place_order(self._handle, str(account_id), str(code),
-                                       float(price), long(size), str(action), int(order_id))
+                                       float(price), long(size), str(action),
+                                       str(price_type), int(order_id))
             
     def cancel_order(self, account_id, code, entrust_no="", order_id=0):
         """Canel order"""

@@ -14,6 +14,11 @@ namespace tquant { namespace stralet { namespace backtest {
 
     class SimStraletContext;
 
+    struct OrderData {
+        shared_ptr<Order> order;
+        string            price_type;
+    };
+
     struct TradeData {
         string  account_id;
         int32_t trading_day;
@@ -21,9 +26,9 @@ namespace tquant { namespace stralet { namespace backtest {
         double  enable_balance;
         double  frozen_balance;
 
-        unordered_map<string, shared_ptr<Position>> positions;     // code + side -> Position
-        unordered_map<string, shared_ptr<Order>>    orders;     // entrust_no -> order
-        unordered_map<string, shared_ptr<Trade>>    trades;     // fill_no -> trade
+        unordered_map<string, shared_ptr<Position>>     positions;  // code + side -> Position
+        unordered_map<string, shared_ptr<OrderData>>    orders;     // entrust_no -> order
+        unordered_map<string, shared_ptr<Trade>>        trades;     // fill_no -> trade
     };
 
     class SimAccount {
@@ -38,17 +43,17 @@ namespace tquant { namespace stralet { namespace backtest {
         CallResult<const vector<Order>>       query_orders();
         CallResult<const vector<Trade>>       query_trades();
         CallResult<const vector<Position>>    query_positions();
-        CallResult<const OrderID>             place_order(const string& code, double price, int64_t size, const string& action, int order_id);
+        CallResult<const OrderID>             place_order(const string& code, double price, int64_t size, const string& action, const string& price_type, int order_id);
         CallResult<bool>                      cancel_order(const string& code, int order_id);
         CallResult<bool>                      cancel_order(const string& code, const string& entrust_no);
         CallResult<const OrderID>             validate_order(const string& code, double price, int64_t size, const string& action);
 
         void try_match();
 
-        void try_buy  (Order* order);
-        void try_short(Order* order);
-        void try_cover(Order* order);
-        void try_sell (Order* order);
+        void try_buy  (OrderData* order);
+        void try_short(OrderData* order);
+        void try_cover(OrderData* order);
+        void try_sell (OrderData* order);
         
         inline bool check_quote_time(const MarketQuote* quote, const Order* order);
 
@@ -87,7 +92,7 @@ namespace tquant { namespace stralet { namespace backtest {
         virtual CallResult<const vector<Order>>         query_orders   (const string& account_id);
         virtual CallResult<const vector<Trade>>         query_trades   (const string& account_id);
         virtual CallResult<const vector<Position>>      query_positions(const string& account_id);
-        virtual CallResult<const OrderID>               place_order    (const string& account_id, const string& code, double price, int64_t size, const string& action, int order_id);
+        virtual CallResult<const OrderID>               place_order    (const string& account_id, const string& code, double price, int64_t size, const string& action, const string& price_type, int order_id);
         virtual CallResult<bool>                        cancel_order   (const string& account_id, const string& code, int order_id);
         virtual CallResult<bool>                        cancel_order   (const string& account_id, const string& code, const string& entrust_no);
         virtual CallResult<string>                      query          (const string& account_id, const string& command, const string& params);

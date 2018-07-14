@@ -19,17 +19,18 @@ namespace tquant { namespace stralet { namespace backtest {
     struct TickCache {
         int64_t       pos;
         int64_t       size;
-        //MarketQuote** first;
-        //MarketQuote** last;
         shared_ptr<const MarketQuoteArray> ticks;
     };
 
-    struct BarTickCache {
+    struct BarCache {
         int64_t pos;
         int64_t size;
-        //Bar**   first;
-        //Bar**   last;
         shared_ptr<const BarArray> bars;
+    };
+
+    struct DailyBarCache {
+        int64_t pos;
+        shared_ptr<const DailyBarArray> daily_bars;
     };
 
     class SimDataApi : public DataApi {
@@ -56,17 +57,23 @@ namespace tquant { namespace stralet { namespace backtest {
         shared_ptr<MarketQuote> next_quote(const string& code);
         shared_ptr<Bar>         next_bar(const string & code);
         const RawBar*           last_bar(const string & code);
+        const RawDailyBar*      cur_daily_bar(const string & code);
 
         DataApi* dapi() { return m_dapi; }
 
         void move_to(int trading_day);
 
         const unordered_set<string>& sub_codes() { return m_codes; }
+        void preload_bar        (const vector<string>& codes);
+        void preload_daily_bar  (const vector<string>& codes);
+        void preload_tick       (const vector<string>& codes);
+
     private:
         SimStraletContext* m_ctx;
         DataApi* m_dapi;
-        unordered_map<string, TickCache>    m_tick_caches;
-        unordered_map<string, BarTickCache> m_bar_caches;
+        unordered_map<string, TickCache>     m_tick_caches;
+        unordered_map<string, BarCache>      m_bar_caches;
+        unordered_map<string, DailyBarCache> m_dailybar_caches;
         unordered_set<string> m_codes;
     };
 

@@ -243,15 +243,16 @@ namespace tquant { namespace api { namespace impl {
             return CallResult<const vector<Position>>(positions);
         }
 
-        virtual CallResult<const OrderID> place_order(const string& account_id, const string& code, double price, int64_t size, const string& action, int order_id) override
+        virtual CallResult<const OrderID> place_order(const string& account_id, const string& code, double price, int64_t size, const string& action, const string& price_type, int order_id) override
         {
             MsgPackPacker pk;
-            pk.pack_map(6);
+            pk.pack_map(7);
             pk.pack_map_item("account_id",  account_id);
             pk.pack_map_item("code",        code);
             pk.pack_map_item("price",       price);
             pk.pack_map_item("size",        size);
             pk.pack_map_item("action",      action);
+            pk.pack_map_item("price_type",  price_type);
             pk.pack_map_item("order_id",    order_id);
 
             auto rsp = m_conn->m_client->call("tapi.place_order", pk.sb.data, pk.sb.size);

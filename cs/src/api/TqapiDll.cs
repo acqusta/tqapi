@@ -78,7 +78,7 @@ namespace TQuant
 
                 [DllImport("tqapi.dll", EntryPoint = "tapi_place_order", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tapi_place_order(IntPtr h, String account_id,
-                    String code, Double price, Int64 size, String action, Int32 order_id);
+                    String code, Double price, Int64 size, String action, String price_type, Int32 order_id);
 
                 [DllImport("tqapi.dll", EntryPoint = "tapi_cancel_order1", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tapi_cancel_order1(IntPtr h, String account_id,
@@ -323,7 +323,7 @@ namespace TQuant
 
                     CallResult<bool> ret;
                     if (cr.value != IntPtr.Zero)
-                        ret = new CallResult<bool>(Marshal.ReadInt32(cr.value) == 1);
+                        ret = new CallResult<bool>(Marshal.ReadByte(cr.value) != 0);
                     else
                         ret = new CallResult<bool>(cr.msg);
 
@@ -331,10 +331,10 @@ namespace TQuant
                     return ret;
                 }
 
-                public CallResult<OrderID> PlaceOrder(string account_id, string code, double price, long size, string action, int order_id)
+                public CallResult<OrderID> PlaceOrder(string account_id, string code, double price, long size, string action, string price_type, int order_id)
                 {
                     IntPtr r = TqapiDll.tapi_place_order(this.handle, account_id,
-                        code, price, size, action, order_id);
+                        code, price, size, action, price_type, order_id);
 
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
 

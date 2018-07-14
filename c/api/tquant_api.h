@@ -535,10 +535,11 @@ namespace tquant {  namespace api {
         * @param price         委托价格
         * @param size          委托数量
         * @param action        委托动作
+        * @param price_type    价格类型，缺省为限价单(LimitPrice)
         * @param order_id      自定义订单编号，不为0表示有值
         * @return OrderID      订单ID
         */
-        virtual CallResult<const OrderID> place_order(const string& account_id, const string& code, double price, int64_t size, const string& action, int order_id) = 0;
+        virtual CallResult<const OrderID> place_order(const string& account_id, const string& code, double price, int64_t size, const string& action, const string& price_type, int order_id) = 0;
 
         /**
         * 根据订单号撤单

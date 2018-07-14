@@ -6,9 +6,9 @@ import com.acqusta.tquant.api.TradeApi;
 
 class TQuantApiJni {
     static {
-        System.load("D:\\work\\github\\tqapi\\build_x64\\dist\\java\\tqapi_jni.dll");
+        //System.load("D:\\work\\github\\tqapi\\build_x64\\dist\\java\\tqapi_jni.dll");
         //System.load("/Users/terryxu/work/tquant/tqapi/build/dist/java/libtqapi_jni.dylib");
-        //System.loadLibrary("tqapi_jni");
+        System.loadLibrary("tqapi_jni");
     }
 
     public static native void setParams(String key, String value);
@@ -35,7 +35,7 @@ class TradeApiJni {
 
     static native TradeApi.Position[] queryPositions(long handle, String account_id);
 
-    static native TradeApi.OrderID placeOrder(long handle, String account_id, String code, double price, long size, String action, int order_id);
+    static native TradeApi.OrderID placeOrder(long handle, String account_id, String code, double price, long size, String action, String price_type, int order_id);
 
     static native boolean cancelOrder(long handle, String account_id, String code, int order_id);
 

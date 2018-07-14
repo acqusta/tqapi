@@ -101,7 +101,7 @@ int DoubleMAStralet::cancel_unfinished_order()
 void DoubleMAStralet::place_order(const string& code, double price, int64_t size, const string action)
 {
     ctx()->logger(INFO) << "place order: " << code << "," << price << "," << size << "," << action << endl;
-    auto r = m_ctx->trade_api()->place_order(m_account_id.c_str(), code.c_str(),price, size, action.c_str(), 0);
+    auto r = m_ctx->trade_api()->place_order(m_account_id.c_str(), code.c_str(),price, size, action.c_str(), "", 0);
     if (!r.value)
         ctx()->logger(ERROR) << "place_order error:" << r.msg << endl;;
 }

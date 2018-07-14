@@ -64,9 +64,9 @@ public class TradeApiImpl implements TradeApi {
     }
 
     @Override
-    public CallResult<OrderID> placeOrder(String account_id, String code, double price, long size, String action, int order_id) {
+    public CallResult<OrderID> placeOrder(String account_id, String code, double price, long size, String action, String price_type, int order_id) {
         try {
-            return new CallResult(TradeApiJni.placeOrder(handle, account_id, code, price, size, action, order_id), "");
+            return new CallResult(TradeApiJni.placeOrder(handle, account_id, code, price, size, action, price_type, order_id), "");
         }catch (Exception e) {
             return new CallResult<>(null, e.getMessage());
         }

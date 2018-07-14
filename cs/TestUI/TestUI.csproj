@@ -167,9 +167,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\src\tqapi_cs.csproj">
+    <ProjectReference Include="..\src\TQuantApi.csproj">
       <Project>{beb1ce43-7f22-45ed-a096-46c1a2e6d242}</Project>
-      <Name>tqapi_cs</Name>
+      <Name>TQuantApi</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

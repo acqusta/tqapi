@@ -160,7 +160,7 @@ void RBreakerStralet::place_order(const string& code, double price, int64_t size
     DateTime dt = m_ctx->cur_time();
 
     ctx()->logger(INFO) << dt.date <<"," << dt.time <<", place order: " << code << "," << price << "," << size << "," << action << endl;
-    auto r = m_ctx->trade_api()->place_order(account_id.c_str(), code.c_str(),price, size, action.c_str(), 0);
+    auto r = m_ctx->trade_api()->place_order(account_id.c_str(), code.c_str(),price, size, action.c_str(), "", 0);
     if (!r.value)
         ctx()->logger(ERROR) << "place_order error:" << r.msg << endl;;
 }

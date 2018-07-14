@@ -165,15 +165,16 @@ PyObject* _wrap_tapi_place_order(PyObject* self, PyObject *args, PyObject* kwarg
     double price;
     int64_t size;
     const char* action;
+    const char* price_type;
     int64_t order_id;
 
-    if (!PyArg_ParseTuple(args, "LssdLsL", &h, &account_id, &code, &price, &size, &action, &order_id))
+    if (!PyArg_ParseTuple(args, "LssdLssL", &h, &account_id, &code, &price, &size, &action, &price_type, &order_id))
         return NULL;
 
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
 
     auto wrap = reinterpret_cast<TradeApiWrap*>(h);
-    auto r = wrap->m_tapi->place_order(account_id, code, price, size, action, (int32_t)order_id);
+    auto r = wrap->m_tapi->place_order(account_id, code, price, size, action, price_type, (int32_t)order_id);
 
     if (r.value) {
         auto ordid = PyDict_New();
