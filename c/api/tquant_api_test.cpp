@@ -238,7 +238,7 @@ void test_tapi(TradeApi* tapi)
     }
 
     {
-        auto r = tapi->place_order("glsc", "000001.SH", 1.0, 1, "Buy", 1);
+        auto r = tapi->place_order("glsc", "000001.SH", 1.0, 1, "Buy", "", 1);
         if (r.value) {
             cout << "place_order result: " << r.value->entrust_no << "," << r.value->order_id << endl;
         }

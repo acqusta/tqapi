@@ -745,7 +745,7 @@ void SimAccount::save_data(const string& dir)
                     << ord->entrust_date << "," << ord->entrust_time << ","
                     << ord->entrust_size << "," << ord->entrust_price << "," << ord->entrust_action << ","
                     << ord->fill_size << "," << ord->fill_price << ","
-                    << ord->status << "," << ord->status_msg << endl;
+                    << ord->status << ",\"" << ord->status_msg << "\"" << endl;
         }
         out.close();
     }

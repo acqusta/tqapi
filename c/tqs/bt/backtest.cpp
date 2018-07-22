@@ -22,6 +22,62 @@ static vector<int> get_calendar(DataApi* dapi)
     return dates;
 }
 
+static 
+bool get_string(Json::Value& value, const char* key, string* str)
+{
+    Json::Value empty;
+    Json::Value tmp = value.get(key, empty);
+    if (tmp.isString()) {
+        *str = tmp.asString();
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+static
+bool get_double(Json::Value& value, const char* key, double* v)
+{
+    Json::Value empty;
+    Json::Value tmp = value.get(key, empty);
+    if (tmp.isNumeric()) {
+        *v = tmp.asDouble();
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+static
+bool get_int64(Json::Value& value, const char* key, int64_t* v)
+{
+    Json::Value empty;
+    Json::Value tmp = value.get(key, empty);
+    if (tmp.isNumeric()) {
+        *v = tmp.asInt64();
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+static
+bool get_int(Json::Value& value, const char* key, int32_t* v)
+{
+    Json::Value empty;
+    Json::Value tmp = value.get(key, empty);
+    if (tmp.isNumeric()) {
+        *v = tmp.asInt();
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 void run(const char* cfg_str, function<Stralet*()> creator)
 {
     string utf8 = gbk_to_utf8(cfg_str);
@@ -36,23 +92,43 @@ void run(const char* cfg_str, function<Stralet*()> creator)
     BackTestConfig cfg;
     try {
         Json::Value empty;
-        Json::Value dapi_addr = conf.get("dapi_addr", empty);
-        if (dapi_addr.isString()) cfg.dapi_addr = dapi_addr.asString();
 
-        Json::Value data_level = conf.get("data_level", empty);
-        if (data_level.isString())    cfg.data_level = data_level.asString();
-
-        Json::Value begin_date = conf.get("begin_date", empty);
-        if (begin_date.isNumeric())    cfg.begin_date = begin_date.asInt();
-
-        Json::Value end_date = conf.get("end_date", empty);
-        if (end_date.isNumeric())    cfg.end_date = end_date.asInt();
-
-        Json::Value result_dir = conf.get("result_dir", empty);
-        if (result_dir.isString())    cfg.result_dir = result_dir.asString();
+        get_string(conf, "dapi_addr",  &cfg.dapi_addr);
+        get_string(conf, "data_level", &cfg.data_level);
+        get_int   (conf, "begin_date", &cfg.begin_date);
+        get_int   (conf, "end_date",   &cfg.end_date);
+        get_string(conf, "result_dir", &cfg.result_dir);
 
         Json::Value properties = conf.get("properties", empty);
         if (!properties.isNull()) cfg.properties = properties.toStyledString();
+
+        Json::Value accounts = conf.get("accounts", empty);
+        if (!accounts.isNull()) {
+            for (auto iter = accounts.begin(); iter != accounts.end(); iter++) {
+
+                string account_id;
+                double init_balance;
+
+                get_string(*iter, "account_id", &account_id);
+                get_double(*iter, "init_balance", &init_balance);
+
+                Json::Value init_holdings = iter->get("init_holdings", empty);
+
+                AccountConfig act(account_id, init_balance);
+                for (auto iter2 = init_holdings.begin(); iter2 != init_holdings.end(); iter2++)
+                {
+                    Holding h;
+                    get_string (*iter2, "code",       &h.code);
+                    get_double (*iter2, "cost_price", &h.cost_price);
+                    get_string (*iter2, "side",       &h.side);
+                    get_int64  (*iter2, "size",       &h.size);
+
+                    act.init_holdings.push_back(h);
+                }
+
+                cfg.accounts.push_back(act);
+            }
+        }
     }
     catch (exception& e) {
         cerr << "parse conf failure: " << e.what();
