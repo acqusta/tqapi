@@ -46,7 +46,7 @@ namespace tquant { namespace stralet { namespace backtest {
         CallResult<const OrderID>             place_order(const string& code, double price, int64_t size, const string& action, const string& price_type, int order_id);
         CallResult<bool>                      cancel_order(const string& code, int order_id);
         CallResult<bool>                      cancel_order(const string& code, const string& entrust_no);
-        CallResult<const OrderID>             validate_order(const string& code, double price, int64_t size, const string& action);
+        CallResult<const OrderID>             validate_order(const string& code, double price, int64_t size, const string& action, const string& price_type);
 
         void try_match();
 
@@ -57,8 +57,10 @@ namespace tquant { namespace stralet { namespace backtest {
         
         inline bool check_quote_time(const MarketQuote* quote, const Order* order);
 
-        void make_trade     (double price, Order* order);
+        bool reject_order   (Order* order, const char* msg);
+        void make_trade     (Order* order, double price);
         Position* get_position(const string& code, const string& side);
+
 
         void move_to(int trading_day);
         void save_data(const string& dir);

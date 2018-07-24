@@ -224,7 +224,7 @@ CallResult<const vector<Position>> SimAccount::query_positions()
     return CallResult<const vector<Position>>(poses);
 }
 
-CallResult<const OrderID> SimAccount::validate_order(const string& code, double price, int64_t size, const string& action)
+CallResult<const OrderID> SimAccount::validate_order(const string& code, double price, int64_t size, const string& action, const string& price_type)
 {
     DateTime dt = m_ctx->cur_time();
 
@@ -294,7 +294,7 @@ CallResult<const OrderID> SimAccount::validate_order(const string& code, double 
 
 CallResult<const OrderID> SimAccount::place_order(const string& code, double price, int64_t size, const string& action, const string& price_type, int order_id)
 {
-    auto r = validate_order(code, price, size, action);
+    auto r = validate_order(code, price, size, action, price_type);
 
     string status;
     string status_msg;
@@ -421,7 +421,38 @@ Position* SimAccount::get_position(const string& code, const string& side)
     return pos.get();
 }
 
-void SimAccount::make_trade(double fill_price, Order* order)
+bool SimAccount::reject_order(Order* order, const char* msg)
+{
+    //cout << "make_trade: " << m_tdata->account_id << "," << order->code << "," << order->entrust_size << ","
+    //    << order->entrust_action << "," << fill_price << endl;
+
+    string pos_side;
+    int inc_dir = 0;
+
+    int64_t fill_size = order->entrust_size;
+
+    get_action_effect(order->entrust_action, &pos_side, &inc_dir);
+    auto pos = get_position(order->code, pos_side);
+    if (inc_dir == 1) {
+        if (is_future(order->code.c_str()))
+            pos->enable_size += fill_size;
+
+        m_tdata->frozen_balance -= order->entrust_size * order->entrust_price;
+    }
+    else {
+        pos->frozen_size -= order->entrust_size;
+    }
+
+    order->fill_price = 0;
+    order->fill_size = 0;
+    order->status = OS_Rejected;
+    order->status_msg = msg;
+
+    // Must make a copy!
+    m_ord_status_ind_list.push_back(make_shared<Order>(*order));
+}
+
+void SimAccount::make_trade(Order* order, double fill_price)
 {
     //cout << "make_trade: " << m_tdata->account_id << "," << order->code << "," << order->entrust_size << ","
     //    << order->entrust_action << "," << fill_price << endl;
@@ -518,26 +549,37 @@ bool SimAccount::check_quote_time(const MarketQuote* quote, const Order* order)
     }
 }
 
+const bool double_equal(double v1, double v2)
+{
+    return fabs(v1 - v2) < 0.000001;
+}
+
 void SimAccount::try_buy(OrderData* od)
 {
     if (m_ctx->data_level() == BT_TICK) {
         auto q = m_ctx->data_api()->quote(od->order->code.c_str());
+
+        if (double_equal(q.value->ask1, 0.0) && od->price_type == "any") {
+            reject_order(od->order.get(), "reach high limit");
+            return;
+        }
+
         if (q.value &&
             (q.value->ask1 <= od->order->entrust_price || od->price_type=="any") &&
             check_quote_time(q.value.get(), od->order.get()))
         {
-            make_trade(q.value->ask1, od->order.get());
+            make_trade(od->order.get(), q.value->ask1);
         }
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
         auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
         if (bar && bar->low < od->order->entrust_price) {
             double fill_price = min(od->order->entrust_price, bar->high);
-            make_trade(fill_price, od->order.get());
+            make_trade(od->order.get(), fill_price);
         }
         else if (bar && od->price_type == "any") {
             double fill_price = (bar->high + bar->low) / 2;
-            make_trade(fill_price, od->order.get());
+            make_trade(od->order.get(), fill_price);
         }
     }
     else {
@@ -549,22 +591,28 @@ void SimAccount::try_sell(OrderData* od)
 {
     if (m_ctx->data_level() == BT_TICK) {
         auto q = m_ctx->data_api()->quote(od->order->code.c_str());
+
+        if (double_equal(q.value->bid1, 0.0) && od->price_type == "any") {
+            reject_order(od->order.get(), "reach low limit");
+            return;
+        }
+
         if (q.value && 
             (q.value->bid1 >= od->order->entrust_price || od->price_type == "any") &&
             check_quote_time(q.value.get(), od->order.get()))
         {
-            make_trade(q.value->bid1, od->order.get());
+            make_trade(od->order.get(), q.value->bid1);
         }
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
         auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
         if (bar && bar->high > od->order->entrust_price) {
             double fill_price = max(od->order->entrust_price, bar->low);
-            make_trade(fill_price, od->order.get());
+            make_trade(od->order.get(), fill_price);
         }
         else if (bar && od->price_type == "any") {
             double fill_price = (bar->high + bar->low) / 2;
-            make_trade(fill_price, od->order.get());
+            make_trade(od->order.get(), fill_price);
         }
     }
     else {
@@ -577,22 +625,28 @@ void SimAccount::try_short(OrderData* od)
     // fixme
     if (m_ctx->data_level() == BT_TICK) {
         auto q = m_ctx->data_api()->quote(od->order->code.c_str());
+
+        if (double_equal(q.value->bid1, 0.0) && od->price_type == "any") {
+            reject_order(od->order.get(), "reach low limit");
+            return;
+        }
+
         if (q.value && 
             ( q.value->bid1 >= od->order->entrust_price || od->price_type == "any") &&
             check_quote_time(q.value.get(), od->order.get()))
         {
-            make_trade(q.value->bid1, od->order.get());
+            make_trade(od->order.get(), q.value->bid1);
         }
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
         auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
         if (bar && bar->high > od->order->entrust_price) {
             double fill_price = max(od->order->entrust_price, bar->low);
-            make_trade(fill_price, od->order.get());
+            make_trade(od->order.get(), fill_price);
         }
         else if (bar && od->price_type == "any") {
             double fill_price = (bar->high + bar->low) / 2;
-            make_trade(fill_price, od->order.get());
+            make_trade(od->order.get(), fill_price);
         }
     }
     else {
@@ -604,22 +658,28 @@ void SimAccount::try_cover(OrderData* od)
 {
     if (m_ctx->data_level() == BT_TICK) {
         auto q = m_ctx->data_api()->quote(od->order->code.c_str());
+
+        if (double_equal(q.value->ask1, 0.0) && od->price_type == "any") {
+            reject_order(od->order.get(), "reach low limit");
+            return;
+        }
+
         if (q.value &&
             (q.value->ask1 < od->order->entrust_price || od->price_type == "any") &&
             check_quote_time(q.value.get(), od->order.get()))
         {
-            make_trade(q.value->last, od->order.get());
+            make_trade(od->order.get(), q.value->ask1);
         }
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
         auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
         if (bar && bar->low < od->order->entrust_price) {
             double fill_price = min(od->order->entrust_price, bar->high);
-            make_trade(fill_price, od->order.get());
+            make_trade(od->order.get(), fill_price);
         }
         else if (bar && od->price_type == "any") {
             double fill_price = (bar->high + bar->low) / 2;
-            make_trade(fill_price, od->order.get());
+            make_trade(od->order.get(), fill_price);
         }
     }
     else {
