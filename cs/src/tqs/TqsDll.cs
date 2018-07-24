@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using TQuant.Api;
-using TQuant.Api.Impl;
 
 namespace TQuant
 {
@@ -11,8 +8,8 @@ namespace TQuant
         [StructLayout(LayoutKind.Sequential)]
         public struct FinDataTime
         {
-            public Int32 date;
-            public Int32 time;
+            public Int32 Date;
+            public Int32 Time;
         }
 
         namespace Impl
