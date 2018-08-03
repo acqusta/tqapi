@@ -194,7 +194,8 @@ void SimDataApi::preload_daily_bar(const vector<string>& codes)
                 break;
         }
 
-        assert(cache.pos != -1);
+        if (cache.pos == -1) cache.pos = 0;
+        //assert(cache.pos != -1);
 
         m_dailybar_caches[code] = cache;
     }

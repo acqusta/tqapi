@@ -66,10 +66,10 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_quer
 /*
  * Class:     com_acqusta_tquant_api_impl_TradeApiJni
  * Method:    placeOrder
- * Signature: (JLjava/lang/String;Ljava/lang/String;DJLjava/lang/String;I)Lcom/acqusta/tquant/api/TradeApi/OrderID;
+ * Signature: (JLjava/lang/String;Ljava/lang/String;DJLjava/lang/String;Ljava/lang/String;I)Lcom/acqusta/tquant/api/TradeApi/OrderID;
  */
 JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_placeOrder
-  (JNIEnv *, jclass, jlong, jstring, jstring, jdouble, jlong, jstring, jint);
+  (JNIEnv *, jclass, jlong, jstring, jstring, jdouble, jlong, jstring, jstring, jint);
 
 /*
  * Class:     com_acqusta_tquant_api_impl_TradeApiJni

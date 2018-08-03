@@ -450,6 +450,7 @@ bool SimAccount::reject_order(Order* order, const char* msg)
 
     // Must make a copy!
     m_ord_status_ind_list.push_back(make_shared<Order>(*order));
+    return true;
 }
 
 void SimAccount::make_trade(Order* order, double fill_price)
