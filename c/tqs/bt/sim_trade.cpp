@@ -709,13 +709,17 @@ void SimAccount::move_to(int trading_day)
 
         auto pos = e.second;
         auto new_pos = make_shared<Position>();
-        *new_pos = *pos;
+        new_pos->account_id   = pos->account_id;
+        new_pos->code         = pos->code;
+        new_pos->name         = pos->name;
         new_pos->init_size    = pos->current_size;
         new_pos->enable_size  = pos->current_size;
         new_pos->current_size = pos->current_size;
-        new_pos->today_size   = 0;
-        new_pos->frozen_size  = 0;
-        new_pos->commission   = 0.0;
+        new_pos->side         = pos->side;
+        new_pos->cost         = pos->cost;
+        new_pos->cost_price   = pos->cost_price;
+        new_pos->margin       = pos->margin;
+
         tdata->positions[e.first] = new_pos;
     }
 

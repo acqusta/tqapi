@@ -223,7 +223,7 @@ namespace tquant {  namespace api {
         double          settle;
         double          pre_close;
         double          pre_settle;
-        double          _padding;
+        double          af;
     };
 
     typedef TickDataHolder<RawDailyBar> DailyBar;
