@@ -72,19 +72,18 @@ CallResult<const DailyBarArray> SimDataApi::daily_bar(const string& code, const 
     if (r.value) {
         auto today = m_ctx->trading_day();
         auto bars = r.value;
-        int pos = 0;
-        for (pos = 0; pos < bars->size(); pos++)
-            if (bars->at(pos).date > today) break;
-        if ( pos == 0 || pos == bars->size()) {
-            // Shouldn't happen?
-            return CallResult<const DailyBarArray >("-1,no data");
+        for (int pos = 0; pos < bars->size(); pos++) {
+            if (bars->at(pos).date >= today) {
+                int size = bars->at(pos).date > today ? pos - 1 : pos;
+                auto new_bars = make_shared<DailyBarArray>(code, size);
+                for (int i = 0; i < size; i++)
+                    new_bars->push_back(bars->at(i));
+                return CallResult<const DailyBarArray>(new_bars);
+            }
         }
-        else {
-            auto new_bars = make_shared<DailyBarArray>(code, pos - 1);
-            for (int i = 0; i < pos - 1; i++)
-                new_bars->push_back(bars->at(i));
-            return CallResult<const DailyBarArray>(new_bars);
-        }
+
+        // Shouldn't happen?
+        return CallResult<const DailyBarArray >("-1,no data");
     }
     else {
         return r;

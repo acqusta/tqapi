@@ -793,13 +793,14 @@ void SimAccount::save_data(const string& dir)
             cerr << "Can't open file " << ss.str();
             return;
         }
-        out << "account_id,trading_day,code,name,entrust_date,entrust_time,entrust_size,entrust_price,"
-            << "entrust_action,fill_size,fill_price,status,status_msg\n";
+        out << "account_id,trading_day,code,name,entrust_no,order_id,"
+            << "entrust_date,entrust_time,entrust_size,entrust_price,"
+            << "entrust_action,fill_size,fill_price,status,status_msg,\n";
         for (auto& tdata : m_his_tdata) {
             vector<shared_ptr<Order>> orders;
             for (auto& e : tdata->orders) orders.push_back(e.second->order);
             sort(orders.begin(), orders.end(), [](shared_ptr<Order> a, shared_ptr<Order> b) {
-                return strcmp(a->entrust_no.c_str(), b->entrust_no.c_str()) < 0;
+                return a->entrust_no < b->entrust_no;
             });
 
             for (auto& ord : orders)
@@ -807,6 +808,7 @@ void SimAccount::save_data(const string& dir)
                     << tdata->account_id << ","
                     << tdata->trading_day << ","
                     << ord->code << "," << ord->name << ","
+                    << ord->entrust_no << "," << ord->order_id << ","
                     << ord->entrust_date << "," << ord->entrust_time << ","
                     << ord->entrust_size << "," << ord->entrust_price << "," << ord->entrust_action << ","
                     << ord->fill_size << "," << ord->fill_price << ","
