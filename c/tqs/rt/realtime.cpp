@@ -39,17 +39,17 @@ namespace tquant { namespace stralet { namespace realtime {
             return m_dapi->quote(code);
         }
 
-        virtual CallResult<const vector<string>> subscribe(const vector<string>& codes)
+        virtual CallResult<const vector<string>> subscribe(const vector<string>& codes) override
         {
             return m_dapi->subscribe(codes);
         }
 
-        virtual CallResult<const vector<string>> unsubscribe(const vector<string>& codes)
+        virtual CallResult<const vector<string>> unsubscribe(const vector<string>& codes) override
         {
             return m_dapi->unsubscribe(codes);
         }
 
-        virtual DataApi_Callback* set_callback(DataApi_Callback* callback)
+        virtual DataApi_Callback* set_callback(DataApi_Callback* callback) override
         {
             return nullptr;
         }

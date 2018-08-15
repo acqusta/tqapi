@@ -39,6 +39,7 @@ namespace myutils {
             int32_t        count;
         };
         PthreadData* m_data;
+        PthreadData  m_data_not_shared;
 #endif
     };
 

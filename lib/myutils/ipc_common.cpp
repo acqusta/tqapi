@@ -2,6 +2,7 @@
 #include <memory>
 #include <string.h>
 #include <time.h>
+#include <errno.h>
 #ifndef _WIN32
 # include <sys/time.h>
 # include <fcntl.h>
@@ -55,7 +56,8 @@ SharedSemaphore*  SharedSemaphore::create(const char* name)
 #else
     auto sem = new SharedSemaphore();
 
-    sem->m_data = (PthreadData*)name;
+    sem->m_data = name ? (PthreadData*)name : &sem->m_data_not_shared;
+
     sem->m_data->count = 0;
 
     pthread_condattr_t cond_shared_attr;  
