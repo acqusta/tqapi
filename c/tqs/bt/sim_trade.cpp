@@ -453,6 +453,29 @@ bool SimAccount::reject_order(Order* order, const char* msg)
     return true;
 }
 
+static void get_commission_rate(const char* code, double* open_rate, double* close_rate)
+{
+    const char* p = strchr(code, '.');
+    if (strcmp(p, "SH") == 0 || strcmp(p, "SZ") == 0) {
+
+        switch (code[0]) {
+        case '1':
+        case '5':
+            *open_rate = 0.00025;
+            *close_rate = 0.00025;
+            break;
+        default:
+            *open_rate = 0.00025;
+            *close_rate = 0.00125;
+        }
+    }
+    else {
+        *open_rate  = 0.000025;
+        *close_rate = 0.000025;
+    }
+    return;
+}
+
 void SimAccount::make_trade(Order* order, double fill_price)
 {
     //cout << "make_trade: " << m_tdata->account_id << "," << order->code << "," << order->entrust_size << ","
@@ -466,30 +489,71 @@ void SimAccount::make_trade(Order* order, double fill_price)
     get_action_effect(order->entrust_action, &pos_side, &inc_dir);
     auto pos = get_position(order->code, pos_side);
     if (inc_dir == 1) {
+
+        if (pos->current_size > 1)
+            pos->current_size = pos->current_size;
+
         pos->current_size += fill_size;
-        if (is_future(order->code.c_str()))
+
+        double cost = fill_price * fill_size;
+        if (is_future(order->code.c_str())) {
             pos->enable_size += fill_size;
-        pos->cost += fill_price * fill_size;
+        }
+        else {
+            double open_rate = 0.0;
+            double close_rate = 0.0;
+            get_commission_rate(order->code.c_str(), &open_rate, &close_rate);
+            double commisson = fill_price * fill_size *open_rate;
+            pos->commission += commisson;
+            cost += commisson;
+        }
+        pos->cost       += cost;
         pos->cost_price = pos->cost / pos->current_size;
 
+        if (pos->cost_price > 7000) {
+            pos->cost_price = pos->cost_price;
+        }
+
         m_tdata->frozen_balance -= order->entrust_size * order->entrust_price;
-        m_tdata->enable_balance -= fill_size * fill_price;
-        //this->m_ctx->logger() << "enable_balance -= " << fill_size * fill_price << endl;
+        m_tdata->enable_balance -= cost;
     }
     else {
         pos->frozen_size  -= order->entrust_size;
         pos->current_size -= fill_size;
         pos->enable_size  -= fill_size; // TODO: check if it is right
         assert(pos->enable_size >= 0);
-        if (pos->side == SD_Long) {
-            pos->close_pnl += fill_size * (fill_price - pos->cost_price);
-            m_tdata->enable_balance += fill_size * fill_price;
+
+        double turnover = 0;
+        double commission = 0;
+
+        if (!is_future(order->code.c_str())) {
+            double open_rate = 0.0;
+            double close_rate = 0.0;
+            turnover = fill_size* fill_price;
+            get_commission_rate(order->code.c_str(), &open_rate, &close_rate);
+            commission = turnover *close_rate;
         }
         else {
-            pos->close_pnl += fill_size * (pos->cost_price - fill_price);
-            m_tdata->enable_balance += fill_size * (pos->cost_price*2 - fill_price);
+            double open_rate = 0.0;
+            double close_rate = 0.0;
+            if (pos->side == SD_Short) {
+                turnover = fill_size * (2 * pos->cost_price - fill_price);
+            }
+            else {
+                turnover = fill_size * fill_price;
+            }
+            get_commission_rate(order->code.c_str(), &open_rate, &close_rate);
+            commission = fill_size* fill_price *close_rate;
         }
-        //this->m_ctx->logger() << "enable_balance += " << fill_size * fill_price << endl;
+        pos->commission += commission;
+        m_tdata->enable_balance += turnover - commission;
+        if (pos->side == SD_Long)
+            pos->close_pnl += fill_size * (fill_price - pos->cost_price) - commission;
+        else
+            pos->close_pnl += fill_size * (pos->cost_price - fill_price) - commission;
+
+        pos->cost = pos->cost_price * pos->current_size;
+
         if (pos->current_size == 0) {
             pos->cost = 0.0;
             pos->cost_price = 0.0;

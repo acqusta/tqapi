@@ -71,9 +71,9 @@ namespace tquant { namespace stralet { namespace backtest {
     private:
         SimStraletContext* m_ctx;
         DataApi* m_dapi;
-        unordered_map<string, TickCache>     m_tick_caches;
-        unordered_map<string, BarCache>      m_bar_caches;
-        unordered_map<string, DailyBarCache> m_dailybar_caches;
+        unordered_map<string, shared_ptr<TickCache>    > m_tick_caches;
+        unordered_map<string, shared_ptr<BarCache>     > m_bar_caches;
+        unordered_map<string, shared_ptr<DailyBarCache>> m_dailybar_caches;
         unordered_set<string> m_codes;
     };
 

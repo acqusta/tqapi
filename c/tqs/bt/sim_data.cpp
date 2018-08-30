@@ -34,9 +34,9 @@ CallResult<const MarketQuoteArray> SimDataApi::tick(const string& code, int trad
         auto it = m_tick_caches.find(code);
         if (it == m_tick_caches.end())
             return CallResult<const MarketQuoteArray>("-1,no tick data");
-        if (it->second.pos < 0)
+        if (it->second->pos < 0)
             return CallResult<const MarketQuoteArray>("-1,not arrive yet");
-        return CallResult<const MarketQuoteArray>(it->second.ticks);
+        return CallResult<const MarketQuoteArray>(it->second->ticks);
     }
     else {
         return m_dapi->tick(code, trading_day);
@@ -55,9 +55,9 @@ CallResult<const BarArray> SimDataApi::bar(const string& code, const string& cyc
         auto it = m_bar_caches.find(code);
         if (it == m_bar_caches.end())
             return CallResult<const BarArray>("-1,no bar data");
-        if (it->second.pos < 0)
+        if (it->second->pos < 0)
             return CallResult<const BarArray>("-1,not arrive yet");
-        return CallResult<const BarArray>(it->second.bars);
+        return CallResult<const BarArray>(it->second->bars);
     }
     else if (trading_day < m_ctx->trading_day())
         return m_dapi->bar(code, cycle, trading_day, align);
@@ -96,9 +96,9 @@ CallResult<const MarketQuote> SimDataApi::quote(const string& code)
         auto it = m_bar_caches.find(code);
         if (it == m_bar_caches.end())
             return CallResult<const MarketQuote>("-1,no bar data");
-        if (it->second.pos < 0)
+        if (it->second->pos < 0)
             return CallResult<const MarketQuote>("-1,not arrive yet");
-        auto bar = &(it->second.bars->at(it->second.pos));
+        auto bar = &(it->second->bars->at(it->second->pos));
         auto q = make_shared<MarketQuote>();
         q->set_code(code);
         q->date        = bar->date;
@@ -118,9 +118,9 @@ CallResult<const MarketQuote> SimDataApi::quote(const string& code)
         auto it = m_tick_caches.find(code);
         if (it == m_tick_caches.end())
             return CallResult<const MarketQuote>("-1,no tick data");
-        if (it->second.pos < 0)
+        if (it->second->pos < 0)
             return CallResult<const MarketQuote>("-1,not arrive yet");
-        auto q = make_shared<MarketQuote>(it->second.ticks->at(it->second.pos), code);
+        auto q = make_shared<MarketQuote>(it->second->ticks->at(it->second->pos), code);
         return CallResult<const MarketQuote>(q);
     }
     else {
@@ -157,12 +157,12 @@ void SimDataApi::preload_bar(const vector<string>& codes)
                 pos = bars->size() - 1;
             }
         }
-        BarCache cache;
-        cache.pos = pos;
-        cache.bars = bars;
-        cache.size = bars->size();
+        auto cache = make_shared<BarCache>();
+        cache->pos = pos;
+        cache->bars = bars;
+        cache->size = bars->size();
         // FIXME: Shouldn't use const?
-        ((BarArray*)cache.bars.get())->set_size(0);
+        ((BarArray*)cache->bars.get())->set_size(0);
 
         m_bar_caches[code] = cache;
     }
@@ -181,19 +181,19 @@ void SimDataApi::preload_daily_bar(const vector<string>& codes)
         }
 
         auto bars = r.value;
-        DailyBarCache cache;
-        cache.pos = -1;
-        cache.daily_bars = r.value;
+        auto cache = make_shared<DailyBarCache>();
+        cache->pos = -1;
+        cache->daily_bars = r.value;
 
         int trading_day = m_ctx->trading_day();
         for (int i = 0; i < bars->size(); i++) {
             if (bars->at(i).date <= trading_day)
-                cache.pos = i;
+                cache->pos = i;
             else
                 break;
         }
 
-        if (cache.pos == -1) cache.pos = 0;
+        if (cache->pos == -1) cache->pos = 0;
         //assert(cache.pos != -1);
 
         m_dailybar_caches[code] = cache;
@@ -224,11 +224,11 @@ void SimDataApi::preload_tick(const vector<string>& codes)
                 pos = ticks->size() - 1;
         }
 
-        TickCache cache;
-        cache.pos = pos;
-        cache.ticks = ticks;
-        cache.size = ticks->size();
-        ((TickArray*)cache.ticks.get())->set_size(0);
+        auto cache = make_shared<TickCache>();
+        cache->pos = pos;
+        cache->ticks = ticks;
+        cache->size = ticks->size();
+        ((TickArray*)cache->ticks.get())->set_size(0);
         m_tick_caches[code] = cache;
     }
 
@@ -293,7 +293,7 @@ void SimDataApi::calc_nex_time(DateTime* dt)
     int32_t time = 160000000;
 
     for (auto& e : m_bar_caches) {
-        auto cache = &e.second;
+        auto cache = e.second;
         //const Bar* bar = (cache->pos + 1 < cache->size) ?
         //                cache->bars->data() + cache->pos + 1 :
         //                cache->bars->data() + cache->pos;
@@ -308,7 +308,7 @@ void SimDataApi::calc_nex_time(DateTime* dt)
     }
 
     for (auto& e : m_tick_caches) {
-        auto cache = &e.second;
+        auto cache = e.second;
         if (cache->pos + 1 < cache->size) {
             auto q = &cache->ticks->at(cache->pos + 1);
 
@@ -329,7 +329,7 @@ shared_ptr<MarketQuote> SimDataApi::next_quote(const string& code)
     if (it == m_tick_caches.end())
         return nullptr;
 
-    auto cache = &it->second;
+    auto cache = it->second;
     DateTime dt = m_ctx->cur_time();
 
     if (cache->pos + 1 >= cache->size) return nullptr;
@@ -350,7 +350,7 @@ shared_ptr<Bar> SimDataApi::next_bar(const string& code)
     if (it == m_bar_caches.end())
         return nullptr;
 
-    auto cache = &it->second;
+    auto cache = it->second;
     DateTime dt = m_ctx->cur_time();
 
     if (cache->pos + 1 >= cache->size) return nullptr;
@@ -371,7 +371,7 @@ const RawBar* SimDataApi::last_bar(const string & code)
     if (it == m_bar_caches.end())
         return nullptr;
 
-    auto cache = &it->second;
+    auto cache = it->second;
     return cache->pos >= 0 ? &cache->bars->at(cache->pos) : nullptr;
 }
 
@@ -381,8 +381,8 @@ const RawDailyBar* SimDataApi::cur_daily_bar(const string & code)
     if (it == m_dailybar_caches.end())
         return nullptr;
 
-    auto cache = &it->second;
-    if (cache->pos < cache->daily_bars->size()) {
+    auto cache = it->second;
+    if (cache->pos >=0 && cache->pos < cache->daily_bars->size()) {
         auto bar = &cache->daily_bars->at(cache->pos);
         if (bar->date == m_ctx->trading_day())
             return bar;
@@ -399,7 +399,7 @@ void SimDataApi::move_to(int trading_day)
 
     // Move to next trading_day !
     for (auto tmp : this->m_dailybar_caches) {
-        auto bar = &tmp.second;
+        auto bar = tmp.second;
         while (bar->pos < bar->daily_bars->size()) {
             if (bar->daily_bars->at(bar->pos).date >= trading_day) break;
             bar->pos++;
