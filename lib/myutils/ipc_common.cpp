@@ -2,12 +2,11 @@
 #include <memory>
 #include <string.h>
 #include <time.h>
-#include <errno.h>
 #ifndef _WIN32
 # include <sys/time.h>
 # include <fcntl.h>
 #endif
-
+#include <errno.h>
 #include "ipc_common.h"
 
 using namespace myutils;
@@ -28,8 +27,12 @@ SharedSemaphore::~SharedSemaphore()
 #ifdef _WIN32
     if (m_hSemaphore) CloseHandle(m_hSemaphore);
 #elif defined(__linux__)
-    if (m_sem && m_sem != SEM_FAILED)
-        sem_close(m_sem);
+    if (m_sem && m_sem != SEM_FAILED) {
+        if (m_sem == &m_unamed_sem)
+            sem_destroy(m_sem);
+        else
+            sem_close(m_sem);
+    }
 #endif
 }
 
@@ -46,7 +49,13 @@ SharedSemaphore*  SharedSemaphore::create(const char* name)
     }
 #elif defined(__linux__)
     auto sem = new SharedSemaphore();
-    sem->m_sem = sem_open(name, O_CREAT, 0666, 0);
+    if (name) {
+        sem->m_sem = sem_open(name, O_CREAT, 0666, 0);
+    }
+    else {
+        sem_init(&sem->m_unamed_sem, 0, 0);
+        sem->m_sem = &sem->m_unamed_sem;
+    }
     if (sem->m_sem != SEM_FAILED) {
         return sem;
     } else {
@@ -57,7 +66,6 @@ SharedSemaphore*  SharedSemaphore::create(const char* name)
     auto sem = new SharedSemaphore();
 
     sem->m_data = name ? (PthreadData*)name : &sem->m_data_not_shared;
-
     sem->m_data->count = 0;
 
     pthread_condattr_t cond_shared_attr;  

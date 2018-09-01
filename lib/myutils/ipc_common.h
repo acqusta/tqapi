@@ -32,6 +32,7 @@ namespace myutils {
         HANDLE m_hSemaphore;
 #elif defined(__linux__)
         sem_t* m_sem;
+        sem_t  m_unamed_sem;
 #else
         struct PthreadData {
             pthread_cond_t  cond;
