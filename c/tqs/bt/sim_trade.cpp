@@ -177,7 +177,7 @@ CallResult<const Balance> SimAccount::query_balance()
     bal->account_id     = m_tdata->account_id;
     bal->fund_account   = m_tdata->account_id;
     bal->init_balance   = m_tdata->init_balance;
-    bal->enable_balance = m_tdata->enable_balance;
+    bal->enable_balance = m_tdata->enable_balance - m_tdata->frozen_balance;
     //bal->margin = m_margin;
     //bal->float_pnl = m_float_pnl;
     //bal->close_pnl = m_close_pnl;
@@ -470,8 +470,9 @@ static void get_commission_rate(const char* code, double* open_rate, double* clo
         }
     }
     else {
-        *open_rate  = 0.000025;
-        *close_rate = 0.000025;
+        // High!
+        *open_rate  = 0.00025;
+        *close_rate = 0.00025;
     }
     return;
 }
@@ -488,11 +489,8 @@ void SimAccount::make_trade(Order* order, double fill_price)
 
     get_action_effect(order->entrust_action, &pos_side, &inc_dir);
     auto pos = get_position(order->code, pos_side);
+
     if (inc_dir == 1) {
-
-        if (pos->current_size > 1)
-            pos->current_size = pos->current_size;
-
         pos->current_size += fill_size;
 
         double cost = fill_price * fill_size;
@@ -509,10 +507,6 @@ void SimAccount::make_trade(Order* order, double fill_price)
         }
         pos->cost       += cost;
         pos->cost_price = pos->cost / pos->current_size;
-
-        if (pos->cost_price > 7000) {
-            pos->cost_price = pos->cost_price;
-        }
 
         m_tdata->frozen_balance -= order->entrust_size * order->entrust_price;
         m_tdata->enable_balance -= cost;
@@ -638,6 +632,7 @@ void SimAccount::try_buy(OrderData* od)
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
         auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
+        if (!bar || !bar->high || !bar->low) return;
         if (bar && bar->low < od->order->entrust_price) {
             double fill_price = min(od->order->entrust_price, bar->high);
             make_trade(od->order.get(), fill_price);
@@ -671,6 +666,8 @@ void SimAccount::try_sell(OrderData* od)
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
         auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
+        if (!bar || !bar->high || !bar->low) return;
+
         if (bar && bar->high > od->order->entrust_price) {
             double fill_price = max(od->order->entrust_price, bar->low);
             make_trade(od->order.get(), fill_price);
@@ -705,6 +702,8 @@ void SimAccount::try_short(OrderData* od)
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
         auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
+        if (!bar || !bar->high || !bar->low) return;
+
         if (bar && bar->high > od->order->entrust_price) {
             double fill_price = max(od->order->entrust_price, bar->low);
             make_trade(od->order.get(), fill_price);
@@ -738,6 +737,8 @@ void SimAccount::try_cover(OrderData* od)
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
         auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
+        if (!bar || !bar->high || !bar->low) return;
+
         if (bar && bar->low < od->order->entrust_price) {
             double fill_price = min(od->order->entrust_price, bar->high);
             make_trade(od->order.get(), fill_price);
@@ -763,7 +764,7 @@ void SimAccount::move_to(int trading_day)
 
     auto tdata = make_shared<TradeData>();
     tdata->account_id     = m_tdata->account_id;
-    tdata->init_balance   = m_tdata->enable_balance + m_tdata->frozen_balance;
+    tdata->init_balance   = m_tdata->enable_balance;
     tdata->enable_balance = tdata->init_balance;
     tdata->trading_day    = trading_day;
     tdata->frozen_balance = 0.0;
