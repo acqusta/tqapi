@@ -15,6 +15,7 @@ namespace tquant { namespace stralet { namespace realtime {
         string data_api_addr;
         string trade_api_addr;
         string output_dir;
+        string properties;
     };
 
     _TQAPI_EXPORT void run(const RealTimeConfig & cfg, function<Stralet*()> creator);

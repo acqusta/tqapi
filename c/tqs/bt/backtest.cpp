@@ -161,10 +161,10 @@ void run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
     SimDataApi* sim_dapi = new SimDataApi(sc, dapi);
     SimTradeApi* sim_tapi = new SimTradeApi(sc, accounts);
 
-    DataLevel dl;
-    if      (cfg.data_level == "tk") dl = BT_TICK;
-    else if (cfg.data_level == "1m") dl = BT_BAR1M;
-    else if (cfg.data_level == "1d") dl = BT_BAR1D;
+    DataLevel data_level;
+    if      (cfg.data_level == "tk") data_level = BT_TICK;
+    else if (cfg.data_level == "1m") data_level = BT_BAR1M;
+    else if (cfg.data_level == "1d") data_level = BT_BAR1D;
     else {
         cerr << "unknown data_level " << cfg.data_level;
         return;
@@ -179,7 +179,7 @@ void run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
         }
     }
 
-    sc->init(sim_dapi, dl, sim_tapi, properties);
+    sc->init(sim_dapi, data_level, sim_tapi, properties);
 
     auto calendar = get_calendar(dapi);
     //calendar.push_back(20180529);

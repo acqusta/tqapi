@@ -122,10 +122,13 @@ namespace tquant { namespace stralet { namespace realtime {
 
     class RealTimeStraletContext : public StraletContext, public DataApi_Callback, public TradeApi_Callback {
     public:
-        RealTimeStraletContext(DataApi* dapi, TradeApi* tapi, Stralet* stralet)
+        RealTimeStraletContext(DataApi* dapi, TradeApi* tapi, Stralet* stralet, Json::Value& properties)
             : m_stralet(stralet)
             , m_mode("realtime")
         {
+            m_properties = properties;
+            m_properties_str = m_properties.toStyledString();
+
             // TODO: Should load trade calendar
             time_t now;
             now = time(&now);
@@ -208,7 +211,10 @@ namespace tquant { namespace stralet { namespace realtime {
         Stralet* m_stralet;
 
         loop::MessageLoop m_msgloop;
-        string m_mode;
+        string            m_mode;
+        Json::Value       m_properties;
+        string            m_properties_str;
+
     };
 
     void RealTimeStraletContext::post_event(const char* evt, void* data)
@@ -285,14 +291,23 @@ namespace tquant { namespace stralet { namespace realtime {
 
     string RealTimeStraletContext::get_property(const char* name, const char* def_value)
     {
-        static string s;
-        return s;
+        Json::Value empty;
+        Json::Value v = m_properties.get(name, empty);
+        switch (v.type()) {
+        case Json::ValueType::nullValue: return def_value;
+        case Json::ValueType::intValue:
+        case Json::ValueType::uintValue:
+        case Json::ValueType::realValue:
+        case Json::ValueType::stringValue:
+        case Json::ValueType::booleanValue: return v.asString();
+        default:
+            return v.toStyledString();
+        }
     }
 
     const string& RealTimeStraletContext::get_properties()
     {
-        static string  s = "";
-        return s;
+        return m_properties_str;
     }
 
     const string& RealTimeStraletContext::mode()
@@ -350,7 +365,16 @@ namespace tquant { namespace stralet { namespace realtime {
 
         auto stralet = creator();
 
-        RealTimeStraletContext* sc = new RealTimeStraletContext(dapi, tapi, stralet);
+        Json::Value properties;
+        if (cfg.properties.size()) {
+            Json::Reader reader;
+            if (!reader.parse(cfg.properties, properties)) {
+                cerr << "parse conf failure: " << reader.getFormattedErrorMessages();
+                return;
+            }
+        }
+
+        RealTimeStraletContext* sc = new RealTimeStraletContext(dapi, tapi, stralet, properties);
 
         stralet->set_context(sc);
         stralet->on_event(make_shared<OnInit>());
