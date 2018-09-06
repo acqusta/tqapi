@@ -290,7 +290,7 @@ namespace tquant { namespace api { namespace impl {
             return old;
         }
 
-        void on_notification(shared_ptr<mprpc::MpRpcMessage> rpcmsg)
+        virtual void on_notification(shared_ptr<mprpc::MpRpcMessage> rpcmsg) override
         {
             if (rpcmsg->method == "dapi.quote") {
                 if (m_callback && is_bin(rpcmsg->params)) {

@@ -406,11 +406,12 @@ void perf_test3(DataApi* dapi)
         auto ticks = dapi->bar(code, "1m", 0, true);
         if (ticks.value) {
             total_count += ticks.value->size();
+#if 0
             for (int n = 0; n < ticks.value->size(); n++) {
                 auto b = &ticks.value->at(n);
-                //cout << "bar: " << b->code << "," << b->date << "," << b->time << "," << b->open <<"," << b->high <<"," << b->low << "," << b->close << endl;
+                cout << "bar: " << b->code << "," << b->date << "," << b->time << "," << b->open <<"," << b->high <<"," << b->low << "," << b->close << endl;
             }
-
+#endif
         }
         //else
         //    cout << "tick error: " << code << "," << bar.date << ": " << ticks.msg << endl;

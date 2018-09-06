@@ -187,6 +187,8 @@ public:
             m_stralet.on_event(evt->evt_id, &account);
             break;
         }
+        default:
+                break;
         }
     }
 };

@@ -10,14 +10,14 @@ namespace tquant { namespace stralet { namespace backtest {
 
 static vector<int> get_calendar(DataApi* dapi)
 {
-    auto sh000001 = dapi->daily_bar("000001.SH", "", true);
-    if (!sh000001.value) {
-        cerr << "Can't get daily_bar 000001.SH\n";
+    auto r = dapi->daily_bar("000001.SH", "", true);
+    if (!r.value) {
+        cerr << "Can't get daily_bar 000001.SH:" << r.msg;
         throw std::runtime_error("Can't get calendar");
     }
     vector<int> dates;
-    for (int i=0; i < sh000001.value->size(); i++)
-        dates.push_back(sh000001.value->at(i).date);
+    for (int i=0; i < r.value->size(); i++)
+        dates.push_back(r.value->at(i).date);
 
     return dates;
 }

@@ -246,14 +246,14 @@ CallResult<const OrderID> SimAccount::validate_order(const string& code, double 
     bool is_open_time = false;
     if (mkt == "SH" || mkt == "SZ" ||  mkt == "CFE") {
         is_open_time =
-            (dt.time >= HMS(9, 30) && dt.time < HMS(11, 30) ||
-                dt.time >= HMS(13, 0) && dt.time < HMS(15, 00));
+            ((dt.time >= HMS(9, 30) && dt.time < HMS(11, 30)) ||
+             (dt.time >= HMS(13, 0) && dt.time < HMS(15, 00)));
     }
     else {
         is_open_time =
-            (dt.time >= HMS(9, 0) && dt.time < HMS(10, 15) ||
-                dt.time >= HMS(10, 30) && dt.time < HMS(11, 30) ||
-                dt.time >= HMS(13, 30) && dt.time < HMS(15, 00));
+            ((dt.time >= HMS( 9,  0) && dt.time < HMS(10, 15)) ||
+             (dt.time >= HMS(10, 30) && dt.time < HMS(11, 30)) ||
+             (dt.time >= HMS(13, 30) && dt.time < HMS(15, 00)));
     }
 
     if (!is_open_time)

@@ -9,42 +9,37 @@ class MyStralet : public Stralet {
 public:
     virtual void on_event(shared_ptr<StraletEvent> evt) {
         switch (evt->evt_id) {
-        case STRALET_EVENT_ID::ON_INIT:
-        {
-            ctx()->logger() << "on_init: " << ctx()->trading_day() << endl;
-            vector<string> codes = { "000001.SH", "600000.SH", "000001.SZ", "399001.SZ" };
-            ctx()->data_api()->subscribe(codes);
-            break;
-        }
-        case STRALET_EVENT_ID::ON_FINI:
-        {
-            ctx()->logger() << "on_fini: " << ctx()->trading_day() << endl;
-            break;
-        }
-        case STRALET_EVENT_ID::ON_QUOTE:
-        {
-            auto q = evt->as<OnQuote>()->quote;
-            //ctx()->logger() << "on_quote: " << q->code << "," << q->date << "," << q->time << "," << q->last << endl;
-            break;
-        }
-        case STRALET_EVENT_ID::ON_BAR:
-        {
-            auto bar = evt->as<OnBar>()->bar;
-            //ctx()->logger() << "on_bar: " << bar->code << "," << bar->date << "," << bar->time << "," << bar->close << endl;
-            break;
-        }
-        case STRALET_EVENT_ID::ON_ORDER:
-        {
-            auto order = evt->as<OnOrder>()->order;
-            cout << "on_order: " << order->code << "," << order->entrust_action << "," << order->status << endl;
-            break;
-        }
-        case STRALET_EVENT_ID::ON_TRADE:
-        {
-            auto trade = evt->as<OnTrade>()->trade;
-            cout << "on_trade: " << trade->code << "," << trade->entrust_action << "," << trade->fill_price << endl;
-            break;
-        }
+            case STRALET_EVENT_ID::ON_INIT: {
+                ctx()->logger() << "on_init: " << ctx()->trading_day() << endl;
+                vector<string> codes = { "000001.SH", "600000.SH", "000001.SZ", "399001.SZ" };
+                ctx()->data_api()->subscribe(codes);
+                break;
+            }
+            case STRALET_EVENT_ID::ON_FINI: {
+                ctx()->logger() << "on_fini: " << ctx()->trading_day() << endl;
+                break;
+            }
+            case STRALET_EVENT_ID::ON_QUOTE: {
+                auto q = evt->as<OnQuote>()->quote;
+                //ctx()->logger() << "on_quote: " << q->code << "," << q->date << "," << q->time << "," << q->last << endl;
+                break;
+            }
+            case STRALET_EVENT_ID::ON_BAR: {
+                auto bar = evt->as<OnBar>()->bar;
+                //ctx()->logger() << "on_bar: " << bar->code << "," << bar->date << "," << bar->time << "," << bar->close << endl;
+                break;
+            }
+            case STRALET_EVENT_ID::ON_ORDER: {
+                auto order = evt->as<OnOrder>()->order;
+                cout << "on_order: " << order->code << "," << order->entrust_action << "," << order->status << endl;
+                break;
+            }
+            case STRALET_EVENT_ID::ON_TRADE: {
+                auto trade = evt->as<OnTrade>()->trade;
+                cout << "on_trade: " << trade->code << "," << trade->entrust_action << "," << trade->fill_price << endl;
+                break;
+            }
+            default: break;
         }
     }
 };

@@ -35,17 +35,18 @@ private:
 void DoubleMAStralet::on_event(shared_ptr<StraletEvent> evt)
 {
     switch (evt->evt_id) {
-    case STRALET_EVENT_ID::ON_INIT:
-        on_init();
-        break;
-    case STRALET_EVENT_ID::ON_FINI:
-        on_fini();
-        break;
-    case STRALET_EVENT_ID::ON_BAR: {
-        auto on_bar = evt->as<OnBar>();
-        this->on_bar(on_bar->cycle.c_str(), on_bar->bar);
-        break;
-    }
+        case STRALET_EVENT_ID::ON_INIT:
+            on_init();
+            break;
+        case STRALET_EVENT_ID::ON_FINI:
+            on_fini();
+            break;
+        case STRALET_EVENT_ID::ON_BAR: {
+            auto on_bar = evt->as<OnBar>();
+            this->on_bar(on_bar->cycle.c_str(), on_bar->bar);
+            break;
+        }
+        default: break;
     }
 }
 

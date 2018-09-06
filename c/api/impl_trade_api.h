@@ -330,7 +330,7 @@ namespace tquant { namespace api { namespace impl {
             return old;
         }
 
-        void on_notification(shared_ptr<MpRpcMessage> rpcmsg)
+        virtual void on_notification(shared_ptr<MpRpcMessage> rpcmsg) override
         {
             if (!m_callback) return;
 
