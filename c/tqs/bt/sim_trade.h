@@ -23,9 +23,11 @@ namespace tquant { namespace stralet { namespace backtest {
         string  account_id;
         int32_t trading_day;
         double  init_balance;
-        double  enable_balance;
+        double  avail_balance;
         double  frozen_balance;
-
+        double  margin;
+        double  frozen_margin;
+        double  commission;
         unordered_map<string, shared_ptr<Position>>     positions;  // code + side -> Position
         unordered_map<string, shared_ptr<OrderData>>    orders;     // entrust_no -> order
         unordered_map<string, shared_ptr<Trade>>        trades;     // fill_no -> trade

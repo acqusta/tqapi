@@ -153,7 +153,7 @@ SimAccount::SimAccount(SimStraletContext* ctx, const string& account_id,
     auto tdata = make_shared<TradeData>();
     tdata->account_id     = account_id;
     tdata->init_balance   = init_balance;
-    tdata->enable_balance = init_balance;
+    tdata->avail_balance = init_balance;
     tdata->frozen_balance = 0.0;
     tdata->trading_day    = 0;
 
@@ -177,7 +177,7 @@ CallResult<const Balance> SimAccount::query_balance()
     bal->account_id     = m_tdata->account_id;
     bal->fund_account   = m_tdata->account_id;
     bal->init_balance   = m_tdata->init_balance;
-    bal->enable_balance = m_tdata->enable_balance - m_tdata->frozen_balance;
+    bal->enable_balance = m_tdata->avail_balance - m_tdata->frozen_balance;
     //bal->margin = m_margin;
     //bal->float_pnl = m_float_pnl;
     //bal->close_pnl = m_close_pnl;
@@ -267,15 +267,15 @@ CallResult<const OrderID> SimAccount::validate_order(const string& code, double 
     if (inc_dir == -1) {
         if (pos->enable_size - pos->frozen_size < size) {
             stringstream ss;
-            ss << "-1,no enough size for close(" << pos->enable_size << ","
-                << pos->frozen_size << "," << size << ")";
+            ss << "-1,no enough size for close(enable " << pos->enable_size << ", frozen "
+                << pos->frozen_size << ", close " << size << ")";
             return CallResult<const OrderID>(ss.str());
         }
         // XXX move to place_order
         pos->frozen_size += size;
     }
     else {
-        if (price*size > m_tdata->enable_balance - m_tdata->frozen_balance)
+        if (price*size > m_tdata->avail_balance - m_tdata->frozen_balance)
             return CallResult<const OrderID>("-1,no enough money");
 
         // XXX move to place_order
@@ -456,7 +456,7 @@ bool SimAccount::reject_order(Order* order, const char* msg)
 static void get_commission_rate(const char* code, double* open_rate, double* close_rate)
 {
     const char* p = strchr(code, '.');
-    if (strcmp(p, "SH") == 0 || strcmp(p, "SZ") == 0) {
+    if (strcmp(p, ".SH") == 0 || strcmp(p, ".SZ") == 0) {
 
         switch (code[0]) {
         case '1':
@@ -471,8 +471,8 @@ static void get_commission_rate(const char* code, double* open_rate, double* clo
     }
     else {
         // High!
-        *open_rate  = 0.00025;
-        *close_rate = 0.00025;
+        *open_rate  = 0.000025;
+        *close_rate = 0.000025;
     }
     return;
 }
@@ -490,26 +490,40 @@ void SimAccount::make_trade(Order* order, double fill_price)
     get_action_effect(order->entrust_action, &pos_side, &inc_dir);
     auto pos = get_position(order->code, pos_side);
 
+    // Stock 
+    //    cost = turnover + commission
+    //    cost_price = cost / current_size
+    // Futures
+    //    cost == margin = turnover
+    //    cost_price = cost /current_size
+    // 
+    //  avail += -turnover - commission + profit
+    // Commission is always removed from avail_balance.
+
     if (inc_dir == 1) {
+        double open_rate = 0.0, close_rate = 0.0;
+        get_commission_rate(order->code.c_str(), &open_rate, &close_rate);
+
+        double turnover = fill_price * fill_size;
+        double commisson = turnover *open_rate;
+
         pos->current_size += fill_size;
 
-        double cost = fill_price * fill_size;
         if (is_future(order->code.c_str())) {
             pos->enable_size += fill_size;
+            pos->cost        += turnover;
+            pos->cost_price   = pos->cost / pos->current_size;
         }
         else {
-            double open_rate = 0.0;
-            double close_rate = 0.0;
-            get_commission_rate(order->code.c_str(), &open_rate, &close_rate);
-            double commisson = fill_price * fill_size *open_rate;
-            pos->commission += commisson;
-            cost += commisson;
+            pos->cost       += turnover + commisson;
+            pos->cost_price  = pos->cost / pos->current_size;
         }
-        pos->cost       += cost;
-        pos->cost_price = pos->cost / pos->current_size;
+
+        pos->commission   += commisson;
 
         m_tdata->frozen_balance -= order->entrust_size * order->entrust_price;
-        m_tdata->enable_balance -= cost;
+        m_tdata->avail_balance  -= turnover + commisson;
+        m_tdata->commission     += commisson;
     }
     else {
         pos->frozen_size  -= order->entrust_size;
@@ -517,41 +531,40 @@ void SimAccount::make_trade(Order* order, double fill_price)
         pos->enable_size  -= fill_size; // TODO: check if it is right
         assert(pos->enable_size >= 0);
 
+        double open_rate = 0.0;
+        double close_rate = 0.0;
+        get_commission_rate(order->code.c_str(), &open_rate, &close_rate);
+
         double turnover = 0;
         double commission = 0;
-
-        if (!is_future(order->code.c_str())) {
-            double open_rate = 0.0;
-            double close_rate = 0.0;
-            turnover = fill_size* fill_price;
-            get_commission_rate(order->code.c_str(), &open_rate, &close_rate);
-            commission = turnover *close_rate;
-        }
-        else {
-            double open_rate = 0.0;
-            double close_rate = 0.0;
+        if (is_future(order->code.c_str())) {
+            // turnover is money payed to account!
             if (pos->side == SD_Short) {
                 turnover = fill_size * (2 * pos->cost_price - fill_price);
+                pos->close_pnl += fill_size * (pos->cost_price - fill_price) - commission;
             }
             else {
                 turnover = fill_size * fill_price;
+                pos->close_pnl += fill_size * (fill_price - pos->cost_price) - commission;
             }
-            get_commission_rate(order->code.c_str(), &open_rate, &close_rate);
             commission = fill_size* fill_price *close_rate;
+            
+        } else {
+            turnover = fill_size* fill_price;
+            commission = turnover *close_rate;
+            pos->close_pnl += fill_size * (fill_price - pos->cost_price) - commission;
         }
         pos->commission += commission;
-        m_tdata->enable_balance += turnover - commission;
-        if (pos->side == SD_Long)
-            pos->close_pnl += fill_size * (fill_price - pos->cost_price) - commission;
-        else
-            pos->close_pnl += fill_size * (pos->cost_price - fill_price) - commission;
-
-        pos->cost = pos->cost_price * pos->current_size;
-
-        if (pos->current_size == 0) {
+        
+        if (pos->current_size) {
+            pos->cost = pos->cost_price * pos->current_size;
+        } else {
             pos->cost = 0.0;
             pos->cost_price = 0.0;
         }
+
+        m_tdata->avail_balance += turnover - commission;
+        m_tdata->commission += commission;
     }
 
     order->fill_price = fill_price;
@@ -625,6 +638,7 @@ void SimAccount::try_buy(OrderData* od)
 
         if (q.value &&
             (q.value->ask1 <= od->order->entrust_price || od->price_type=="any") &&
+            q.value->ask_vol1 > 0 &&
             check_quote_time(q.value.get(), od->order.get()))
         {
             make_trade(od->order.get(), q.value->ask1);
@@ -632,7 +646,7 @@ void SimAccount::try_buy(OrderData* od)
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
         auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
-        if (!bar || !bar->high || !bar->low) return;
+        if (!bar || !bar->high || !bar->low || !bar->volume) return;
         if (bar && bar->low < od->order->entrust_price) {
             double fill_price = min(od->order->entrust_price, bar->high);
             make_trade(od->order.get(), fill_price);
@@ -659,6 +673,7 @@ void SimAccount::try_sell(OrderData* od)
 
         if (q.value && 
             (q.value->bid1 >= od->order->entrust_price || od->price_type == "any") &&
+            q.value->bid_vol1 > 0 &&
             check_quote_time(q.value.get(), od->order.get()))
         {
             make_trade(od->order.get(), q.value->bid1);
@@ -666,7 +681,7 @@ void SimAccount::try_sell(OrderData* od)
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
         auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
-        if (!bar || !bar->high || !bar->low) return;
+        if (!bar || !bar->high || !bar->low || !bar->volume) return;
 
         if (bar && bar->high > od->order->entrust_price) {
             double fill_price = max(od->order->entrust_price, bar->low);
@@ -695,6 +710,7 @@ void SimAccount::try_short(OrderData* od)
 
         if (q.value && 
             ( q.value->bid1 >= od->order->entrust_price || od->price_type == "any") &&
+            q.value->bid_vol1 > 0 &&
             check_quote_time(q.value.get(), od->order.get()))
         {
             make_trade(od->order.get(), q.value->bid1);
@@ -702,7 +718,7 @@ void SimAccount::try_short(OrderData* od)
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
         auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
-        if (!bar || !bar->high || !bar->low) return;
+        if (!bar || !bar->high || !bar->low || !bar->volume) return;
 
         if (bar && bar->high > od->order->entrust_price) {
             double fill_price = max(od->order->entrust_price, bar->low);
@@ -730,6 +746,7 @@ void SimAccount::try_cover(OrderData* od)
 
         if (q.value &&
             (q.value->ask1 < od->order->entrust_price || od->price_type == "any") &&
+            q.value->ask_vol1 > 0 &&
             check_quote_time(q.value.get(), od->order.get()))
         {
             make_trade(od->order.get(), q.value->ask1);
@@ -737,7 +754,7 @@ void SimAccount::try_cover(OrderData* od)
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
         auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
-        if (!bar || !bar->high || !bar->low) return;
+        if (!bar || !bar->high || !bar->low || !bar->volume) return;
 
         if (bar && bar->low < od->order->entrust_price) {
             double fill_price = min(od->order->entrust_price, bar->high);
@@ -764,8 +781,8 @@ void SimAccount::move_to(int trading_day)
 
     auto tdata = make_shared<TradeData>();
     tdata->account_id     = m_tdata->account_id;
-    tdata->init_balance   = m_tdata->enable_balance;
-    tdata->enable_balance = tdata->init_balance;
+    tdata->init_balance   = m_tdata->avail_balance;
+    tdata->avail_balance = tdata->init_balance;
     tdata->trading_day    = trading_day;
     tdata->frozen_balance = 0.0;
 
@@ -806,13 +823,13 @@ void SimAccount::save_data(const string& dir)
             cerr << "Can't open file " << ss.str();
             return;
         }
-        out << "account_id,trading_day,init_balance,enable_balance,frozen_balance\n";
+        out << "account_id,trading_day,init_balance,avail_balance,frozen_balance\n";
         for (auto& tdata : m_his_tdata) {
             out << setprecision(4) << fixed
                 << tdata->account_id << ","
                 << tdata->trading_day << ","
                 << tdata->init_balance << ","
-                << tdata->enable_balance << ","
+                << tdata->avail_balance << ","
                 << tdata->frozen_balance << endl;
         }
         out.close();
