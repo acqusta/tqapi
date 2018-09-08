@@ -69,7 +69,7 @@ elif OSNAME=="Linux":
     libraries = ['msgpack', 'rt']
 
 else:
-    libraries = ['msgpack']
+    libraries = ['msgpack', 'iconv']
 
 module = Extension('tquant._tqapi',
                    define_macros = define_macros,
