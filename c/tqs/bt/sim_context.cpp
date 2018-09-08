@@ -214,21 +214,7 @@ void SimStraletContext::run_one_day(Stralet* stralet)
                 bars.push_back(bar);
         }
 
-        // 注意事件顺序: event -> quote -> bar -> (try_match) -> order -> trade
-        if (m_events.size()) {
-            auto events = m_events;
-            m_events.clear();
-            for (auto evt : events)
-                stralet->on_event(make_shared<OnEvent>(evt->name, evt->data));
-        }
-
-        for (auto & q : quotes)
-            stralet->on_event(make_shared<OnQuote>(q));
-
-        for (auto& bar : bars) {
-            const char* cycle = "1m";
-            stralet->on_event(make_shared<OnBar>(cycle, bar));
-        }
+        // 注意事件顺序: try_match -> order -> trade -> event -> quote -> bar
 
         m_tapi->try_match();
 
@@ -248,6 +234,21 @@ void SimStraletContext::run_one_day(Stralet* stralet)
                     stralet->on_event(make_shared<OnTrade>(ind));
                 }
             }
+        }
+
+        if (m_events.size()) {
+            auto events = m_events;
+            m_events.clear();
+            for (auto evt : events)
+                stralet->on_event(make_shared<OnEvent>(evt->name, evt->data));
+        }
+
+        for (auto & q : quotes)
+            stralet->on_event(make_shared<OnQuote>(q));
+
+        for (auto& bar : bars) {
+            const char* cycle = "1m";
+            stralet->on_event(make_shared<OnBar>(cycle, bar));
         }
 
         execute_timer();

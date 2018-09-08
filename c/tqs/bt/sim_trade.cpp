@@ -393,12 +393,18 @@ void SimAccount::try_match()
     }
 }
 
-bool is_future(const char* code)
+static bool is_futures_or_index(const char* code)
 {
     const char*p = strrchr(code, '.');
     if (!p) return false;
     p++;
-    return strcmp(p, "SH") && strcmp(p, "SZ");
+
+    if (strcmp(p, "SH") == 0)
+        return strncmp(code, "000", 3) == 0;
+    else if (strcmp(p, "SZ") == 0)
+        return strncmp(code, "399", 3) == 0;
+    else
+        return true;
 }
 
 Position* SimAccount::get_position(const string& code, const string& side)
@@ -434,7 +440,7 @@ bool SimAccount::reject_order(Order* order, const char* msg)
     get_action_effect(order->entrust_action, &pos_side, &inc_dir);
     auto pos = get_position(order->code, pos_side);
     if (inc_dir == 1) {
-        if (is_future(order->code.c_str()))
+        if (is_futures_or_index(order->code.c_str()))
             pos->enable_size += fill_size;
 
         m_tdata->frozen_balance -= order->entrust_size * order->entrust_price;
@@ -509,7 +515,7 @@ void SimAccount::make_trade(Order* order, double fill_price)
 
         pos->current_size += fill_size;
 
-        if (is_future(order->code.c_str())) {
+        if (is_futures_or_index(order->code.c_str())) {
             pos->enable_size += fill_size;
             pos->cost        += turnover;
             pos->cost_price   = pos->cost / pos->current_size;
@@ -537,7 +543,7 @@ void SimAccount::make_trade(Order* order, double fill_price)
 
         double turnover = 0;
         double commission = 0;
-        if (is_future(order->code.c_str())) {
+        if (is_futures_or_index(order->code.c_str())) {
             // turnover is money payed to account!
             if (pos->side == SD_Short) {
                 turnover = fill_size * (2 * pos->cost_price - fill_price);
