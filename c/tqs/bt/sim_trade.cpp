@@ -653,12 +653,13 @@ void SimAccount::try_buy(OrderData* od)
     else if (m_ctx->data_level() == BT_BAR1M) {
         auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
         if (!bar || !bar->high || !bar->low || !bar->volume) return;
-        if (bar && bar->low < od->order->entrust_price) {
-            double fill_price = min(od->order->entrust_price, bar->high);
+
+        if (bar && od->price_type == "any") {
+            double fill_price = (bar->high + bar->low) / 2;
             make_trade(od->order.get(), fill_price);
         }
-        else if (bar && od->price_type == "any") {
-            double fill_price = (bar->high + bar->low) / 2;
+        else if (bar && bar->low < od->order->entrust_price) {
+            double fill_price = min(od->order->entrust_price, bar->high);
             make_trade(od->order.get(), fill_price);
         }
     }
@@ -689,12 +690,12 @@ void SimAccount::try_sell(OrderData* od)
         auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
         if (!bar || !bar->high || !bar->low || !bar->volume) return;
 
-        if (bar && bar->high > od->order->entrust_price) {
-            double fill_price = max(od->order->entrust_price, bar->low);
+        if (bar && od->price_type == "any") {
+            double fill_price = (bar->high + bar->low) / 2;
             make_trade(od->order.get(), fill_price);
         }
-        else if (bar && od->price_type == "any") {
-            double fill_price = (bar->high + bar->low) / 2;
+        else if (bar && bar->high > od->order->entrust_price) {
+            double fill_price = max(od->order->entrust_price, bar->low);
             make_trade(od->order.get(), fill_price);
         }
     }
@@ -726,12 +727,12 @@ void SimAccount::try_short(OrderData* od)
         auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
         if (!bar || !bar->high || !bar->low || !bar->volume) return;
 
-        if (bar && bar->high > od->order->entrust_price) {
-            double fill_price = max(od->order->entrust_price, bar->low);
+        if (bar && od->price_type == "any") {
+            double fill_price = (bar->high + bar->low) / 2;
             make_trade(od->order.get(), fill_price);
         }
-        else if (bar && od->price_type == "any") {
-            double fill_price = (bar->high + bar->low) / 2;
+        else if (bar && bar->high > od->order->entrust_price) {
+            double fill_price = max(od->order->entrust_price, bar->low);
             make_trade(od->order.get(), fill_price);
         }
     }
@@ -762,12 +763,12 @@ void SimAccount::try_cover(OrderData* od)
         auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
         if (!bar || !bar->high || !bar->low || !bar->volume) return;
 
-        if (bar && bar->low < od->order->entrust_price) {
-            double fill_price = min(od->order->entrust_price, bar->high);
+        if (bar && od->price_type == "any") {
+            double fill_price = (bar->high + bar->low) / 2;
             make_trade(od->order.get(), fill_price);
         }
-        else if (bar && od->price_type == "any") {
-            double fill_price = (bar->high + bar->low) / 2;
+        else if (bar && bar->low < od->order->entrust_price) {
+            double fill_price = min(od->order->entrust_price, bar->high);
             make_trade(od->order.get(), fill_price);
         }
     }
