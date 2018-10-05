@@ -25,27 +25,40 @@ static bool is_finished_status(const string& status)
     return status == OS_Filled || status == OS_Rejected || status == OS_Cancelled;
 }
 
-static void get_action_effect(const string& action, string* pos_side, int* inc_dir)
+static void get_action_effect(const string& action, string* pos_side, int* size_inc_dir)
 {
     if (action == EA_Buy) {
         *pos_side = SD_Long;
-        *inc_dir = 1;
+        *size_inc_dir = 1;
     }
     else if (action == EA_Sell ||
         action == EA_SellToday || action == EA_SellYesterday) {
         *pos_side = SD_Long;
-        *inc_dir = -1;
+        *size_inc_dir = -1;
     }
     else if (action == EA_Short) {
         *pos_side = SD_Short;
-        *inc_dir = 1;
+        *size_inc_dir = 1;
     }
     else {
         *pos_side = SD_Short;
-        *inc_dir = -1;
+        *size_inc_dir = -1;
     }
 }
 
+
+struct CodeInfo {
+    string code;
+    string name;
+    string mkt;
+    string product_id;
+    string product_class; // "Futurs", "Options" ???
+    double volume_multiple;
+    double price_tick;
+    double margin_ratio;
+};
+
+shared_ptr<CodeInfo> get_code_info(const string& code);
 
 CallResult<const vector<AccountInfo>> SimTradeApi::query_account_status()
 {
@@ -334,8 +347,15 @@ CallResult<const OrderID> SimAccount::place_order(const string& code, double pri
     order->status_msg     = status_msg;
 
     auto od = make_shared<OrderData>();
-    od->order = order;
-    od->price_type = price_type;
+    od->order           = order;
+    od->price_type      = price_type;
+    od->last_volume     = 0;
+    od->volume_in_queue = 0;
+
+    auto code_info = get_code_info(order->code);
+    od->volume_multiple = code_info->volume_multiple;
+    od->price_tick      = code_info->price_tick;
+
     m_tdata->orders[entrust_no] = od;
 
     if (r.value)
@@ -475,10 +495,13 @@ static void get_commission_rate(const char* code, double* open_rate, double* clo
             *close_rate = 0.00125;
         }
     }
-    else {
-        // High!
+    else if (strcmp(p, ".CFE") == 0) {
         *open_rate  = 0.000025;
         *close_rate = 0.000025;
+    }
+    else {
+        *open_rate  = 0.0000;
+        *close_rate = 0.0000;
     }
     return;
 }
@@ -632,22 +655,129 @@ const bool double_equal(double v1, double v2)
     return fabs(v1 - v2) < 0.000001;
 }
 
+bool is_buy_action(const string& action)
+{
+    return
+        action == EA_Buy ||
+        action == EA_Cover ||
+        action == EA_CoverToday ||
+        action == EA_CoverYesterday;
+}
+
+void SimAccount::estimate_vol_in_queue(OrderData* od, const MarketQuote* q)
+{
+    bool is_buy = is_buy_action(od->order->entrust_action);
+
+    if (od->last_volume == 0) {
+        od->last_volume   = q->volume;
+        od->last_turnover = q->turnover;
+        if (is_buy) 
+            od->volume_in_queue = /*q->bid_vol1 > 6 ? q->bid_vol1 * 2 / 3 :*/ q->bid_vol1;
+        else
+            od->volume_in_queue = /*q->ask_vol1 > 6 ? q->ask_vol1 * 2 / 3 :*/ q->ask_vol1;
+        od->volume_in_queue += od->order->entrust_size;
+        assert(od->volume_in_queue);
+        return;
+    }
+
+    size_t filled_volume = q->volume - od->last_volume;
+    double turnvoer      = q->turnover - od->last_turnover;
+    if (!filled_volume) return;
+
+    double volume_multiple = od->volume_multiple;
+    double price_tick      = od->price_tick;
+
+    double avg_px = turnvoer / filled_volume / volume_multiple;    
+    
+    // 估计逻辑: 以 Buy为例
+    //   当 entrust_price >= ask，buy队列中全部成交
+    //   当 entrust_price < bid, 不能估算成交数量，因此buy_queue保持不变
+    //   当 entrust_price == bid
+    //      如果 avg_px > ask, 不能估算成交数量，因此buy_queue保持不变
+    //      如果 avg_px < bid, buy队列全部成交
+    //      如果 avg_px 在 (bid, bid+price_tick)之间，按比例算出 以小于等于avg_px的成交的数量，从 buy_queue中减去
+    //
+    if (is_buy) {
+        if (od->order->entrust_price >= q->ask1) {
+            od->volume_in_queue = 0;
+        }
+        else if (od->order->entrust_price < q->bid1) {
+            // pass
+        }
+        else {
+            if (avg_px < q->bid1) {
+                od->volume_in_queue = 0;
+            }
+            else if (avg_px <= q->bid1 + price_tick) {
+                double down_px = q->bid1;
+                double up_px   = down_px + price_tick;
+                double down_r = (up_px - avg_px) / price_tick;
+                filled_volume *= down_r;
+                if (down_r > 0) {
+                    if (filled_volume == 0) filled_volume = 1;
+                    if (filled_volume < od->volume_in_queue)
+                        od->volume_in_queue -= filled_volume;
+                    else
+                        od->volume_in_queue = 0;
+                }
+                if (od->volume_in_queue > q->bid_vol1)
+                    od->volume_in_queue = q->bid_vol1;
+            }
+        }
+    }
+    else {
+        if (od->order->entrust_price <= q->bid1) {
+            od->volume_in_queue = 0;
+        }
+        else if (od->order->entrust_price > q->ask1) {
+            // pass
+        }
+        else {
+            if (avg_px > q->ask1) {
+                od->volume_in_queue = 0;
+            }
+            else if (avg_px >= q->ask1 - price_tick) {
+                //double r = (avg_px - q->bid1) / (q->ask1 - q->bid1);
+                //double r = (q->ask1 - avg_px) / (q->ask1 - q->bid1);
+                //filled_volume *= r;
+                //if (r > 0 && filled_volume == 0) filled_volume = 1;
+
+                double up_px   = q->ask1;
+                double down_px = up_px - price_tick;
+                double up_r    = (avg_px - down_px) / price_tick;
+                filled_volume *= up_r;
+                if (up_r > 0) {
+                    if (filled_volume == 0) filled_volume = 1;
+                    if (filled_volume < od->volume_in_queue)
+                        od->volume_in_queue -= filled_volume;
+                    else
+                        od->volume_in_queue = 0;
+                }
+                if (od->volume_in_queue > q->ask_vol1)
+                    od->volume_in_queue = q->ask_vol1;
+            }
+        }
+    }
+}
+
 void SimAccount::try_buy(OrderData* od)
 {
     if (m_ctx->data_level() == BT_TICK) {
-        auto q = m_ctx->data_api()->quote(od->order->code.c_str());
+        auto q = m_ctx->data_api()->quote(od->order->code.c_str()).value;
+        if (!q) return;
 
-        if (double_equal(q.value->ask1, 0.0) && od->price_type == "any") {
+        if (double_equal(q->ask1, 0.0) && od->price_type == "any") {
             reject_order(od->order.get(), "reach high limit");
             return;
         }
 
-        if (q.value &&
-            (q.value->ask1 <= od->order->entrust_price || od->price_type=="any") &&
-            q.value->ask_vol1 > 0 &&
-            check_quote_time(q.value.get(), od->order.get()))
-        {
-            make_trade(od->order.get(), q.value->ask1);
+        estimate_vol_in_queue(od, q.get());
+
+        if (check_quote_time(q.get(), od->order.get())) {
+            if (od->price_type == "any" && q->ask_vol1 > 0)
+                make_trade(od->order.get(), q->ask1);
+            else if (q->last <= od->order->entrust_price && od->volume_in_queue == 0)
+                make_trade(od->order.get(), od->order->entrust_price);
         }
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
@@ -671,19 +801,22 @@ void SimAccount::try_buy(OrderData* od)
 void SimAccount::try_sell(OrderData* od)
 {
     if (m_ctx->data_level() == BT_TICK) {
-        auto q = m_ctx->data_api()->quote(od->order->code.c_str());
+        auto q = m_ctx->data_api()->quote(od->order->code.c_str()).value;
+        if (!q) return;
 
-        if (double_equal(q.value->bid1, 0.0) && od->price_type == "any") {
+        if (double_equal(q->bid1, 0.0) && od->price_type == "any") {
             reject_order(od->order.get(), "reach low limit");
             return;
         }
 
-        if (q.value && 
-            (q.value->bid1 >= od->order->entrust_price || od->price_type == "any") &&
-            q.value->bid_vol1 > 0 &&
-            check_quote_time(q.value.get(), od->order.get()))
-        {
-            make_trade(od->order.get(), q.value->bid1);
+        estimate_vol_in_queue(od, q.get());
+
+        if (check_quote_time(q.get(), od->order.get())) {
+            if (od->price_type == "any" && q->bid_vol1 > 0)
+                make_trade(od->order.get(), q->bid1);
+            else if (q->last >= od->order->entrust_price && od->volume_in_queue == 0) {
+                make_trade(od->order.get(), od->order->entrust_price);
+            }
         }
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
@@ -708,19 +841,22 @@ void SimAccount::try_short(OrderData* od)
 {
     // fixme
     if (m_ctx->data_level() == BT_TICK) {
-        auto q = m_ctx->data_api()->quote(od->order->code.c_str());
+        auto q = m_ctx->data_api()->quote(od->order->code.c_str()).value;
+        if (!q) return;
 
-        if (double_equal(q.value->bid1, 0.0) && od->price_type == "any") {
+        if (double_equal(q->bid1, 0.0) && od->price_type == "any") {
             reject_order(od->order.get(), "reach low limit");
             return;
         }
 
-        if (q.value && 
-            ( q.value->bid1 >= od->order->entrust_price || od->price_type == "any") &&
-            q.value->bid_vol1 > 0 &&
-            check_quote_time(q.value.get(), od->order.get()))
-        {
-            make_trade(od->order.get(), q.value->bid1);
+        estimate_vol_in_queue(od, q.get());
+
+        if (check_quote_time(q.get(), od->order.get())) {
+            if (od->price_type == "any" && q->bid_vol1 > 0)
+                make_trade(od->order.get(), q->bid1);
+            else if (q->last >= od->order->entrust_price && od->volume_in_queue == 0) {
+                make_trade(od->order.get(), od->order->entrust_price);
+            }
         }
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
@@ -744,19 +880,19 @@ void SimAccount::try_short(OrderData* od)
 void SimAccount::try_cover(OrderData* od)
 {
     if (m_ctx->data_level() == BT_TICK) {
-        auto q = m_ctx->data_api()->quote(od->order->code.c_str());
+        auto q = m_ctx->data_api()->quote(od->order->code.c_str()).value;
+        if (!q) return;
 
-        if (double_equal(q.value->ask1, 0.0) && od->price_type == "any") {
+        if (double_equal(q->ask1, 0.0) && od->price_type == "any") {
             reject_order(od->order.get(), "reach low limit");
             return;
         }
 
-        if (q.value &&
-            (q.value->ask1 < od->order->entrust_price || od->price_type == "any") &&
-            q.value->ask_vol1 > 0 &&
-            check_quote_time(q.value.get(), od->order.get()))
-        {
-            make_trade(od->order.get(), q.value->ask1);
+        if (check_quote_time(q.get(), od->order.get())) {
+            if (od->price_type == "any" && q->ask_vol1 > 0 )
+                make_trade(od->order.get(), q->ask1);
+            else if (q->last <= od->order->entrust_price && od->volume_in_queue == 0)
+                make_trade(od->order.get(), od->order->entrust_price);
         }
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
@@ -934,5 +1070,89 @@ void SimAccount::save_data(const string& dir)
                     << trd->fill_size << "," << trd->fill_price << endl;
         }
         out.close();
+    }
+}
+
+
+shared_ptr<CodeInfo> get_code_info(const string& code)
+{
+   static vector<CodeInfo> g_contracts {
+        { "A.DCE",  "A.DCE", "DCE", "A.DCE", "Futures", 10, 1.0, 0.1 },
+        { "AG.SHF", "AG.SHF", "SHF", "AG.SHF", "Futures", 15, 1.0, 0.1 },
+        { "AL.SHF", "AL.SHF", "SHF", "AL.SHF", "Futures", 5, 5.0, 0.1 },
+        { "AP.CZC", "AP.CZC", "CZC", "AP.CZC", "Futures", 10, 1.0, 0.1 },
+        { "AU.SHF", "AU.SHF", "SHF", "AU.SHF", "Futures", 1000, 0.05, 0.1 },
+        { "B.DCE", "B.DCE", "DCE", "B.DCE", "Futures", 10, 1.0, 0.1 },
+        { "BB.DCE", "BB.DCE", "DCE", "BB.DCE", "Futures", 500, 0.05, 0.1 },
+        { "BU.SHF", "BU.SHF", "SHF", "BU.SHF", "Futures", 10, 2.0, 0.1 },
+        { "C.DCE", "C.DCE", "DCE", "C.DCE", "Futures", 10, 1.0, 0.1 },
+        { "CF.CZC", "CF.CZC", "CZC", "CF.CZC", "Futures", 5, 5.0, 0.1 },
+        { "CS.DCE", "CS.DCE", "DCE", "CS.DCE", "Futures", 10, 1.0, 0.1 },
+        { "CU.SHF", "CU.SHF", "SHF", "CU.SHF", "Futures", 5, 10.0, 0.1 },
+        { "CY.CZC", "CY.CZC", "CZC", "CY.CZC", "Futures", 5, 5.0, 0.1 },
+        { "FB.DCE", "FB.DCE", "DCE", "FB.DCE", "Futures", 500, 0.05, 0.1 },
+        { "FG.CZC", "FG.CZC", "CZC", "FG.CZC", "Futures", 20, 1.0, 0.1 },
+        { "FU.SHF", "FU.SHF", "SHF", "FU.SHF", "Futures", 10, 1.0, 0.1 },
+        { "HC.SHF", "HC.SHF", "SHF", "HC.SHF", "Futures", 10, 1.0, 0.1 },
+        { "I.DCE", "I.DCE", "DCE", "I.DCE", "Futures", 100, 0.5, 0.1 },
+        { "IC.CFE", "IC.CFE", "CFE", "IC.CFE", "Futures", 200, 0.2, 0.1 },
+        { "IF.CFE", "IF.CFE", "CFE", "IF.CFE", "Futures", 300, 0.2, 0.1 },
+        { "IH.CFE", "IH.CFE", "CFE", "IH.CFE", "Futures", 300, 0.2, 0.1 },
+        { "J.DCE", "J.DCE", "DCE", "J.DCE", "Futures", 100, 0.5, 0.1 },
+        { "JD.DCE", "JD.DCE", "DCE", "JD.DCE", "Futures", 10, 1.0, 0.1 },
+        { "JM.DCE", "JM.DCE", "DCE", "JM.DCE", "Futures", 60, 0.5, 0.1 },
+        { "JR.CZC", "JR.CZC", "CZC", "JR.CZC", "Futures", 20, 1.0, 0.1 },
+        { "L.DCE", "L.DCE", "DCE", "L.DCE", "Futures", 5, 5.0, 0.1 },
+        { "LR.CZC", "LR.CZC", "CZC", "LR.CZC", "Futures", 20, 1.0, 0.1 },
+        { "M.DCE", "M.DCE", "DCE", "M.DCE", "Futures", 10, 1.0, 0.1 },
+        { "MA.CZC", "MA.CZC", "CZC", "MA.CZC", "Futures", 10, 1.0, 0.1 },
+        { "NI.SHF", "NI.SHF", "SHF", "NI.SHF", "Futures", 1, 10.0, 0.1 },
+        { "OI.CZC", "OI.CZC", "CZC", "OI.CZC", "Futures", 10, 1.0, 0.1 },
+        { "P.DCE", "P.DCE", "DCE", "P.DCE", "Futures", 10, 2.0, 0.1 },
+        { "PB.SHF", "PB.SHF", "SHF", "PB.SHF", "Futures", 5, 5.0, 0.1 },
+        { "PM.CZC", "PM.CZC", "CZC", "PM.CZC", "Futures", 50, 1.0, 0.1 },
+        { "PP.DCE", "PP.DCE", "DCE", "PP.DCE", "Futures", 5, 1.0, 0.1 },
+        { "RB.SHF", "RB.SHF", "SHF", "RB.SHF", "Futures", 10, 1.0, 0.1 },
+        { "RI.CZC", "RI.CZC", "CZC", "RI.CZC", "Futures", 20, 1.0, 0.1 },
+        { "RM.CZC", "RM.CZC", "CZC", "RM.CZC", "Futures", 10, 1.0, 0.1 },
+        { "RS.CZC", "RS.CZC", "CZC", "RS.CZC", "Futures", 10, 1.0, 0.1 },
+        { "RU.SHF", "RU.SHF", "SHF", "RU.SHF", "Futures", 10, 5.0, 0.1 },
+        { "SC.INE", "SC.INE", "INE", "SC.INE", "Futures", 1000, 0.1, 0.1 },
+        { "SF.CZC", "SF.CZC", "CZC", "SF.CZC", "Futures", 5, 2.0, 0.1 },
+        { "SM.CZC", "SM.CZC", "CZC", "SM.CZC", "Futures", 5, 2.0, 0.1 },
+        { "SN.SHF", "SN.SHF", "SHF", "SN.SHF", "Futures", 1, 10.0, 0.1 },
+        { "SR.CZC", "SR.CZC", "CZC", "SR.CZC", "Futures", 10, 1.0, 0.1 },
+        { "T.CFE", "T.CFE", "CFE", "T.CFE", "Futures", 10000, 0.005, 0.1 },
+        { "TA.CZC", "TA.CZC", "CZC", "TA.CZC", "Futures", 5, 2.0, 0.1 },
+        { "TF.CFE", "TF.CFE", "CFE", "TF.CFE", "Futures", 10000, 0.005, 0.1 },
+        { "TS.CFE", "TS.CFE", "CFE", "TS.CFE", "Futures", 20000, 0.005, 0.1 },
+        { "V.DCE", "V.DCE", "DCE", "V.DCE", "Futures", 5, 5.0, 0.1 },
+        { "WH.CZC", "WH.CZC", "CZC", "WH.CZC", "Futures", 20, 1.0, 0.1 },
+        { "Y.DCE", "Y.DCE", "DCE", "Y.DCE", "Futures", 10, 2.0, 0.1 },
+        { "ZC.CZC", "ZC.CZC", "CZC", "ZC.CZC", "Futures", 100, 0.2, 0.1 },
+        { "ZN.SHF", "ZN.SHF", "SHF", "ZN.SHF", "Futures", 5, 5.0, 0.1 }
+    };
+
+    static unordered_map<string, shared_ptr<CodeInfo>> g_code_map;
+    if (g_code_map.empty()) {
+       for (auto& c : g_contracts)
+           g_code_map[c.code] = make_shared<CodeInfo>(c);
+    }
+
+    const char* p = strchr(code.c_str(), '.');
+    assert(p);
+    if (strcmp(p, ".SH") == 0 || strcmp(p, "SZ")==0) {
+        auto info = make_shared<CodeInfo>();
+        info->code = code;
+        info->name = code;
+        info->margin_ratio = 1;
+        info->mkt = p + 1;
+        info->price_tick = 0.001;
+        info->volume_multiple = 1.0;
+        return info;
+    }
+    else {
+        auto it = g_code_map.find(code);
+        return it != g_code_map.end() ? it->second : nullptr;
     }
 }

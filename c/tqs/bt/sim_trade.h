@@ -17,6 +17,11 @@ namespace tquant { namespace stralet { namespace backtest {
     struct OrderData {
         shared_ptr<Order> order;
         string            price_type;
+        size_t            last_volume;
+        double            last_turnover;
+        size_t            volume_in_queue;
+        double            volume_multiple;
+        double            price_tick;
     };
 
     struct TradeData {
@@ -56,6 +61,7 @@ namespace tquant { namespace stralet { namespace backtest {
         void try_short(OrderData* order);
         void try_cover(OrderData* order);
         void try_sell (OrderData* order);
+        void estimate_vol_in_queue(OrderData* order, const MarketQuote* q);
         
         inline bool check_quote_time(const MarketQuote* quote, const Order* order);
 
