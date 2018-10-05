@@ -426,8 +426,7 @@ void perf_test3(DataApi* dapi)
 
 int main(int argc, const char** argv)
 {
-    {
-
+    if (0) {
         const char* addr[3] = {
             "ipc://tqc_10001",
             "tcp://127.0.0.1:10001"
@@ -441,7 +440,6 @@ int main(int argc, const char** argv)
         addr[2] = "mdapi://file:///opt/tquant/md";
         set_params("plugin_path", "/opt/tquant/md/lib");
 #endif
-
 
         int i = 0;
         if (argc>1) i = atoi(argv[1]);
@@ -457,8 +455,9 @@ int main(int argc, const char** argv)
         delete dapi;
 
     }
-    if (0) {
-        const char* addr = "tradeapi://tcp://127.0.0.1:10202";
+    if (1) {
+        //const char* addr = "tradeapi://tcp://127.0.0.1:10202";
+        const char* addr = "tkernel://hft.conf";
 
         set_params("plugin_path", "D:\\tquant\\md\\bin;D:\\tquant\\trade\\bin;D:\\tquant\\trade\\bin_x64");
 

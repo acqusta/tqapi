@@ -86,10 +86,9 @@ static string ConvertErrorCodeToString(DWORD ErrorCode)
 
 namespace tquant { namespace api {
 
-    typedef DataApi*  (*T_create_data_api)(const char* str_params);
-    typedef TradeApi* (*T_create_trade_api)(const char* str_params);
-
     static unordered_map<string, string> g_params;
+
+    static vector<T_create_trade_api> g_tapi_factories;
 
     void set_params(const string& key, const string& value)
     {
@@ -289,10 +288,19 @@ namespace tquant { namespace api {
             }
         }
         else {
+            for (auto& f : g_tapi_factories) {
+                auto tapi = f(addr.c_str());
+                if (tapi)
+                    return tapi;
+            }
+
             return creatae_embed_tapi(addr.c_str());
         }
-
     }
 
 
+    void register_trade_api_factory(T_create_trade_api factory)
+    {
+        g_tapi_factories.push_back(factory);
+    }
 } }

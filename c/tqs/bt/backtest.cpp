@@ -10,6 +10,7 @@ namespace tquant { namespace stralet { namespace backtest {
 
 static vector<int> get_calendar(DataApi* dapi)
 {
+    dapi->subscribe(vector<string>{"000001.SH"});
     auto r = dapi->daily_bar("000001.SH", "", true);
     if (!r.value) {
         cerr << "Can't get daily_bar 000001.SH:" << r.msg;

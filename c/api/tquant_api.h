@@ -592,6 +592,12 @@ namespace tquant {  namespace api {
 
     _TQAPI_EXPORT void set_params(const string& key, const string& value);
 
+    typedef DataApi*  (*T_create_data_api)(const char* str_params);
+    typedef TradeApi* (*T_create_trade_api)(const char* str_params);
+
+
+    _TQAPI_EXPORT void register_trade_api_factory(T_create_trade_api factory);
+
 } }
 
 #endif
