@@ -350,7 +350,8 @@ CallResult<const OrderID> SimAccount::place_order(const string& code, double pri
     od->order           = order;
     od->price_type      = price_type;
     od->last_volume     = 0;
-    od->volume_in_queue = 0;
+    od->last_turnover   = 0.0;
+    od->volume_in_queue = 1e8;
 
     auto code_info = get_code_info(order->code);
     od->volume_multiple = code_info->volume_multiple;
@@ -646,6 +647,7 @@ bool SimAccount::check_quote_time(const MarketQuote* quote, const Order* order)
         DateTime cur_time = m_ctx->cur_time();
         DateTime a(cur_time.date, (cur_time.time / 500)*500); 
         DateTime b(order->entrust_date, (order->entrust_time / 500) * 500);
+
         return a.sub(b) >= milliseconds(500);
     }
 }
@@ -669,9 +671,28 @@ void SimAccount::estimate_vol_in_queue(OrderData* od, const MarketQuote* q)
     bool is_buy = is_buy_action(od->order->entrust_action);
 
     if (od->last_volume == 0) {
+        if (is_buy) {
+            if (od->order->entrust_price >= q->ask1) {
+                od->volume_in_queue = 0;
+                return;
+            }
+            else if (od->order->entrust_price < q->bid1) {
+                return;
+            }
+        }
+        else {
+            if (od->order->entrust_price <= q->bid1) {
+                od->volume_in_queue = 0;
+                return;
+            }
+            else if (od->order->entrust_price > q->ask1) {
+                return;
+            }
+        }
+
         od->last_volume   = q->volume;
         od->last_turnover = q->turnover;
-        if (is_buy) 
+        if (is_buy)
             od->volume_in_queue = /*q->bid_vol1 > 6 ? q->bid_vol1 * 2 / 3 :*/ q->bid_vol1;
         else
             od->volume_in_queue = /*q->ask_vol1 > 6 ? q->ask_vol1 * 2 / 3 :*/ q->ask_vol1;
@@ -683,6 +704,9 @@ void SimAccount::estimate_vol_in_queue(OrderData* od, const MarketQuote* q)
     size_t filled_volume = q->volume - od->last_volume;
     double turnvoer      = q->turnover - od->last_turnover;
     if (!filled_volume) return;
+
+    od->last_volume   = q->volume;
+    od->last_turnover = q->turnover;
 
     double volume_multiple = od->volume_multiple;
     double price_tick      = od->price_tick;
@@ -737,11 +761,6 @@ void SimAccount::estimate_vol_in_queue(OrderData* od, const MarketQuote* q)
                 od->volume_in_queue = 0;
             }
             else if (avg_px >= q->ask1 - price_tick) {
-                //double r = (avg_px - q->bid1) / (q->ask1 - q->bid1);
-                //double r = (q->ask1 - avg_px) / (q->ask1 - q->bid1);
-                //filled_volume *= r;
-                //if (r > 0 && filled_volume == 0) filled_volume = 1;
-
                 double up_px   = q->ask1;
                 double down_px = up_px - price_tick;
                 double up_r    = (avg_px - down_px) / price_tick;
@@ -887,6 +906,8 @@ void SimAccount::try_cover(OrderData* od)
             reject_order(od->order.get(), "reach low limit");
             return;
         }
+
+        estimate_vol_in_queue(od, q.get());
 
         if (check_quote_time(q.get(), od->order.get())) {
             if (od->price_type == "any" && q->ask_vol1 > 0 )
