@@ -47,9 +47,9 @@ namespace tquant { namespace stralet { namespace backtest {
                    const vector<Holding> & holdings);
 
         CallResult<const Balance>             query_balance();
-        CallResult<const vector<Order>>       query_orders();
-        CallResult<const vector<Trade>>       query_trades();
-        CallResult<const vector<Position>>    query_positions();
+        CallResult<const vector<Order>>       query_orders   (const unordered_set<string>* codes);
+        CallResult<const vector<Trade>>       query_trades   (const unordered_set<string>* codes);
+        CallResult<const vector<Position>>    query_positions(const unordered_set<string>* codes);
         CallResult<const OrderID>             place_order(const string& code, double price, int64_t size, const string& action, const string& price_type, int order_id);
         CallResult<bool>                      cancel_order(const string& code, int order_id);
         CallResult<bool>                      cancel_order(const string& code, const string& entrust_no);
@@ -98,14 +98,14 @@ namespace tquant { namespace stralet { namespace backtest {
 
         // TradeApi
         virtual CallResult<const vector<AccountInfo>>   query_account_status();
-        virtual CallResult<const Balance>               query_balance  (const string& account_id);
-        virtual CallResult<const vector<Order>>         query_orders   (const string& account_id);
-        virtual CallResult<const vector<Trade>>         query_trades   (const string& account_id);
-        virtual CallResult<const vector<Position>>      query_positions(const string& account_id);
-        virtual CallResult<const OrderID>               place_order    (const string& account_id, const string& code, double price, int64_t size, const string& action, const string& price_type, int order_id);
-        virtual CallResult<bool>                        cancel_order   (const string& account_id, const string& code, int order_id);
-        virtual CallResult<bool>                        cancel_order   (const string& account_id, const string& code, const string& entrust_no);
-        virtual CallResult<string>                      query          (const string& account_id, const string& command, const string& params);
+        virtual CallResult<const Balance>               query_balance  (const string& account_id) override;
+        virtual CallResult<const vector<Order>>         query_orders   (const string& account_id, const unordered_set<string>* codes) override;
+        virtual CallResult<const vector<Trade>>         query_trades   (const string& account_id, const unordered_set<string>* codes) override;
+        virtual CallResult<const vector<Position>>      query_positions(const string& account_id, const unordered_set<string>* codes) override;
+        virtual CallResult<const OrderID>               place_order    (const string& account_id, const string& code, double price, int64_t size, const string& action, const string& price_type, int order_id) override;
+        virtual CallResult<bool>                        cancel_order   (const string& account_id, const string& code, int order_id) override;
+        virtual CallResult<bool>                        cancel_order   (const string& account_id, const string& code, const string& entrust_no) override;
+        virtual CallResult<string>                      query          (const string& account_id, const string& command, const string& params) override;
         virtual TradeApi_Callback* set_callback(TradeApi_Callback* callback);
 
         SimAccount* get_account(const string& account_id) {

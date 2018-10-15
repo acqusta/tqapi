@@ -7,6 +7,7 @@
 #include <vector>
 #include <exception>
 #include <cstring>
+#include <unordered_set>
 
 #ifdef _WIN32
 #  ifdef _TQAPI_DLL
@@ -503,7 +504,7 @@ namespace tquant {  namespace api {
         * @param account_id
         * @return
         */
-        virtual CallResult<const vector<Order>> query_orders(const string& account_id) = 0;
+        virtual CallResult<const vector<Order>> query_orders(const string& account_id, const unordered_set<string>* codes = nullptr) = 0;
 
         /**
         * 查询某个帐号的当天的成交
@@ -511,7 +512,7 @@ namespace tquant {  namespace api {
         * @param account_id
         * @return
         */
-        virtual CallResult<const vector<Trade>> query_trades(const string& account_id) = 0;
+        virtual CallResult<const vector<Trade>> query_trades(const string& account_id, const unordered_set<string>* codes = nullptr) = 0;
 
         /**
         * 查询某个帐号的当天的持仓
@@ -519,7 +520,7 @@ namespace tquant {  namespace api {
         * @param account_id
         * @return
         */
-        virtual CallResult<const vector<Position>> query_positions(const string& account_id) = 0;
+        virtual CallResult<const vector<Position>> query_positions(const string& account_id, const unordered_set<string>* codes = nullptr) = 0;
 
         /**
         * 下单

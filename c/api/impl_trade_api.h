@@ -147,11 +147,27 @@ namespace tquant { namespace api { namespace impl {
             return CallResult<const Balance>(bal);
         }
 
-        virtual CallResult<const vector<Order>> query_orders(const string& account_id) override
+        static string inline union_str(const unordered_set<string>& strs, char sep=',')
+        {
+            if (strs.empty()) return "";
+
+            stringstream ss;
+            int i = 0;
+            for (auto& s : strs) {
+                ss << s;
+                if (i++ != strs.size() - 1)
+                    ss << sep;
+            }
+
+            return ss.str();
+        }
+
+        virtual CallResult<const vector<Order>> query_orders(const string& account_id, const unordered_set<string>* codes = nullptr) override
         {
             MsgPackPacker pk;
-            pk.pack_map(1);
+            pk.pack_map(2);
             pk.pack_map_item("account_id", account_id);
+            pk.pack_map_item("codes",      codes ? union_str(*codes) : "");
 
             auto rsp = m_conn->m_client->call("tapi.query_orders", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
@@ -171,11 +187,12 @@ namespace tquant { namespace api { namespace impl {
             return CallResult<const vector<Order>>(orders);
         }
 
-        virtual CallResult<const vector<Trade>> query_trades(const string& account_id) override
+        virtual CallResult<const vector<Trade>> query_trades(const string& account_id, const unordered_set<string>* codes = nullptr) override
         {
             MsgPackPacker pk;
-            pk.pack_map(1);
+            pk.pack_map(2);
             pk.pack_map_item("account_id", account_id);
+            pk.pack_map_item("codes", codes ? union_str(*codes) : "");
 
             auto rsp = m_conn->m_client->call("tapi.query_trades", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
@@ -195,11 +212,12 @@ namespace tquant { namespace api { namespace impl {
             return CallResult<const vector<Trade>>(trades);
         }
 
-        virtual CallResult<const vector<Position>> query_positions(const string& account_id) override
+        virtual CallResult<const vector<Position>> query_positions(const string& account_id, const unordered_set<string>* codes = nullptr) override
         {
             MsgPackPacker pk;
-            pk.pack_map(1);
+            pk.pack_map(2);
             pk.pack_map_item("account_id", account_id);
+            pk.pack_map_item("codes", codes ? union_str(*codes) : "");
 
             auto rsp = m_conn->m_client->call("tapi.query_positions", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
@@ -320,7 +338,23 @@ namespace tquant { namespace api { namespace impl {
 
         virtual CallResult<string> query(const string& account_id, const string& command, const string& params) override
         {
-            return CallResult<string>("-1,to be implemented");
+            MsgPackPacker pk;
+            pk.pack_map(3);
+            pk.pack_map_item("account_id", account_id);
+            pk.pack_map_item("command", command);
+            pk.pack_map_item("params", params);
+
+            auto rsp = m_conn->m_client->call("tapi.common_query", pk.sb.data, pk.sb.size);
+            if (is_nil(rsp->result))
+                return CallResult<string>(builld_errmsg(rsp->err_code, rsp->err_msg));
+
+            //string text;
+            if (is_map(rsp->result)) {
+                string content;
+                if (mp_map_get(rsp->result, "content", &content))
+                    return CallResult<string>(make_shared<string>(content));
+            }
+            return CallResult<string>("-1,wrong data format");
         }
 
         virtual TradeApi_Callback* set_callback(TradeApi_Callback* callback) override

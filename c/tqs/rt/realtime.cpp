@@ -72,19 +72,19 @@ namespace tquant { namespace stralet { namespace realtime {
             return m_tapi->query_balance(account_id);
         }
 
-        virtual CallResult<const vector<Order>> query_orders(const string& account_id) override
+        virtual CallResult<const vector<Order>> query_orders(const string& account_id, const unordered_set<string>* codes) override
         {
-            return m_tapi->query_orders(account_id);
+            return m_tapi->query_orders(account_id, codes);
         }
 
-        virtual CallResult<const vector<Trade>> query_trades(const string& account_id) override
+        virtual CallResult<const vector<Trade>> query_trades(const string& account_id, const unordered_set<string>* codes) override
         {
-            return m_tapi->query_trades(account_id);
+            return m_tapi->query_trades(account_id, codes);
         }
 
-        virtual CallResult<const vector<Position>> query_positions(const string& account_id) override
+        virtual CallResult<const vector<Position>> query_positions(const string& account_id, const unordered_set<string>* codes) override
         {
-            return m_tapi->query_positions(account_id);
+            return m_tapi->query_positions(account_id, codes);
         }
 
         virtual CallResult<const OrderID> place_order(const string& account_id, const string& code, double price, int64_t size, const string& action, const string& price_type, int order_id) override
@@ -360,8 +360,8 @@ namespace tquant { namespace stralet { namespace realtime {
 
         //cout << "run stralet: " << cfg.output_dir << endl;
 
-        auto dapi = create_data_api(cfg.data_api_addr.c_str());
-        auto tapi = create_trade_api(cfg.data_api_addr.c_str());
+        auto dapi = create_data_api (cfg.data_api_addr.c_str());
+        auto tapi = create_trade_api(cfg.trade_api_addr.c_str());
 
         auto stralet = creator();
 

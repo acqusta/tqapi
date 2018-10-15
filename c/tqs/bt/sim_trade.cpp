@@ -85,24 +85,24 @@ CallResult<const Balance> SimTradeApi::query_balance(const string& account_id)
         CallResult<const Balance>("-1,no such account");
 }
 
-CallResult<const vector<Order>> SimTradeApi::query_orders(const string& account_id)
+CallResult<const vector<Order>> SimTradeApi::query_orders(const string& account_id, const unordered_set<string>* codes)
 {
     auto act = m_ctx->get_account(account_id);
-    return act ? act->query_orders() :
+    return act ? act->query_orders(codes) :
         CallResult<const vector<Order>>("-1,no such account");
 }
 
-CallResult<const vector<Trade>> SimTradeApi::query_trades(const string& account_id)
+CallResult<const vector<Trade>> SimTradeApi::query_trades(const string& account_id, const unordered_set<string>* codes)
 {
     auto act = m_ctx->get_account(account_id);
-    return act ? act->query_trades() :
+    return act ? act->query_trades(codes) :
         CallResult<const vector<Trade>>("-1,no such account");
 }
 
-CallResult<const vector<Position>> SimTradeApi::query_positions(const string& account_id)
+CallResult<const vector<Position>> SimTradeApi::query_positions(const string& account_id, const unordered_set<string>* codes)
 {
     auto act = m_ctx->get_account(account_id);
-    return act ? act->query_positions() :
+    return act ? act->query_positions(codes) :
         CallResult<const vector<Position>>("-1,no such account");
 }
 
@@ -198,11 +198,13 @@ CallResult<const Balance> SimAccount::query_balance()
     return CallResult<const Balance>(bal);
 }
 
-CallResult<const vector<Order>> SimAccount::query_orders()
+CallResult<const vector<Order>> SimAccount::query_orders(const unordered_set<string>* codes)
 {
     auto orders = make_shared<vector<Order>>();
-    for (auto & e : m_tdata->orders)
-        orders->push_back(*e.second->order);
+    for (auto & e : m_tdata->orders) {
+        if (!codes || codes->empty() || codes->find(e.second->order->code) != codes->end())
+            orders->push_back(*e.second->order);
+    }
 
     sort(orders->begin(), orders->end(), [](Order& a, Order&b) {
         return a.entrust_no < b.entrust_no;
@@ -211,11 +213,13 @@ CallResult<const vector<Order>> SimAccount::query_orders()
     return CallResult<const vector<Order>>(orders);
 }
 
-CallResult<const vector<Trade>> SimAccount::query_trades()
+CallResult<const vector<Trade>> SimAccount::query_trades(const unordered_set<string>* codes)
 {
     auto trades = make_shared<vector<Trade>>();
-    for (auto & e : m_tdata->trades)
-        trades->push_back(*e.second);
+    for (auto & e : m_tdata->trades) {
+        if (!codes || codes->empty() || codes->find(e.second->code) != codes->end())
+            trades->push_back(*e.second);
+    }
 
     sort(trades->begin(), trades->end(), [](Trade& a, Trade&b) {
         return a.fill_no < b.fill_no;
@@ -224,11 +228,13 @@ CallResult<const vector<Trade>> SimAccount::query_trades()
     return CallResult<const vector<Trade>>(trades);
 }
 
-CallResult<const vector<Position>> SimAccount::query_positions()
+CallResult<const vector<Position>> SimAccount::query_positions(const unordered_set<string>* codes)
 {
     auto poses = make_shared<vector<Position>>();
-    for (auto & e : m_tdata->positions)
-        poses->push_back(*e.second);
+    for (auto & e : m_tdata->positions) {
+        if (!codes || codes->empty() || codes->find(e.second->code) != codes->end())
+            poses->push_back(*e.second);
+    }
 
     sort(poses->begin(), poses->end(), [](Position& a, Position&b) {
         return a.code < b.code;

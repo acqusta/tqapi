@@ -64,25 +64,34 @@ class TradeApi:
         """Get balance of one account."""
         return _tqapi.tapi_query_balance(self._handle, str(account_id))
 
-    def query_trades(self, account_id):
+    def query_trades(self, account_id, codes=""):
         """Get trades of one account."""
-        v, msg = _tqapi.tapi_query_trades(self._handle, str(account_id))
+        if type(codes) is tuple or type(codes) is list:
+            codes = ",".join(codes)
+
+        v, msg = _tqapi.tapi_query_trades(self._handle, str(account_id), str(codes))
         if v is not None:
             return pd.DataFrame(v), msg
         else:
             return (None, msg)
 
-    def query_orders(self, account_id):
+    def query_orders(self, account_id, codes=""):
         """Get orders of one account."""
-        v, msg = _tqapi.tapi_query_orders(self._handle, str(account_id))
+        if type(codes) is tuple or type(codes) is list:
+            codes = ",".join(codes)
+
+        v, msg = _tqapi.tapi_query_orders(self._handle, str(account_id), str(codes))
         if v is not None:
             return pd.DataFrame(v), msg
         else:
             return (None, msg)
 
-    def query_positions(self, account_id):
+    def query_positions(self, account_id, codes=""):
         """Get positions of one account."""
-        v, msg = _tqapi.tapi_query_positions(self._handle, str(account_id))
+        if type(codes) is tuple or type(codes) is list:
+            codes = ",".join(codes)
+
+        v, msg = _tqapi.tapi_query_positions(self._handle, str(account_id), str(codes))
         if v is not None:
             return pd.DataFrame(v), msg
         else:
