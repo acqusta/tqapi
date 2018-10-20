@@ -81,7 +81,7 @@ PyObject* convert_position(const Position* pos)
     return obj;
 }
 
-PyObject* convert_account_status(const AccountInfo* account)
+PyObject* convert_account_info(const AccountInfo* account)
 {
     PyObject* obj = PyDict_New();
 
@@ -123,7 +123,7 @@ PyObject* convert_account_status_list(const vector<AccountInfo>* accounts)
 {
     PyObject* list = PyList_New(accounts->size());
     for (size_t i = 0; i < accounts->size(); i++)
-        PyList_SetItem(list, i, convert_account_status(&accounts->at(i)));
+        PyList_SetItem(list, i, convert_account_info(&accounts->at(i)));
     return list;
 }
 
@@ -406,7 +406,7 @@ void TradeApiWrap::on_account_status(shared_ptr<AccountInfo> account)
 
     m_msg_loop.post_task([this, account]() {
         auto gstate = PyGILState_Ensure();
-        PyObject* obj = convert_account_status(account.get());
+        PyObject* obj = convert_account_info(account.get());
         call_callback(this->m_tapi_cb.obj, "tapi.account_status_ind", obj);
         PyGILState_Release(gstate);
     });

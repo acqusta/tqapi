@@ -44,6 +44,23 @@ static PyMethodDef Methods[] = {
     { (char *)"dapi_dailybar",              (PyCFunction)_wrap_dapi_dailybar,               METH_KEYWORDS | METH_VARARGS, NULL },
 
     { (char *)"set_params",                 (PyCFunction)_wrap_set_params,                  METH_KEYWORDS | METH_VARARGS, NULL },
+
+    { (char *)"tqs_sc_trading_day",         (PyCFunction)_wrap_tqs_sc_trading_day,          METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tqs_sc_cur_time",            (PyCFunction)_wrap_tqs_sc_cur_time,             METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tqs_sc_post_event",          (PyCFunction)_wrap_tqs_sc_post_event,           METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tqs_sc_set_timer",           (PyCFunction)_wrap_tqs_sc_set_timer,            METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tqs_sc_kill_timer",          (PyCFunction)_wrap_tqs_sc_kill_timer,           METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tqs_sc_dapi_get",            (PyCFunction)_wrap_tqs_sc_dapi_get,             METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tqs_sc_dapi_put",            (PyCFunction)_wrap_tqs_sc_dapi_put,             METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tqs_sc_tapi_get",            (PyCFunction)_wrap_tqs_sc_tapi_get,             METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tqs_sc_tapi_put",            (PyCFunction)_wrap_tqs_sc_tapi_put,             METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tqs_sc_log",                 (PyCFunction)_wrap_tqs_sc_log,                  METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tqs_sc_get_properties",      (PyCFunction)_wrap_tqs_sc_get_properties,       METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tqs_sc_get_property",        (PyCFunction)_wrap_tqs_sc_get_property,         METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tqs_sc_mode",                (PyCFunction)_wrap_tqs_sc_mode,                 METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tqs_bt_run",                 (PyCFunction)_wrap_tqs_bt_run,                  METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tqs_rt_run",                 (PyCFunction)_wrap_tqs_rt_run,                  METH_KEYWORDS | METH_VARARGS, NULL },
+
     { NULL, NULL, 0, NULL }
 };
 

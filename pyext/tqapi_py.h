@@ -164,6 +164,12 @@ public:
     mutex m_mtx;
 };
 
+PyObject* convert_quote        (const MarketQuote* q);
+PyObject* convert_bar          (const Bar* b);
+PyObject* convert_order        (const Order* order);
+PyObject* convert_trade        (const Trade* trade);
+PyObject* convert_position     (const Position* position);
+PyObject* convert_account_info (const AccountInfo* account);
 
 PyObject* _wrap_tapi_create                 (PyObject* self, PyObject *args, PyObject* kwargs);
 PyObject* _wrap_tapi_destroy                (PyObject* self, PyObject *args, PyObject* kwargs);
@@ -187,5 +193,21 @@ PyObject* _wrap_dapi_quote                  (PyObject* self, PyObject *args, PyO
 PyObject* _wrap_dapi_bar                    (PyObject* self, PyObject *args, PyObject* kwargs);
 PyObject* _wrap_dapi_tick                   (PyObject* self, PyObject *args, PyObject* kwargs);
 PyObject* _wrap_dapi_dailybar               (PyObject* self, PyObject *args, PyObject* kwargs);
+
+PyObject* _wrap_tqs_sc_trading_day          (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tqs_sc_cur_time             (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tqs_sc_post_event           (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tqs_sc_set_timer            (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tqs_sc_kill_timer           (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tqs_sc_dapi_get             (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tqs_sc_dapi_put             (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tqs_sc_tapi_get             (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tqs_sc_tapi_put             (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tqs_sc_log                  (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tqs_sc_get_properties       (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tqs_sc_get_property         (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tqs_sc_mode                 (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tqs_bt_run                  (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tqs_rt_run                  (PyObject* self, PyObject *args, PyObject* kwargs);
 
 #endif

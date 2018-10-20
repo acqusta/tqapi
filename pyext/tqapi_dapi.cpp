@@ -7,11 +7,11 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
-static inline PyObject* convert_quote      (const MarketQuote* q);
-static inline PyObject* convert_bar        (const Bar* b);
-static inline PyObject* convert_bars       (const BarArray* bars);
-static inline PyObject* convert_dailybars  (const DailyBarArray* bars);
-static inline PyObject* convert_ticks      (const MarketQuoteArray* ticks);
+inline PyObject* convert_quote      (const MarketQuote* q);
+inline PyObject* convert_bar        (const Bar* b);
+inline PyObject* convert_bars       (const BarArray* bars);
+inline PyObject* convert_dailybars  (const DailyBarArray* bars);
+inline PyObject* convert_ticks      (const MarketQuoteArray* ticks);
 
 
 PyObject* _wrap_dapi_create(PyObject* self, PyObject *args, PyObject* kwargs)
@@ -250,7 +250,7 @@ void DataApiWrap::on_bar(const string& cycle, shared_ptr<const Bar> bar)
     });
 }
 
-static PyObject* convert_quote(const MarketQuote* q)
+PyObject* convert_quote(const MarketQuote* q)
 {
     PyObject* obj = PyDict_New();
 
@@ -364,7 +364,7 @@ static PyObject* convert_ticks(const MarketQuoteArray* ticks)
     return dict;
 }
 
-static PyObject* convert_bar(const Bar* b)
+PyObject* convert_bar(const Bar* b)
 {
     PyObject* obj = PyDict_New();
 

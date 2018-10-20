@@ -5,6 +5,7 @@ project(tqapi_pyext)
 set(SRC
   tqapi_dapi.cpp
   tqapi_tapi.cpp
+  tqs_stralet.cpp
   tqapi_py.cpp
   tqapi_py.h
   tqapi.py
@@ -13,6 +14,7 @@ set(SRC
 
 include_directories(
   ../c/api
+  ../c/tqs
   ../lib
   )
 
