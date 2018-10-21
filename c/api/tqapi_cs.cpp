@@ -146,7 +146,8 @@ CallResultWrap* dapi_subscribe(void* h, const char* codes)
     assert(dapi);
 
     vector<string> ss;
-    split(codes, ",", &ss);
+    if (codes) 
+        split(codes, ",", &ss);
 
     auto r = dapi->subscribe(ss);
     CallResultWrap* cr = new CallResultWrap();
@@ -292,12 +293,12 @@ CallResultWrap* tapi_query_balance(void* h, const char* account_id)
 }
 
 extern "C" _TQAPI_EXPORT
-CallResultWrap* tapi_query_positions(void* h, const char* account_id)
+CallResultWrap* tapi_query_positions(void* h, const char* account_id, const char* codes)
 {
     auto tapi = reinterpret_cast<TradeApi*>(h);
     assert(tapi);
 
-    auto r = tapi->query_positions(account_id);
+    auto r = tapi->query_positions(account_id, codes);
     CallResultWrap* cr = new CallResultWrap();
     if (r.value) {
 
@@ -318,12 +319,12 @@ CallResultWrap* tapi_query_positions(void* h, const char* account_id)
 }
 
 extern "C" _TQAPI_EXPORT
-CallResultWrap* tapi_query_orders(void* h, const char* account_id)
+CallResultWrap* tapi_query_orders(void* h, const char* account_id, const char* codes)
 {
     auto tapi = reinterpret_cast<TradeApi*>(h);
     assert(tapi);
 
-    auto r = tapi->query_orders(account_id);
+    auto r = tapi->query_orders(account_id, codes);
     CallResultWrap* cr = new CallResultWrap();
     if (r.value) {
         cr->orders = make_shared<vector<OrderWrap>>();
@@ -343,12 +344,12 @@ CallResultWrap* tapi_query_orders(void* h, const char* account_id)
 }
 
 extern "C" _TQAPI_EXPORT
-CallResultWrap* tapi_query_trades(void* h, const char* account_id)
+CallResultWrap* tapi_query_trades(void* h, const char* account_id, const char* codes)
 {
     auto tapi = reinterpret_cast<TradeApi*>(h);
     assert(tapi);
 
-    auto r = tapi->query_trades(account_id);
+    auto r = tapi->query_trades(account_id, codes);
     CallResultWrap* cr = new CallResultWrap();
     if (r.value) {
         cr->trades = make_shared<vector<TradeWrap>>();

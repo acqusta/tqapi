@@ -16,18 +16,18 @@ namespace TQuant.Stralet
         {
             var json = JsonConvert.SerializeObject(cfg);
 
-            Stralet stralet = null;
+            StraletWrap wrap = null;
             Impl.TqsDll.StraletCreator my_creatae_stralet = () =>
             {
                 // FIXME
-                stralet = creatae_stralet();
-                return stralet._Handle;
+                var stralet = creatae_stralet();
+                wrap = new StraletWrap(stralet);
+                return wrap.handle;
             };
 
             Impl.TqsDll.tqs_rt_run(json, my_creatae_stralet);
 
-            stralet = null;
+            wrap = null;
         }
-
     }
 }

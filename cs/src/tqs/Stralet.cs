@@ -21,7 +21,6 @@ namespace TQuant.Stralet
     public interface IStraletContext
     {
         ILoggingAdapter Logger { get; }
-        //IStraletRef Self { get; }
 
         Dictionary<String, Object> Props { get; }
 
@@ -46,86 +45,27 @@ namespace TQuant.Stralet
 
     public abstract class Stralet
     {
-        private StraletWrap wrap;
+        //public Stralet()
+        //{
+        //}
 
-        private StraletContextImpl ctx;
-
-        public Stralet()
-        {
-            wrap = new StraletWrap(this);
-        }
-
-        internal IntPtr _Handle { get { return wrap.handle; } }
-
-        internal void _SetContext(StraletContextImpl sc)
+        private IStraletContext ctx;
+        internal void _SetContext(IStraletContext sc)
         {
             this.ctx = sc;
-            //OnInit(sc);
-        }
-
-        internal void _OnDestroy()
-        {
-            this.ctx = null;
-            this.wrap = null;
-        }
-
-        internal void _OnEvent(Int32 evt_id, IntPtr evt_data)
-        {
-            switch (evt_id)
-            {
-                case STRALET_EVENT_ID.ON_INIT:
-                    {
-                        OnEvent(StraletEvent.OnInit.Instance);
-                        break;
-                    }
-                case STRALET_EVENT_ID.ON_FINI:
-                    {
-                        OnEvent(StraletEvent.OnFini.Instance);
-                        break;
-                    }
-                case STRALET_EVENT_ID.ON_QUOTE:
-                    {
-                        OnEvent(new StraletEvent.OnQuote(Marshal.PtrToStructure<MarketQuote>(evt_data)));
-                        break;
-                    }
-                case STRALET_EVENT_ID.ON_BAR:
-                    {
-                        var bar_wrap = Marshal.PtrToStructure<Impl.BarWrap>(evt_data);
-                        OnEvent(new StraletEvent.OnBar(bar_wrap.cycle, Marshal.PtrToStructure<Bar>(bar_wrap.bar)));
-                        break;
-                    }
-                case STRALET_EVENT_ID.ON_TIMER:
-                    {
-                        var timer_wrap = Marshal.PtrToStructure<Impl.TimerWrap>(evt_data);
-                        OnEvent(new StraletEvent._OnTimer(timer_wrap.id, timer_wrap.data.ToInt64()));
-                        break;
-                    }
-                case STRALET_EVENT_ID.ON_EVENT:
-                    {
-                        var event_wrap = Marshal.PtrToStructure<Impl.EventWrap>(evt_data);
-                        OnEvent(new StraletEvent._OnEvent(event_wrap.name, event_wrap.data.ToInt64()));
-                        break;
-                    }
-                case STRALET_EVENT_ID.ON_ORDER:
-                    {
-                        OnEvent(new StraletEvent.OnOrder(Marshal.PtrToStructure<Order>(evt_data)));
-                        break;
-                    }
-                case STRALET_EVENT_ID.ON_TRADE:
-                    {
-                        OnEvent(new StraletEvent.OnTrade(Marshal.PtrToStructure<Trade>(evt_data)));
-                        break;
-                    }
-                case STRALET_EVENT_ID.ON_ACCOUNT_STATUS:
-                    {
-                        //OnEvent(new StraletEvent.OnTrade(Marshal.PtrToStructure<Trade>(evt_data)));
-                        break;
-                    }
-            }
         }
         public IStraletContext Context { get { return ctx; } }
 
-        public abstract void OnEvent(Object evt);
+        public virtual void OnInit() { }
+        public virtual void OnFini() { }
+        public virtual void OnQuote(MarketQuote quote) { }
+        public virtual void OnBar(String cycle, Bar bar) { }
+        public virtual void OnOrder(Order order) { }
+        public virtual void OnTrade(Trade trade) { }
+        public virtual void OnTimer(long id, long data) { }
+        public virtual void OnEvent(String name, long data) { }
+        public virtual void OnAccountStatus(AccountInfo account) { }
+
     }
 
     class LogginAdpterImpl : ILoggingAdapter
@@ -236,11 +176,6 @@ namespace TQuant.Stralet
             throw new NotImplementedException();
         }
 
-        //public void AddStralet(Stralet stralet)
-        //{
-        //    stralet.SetContext(this);
-        //}
-
         public String Mode { get; }
     }
 
@@ -249,24 +184,21 @@ namespace TQuant.Stralet
         TqsDll.DotNetStralet wrap = new TqsDll.DotNetStralet();
         StraletContextImpl ctx;
         internal IntPtr handle;
+        Stralet stralet;
 
         public StraletWrap(Stralet stralet)
         {
-            wrap.SetContext = (sc) =>
-            {
-                ctx = new StraletContextImpl(sc);
-                stralet._SetContext(ctx);
-            };
+            this.stralet = stralet;
 
-            wrap.OnDestroy = () =>
-            {
-                this.handle = IntPtr.Zero;
-                stralet._OnDestroy();
-            };
+            //wrap.OnDestroy = () =>
+            //{
+            //    this.handle = IntPtr.Zero;
+            //    //stralet._OnDestroy();
+            //};
 
             wrap.OnEvent = (evt, data) =>
             {
-                stralet._OnEvent(evt, data);
+                _OnEvent(evt, data);
             };
 
             handle = TqsDll.tqs_stralet_create(ref wrap);
@@ -275,7 +207,70 @@ namespace TQuant.Stralet
         ~StraletWrap()
         {
             if (handle != IntPtr.Zero)
+            {
                 TqsDll.tqs_stralet_destroy(handle);
+                stralet = null;
+            }
+        }
+
+        internal void _OnEvent(Int32 evt_id, IntPtr evt_data)
+        {
+            switch (evt_id)
+            {
+                case STRALET_EVENT_ID.ON_INIT:
+                    {
+                        ctx = new StraletContextImpl(evt_data);
+                        stralet._SetContext(ctx);
+
+                        stralet.OnInit();
+                        break;
+                    }
+                case STRALET_EVENT_ID.ON_FINI:
+                    {
+                        stralet.OnFini();
+                        stralet = null;
+                        handle = IntPtr.Zero;
+                        break;
+                    }
+                case STRALET_EVENT_ID.ON_QUOTE:
+                    {
+                        stralet.OnQuote(Marshal.PtrToStructure<MarketQuote>(evt_data));
+                        break;
+                    }
+                case STRALET_EVENT_ID.ON_BAR:
+                    {
+                        var bar_wrap = Marshal.PtrToStructure<Impl.BarWrap>(evt_data);
+                        stralet.OnBar(bar_wrap.cycle, Marshal.PtrToStructure<Bar>(bar_wrap.bar));
+                        break;
+                    }
+                case STRALET_EVENT_ID.ON_TIMER:
+                    {
+                        var timer_wrap = Marshal.PtrToStructure<Impl.TimerWrap>(evt_data);
+                        stralet.OnTimer(timer_wrap.id, timer_wrap.data.ToInt64());
+                        break;
+                    }
+                case STRALET_EVENT_ID.ON_EVENT:
+                    {
+                        var event_wrap = Marshal.PtrToStructure<Impl.EventWrap>(evt_data);
+                        stralet.OnEvent(event_wrap.name, event_wrap.data.ToInt64());
+                        break;
+                    }
+                case STRALET_EVENT_ID.ON_ORDER:
+                    {
+                        stralet.OnOrder(Marshal.PtrToStructure<Order>(evt_data));
+                        break;
+                    }
+                case STRALET_EVENT_ID.ON_TRADE:
+                    {
+                        stralet.OnTrade(Marshal.PtrToStructure<Trade>(evt_data));
+                        break;
+                    }
+                case STRALET_EVENT_ID.ON_ACCOUNT_STATUS:
+                    {
+                        stralet.OnAccountStatus(Marshal.PtrToStructure<AccountInfo>(evt_data));
+                        break;
+                    }
+            }
         }
     }
 }

@@ -99,8 +99,8 @@ namespace TQuant
                 [StructLayout(LayoutKind.Sequential)]
                 public struct DotNetStralet
                 {
-                    public StraletOnDestroy         OnDestroy;
-                    public StraletSetContext        SetContext;
+                    //public StraletOnDestroy         OnDestroy;
+                    //public StraletSetContext        SetContext;
                     public StraletOnEvent           OnEvent;
                 }
 

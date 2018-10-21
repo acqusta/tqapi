@@ -97,8 +97,8 @@ const char* tqs_sc_mode(void* h)
 }
 
 struct DotNetStalet {
-    void (*on_destroy)       ();
-    void (*set_context)      (StraletContext* sc);
+    //void (*on_destroy)       ();
+    //void (*set_context)      (StraletContext* sc);
     void (*on_event)         (int evt_id, void* data);
 };
 
@@ -108,9 +108,8 @@ public:
     StraletWrap(DotNetStalet& s) : m_stralet(s)
     {}
 
-
     ~StraletWrap() {
-        m_stralet.on_destroy();
+        //m_stralet.on_destroy();
     }
 
     struct TimerWrap {
@@ -132,8 +131,7 @@ public:
     {
         switch (evt->evt_id) {
         case STRALET_EVENT_ID::ON_INIT:
-            m_stralet.set_context(m_ctx);
-            m_stralet.on_event(evt->evt_id, nullptr);
+            m_stralet.on_event(evt->evt_id, m_ctx);
             break;
         case STRALET_EVENT_ID::ON_FINI:
             m_stralet.on_event(evt->evt_id, nullptr);

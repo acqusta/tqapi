@@ -2,40 +2,28 @@
 using System.Collections.Generic;
 using TQuant.Api;
 using TQuant.Stralet;
-using TQuant.Stralet.StraletEvent;
 
 namespace Test
 {
     class StraletDemo : Stralet
     {
-        public override void OnEvent(object evt)
-        {
-            if (evt is OnInit)
-            {
-                OnInit();
-            }
-            else if (evt is OnFini)
-            {
-                OnFini();
-            }
-            else if (evt is OnQuote)
-            {
-                OnQuote((evt as OnQuote).Quote);
-            }
-        }
-        public void OnInit()
+        public override void OnInit()
         {
             Context.Logger.Info(String.Format("OnInit: {0}", Context.TradingDay));
             Context.DataApi.Subscribe( new String[]{ "000001.SH", "600000.SH","399001.SZ"});
         }
 
-        public void OnFini()
+        public override void OnFini()
         {
             Context.Logger.Info(String.Format("OnFini: {0}", Context.TradingDay));
         }
-        public void OnQuote(MarketQuote quote)
+        public override void OnQuote(MarketQuote quote)
         {
-            Context.Logger.Info(String.Format("on_quote {0} {1} {2} {3}", quote.Code, quote.Time, quote.Last, quote.Volume));
+            Context.Logger.Info(String.Format("OnQuote {0} {1} {2} {3}", quote.Code, quote.Time, quote.Last, quote.Volume));
+        }
+        public override void OnBar(string cycle, Bar bar)
+        {
+            Context.Logger.Info(String.Format("OnBar {0} {1} {2} {3}", bar.Code, bar.Time, bar.Close, bar.Volume));
         }
     }
 

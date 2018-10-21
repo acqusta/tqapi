@@ -143,25 +143,28 @@ namespace TQuant
             * 查询某个帐号的当天的订单
             *
             * @param account_id
+            * @param codes
             * @return
             */
-            CallResult<Order[]> QueryOrders(string account_id);
+            CallResult<Order[]> QueryOrders(string account_id, String[] codes = null);
 
             /**
             * 查询某个帐号的当天的成交
             *
             * @param account_id
+            * @param codes
             * @return
             */
-            CallResult<Trade[]> QueryTrades(string account_id);
+            CallResult<Trade[]> QueryTrades(string account_id, String[] codes = null);
 
             /**
             * 查询某个帐号的当天的持仓
             *
             * @param account_id
+            * @param codes
             * @return
             */
-            CallResult<Position[]> QueryPositions(string account_id);
+            CallResult<Position[]> QueryPositions(string account_id, String[] codes = null);
 
             /**
             * 下单

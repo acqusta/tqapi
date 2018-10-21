@@ -62,13 +62,13 @@ namespace TQuant
                 public static extern IntPtr tapi_query_balance(IntPtr h, String account_id);
 
                 [DllImport("tqapi.dll", EntryPoint = "tapi_query_positions", CallingConvention = CallingConvention.Cdecl)]
-                public static extern IntPtr tapi_query_positions(IntPtr h, String account_id);
+                public static extern IntPtr tapi_query_positions(IntPtr h, String account_id, String codes);
 
                 [DllImport("tqapi.dll", EntryPoint = "tapi_query_orders", CallingConvention = CallingConvention.Cdecl)]
-                public static extern IntPtr tapi_query_orders(IntPtr h, String account_id);
+                public static extern IntPtr tapi_query_orders(IntPtr h, String account_id, String codes);
 
                 [DllImport("tqapi.dll", EntryPoint = "tapi_query_trades", CallingConvention = CallingConvention.Cdecl)]
-                public static extern IntPtr tapi_query_trades(IntPtr h, String account_id);
+                public static extern IntPtr tapi_query_trades(IntPtr h, String account_id, String codes);
 
                 [DllImport("tqapi.dll", EntryPoint = "tapi_query_account_status", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tapi_query_account_status(IntPtr h);
@@ -292,15 +292,6 @@ namespace TQuant
                     }
                 }
 
-                //public void Detach()
-                //{
-                //    if (this.handle != IntPtr.Zero)
-                //    {
-                //        TqapiDll.tapi_set_callback(this.handle, null, null, null);
-                //        this.handle = IntPtr.Zero;
-                //    }
-                //}
-
                 public CallResult<bool> CancelOrder(string account_id, string code, int order_id)
                 {
                     IntPtr r = TqapiDll.tapi_cancel_order2(this.handle, account_id, code, order_id);
@@ -397,9 +388,25 @@ namespace TQuant
                     return ret;
                 }
 
-                public CallResult<Order[]> QueryOrders(string account_id)
+                private string codes_to_str(string[] codes)
                 {
-                    IntPtr r = TqapiDll.tapi_query_orders(this.handle, account_id);
+                    if (codes == null && codes.Length == 0)
+                        return "";
+
+                    string str = "";
+                    for (var i = 0; i < codes.Length; i++) {
+                        str += codes[i];
+                        if (i < codes.Length - 1)
+                            str += ",";
+                    }
+
+                    return str;
+                }
+
+                public CallResult<Order[]> QueryOrders(string account_id, string[] codes)
+                {
+
+                    IntPtr r = TqapiDll.tapi_query_orders(this.handle, account_id, codes_to_str(codes));
 
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
 
@@ -413,9 +420,9 @@ namespace TQuant
                     return ret;
                 }
 
-                public CallResult<Position[]> QueryPositions(string account_id)
+                public CallResult<Position[]> QueryPositions(string account_id, string[] codes)
                 {
-                    IntPtr r = TqapiDll.tapi_query_positions(this.handle, account_id);
+                    IntPtr r = TqapiDll.tapi_query_positions(this.handle, account_id, codes_to_str(codes));
 
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
 
@@ -429,9 +436,9 @@ namespace TQuant
                     return ret;
                 }
 
-                public CallResult<Trade[]> QueryTrades(string account_id)
+                public CallResult<Trade[]> QueryTrades(string account_id, string[] codes)
                 {
-                    IntPtr r = TqapiDll.tapi_query_trades(this.handle, account_id);
+                    IntPtr r = TqapiDll.tapi_query_trades(this.handle, account_id, codes_to_str(codes));
 
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
 
