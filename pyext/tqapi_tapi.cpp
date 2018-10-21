@@ -224,17 +224,11 @@ PyObject* _wrap_tapi_query_orders(PyObject* self, PyObject *args, PyObject* kwar
     if (!PyArg_ParseTuple(args, "Lss", &h, &account_id, &codes))
         return NULL;
 
-    unordered_set<string> code_set;
-    vector<string> ss;
-    split(codes, ",", &ss);
-    for (auto& s : ss)
-        code_set.insert(s);
-
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
 
     auto wrap = reinterpret_cast<TradeApiWrap*>(h);
     
-    auto r = wrap->m_tapi->query_orders(account_id, &code_set);
+    auto r = wrap->m_tapi->query_orders(account_id, codes);
 
     if (r.value)
         return Py_BuildValue("NO", convert_orders(r.value.get()), Py_None);
@@ -251,17 +245,11 @@ PyObject* _wrap_tapi_query_trades(PyObject* self, PyObject *args, PyObject* kwar
     if (!PyArg_ParseTuple(args, "Lss", &h, &account_id, &codes))
         return NULL;
 
-    unordered_set<string> code_set;
-    vector<string> ss;
-    split(codes, ",", &ss);
-    for (auto& s : ss)
-        code_set.insert(s);
-
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
 
     auto wrap = reinterpret_cast<TradeApiWrap*>(h);
 
-    auto r = wrap->m_tapi->query_trades(account_id, &code_set);
+    auto r = wrap->m_tapi->query_trades(account_id, codes);
 
     if (r.value)
         return Py_BuildValue("NO", convert_trades(r.value.get()), Py_None);
@@ -278,17 +266,11 @@ PyObject* _wrap_tapi_query_positions(PyObject* self, PyObject *args, PyObject* k
     if (!PyArg_ParseTuple(args, "Lss", &h, &account_id, &codes))
         return NULL;
 
-    unordered_set<string> code_set;
-    vector<string> ss;
-    split(codes, ",", &ss);
-    for (auto& s : ss)
-        code_set.insert(s);
-
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
 
     auto wrap = reinterpret_cast<TradeApiWrap*>(h);
 
-    auto r = wrap->m_tapi->query_positions(account_id, &code_set);
+    auto r = wrap->m_tapi->query_positions(account_id, codes);
 
     if (r.value)
         return Py_BuildValue("NO", convert_positions(r.value.get()), Py_None);

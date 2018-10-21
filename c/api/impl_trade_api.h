@@ -164,10 +164,15 @@ namespace tquant { namespace api { namespace impl {
 
         virtual CallResult<const vector<Order>> query_orders(const string& account_id, const unordered_set<string>* codes = nullptr) override
         {
+            return query_orders(account_id, codes ? union_str(*codes) : "");
+        }
+
+        virtual CallResult<const vector<Order>> query_orders(const string& account_id, const string& codes = nullptr) override
+        {
             MsgPackPacker pk;
             pk.pack_map(2);
             pk.pack_map_item("account_id", account_id);
-            pk.pack_map_item("codes",      codes ? union_str(*codes) : "");
+            pk.pack_map_item("codes",      codes);
 
             auto rsp = m_conn->m_client->call("tapi.query_orders", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
@@ -189,10 +194,15 @@ namespace tquant { namespace api { namespace impl {
 
         virtual CallResult<const vector<Trade>> query_trades(const string& account_id, const unordered_set<string>* codes = nullptr) override
         {
+            return query_trades(account_id, codes ? union_str(*codes) : "");
+        }
+
+        virtual CallResult<const vector<Trade>> query_trades(const string& account_id, const string& codes = nullptr) override
+        {
             MsgPackPacker pk;
             pk.pack_map(2);
             pk.pack_map_item("account_id", account_id);
-            pk.pack_map_item("codes", codes ? union_str(*codes) : "");
+            pk.pack_map_item("codes",      codes);
 
             auto rsp = m_conn->m_client->call("tapi.query_trades", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
@@ -214,10 +224,15 @@ namespace tquant { namespace api { namespace impl {
 
         virtual CallResult<const vector<Position>> query_positions(const string& account_id, const unordered_set<string>* codes = nullptr) override
         {
+            return query_positions(account_id, codes ? union_str(*codes) : "");
+        }
+
+        virtual CallResult<const vector<Position>> query_positions(const string& account_id, const string& codes) override
+        {
             MsgPackPacker pk;
             pk.pack_map(2);
             pk.pack_map_item("account_id", account_id);
-            pk.pack_map_item("codes", codes ? union_str(*codes) : "");
+            pk.pack_map_item("codes",      codes);
 
             auto rsp = m_conn->m_client->call("tapi.query_positions", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))

@@ -505,6 +505,7 @@ namespace tquant {  namespace api {
         * @return
         */
         virtual CallResult<const vector<Order>> query_orders(const string& account_id, const unordered_set<string>* codes = nullptr) = 0;
+        virtual CallResult<const vector<Order>> query_orders(const string& account_id, const string& codes) = 0;
 
         /**
         * 查询某个帐号的当天的成交
@@ -513,6 +514,7 @@ namespace tquant {  namespace api {
         * @return
         */
         virtual CallResult<const vector<Trade>> query_trades(const string& account_id, const unordered_set<string>* codes = nullptr) = 0;
+        virtual CallResult<const vector<Trade>> query_trades(const string& account_id, const string& codes) = 0;
 
         /**
         * 查询某个帐号的当天的持仓
@@ -521,6 +523,7 @@ namespace tquant {  namespace api {
         * @return
         */
         virtual CallResult<const vector<Position>> query_positions(const string& account_id, const unordered_set<string>* codes = nullptr) = 0;
+        virtual CallResult<const vector<Position>> query_positions(const string& account_id, const string& codes) = 0;
 
         /**
         * 下单

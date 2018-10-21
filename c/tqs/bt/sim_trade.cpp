@@ -11,6 +11,7 @@
 #include "sim_context.h"
 #include "sim_data.h"
 #include "sim_trade.h"
+#include "myutils/stringutils.h"
 
 using namespace tquant::api;
 using namespace tquant::stralet;
@@ -92,6 +93,18 @@ CallResult<const vector<Order>> SimTradeApi::query_orders(const string& account_
         CallResult<const vector<Order>>("-1,no such account");
 }
 
+CallResult<const vector<Order>> SimTradeApi::query_orders(const string& account_id, const string& codes)
+{
+    unordered_set<string> code_set;
+    vector<string> ss;    
+    split(codes, ",", &ss);
+    for (auto&s : ss) if (s.size()) code_set.insert(s);
+
+    auto act = m_ctx->get_account(account_id);
+    return act ? act->query_orders(&code_set) :
+        CallResult<const vector<Order>>("-1,no such account");
+}
+
 CallResult<const vector<Trade>> SimTradeApi::query_trades(const string& account_id, const unordered_set<string>* codes)
 {
     auto act = m_ctx->get_account(account_id);
@@ -99,10 +112,34 @@ CallResult<const vector<Trade>> SimTradeApi::query_trades(const string& account_
         CallResult<const vector<Trade>>("-1,no such account");
 }
 
+CallResult<const vector<Trade>> SimTradeApi::query_trades(const string& account_id, const string& codes)
+{
+    unordered_set<string> code_set;
+    vector<string> ss;
+    split(codes, ",", &ss);
+    for (auto&s : ss) if (s.size()) code_set.insert(s);
+
+    auto act = m_ctx->get_account(account_id);
+    return act ? act->query_trades(&code_set) :
+        CallResult<const vector<Trade>>("-1,no such account");
+}
+
 CallResult<const vector<Position>> SimTradeApi::query_positions(const string& account_id, const unordered_set<string>* codes)
 {
     auto act = m_ctx->get_account(account_id);
     return act ? act->query_positions(codes) :
+        CallResult<const vector<Position>>("-1,no such account");
+}
+
+CallResult<const vector<Position>> SimTradeApi::query_positions(const string& account_id, const string& codes)
+{
+    unordered_set<string> code_set;
+    vector<string> ss;
+    split(codes, ",", &ss);
+    for (auto&s : ss) if (s.size()) code_set.insert(s);
+
+    auto act = m_ctx->get_account(account_id);
+    return act ? act->query_positions(&code_set) :
         CallResult<const vector<Position>>("-1,no such account");
 }
 

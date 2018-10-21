@@ -102,6 +102,9 @@ namespace tquant { namespace stralet { namespace backtest {
         virtual CallResult<const vector<Order>>         query_orders   (const string& account_id, const unordered_set<string>* codes) override;
         virtual CallResult<const vector<Trade>>         query_trades   (const string& account_id, const unordered_set<string>* codes) override;
         virtual CallResult<const vector<Position>>      query_positions(const string& account_id, const unordered_set<string>* codes) override;
+        virtual CallResult<const vector<Order>>         query_orders   (const string& account_id, const string& codes) override;
+        virtual CallResult<const vector<Trade>>         query_trades   (const string& account_id, const string& codes) override;
+        virtual CallResult<const vector<Position>>      query_positions(const string& account_id, const string& codes) override;
         virtual CallResult<const OrderID>               place_order    (const string& account_id, const string& code, double price, int64_t size, const string& action, const string& price_type, int order_id) override;
         virtual CallResult<bool>                        cancel_order   (const string& account_id, const string& code, int order_id) override;
         virtual CallResult<bool>                        cancel_order   (const string& account_id, const string& code, const string& entrust_no) override;
