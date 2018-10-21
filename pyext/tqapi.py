@@ -3,6 +3,7 @@ import pandas as pd
 import traceback
 import threading
 import json
+import datetime as dt
 
 def _to_date(row):
     date = int(row['date'])
@@ -74,36 +75,36 @@ class TradeApi:
         """Get balance of one account."""
         return _tqapi.tapi_query_balance(self._handle, str(account_id))
 
-    def query_trades(self, account_id, codes=""):
+    def query_trades(self, account_id, codes="", to_dataframe=True):
         """Get trades of one account."""
         if type(codes) is tuple or type(codes) is list:
             codes = ",".join(codes)
 
         v, msg = _tqapi.tapi_query_trades(self._handle, str(account_id), str(codes))
         if v is not None:
-            return pd.DataFrame(v), msg
+            return pd.DataFrame(v) if to_dataframe else v, msg
         else:
             return (None, msg)
 
-    def query_orders(self, account_id, codes=""):
+    def query_orders(self, account_id, codes="", to_dataframe=True):
         """Get orders of one account."""
         if type(codes) is tuple or type(codes) is list:
             codes = ",".join(codes)
 
         v, msg = _tqapi.tapi_query_orders(self._handle, str(account_id), str(codes))
         if v is not None:
-            return pd.DataFrame(v), msg
+            return pd.DataFrame(v) if to_dataframe else v, msg
         else:
             return (None, msg)
 
-    def query_positions(self, account_id, codes=""):
+    def query_positions(self, account_id, codes="", to_dataframe=True):
         """Get positions of one account."""
         if type(codes) is tuple or type(codes) is list:
             codes = ",".join(codes)
 
         v, msg = _tqapi.tapi_query_positions(self._handle, str(account_id), str(codes))
         if v is not None:
-            return pd.DataFrame(v), msg
+            return pd.DataFrame(v) if to_dataframe else v, msg
         else:
             return (None, msg)
     
@@ -247,7 +248,22 @@ class StraletContext:
         return _tqapi.tqs_sc_mode(self._handle)
 
     @property
-    def cur_time(self):
+    def cur_datetime(self):
+        date, time = _tqapi.tqs_sc_cur_time(self._handle)
+        y = date // 10000
+        m = (date // 100) % 100
+        d = date % 100
+        MS = time % 1000
+        time //= 1000
+        H = time // 10000
+        M = (time // 100) % 100
+        S = time % 100
+
+        return dt.datetime(y,m,d, H,M,S,MS)
+
+
+    @property
+    def cur_fin_time(self):
         return _tqapi.tqs_sc_cur_time(self._handle)
 
     def post_event(self, name, data):
