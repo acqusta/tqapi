@@ -51,11 +51,13 @@ namespace tquant {
             LogStream(LogStream& left)
                 : std::ostream(NULL) {
                 this->streambuf_ = left.streambuf_;
+                rdbuf(streambuf_.get());
             }
 
             LogStream(const LogStream& left)
                 : std::ostream(NULL) {
                 this->streambuf_ = left.streambuf_;
+                rdbuf(streambuf_.get());
             }
             
             shared_ptr<LogStreamBuf> streambuf_;

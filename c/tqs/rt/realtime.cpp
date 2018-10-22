@@ -363,7 +363,7 @@ namespace tquant { namespace stralet { namespace realtime {
     void run(const RealTimeConfig & a_cfg, function<Stralet*()> creator)
     {
         RealTimeConfig cfg = a_cfg;
-        if (cfg.data_api_addr.empty())   cfg.data_api_addr = "ipc://tqc_10001";
+        if (cfg.data_api_addr.empty())   cfg.data_api_addr  = "ipc://tqc_10001";
         if (cfg.trade_api_addr.empty())  cfg.trade_api_addr = "ipc://tqc_10001";
         if (cfg.output_dir.empty()) cfg.output_dir = ".";
 
@@ -384,6 +384,9 @@ namespace tquant { namespace stralet { namespace realtime {
         }
 
         RealTimeStraletContext* sc = new RealTimeStraletContext(dapi, tapi, stralet, properties);
+
+        sc->logger() << "dapi_addr  : " << cfg.data_api_addr;
+        sc->logger() << "tapi_addr : " << cfg.trade_api_addr;
 
         stralet->set_context(sc);
         stralet->on_event(make_shared<OnInit>());
@@ -411,10 +414,10 @@ namespace tquant { namespace stralet { namespace realtime {
         RealTimeConfig cfg;
         try {
             Json::Value empty;
-            Json::Value data_api_addr = conf.get("data_api_addr", empty);
+            Json::Value data_api_addr = conf.get("dapi_addr", empty);
             if (data_api_addr.isString()) cfg.data_api_addr = data_api_addr.asString();
 
-            Json::Value trade_api_addr = conf.get("trade_api_addr", empty);
+            Json::Value trade_api_addr = conf.get("tapi_addr", empty);
             if (trade_api_addr.isString()) cfg.trade_api_addr = trade_api_addr.asString();
 
             Json::Value output_dir = conf.get("output_dir", empty);

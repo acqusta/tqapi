@@ -37,7 +37,7 @@ namespace tquant {
 
             int ms = time % 1000;
             time /= 1000;
-            int h = time / 1000;
+            int h = time / 10000;
             int m = (time / 100) % 100;
             int s = time % 100;
             int n = sprintf(buf, "%s%04d %02d:%02d:%02d.%03d ",
@@ -58,6 +58,16 @@ namespace tquant {
 
             color_console_output(buf, len, severity);
             file_output(buf, len);
+
+            if (severity == LogSeverity::FATAL) {
+#if defined(_DEBUG) && defined(_MSC_VER)
+                // When debugging on windows, avoid the obnoxious dialog and make
+                // it possible to continue past a LOG(FATAL) in the debugger
+                __debugbreak();
+#else
+                abort();
+#endif
+            }
         }
 
 

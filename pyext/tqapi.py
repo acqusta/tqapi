@@ -382,7 +382,7 @@ def bt_run(cfg, StraletClass):
     wrap = StraletWrap(StraletClass)
     _tqapi.tqs_bt_run(cfg, wrap._stralet_callback)
 
-def rt_run(cfg, StaletClass):
+def rt_run(cfg, StraletClass):
     if type(cfg) is not str:
         cfg = json.dumps(cfg)
 
