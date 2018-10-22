@@ -3,12 +3,16 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <process.h>
+
 #include "logger.h"
 #include "myutils/timeutils.h"
+
 #ifdef _WIN32
-#include "Windows.h"
-#undef ERROR
+# include <process.h>
+# include "Windows.h"
+# undef ERROR
+#else
+# include <unistd.h>
 #endif
 
 using namespace std;

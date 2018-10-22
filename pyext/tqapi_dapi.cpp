@@ -7,11 +7,11 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
-inline PyObject* convert_quote      (const MarketQuote* q);
-inline PyObject* convert_bar        (const Bar* b);
-inline PyObject* convert_bars       (const BarArray* bars);
-inline PyObject* convert_dailybars  (const DailyBarArray* bars);
-inline PyObject* convert_ticks      (const MarketQuoteArray* ticks);
+PyObject* convert_quote      (const MarketQuote* q);
+PyObject* convert_bar        (const Bar* b);
+PyObject* convert_bars       (const BarArray* bars);
+PyObject* convert_dailybars  (const DailyBarArray* bars);
+PyObject* convert_ticks      (const MarketQuoteArray* ticks);
 
 
 PyObject* _wrap_dapi_create(PyObject* self, PyObject *args, PyObject* kwargs)
@@ -306,7 +306,7 @@ PyObject* convert_quote(const MarketQuote* q)
     dict_set_item(_dict, # _field, _field);
 
 
-static PyObject* convert_ticks(const MarketQuoteArray* ticks)
+PyObject* convert_ticks(const MarketQuoteArray* ticks)
 {
 
     import_array1(nullptr);
@@ -383,7 +383,7 @@ PyObject* convert_bar(const Bar* b)
     return obj;
 }
 
-static PyObject* convert_bars(const BarArray* bars)
+PyObject* convert_bars(const BarArray* bars)
 {
     import_array1(nullptr);
 
@@ -434,7 +434,7 @@ static PyObject* convert_dailybar(DailyBar* b)
 }
 #endif
 
-static PyObject* convert_dailybars(const DailyBarArray* bars)
+PyObject* convert_dailybars(const DailyBarArray* bars)
 {
     import_array1(nullptr);
 

@@ -212,7 +212,7 @@ void SimDataApi::preload_tick(const vector<string>& codes)
         auto ticks = r.value;
         int pos = -1;
         if (ticks->size() > 0) {
-            for (pos = 0; pos < ticks->size(); pos++) {
+            for (pos = 0; pos < (int)ticks->size(); pos++) {
                 auto a = &ticks->at(pos);
                 int v = cmp_time(a->date, a->time, dt.date, dt.time);
                 if (v == 0) break;
@@ -220,7 +220,7 @@ void SimDataApi::preload_tick(const vector<string>& codes)
                     pos--; break;
                 }
             }
-            if (pos == ticks->size())
+            if (pos == (int)ticks->size())
                 pos = ticks->size() - 1;
         }
 
@@ -382,7 +382,7 @@ const RawDailyBar* SimDataApi::cur_daily_bar(const string & code)
         return nullptr;
 
     auto cache = it->second;
-    if (cache->pos >=0 && cache->pos < cache->daily_bars->size()) {
+    if (cache->pos >=0 && cache->pos < (int)cache->daily_bars->size()) {
         auto bar = &cache->daily_bars->at(cache->pos);
         if (bar->date == m_ctx->trading_day())
             return bar;
@@ -400,7 +400,7 @@ void SimDataApi::move_to(int trading_day)
     // Move to next trading_day !
     for (auto tmp : this->m_dailybar_caches) {
         auto bar = tmp.second;
-        while (bar->pos < bar->daily_bars->size()) {
+        while (bar->pos < (int)bar->daily_bars->size()) {
             if (bar->daily_bars->at(bar->pos).date >= trading_day) break;
             bar->pos++;
         }

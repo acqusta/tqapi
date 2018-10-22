@@ -294,7 +294,8 @@ namespace tquant { namespace stralet { namespace realtime {
         int date, time;
         fin_datetime(&date, &time);
         auto buf = make_shared<LogStreamBuf>(severity, date, time);
-        return LogStream(buf);
+        LogStream tmp(buf);
+        return tmp;
     }
 
     string RealTimeStraletContext::get_property(const char* name, const char* def_value)
