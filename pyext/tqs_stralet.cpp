@@ -310,7 +310,7 @@ void StraletWrap::on_event(shared_ptr<StraletEvent> evt)
         }
         case STRALET_EVENT_ID::ON_EVENT: {
             auto on_event = evt->as<OnEvent>();
-            PyObject* tmp = Py_BuildValue("sL", on_event->name, on_event->data);
+            PyObject* tmp = Py_BuildValue("sL", on_event->name.c_str(), on_event->data);
             PyObject* arg = Py_BuildValue("iN", evt->evt_id, tmp);
             call_callback(m_callback.obj, arg);
             break;
@@ -339,6 +339,8 @@ void StraletWrap::on_event(shared_ptr<StraletEvent> evt)
             call_callback(m_callback.obj, arg);
             break;
         }
+        default:
+            break;
     }
 
     PyGILState_Release(gstate);
