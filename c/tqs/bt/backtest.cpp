@@ -183,7 +183,6 @@ void run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
     sc->init(sim_dapi, data_level, sim_tapi, properties);
 
     auto calendar = get_calendar(dapi);
-    //calendar.push_back(20180529);
     for (auto & date : calendar) {
         if (date < cfg.begin_date) continue;
         if (date > cfg.end_date) break;

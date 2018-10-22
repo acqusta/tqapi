@@ -78,28 +78,28 @@ namespace TQuant.Stralet
         }
         public void Debug(string format, params object[] objs)
         {
-            context.Log(LogLevel.INFO, String.Format(format, objs));
+            context.Log(LogSeverity.INFO, String.Format(format, objs));
         }
 
         public void Info(string format, params object[] objs)
         {
-            context.Log(LogLevel.INFO, String.Format(format, objs));
+            context.Log(LogSeverity.INFO, String.Format(format, objs));
         }
 
         public void Error(string format, params object[] objs)
         {
-            context.Log(LogLevel.ERROR, String.Format(format, objs));
+            context.Log(LogSeverity.ERROR, String.Format(format, objs));
         }
 
         public void Error(Exception e, string format, params object[] objs)
         {
-            context.Log(LogLevel.ERROR, String.Format(format, objs));
+            context.Log(LogSeverity.ERROR, String.Format(format, objs));
             throw e;
         }
 
         public void Warning(string format, params object[] objs)
         {
-            context.Log(LogLevel.WARNING, String.Format(format, objs));
+            context.Log(LogSeverity.WARNING, String.Format(format, objs));
         }
     }
 
@@ -153,18 +153,18 @@ namespace TQuant.Stralet
 
         public void Log(String str)
         {
-            Log(LogLevel.INFO, str);
+            Log(LogSeverity.INFO, str);
         }
 
-        public void Log(LogLevel level, String str)
+        public void Log(LogSeverity severity, String str)
         {
             int l = 0;
-            switch (level)
+            switch (severity)
             {
-                case LogLevel.INFO: l = 0; break;
-                case LogLevel.WARNING: l = 1; break;
-                case LogLevel.ERROR: l = 2; break;
-                case LogLevel.FATAL: l = 3; break;
+                case LogSeverity.INFO: l = 0; break;
+                case LogSeverity.WARNING: l = 1; break;
+                case LogSeverity.ERROR: l = 2; break;
+                case LogSeverity.FATAL: l = 3; break;
             }
             TqsDll.tqs_sc_log(this.handle, l, str);
         }

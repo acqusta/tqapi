@@ -72,14 +72,14 @@ TradeApi* tqs_sc_trade_api(void* h)
 }
 
 extern "C" _TQS_EXPORT
-void tqs_sc_log(void* h, int32_t level, const char* str)
+void tqs_sc_log(void* h, int32_t severity, const char* str)
 {
     StraletContext* ctx = reinterpret_cast<StraletContext*>(h);
     const char* p = str + strlen(str) - 1;
     if (*p != '\n')
-        ctx->logger((LogLevel)level) << str << endl;
+        ctx->logger((LogSeverity)severity) << str << endl;
     else
-        ctx->logger((LogLevel)level) << str;
+        ctx->logger((LogSeverity)severity) << str;
 }
 
 extern "C" _TQS_EXPORT

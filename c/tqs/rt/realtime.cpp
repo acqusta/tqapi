@@ -1,11 +1,17 @@
 #include <iostream>
 #include <unordered_map>
 #include <algorithm>
-#include "realtime.h"
+
 #include "myutils/timeutils.h"
 #include "myutils/unicode.h"
 #include "myutils/loop/MsgRunLoop.h"
-#include "jsoncpp/inc/json/json.h"
+#include "json/json.h"
+
+#ifdef ERROR
+#  undef ERROR
+#endif
+
+#include "realtime.h"
 
 
 namespace tquant { namespace stralet { namespace realtime {
@@ -199,7 +205,7 @@ namespace tquant { namespace stralet { namespace realtime {
 
         virtual TradeApi* trade_api() override;
 
-        virtual ostream& logger(LogLevel level = LogLevel::INFO) override;
+        virtual LogStream logger(LogSeverity severity = LogSeverity::INFO) override;
 
         virtual string        get_property(const char* name, const char* def_value) override;
         virtual const string& get_properties() override;
@@ -283,25 +289,12 @@ namespace tquant { namespace stralet { namespace realtime {
     }
 
 
-    ostream& RealTimeStraletContext::logger(LogLevel level)
+    LogStream RealTimeStraletContext::logger(LogSeverity severity)
     {
-        static const char* str_level[] = {
-            "I",
-            "W",
-            "E",
-            "F"
-        };
-
-        DateTime now = cur_time();
-
-        char label[100];
-
-        int h = now.time / 1000 / 10000;
-        int m = (now.time / 1000 / 100) % 100;
-        int s = (now.time / 1000) % 100;
-        sprintf(label, "%08d %02d:%02d:%02d.%03d %s| ", now.date, h, m, s, now.time % 1000, str_level[level]);
-        cout << label;
-        return cout;
+        int date, time;
+        fin_datetime(&date, &time);
+        auto buf = make_shared<LogStreamBuf>(severity, date, time);
+        return LogStream(buf);
     }
 
     string RealTimeStraletContext::get_property(const char* name, const char* def_value)

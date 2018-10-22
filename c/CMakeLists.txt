@@ -21,16 +21,18 @@ set(SRC
   api/tqapi_cs.cpp
   api/tqapi_cs.h
 
-  tqs/bt/backtest.cpp
-  tqs/bt/backtest.h
   tqs/rt/realtime.cpp
   tqs/rt/realtime.h
+  tqs/bt/backtest.cpp
+  tqs/bt/backtest.h
   tqs/bt/sim_context.cpp
   tqs/bt/sim_context.h
   tqs/bt/sim_data.cpp
   tqs/bt/sim_data.h
   tqs/bt/sim_trade.cpp
   tqs/bt/sim_trade.h
+  tqs/logger.h
+  tqs/logger.cpp
   tqs/stralet.cpp
   tqs/stralet.h
   tqs/tqs_cs.cpp
@@ -73,6 +75,7 @@ install(FILES
 
 install(FILES
   tqs/stralet.h
+  tqs/logger.h
   DESTINATION cpp
 )
 

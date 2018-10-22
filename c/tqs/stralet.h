@@ -5,6 +5,7 @@
 #include <ostream>
 
 #include "tquant_api.h"
+#include "logger.h"
 
 namespace tquant { namespace stralet {
 
@@ -127,12 +128,6 @@ namespace tquant { namespace stralet {
         StraletContext* m_ctx;
     };
 
-    enum LogLevel {
-        INFO,
-        WARNING,
-        ERROR,
-        FATAL
-    };
 
     class StraletContext {
     public:
@@ -150,7 +145,7 @@ namespace tquant { namespace stralet {
         virtual DataApi*  data_api() = 0;
         virtual TradeApi* trade_api() = 0;
 
-        virtual ostream& logger(LogLevel level = LogLevel::INFO) = 0;
+        virtual LogStream logger(LogSeverity severity = LogSeverity::INFO) = 0;
 
         virtual string        get_property(const char* name, const char* def_value) = 0;
         virtual const string& get_properties() = 0;

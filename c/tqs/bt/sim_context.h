@@ -28,7 +28,7 @@ namespace tquant { namespace stralet { namespace backtest {
     public:
         SimStraletContext();
 
-        void init(SimDataApi* dapi, DataLevel level, SimTradeApi* tapi, Json::Value& properties);
+        void init(SimDataApi* dapi, DataLevel severity, SimTradeApi* tapi, Json::Value& properties);
 
         DataLevel data_level() { return m_data_level; }
 
@@ -54,7 +54,7 @@ namespace tquant { namespace stralet { namespace backtest {
         virtual DataApi*  data_api() override;
         virtual TradeApi* trade_api() override;
 
-        virtual ostream& logger(LogLevel level = LogLevel::INFO) override;
+        virtual LogStream logger(LogSeverity severity = LogSeverity::INFO) override;
 
         virtual string get_property(const char* name, const char* def_value) override;
         virtual const string& get_properties() override;

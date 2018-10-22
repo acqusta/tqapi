@@ -16,10 +16,10 @@ SimStraletContext::SimStraletContext()
 {
 }
 
-void SimStraletContext::init(SimDataApi* dapi, DataLevel level, SimTradeApi* tapi, Json::Value& properties)
+void SimStraletContext::init(SimDataApi* dapi, DataLevel severity, SimTradeApi* tapi, Json::Value& properties)
 {
     m_dapi = dapi;
-    m_data_level = level;
+    m_data_level = severity;
     m_tapi = tapi;
     m_properties = properties;
     m_properties_str = m_properties.toStyledString();
@@ -90,22 +90,10 @@ TradeApi* SimStraletContext::trade_api()
     return m_tapi;
 }
 
-ostream& SimStraletContext::logger(LogLevel level)
+LogStream SimStraletContext::logger(LogSeverity severity)
 {
-    static const char* str_level[] = {
-        "I",
-        "W",
-        "E",
-        "F"
-    };
-
-    DateTime now = cur_time();
-
-    char label[100];
-    
-    sprintf(label, "%08d %06d.%03d %s| ", now.date, now.time / 1000, now.time % 1000, str_level[level]);
-    cout << label;
-    return cout;
+    auto buf = make_shared<LogStreamBuf>(severity, m_now.date, m_now.time);
+    return LogStream(buf);
 }
 
 string SimStraletContext::get_property(const char* name, const char* def_value)

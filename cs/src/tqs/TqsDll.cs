@@ -73,7 +73,7 @@ namespace TQuant
                 public static extern IntPtr tqs_sc_trade_api(IntPtr h);
 
                 [DllImport("tqapi.dll", EntryPoint = "tqs_sc_log", CallingConvention = CallingConvention.Cdecl)]
-                public static extern void tqs_sc_log(IntPtr h, Int32 level, String str);
+                public static extern void tqs_sc_log(IntPtr h, Int32 severity, String str);
 
                 [DllImport("tqapi.dll", EntryPoint = "tqs_sc_get_properties", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tqs_sc_get_properties(IntPtr h);
@@ -114,7 +114,7 @@ namespace TQuant
                 public static extern IntPtr tqs_rt_run(String cfg, StraletCreator stralet_creator);
             }
 
-            public enum LogLevel
+            public enum LogSeverity
             {
                 INFO,
                 WARNING,
