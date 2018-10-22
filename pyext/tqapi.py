@@ -291,12 +291,26 @@ class StraletContext:
     def get_property(self, name, def_value=None):
         return _tqapi.tqs_sc_get_property(self, name, def_value)
 
-    def log(self, level, msg):
-        return _tqapi.tqs_sc_log(self._handle, level, msg)
+    def log(self, severity, msg):
+        return _tqapi.tqs_sc_log(self._handle, severity, msg)
 
 class Stralet:
+
+    class Logger:
+        def __init__(self, ctx):
+            self._ctx = ctx
+
+        def _str_arg(self, arg): 
+            return " ".join( [ str(a) for a in arg])
+
+        def info (self, *arg):  self._ctx.log('INFO',    self._str_arg(arg))
+        def error(self, *arg):  self._ctx.log('ERROR',   self._str_arg(arg))
+        def warn (self, *arg):  self._ctx.log('WARNING', self._str_arg(arg))
+        def info (self, *arg):  self._ctx.log('FATAL',   self._str_arg(arg))
+
     def __init__(self, ctx):
         self._ctx = ctx
+        self._logger = Stralet.Logger(ctx)
 
     def __del__(self):
         pass
@@ -312,6 +326,10 @@ class Stralet:
     @property
     def trade_api(self):
         return self._ctx.trade_api
+
+    @property
+    def logger(self):
+        return self._logger
 
     def on_init(self):  pass
     def on_fini(self):  pass

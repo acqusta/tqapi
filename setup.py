@@ -43,10 +43,22 @@ sources = [
     "lib/myutils/socketutils.cpp",
     "lib/myutils/loop/MessageLoop.cpp",
     "lib/myutils/loop/RunLoop.cpp",
+    "lib/jsoncpp/src/json_reader.cpp",
+    "lib/jsoncpp/src/json_value.cpp",
+    "lib/jsoncpp/src/json_writer.cpp",
+
     "pyext/tqapi_tapi.cpp",
     "pyext/tqapi_dapi.cpp",
     "pyext/tqapi_py.cpp",
-    "c/api/impl_tquant_api.cpp"
+    "pyext/tqs_stralet.cpp",
+    "c/api/impl_tquant_api.cpp",
+    "c/tqs/rt/realtime.cpp",
+    "c/tqs/bt/backtest.cpp",
+    "c/tqs/bt/sim_context.cpp",
+    "c/tqs/bt/sim_data.cpp",
+    "c/tqs/bt/sim_trade.cpp",
+    "c/tqs/stralet.cpp",
+    "c/tqs/logger.cpp"
 ]
 
 define_macros = [
@@ -57,8 +69,10 @@ define_macros = [
 include_dirs = [
     'lib',
     'lib/msgpack/include',
+    'lib/jsoncpp/inc',
     'pyext',
     'c/api',
+    'c/tqs',
     np.get_include()
 ]
 
@@ -92,7 +106,7 @@ setup(packages = [ 'tquant' ],
       libraries = [ msgpack ],
       ext_modules = [module],
       name = 'tquant',
-      version = '0.1.12',
+      version = '0.1.13',
       description="Acqusta quantitative trading tools",
       author = "Xu Tiezhu",
       author_email = 'xutiezhu@gmail.com',
