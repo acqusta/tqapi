@@ -164,19 +164,19 @@ PyObject* _wrap_tqs_sc_log(PyObject* self, PyObject *args, PyObject* kwargs)
 {
     int64_t h;
     const char* msg;
-    const char* level;
+    const char* severity;
 
-    if (!PyArg_ParseTuple(args, "Lss", &h, &level, &msg))
+    if (!PyArg_ParseTuple(args, "Lss", &h, &severity, &msg))
         return NULL;
 
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
 
     auto sc = reinterpret_cast<StraletContext*>(h);
 
-    if      (strcmp(level, "INFO"))      sc->logger(INFO) << msg << endl;
-    else if (strcmp(level, "ERROR"))     sc->logger(ERROR) << msg << endl;
-    else if (strcmp(level, "WARNING"))   sc->logger(WARNING) << msg << endl;
-    else if (strcmp(level, "FATAL"))     sc->logger(FATAL) << msg << endl;
+    if      (strcmp(severity, "INFO")   == 0)   sc->logger(INFO) << msg << endl;
+    else if (strcmp(severity, "ERROR")  == 0)   sc->logger(ERROR) << msg << endl;
+    else if (strcmp(severity, "WARNING")== 0)   sc->logger(WARNING) << msg << endl;
+    else if (strcmp(severity, "FATAL")  == 0)   sc->logger(FATAL) << msg << endl;
 
     Py_RETURN_NONE;
 }

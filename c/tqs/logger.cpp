@@ -51,9 +51,9 @@ namespace tquant {
         LogStreamBuf::~LogStreamBuf()
         {
             size_t len = pcount() + pbase() - buf;
-            if (buf[len - 1] != '\n') {
+            if (buf[len - 1] != '\n')
                 buf[len++] = '\n';
-            }
+
             buf[len] = '\0';
 
             color_console_output(buf, len, severity);

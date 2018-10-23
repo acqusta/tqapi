@@ -306,7 +306,7 @@ class Stralet:
         def info (self, *arg):  self._ctx.log('INFO',    self._str_arg(arg))
         def error(self, *arg):  self._ctx.log('ERROR',   self._str_arg(arg))
         def warn (self, *arg):  self._ctx.log('WARNING', self._str_arg(arg))
-        def info (self, *arg):  self._ctx.log('FATAL',   self._str_arg(arg))
+        def fatal(self, *arg):  self._ctx.log('FATAL',   self._str_arg(arg))
 
     def __init__(self, ctx):
         self._ctx = ctx
