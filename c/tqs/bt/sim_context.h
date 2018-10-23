@@ -28,7 +28,11 @@ namespace tquant { namespace stralet { namespace backtest {
     public:
         SimStraletContext();
 
-        void init(SimDataApi* dapi, DataLevel severity, SimTradeApi* tapi, Json::Value& properties);
+        void init(SimDataApi* dapi,SimTradeApi* tapi,
+            DataLevel level,
+            Json::Value& properties,
+            const vector<int>& calendar
+            );
 
         DataLevel data_level() { return m_data_level; }
 
@@ -42,6 +46,9 @@ namespace tquant { namespace stralet { namespace backtest {
         void calc_next_timer_time(DateTime* dt);
         void execute_timer();
         void set_sim_time(const DateTime& dt);
+        void init_sim_time();
+
+        bool is_trading_day(int date);
 
         virtual int32_t trading_day() override;
         virtual DateTime cur_time() override;
@@ -89,6 +96,8 @@ namespace tquant { namespace stralet { namespace backtest {
         string                        m_mode;
         Json::Value                   m_properties;
         string                        m_properties_str;
+
+        unordered_set<int> m_calendar;
     };
 
 } } }

@@ -16,13 +16,19 @@ SimStraletContext::SimStraletContext()
 {
 }
 
-void SimStraletContext::init(SimDataApi* dapi, DataLevel severity, SimTradeApi* tapi, Json::Value& properties)
+void SimStraletContext::init(
+    SimDataApi* dapi, SimTradeApi* tapi,
+    DataLevel level,
+    Json::Value& properties,
+    const vector<int>& calendar)
 {
     m_dapi = dapi;
-    m_data_level = severity;
+    m_data_level = level;
     m_tapi = tapi;
     m_properties = properties;
     m_properties_str = m_properties.toStyledString();
+
+    for (auto date : calendar) m_calendar.insert(date);
 }
 
 
@@ -168,17 +174,53 @@ SimAccount* SimStraletContext::get_account(const string& account_id)
     return it != m_tapi->m_accounts.end() ? it->second : nullptr;
 }
 
+bool SimStraletContext::is_trading_day(int date)
+{
+    return m_calendar.find(date) != m_calendar.end();
+}
+
+/*
+ * 设置每个交易日的开始时间
+ * 如果期货有夜盘，从上一个交易日的20：00开始，否则从当日的 8:50开始。
+ */
+void SimStraletContext::init_sim_time()
+{
+    int action_day = -1;
+    for (int i = 1; i <= 3; i++) {
+        struct tm tm;
+        memset(&tm, 0, sizeof(tm));
+        tm.tm_mday = m_trading_day % 100;
+        tm.tm_mon = (m_trading_day / 100) % 100 - 1;
+        tm.tm_year = (m_trading_day / 10000) - 1900;
+        time_t t = mktime(&tm) - 3600 * 24 * i;
+        tm = *localtime(&t);
+
+        // sunday or saturday
+        if (tm.tm_wday == 0 || tm.tm_wday == 6)
+            continue;
+        action_day = (tm.tm_year + 1900) * 10000 + (tm.tm_mon + 1) * 100 + tm.tm_mday;
+        break;
+    }
+
+    if (action_day == -1 || !is_trading_day(action_day)) {
+        action_day = m_trading_day;
+        set_sim_time(DateTime(action_day, HMS(8, 50)));
+    }
+    else {
+        set_sim_time(DateTime(action_day, HMS(20, 0)));
+    }
+}
+
 void SimStraletContext::run_one_day(Stralet* stralet)
 {
+    init_sim_time();
+
     m_stralet = stralet;
-
-    DateTime end_dt(m_trading_day, HMS(15, 0, 0));
-
-    // FIXME: 不支持夜盘。
-    set_sim_time(DateTime(m_trading_day, HMS(8, 50)));
 
     stralet->set_context(this);
     stralet->on_event(make_shared<OnInit>());
+
+    DateTime end_dt(m_trading_day, HMS(15, 0, 0));
 
     while (m_now.cmp(end_dt) < 0) {
         DateTime dt1, dt2;

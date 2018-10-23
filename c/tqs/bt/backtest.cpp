@@ -180,9 +180,10 @@ void run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
         }
     }
 
-    sc->init(sim_dapi, data_level, sim_tapi, properties);
-
     auto calendar = get_calendar(dapi);
+
+    sc->init(sim_dapi, sim_tapi, data_level, properties, calendar);
+
     for (auto & date : calendar) {
         if (date < cfg.begin_date) continue;
         if (date > cfg.end_date) break;
