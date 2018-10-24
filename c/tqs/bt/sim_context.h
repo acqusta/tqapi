@@ -31,7 +31,8 @@ namespace tquant { namespace stralet { namespace backtest {
         void init(SimDataApi* dapi,SimTradeApi* tapi,
             DataLevel level,
             Json::Value& properties,
-            const vector<int>& calendar
+            const vector<int>& calendar,
+            const string& log_dir
             );
 
         DataLevel data_level() { return m_data_level; }
@@ -96,6 +97,7 @@ namespace tquant { namespace stralet { namespace backtest {
         string                        m_mode;
         Json::Value                   m_properties;
         string                        m_properties_str;
+        string                        m_log_dir;
 
         unordered_set<int> m_calendar;
     };

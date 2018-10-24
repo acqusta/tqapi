@@ -5,6 +5,7 @@
 #include "myutils/timeutils.h"
 #include "myutils/unicode.h"
 #include "myutils/loop/MsgRunLoop.h"
+#include "myutils/misc.h"
 #include "json/json.h"
 
 #ifdef ERROR
@@ -143,9 +144,10 @@ namespace tquant { namespace stralet { namespace realtime {
 
     class RealTimeStraletContext : public StraletContext, public DataApi_Callback, public TradeApi_Callback {
     public:
-        RealTimeStraletContext(DataApi* dapi, TradeApi* tapi, Stralet* stralet, Json::Value& properties)
+        RealTimeStraletContext(DataApi* dapi, TradeApi* tapi, Stralet* stralet, Json::Value& properties, const string& log_dir)
             : m_stralet(stralet)
             , m_mode("realtime")
+            , m_log_dir(log_dir)
         {
             m_properties = properties;
             m_properties_str = m_properties.toStyledString();
@@ -235,6 +237,7 @@ namespace tquant { namespace stralet { namespace realtime {
         string            m_mode;
         Json::Value       m_properties;
         string            m_properties_str;
+        string            m_log_dir;
 
     };
 
@@ -293,7 +296,7 @@ namespace tquant { namespace stralet { namespace realtime {
     {
         int date, time;
         fin_datetime(&date, &time);
-        auto buf = make_shared<LogStreamBuf>(severity, date, time);
+        auto buf = make_shared<LogStreamBuf>(m_log_dir, severity, date, time);
         LogStream tmp(buf);
         return tmp;
     }
@@ -365,9 +368,11 @@ namespace tquant { namespace stralet { namespace realtime {
         RealTimeConfig cfg = a_cfg;
         if (cfg.data_api_addr.empty())   cfg.data_api_addr  = "ipc://tqc_10001";
         if (cfg.trade_api_addr.empty())  cfg.trade_api_addr = "ipc://tqc_10001";
-        if (cfg.output_dir.empty()) cfg.output_dir = ".";
+        if (cfg.output_dir.empty())      cfg.output_dir = ".";
 
         //cout << "run stralet: " << cfg.output_dir << endl;
+
+        myutils::make_abs_dir(cfg.output_dir);
 
         auto dapi = create_data_api (cfg.data_api_addr.c_str());
         auto tapi = create_trade_api(cfg.trade_api_addr.c_str());
@@ -383,7 +388,7 @@ namespace tquant { namespace stralet { namespace realtime {
             }
         }
 
-        RealTimeStraletContext* sc = new RealTimeStraletContext(dapi, tapi, stralet, properties);
+        RealTimeStraletContext* sc = new RealTimeStraletContext(dapi, tapi, stralet, properties, cfg.output_dir);
 
         sc->logger() << "dapi_addr  : " << cfg.data_api_addr;
         sc->logger() << "tapi_addr : " << cfg.trade_api_addr;

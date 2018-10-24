@@ -28,10 +28,10 @@ namespace tquant {
         };
 
         static void color_console_output(const char* buf, int len, LogSeverity severity);
-        static void file_output(const char* buf, int len);
+        static void file_output(const string& log_dir, const char* buf, int len);
 
-        LogStreamBuf::LogStreamBuf(LogSeverity a_severity, int date, int time)
-            : severity(a_severity)
+        LogStreamBuf::LogStreamBuf(const string& a_log_dir, LogSeverity a_severity, int date, int time)
+            : log_dir(a_log_dir), severity(a_severity)
         {
             buf = new char[buf_len];
 
@@ -57,7 +57,7 @@ namespace tquant {
             buf[len] = '\0';
 
             color_console_output(buf, len, severity);
-            file_output(buf, len);
+            file_output(log_dir, buf, len);
 
             if (severity == LogSeverity::FATAL) {
 #if defined(_DEBUG) && defined(_MSC_VER)
@@ -74,14 +74,14 @@ namespace tquant {
         static ofstream out;
         static int cache_len = 0;
 
-        void file_output(const char* buf, int len)
+        void file_output(const string& log_dir, const char* buf, int len)
         {
             if (!out.is_open()) {
                 int date, time;
                 fin_datetime(&date, &time);
 
-                char buf[100];
-                sprintf(buf, "%8d-%8d.%d.log", date, time, getpid());                
+                char buf[1000];
+                sprintf(buf, "%s/%8d-%8d.%d.log", log_dir.c_str(), date, time, getpid());                
                 out.open(buf, ios::app);
             }
 

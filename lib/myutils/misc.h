@@ -10,6 +10,7 @@ namespace myutils {
 
     bool parse_addr(const std::string& addr, std::string* url, std::unordered_map<std::string, std::string>* properties);
 
+    bool make_abs_dir(const std::string& abs_path);
 }
 
 

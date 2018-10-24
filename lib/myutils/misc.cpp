@@ -2,6 +2,13 @@
 #include <random>
 #include <limits.h>
 #include <stdint.h>
+#ifdef _WIN32
+# include <filesystem>
+namespace fs = std::tr2::sys;
+#else
+# include <sys/stat.h>
+# include <unistd.h>
+#endif
 
 #include "misc.h"
 #include "stringutils.h"
@@ -39,6 +46,28 @@ namespace myutils{
         }
         return true;
     }
+
+    bool make_abs_dir(const std::string& abs_path)
+    {
+#ifdef _WIN32
+        if (!fs::exists(abs_path)) {
+            return fs::create_directories(abs_path);
+        }
+        else {
+            return true;
+        }
+#else
+        struct stat s;
+        if (stat(abs_path, &s) != 0) {
+            std::string cmd = "mkdir -p " + string(abs_path);
+            return system(cmd.c_str()) == 0;
+        }
+        else {
+            return true;
+        }
+#endif
+    }
+
 
 
 }

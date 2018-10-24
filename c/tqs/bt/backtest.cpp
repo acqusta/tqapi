@@ -5,6 +5,7 @@
 #include "backtest.h"
 #include "jsoncpp/inc/json/json.h"
 #include "myutils/unicode.h"
+#include "myutils/misc.h"
 
 namespace tquant { namespace stralet { namespace backtest {
 
@@ -150,6 +151,8 @@ void run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
     cout << "backtest: " << cfg.begin_date << "-" << cfg.end_date << "," << cfg.data_level << endl
          << "          outdir " << cfg.result_dir << endl;
 
+    myutils::make_abs_dir(cfg.result_dir);
+
     DataApi* dapi = create_data_api(cfg.dapi_addr.c_str());
 
     SimStraletContext* sc = new SimStraletContext();
@@ -182,7 +185,7 @@ void run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
 
     auto calendar = get_calendar(dapi);
 
-    sc->init(sim_dapi, sim_tapi, data_level, properties, calendar);
+    sc->init(sim_dapi, sim_tapi, data_level, properties, calendar, cfg.result_dir);
 
     for (auto & date : calendar) {
         if (date < cfg.begin_date) continue;
@@ -198,7 +201,7 @@ void run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
     }
 
     for (auto& act : accounts) {
-        act->save_data(".");
+        act->save_data(cfg.result_dir);
         delete act;
     }
     delete sc;

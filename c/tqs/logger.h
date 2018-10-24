@@ -18,7 +18,7 @@ namespace tquant {
 
         class LogStreamBuf : public std::streambuf {
         public:
-            LogStreamBuf(LogSeverity leverl, int date, int time);
+            LogStreamBuf(const string& log_dir, LogSeverity leverl, int date, int time);
 
             virtual int_type overflow(int_type ch) {
                 return ch;
@@ -29,8 +29,9 @@ namespace tquant {
             size_t pcount() const { return pptr() - pbase(); }
             char* pbase() const { return std::streambuf::pbase(); }
 
-            char* buf;
+            string log_dir;
             LogSeverity severity;
+            char* buf;
         };
 
         class LogStream : public std::ostream {

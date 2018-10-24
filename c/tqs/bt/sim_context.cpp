@@ -20,13 +20,16 @@ void SimStraletContext::init(
     SimDataApi* dapi, SimTradeApi* tapi,
     DataLevel level,
     Json::Value& properties,
-    const vector<int>& calendar)
+    const vector<int>& calendar,
+    const string& log_dir
+    )
 {
     m_dapi = dapi;
     m_data_level = level;
     m_tapi = tapi;
     m_properties = properties;
     m_properties_str = m_properties.toStyledString();
+    m_log_dir = log_dir;
 
     for (auto date : calendar) m_calendar.insert(date);
 }
@@ -98,7 +101,7 @@ TradeApi* SimStraletContext::trade_api()
 
 LogStream SimStraletContext::logger(LogSeverity severity)
 {
-    auto buf = make_shared<LogStreamBuf>(severity, m_now.date, m_now.time);
+    auto buf = make_shared<LogStreamBuf>(m_log_dir, severity, m_now.date, m_now.time);
     return LogStream(buf);
 }
 
