@@ -59,7 +59,7 @@ namespace tquant {  namespace api {
 
         void set_code(const string& a_code) {
             _code = a_code;
-            this->_code = _code.c_str();
+            this->code = _code.c_str();
         }
     };
 
