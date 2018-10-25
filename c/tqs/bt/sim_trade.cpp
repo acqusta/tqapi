@@ -353,6 +353,12 @@ CallResult<const OrderID> SimAccount::place_order(const string& code, double pri
 {
     auto r = validate_order(code, price, size, action, price_type);
 
+    auto code_info = get_code_info(code);
+    if (!code_info && r.value) {
+        r.value = nullptr;
+        r.msg = string("Can't find code info for ") + code;
+    }
+
     string status;
     string status_msg;
     string entrust_no;
@@ -397,9 +403,14 @@ CallResult<const OrderID> SimAccount::place_order(const string& code, double pri
     od->last_turnover   = 0.0;
     od->volume_in_queue = 1e8;
 
-    auto code_info = get_code_info(order->code);
-    od->volume_multiple = code_info->volume_multiple;
-    od->price_tick      = code_info->price_tick;
+    if (code_info) {
+        od->volume_multiple = code_info->volume_multiple;
+        od->price_tick      = code_info->price_tick;
+    }
+    else {
+        od->volume_multiple = 1.0;
+        od->price_tick      = 1.0;
+    }
 
     m_tdata->orders[entrust_no] = od;
 
@@ -1206,7 +1217,7 @@ shared_ptr<CodeInfo> get_code_info(const string& code)
 
     const char* p = strchr(code.c_str(), '.');
     assert(p);
-    if (strcmp(p, ".SH") == 0 || strcmp(p, "SZ")==0) {
+    if (strcmp(p, ".SH") == 0 || strcmp(p, ".SZ")==0) {
         auto info = make_shared<CodeInfo>();
         info->code = code;
         info->name = code;
@@ -1217,7 +1228,17 @@ shared_ptr<CodeInfo> get_code_info(const string& code)
         return info;
     }
     else {
-        auto it = g_code_map.find(code);
-        return it != g_code_map.end() ? it->second : nullptr;
+        const char* p1 = code.c_str();
+        while (isalpha(*p1)) p1++;
+        // map contract to product code
+        if (*p1 != '.') {
+            string new_code = code.substr(0, p1 - code.c_str()) + string(p);
+            auto it = g_code_map.find(new_code);
+            return it != g_code_map.end() ? it->second : nullptr;
+        }
+        else {
+            auto it = g_code_map.find(code);
+            return it != g_code_map.end() ? it->second : nullptr;
+        }
     }
 }

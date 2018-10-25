@@ -357,8 +357,10 @@ PyObject* convert_ticks(const MarketQuoteArray* ticks)
     std::vector<PyObject*> code(ticks->size());
     for (size_t k = 0; k < ticks->size(); k++)
         code[k] = PyString_FromString(ticks->at(k).code);
+
     PyObject* py_code = PyArray_SimpleNew(1, array_len, NPY_OBJECT);
-    memcpy(PyArray_DATA((PyArrayObject*)py_code), &code[0], sizeof(PyObject*)*code.size());
+    if (code.size())
+        memcpy(PyArray_DATA((PyArrayObject*)py_code), &code[0], sizeof(PyObject*)*code.size());
     dict_set_item(dict, "code", py_code);
 
     return dict;
@@ -402,11 +404,14 @@ PyObject* convert_bars(const BarArray* bars)
     to_pyarray(dict, bars, array_len, oi,           int64_t, NPY_INT64);
 
     // TODO: 1 don't return code, 2. only create one object for each code
+
     std::vector<PyObject*> code(bars->size());
     for (size_t k = 0; k < bars->size(); k++)
         code[k] = PyString_FromString(bars->at(k).code);
+
     PyObject* py_code = PyArray_SimpleNew(1, array_len, NPY_OBJECT);
-    memcpy(PyArray_DATA((PyArrayObject*)py_code), &code[0], sizeof(PyObject*)*code.size());
+    if (code.size())
+        memcpy(PyArray_DATA((PyArrayObject*)py_code), &code[0], sizeof(PyObject*)*code.size());
     dict_set_item(dict, "code", py_code);
 
     return dict;
@@ -457,8 +462,10 @@ PyObject* convert_dailybars(const DailyBarArray* bars)
     std::vector<PyObject*> code(bars->size());
     for (size_t k = 0; k < bars->size(); k++)
         code[k] = PyString_FromString(bars->at(k).code);
+
     PyObject* py_code = PyArray_SimpleNew(1, array_len, NPY_OBJECT);
-    memcpy(PyArray_DATA((PyArrayObject*)py_code), &code[0], sizeof(PyObject*)*code.size());
+    if (code.size())
+        memcpy(PyArray_DATA((PyArrayObject*)py_code), &code[0], sizeof(PyObject*)*code.size());
     dict_set_item(dict, "code", py_code);
 
     return dict;
