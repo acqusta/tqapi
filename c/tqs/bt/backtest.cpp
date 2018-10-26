@@ -18,7 +18,7 @@ static vector<int> get_calendar(DataApi* dapi)
         throw std::runtime_error("Can't get calendar");
     }
     vector<int> dates;
-    for (int i=0; i < r.value->size(); i++)
+    for (size_t i=0; i < r.value->size(); i++)
         dates.push_back(r.value->at(i).date);
 
     return dates;

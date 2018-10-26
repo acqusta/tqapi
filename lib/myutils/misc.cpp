@@ -58,7 +58,7 @@ namespace myutils{
         }
 #else
         struct stat s;
-        if (stat(abs_path, &s) != 0) {
+        if (stat(abs_path.c_str(), &s) != 0) {
             std::string cmd = "mkdir -p " + string(abs_path);
             return system(cmd.c_str()) == 0;
         }
