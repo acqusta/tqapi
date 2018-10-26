@@ -11,14 +11,29 @@ def _to_date(row):
 
 def _to_datetime(row):
     date = int(row['date'])
-    time = int(row['time']) // 1000
+    time = int(row['time'])
+    ms   = time % 1000
+    time = time // 1000
     return pd.datetime(year=date // 10000, month=date // 100 % 100, day=date % 100,
-                       hour=time // 10000, minute=time // 100 % 100, second=time % 100)
+                       hour=time // 10000, minute=time // 100 % 100, second=time % 100, millisecond=ms)
 def _add_index(df):
     if 'time' in df.columns:
-        df.index = df.apply(_to_datetime, axis=1)
+        date = df['date'].astype(int)
+        time = df['time'].astype(int)
+        ms   = time % 1000
+        time = time // 1000
+        df.index = pd.to_datetime( {"year"        : date // 10000,
+                                    "month"       : date // 100 % 100,
+                                    "day"         : date % 100,
+                                    "hour"        : time // 10000,
+                                    "minute"      : time // 100 % 100,
+                                    "second"      : time % 100,
+                                    "millisecond" : ms })
     elif 'date' in df.columns:
-        df.index = df.apply(_to_date, axis=1)    
+        date = df['date'].astype(int)
+        df.index = pd.to_datetime( {"year"  : date // 10000,
+                                    "month" : date // 100 % 100,
+                                    "day"   : date % 100  })
     return df
 
 class TradeApi:
