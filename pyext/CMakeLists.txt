@@ -81,7 +81,7 @@ install(TARGETS tqapi_py
   LIBRARY DESTINATION py/tquant
   )
 
-install(FILES tqapi.py __init__.py DESTINATION py/tquant)
+install(FILES tqapi.py stralet.py __init__.py DESTINATION py/tquant)
 
 if (APPLE)
   install(FILES

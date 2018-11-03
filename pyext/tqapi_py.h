@@ -164,8 +164,8 @@ public:
     mutex m_mtx;
 };
 
-PyObject* convert_quote        (const MarketQuote* q);
-PyObject* convert_bar          (const Bar* b);
+PyObject* convert_tick         (const RawMarketQuote* q);
+PyObject* convert_bar          (const RawBar* b);
 PyObject* convert_order        (const Order* order);
 PyObject* convert_trade        (const Trade* trade);
 PyObject* convert_position     (const Position* position);

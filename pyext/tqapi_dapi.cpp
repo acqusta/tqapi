@@ -7,11 +7,12 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
-PyObject* convert_quote      (const MarketQuote* q);
-PyObject* convert_bar        (const Bar* b);
-PyObject* convert_bars       (const BarArray* bars);
-PyObject* convert_dailybars  (const DailyBarArray* bars);
-PyObject* convert_ticks      (const MarketQuoteArray* ticks);
+static inline PyObject* bars_to_dataframe(const BarArray* bars);
+static inline PyObject* dailybars_to_dataframe(const DailyBarArray* bars);
+static inline PyObject* ticks_to_dataframe(const MarketQuoteArray* ticks);
+static inline PyObject* bars_to_array(const BarArray* bars);
+static inline PyObject* dailybars_to_array(const DailyBarArray* bars);
+static inline PyObject* ticks_to_array(const MarketQuoteArray* ticks);
 
 
 PyObject* _wrap_dapi_create(PyObject* self, PyObject *args, PyObject* kwargs)
@@ -135,7 +136,7 @@ PyObject* _wrap_dapi_quote(PyObject* self, PyObject *args, PyObject* kwargs)
     auto r = wrap->m_dapi->quote(code);
 
     if (r.value) {
-        return Py_BuildValue("NO", convert_quote(r.value.get()), Py_None);
+        return Py_BuildValue("NO", convert_tick(r.value.get()), Py_None);
     }
     else {
         return Py_BuildValue("Os", Py_None, r.msg.c_str());
@@ -144,14 +145,15 @@ PyObject* _wrap_dapi_quote(PyObject* self, PyObject *args, PyObject* kwargs)
 
 PyObject* _wrap_dapi_bar(PyObject* self, PyObject *args, PyObject* kwargs)
 {
-    int64_t h = 0;
-    const char* code = nullptr;
-    int32_t trading_day = 0;
-    PyObject* align;
-    const char* cycle = nullptr;
+    int64_t      h = 0;
+    const char*  code = nullptr;
+    int32_t      trading_day = 0;
+    PyObject*    align;
+    const char*  cycle = nullptr;
+    PyObject*    df_value;
 
-    if (!PyArg_ParseTuple(args, "LssiO",
-        &h, &code, &cycle, &trading_day, &align))
+    if (!PyArg_ParseTuple(args, "LssiOO",
+        &h, &code, &cycle, &trading_day, &align, &df_value))
     {
         return NULL;
     }
@@ -164,7 +166,10 @@ PyObject* _wrap_dapi_bar(PyObject* self, PyObject *args, PyObject* kwargs)
     auto r = wrap->m_dapi->bar(code, cycle, trading_day, PyObject_IsTrue(align)!=0);
 
     if (r.value) {
-        return Py_BuildValue("NO", convert_bars(r.value.get()), Py_None);
+        if (PyObject_IsTrue(df_value))
+            return Py_BuildValue("NO", bars_to_dataframe(r.value.get()), Py_None);
+        else
+            return Py_BuildValue("NO", bars_to_array(r.value.get()), Py_None);
     }
     else {
         return Py_BuildValue("Os", Py_None, r.msg.c_str());
@@ -177,9 +182,10 @@ PyObject* _wrap_dapi_dailybar(PyObject* self, PyObject *args, PyObject* kwargs)
     const char* code = nullptr;
     PyObject* align = nullptr;
     const char* price_adj = nullptr;
+    PyObject*    df_value;
 
-    if (!PyArg_ParseTuple(args, "LssO",
-        &h, &code, &price_adj, &align))
+    if (!PyArg_ParseTuple(args, "LssOO",
+        &h, &code, &price_adj, &align, &df_value))
     {
         return NULL;
     }
@@ -192,7 +198,10 @@ PyObject* _wrap_dapi_dailybar(PyObject* self, PyObject *args, PyObject* kwargs)
     auto r = wrap->m_dapi->daily_bar(code, price_adj, PyObject_IsTrue(align)!=0);
 
     if (r.value) {
-        return Py_BuildValue("NO", convert_dailybars(r.value.get()), Py_None);
+        if (PyObject_IsTrue(df_value))
+            return Py_BuildValue("NO", dailybars_to_dataframe(r.value.get()), Py_None);
+        else
+            return Py_BuildValue("NO", dailybars_to_array(r.value.get()), Py_None);
     }
     else {
         return Py_BuildValue("Os", Py_None, r.msg.c_str());
@@ -204,9 +213,10 @@ PyObject* _wrap_dapi_tick(PyObject* self, PyObject *args, PyObject* kwargs)
     int64_t h = 0;
     const char* code;
     int trading_day;
+    PyObject*    df_value;
 
-    if (!PyArg_ParseTuple(args, "Lsi",
-        &h, &code, &trading_day))
+    if (!PyArg_ParseTuple(args, "LsiO",
+        &h, &code, &trading_day, &df_value))
     {
         return NULL;
     }
@@ -218,7 +228,11 @@ PyObject* _wrap_dapi_tick(PyObject* self, PyObject *args, PyObject* kwargs)
     auto r = wrap->m_dapi->tick(code, trading_day);
 
     if (r.value) {
-        return Py_BuildValue("NO", convert_ticks(r.value.get()), Py_None);
+
+        if (PyObject_IsTrue(df_value))
+            return Py_BuildValue("NO", ticks_to_dataframe(r.value.get()), Py_None);
+        else
+            return Py_BuildValue("NO", ticks_to_array(r.value.get()), Py_None);
     }
     else {
         return Py_BuildValue("Os", Py_None, r.msg.c_str());
@@ -232,7 +246,7 @@ void DataApiWrap::on_market_quote(shared_ptr<const MarketQuote> quote)
 
     msg_loop().post_task([this, quote]() {
         auto gstate = PyGILState_Ensure();
-        PyObject* obj = convert_quote(quote.get());
+        PyObject* obj = convert_tick(quote.get());
         call_callback(this->m_dapi_cb.obj, "dapi.quote", obj);
         PyGILState_Release(gstate);
     });
@@ -250,7 +264,7 @@ void DataApiWrap::on_bar(const string& cycle, shared_ptr<const Bar> bar)
     });
 }
 
-PyObject* convert_quote(const MarketQuote* q)
+PyObject* convert_tick(const RawMarketQuote* q)
 {
     PyObject* obj = PyDict_New();
 
@@ -306,7 +320,7 @@ PyObject* convert_quote(const MarketQuote* q)
     dict_set_item(_dict, # _field, _field);
 
 
-PyObject* convert_ticks(const MarketQuoteArray* ticks)
+PyObject* ticks_to_dataframe(const MarketQuoteArray* ticks)
 {
 
     import_array1(nullptr);
@@ -366,7 +380,19 @@ PyObject* convert_ticks(const MarketQuoteArray* ticks)
     return dict;
 }
 
-PyObject* convert_bar(const Bar* b)
+PyObject* ticks_to_array(const MarketQuoteArray* ticks)
+{
+    PyObject* arr = PyList_New(ticks->size());
+
+    for (size_t k = 0; k < ticks->size(); k++) {
+        PyObject* obj = convert_tick(&ticks->at(k));
+        PyList_SetItem(arr, k, obj);
+    }
+
+    return arr;
+}
+
+PyObject* convert_bar(const RawBar* b)
 {
     PyObject* obj = PyDict_New();
 
@@ -385,7 +411,7 @@ PyObject* convert_bar(const Bar* b)
     return obj;
 }
 
-PyObject* convert_bars(const BarArray* bars)
+PyObject* bars_to_dataframe(const BarArray* bars)
 {
     import_array1(nullptr);
 
@@ -417,8 +443,19 @@ PyObject* convert_bars(const BarArray* bars)
     return dict;
 }
 
-#if 0
-static PyObject* convert_dailybar(DailyBar* b)
+PyObject* bars_to_array(const BarArray* bars)
+{
+    PyObject* arr = PyList_New(bars->size());
+
+    for (size_t k = 0; k < bars->size(); k++) {
+        PyObject* obj = convert_bar(&bars->at(k));
+        PyList_SetItem(arr, k, obj);
+    }
+
+    return arr;
+}
+
+static inline PyObject* convert_dailybar(RawDailyBar* b)
 {
     PyObject* obj = PyDict_New();
 
@@ -437,9 +474,8 @@ static PyObject* convert_dailybar(DailyBar* b)
 
     return obj;
 }
-#endif
 
-PyObject* convert_dailybars(const DailyBarArray* bars)
+PyObject* dailybars_to_dataframe(const DailyBarArray* bars)
 {
     import_array1(nullptr);
 
@@ -471,3 +507,14 @@ PyObject* convert_dailybars(const DailyBarArray* bars)
     return dict;
 }
 
+PyObject* dailybars_to_array(const DailyBarArray* bars)
+{
+    PyObject* arr = PyList_New(bars->size());
+
+    for (size_t k = 0; k < bars->size(); k++) {
+        PyObject* obj = convert_dailybar(&bars->at(k));
+        PyList_SetItem(arr, k, obj);
+    }
+
+    return arr;
+}

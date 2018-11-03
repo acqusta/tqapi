@@ -287,7 +287,7 @@ void StraletWrap::on_event(shared_ptr<StraletEvent> evt)
             break;
         }
         case STRALET_EVENT_ID::ON_QUOTE: {
-            auto quote = convert_quote(evt->as<OnQuote>()->quote.get());
+            auto quote = convert_tick(evt->as<OnQuote>()->quote.get());
             PyObject* arg = Py_BuildValue("iN", evt->evt_id, quote);
             call_callback(m_callback.obj, arg);
             break;
