@@ -1,5 +1,6 @@
 import _tqapi
 import datetime as dt
+import json
 
 from tqapi import DataApi, TradeApi
 
@@ -52,7 +53,8 @@ class StraletContext:
 
     @property
     def cur_fin_time(self):
-        return _tqapi.tqs_sc_cur_time(self._handle)
+        tmp = _tqapi.tqs_sc_cur_time(self._handle)
+        return {'date': tmp[0], 'time': tmp[1]}
 
     def post_event(self, name, data):
         # FIXME:
