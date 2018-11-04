@@ -1,7 +1,7 @@
-import _tqapi
+from . import _tqapi
 import datetime as dt
 
-from tqapi import DataApi, TradeApi
+from .tqapi import DataApi, TradeApi
 
 
 class StraletEvent:

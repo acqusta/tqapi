@@ -23,6 +23,9 @@
 #include "myutils/loop/MsgRunLoop.h"
 #include "tquant_api.h"
 
+#if PY_MAJOR_VERSION >= 3
+# define PyString_FromString PyUnicode_FromString
+#endif
 
 using namespace tquant::api;
 
