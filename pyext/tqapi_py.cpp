@@ -20,7 +20,7 @@ void call_callback(PyObject* callback, const char* evt, PyObject* data)
     Py_XDECREF(arg);
 }
 
-static PyMethodDef Methods[] = {
+static PyMethodDef tqapi_methods[] = {
     { (char *)"tapi_create",                (PyCFunction)_wrap_tapi_create,                 METH_KEYWORDS | METH_VARARGS, NULL },
     { (char *)"tapi_destroy",               (PyCFunction)_wrap_tapi_destroy,                METH_KEYWORDS | METH_VARARGS, NULL },
     { (char *)"tapi_place_order",           (PyCFunction)_wrap_tapi_place_order,            METH_KEYWORDS | METH_VARARGS, NULL },
@@ -65,12 +65,86 @@ static PyMethodDef Methods[] = {
 };
 
 
-PyMODINIT_FUNC API_EXPORT init_tqapi(void)
+struct module_tqapi {
+    int foo;
+};
+
+// #if PY_MAJOR_VERSION >= 3
+// #define GETSTATE(m) ((struct module_tqapi*)PyModule_GetState(m))
+// #else
+// #define GETSTATE(m) (&_state)
+// static struct module_tqapi _tqapi;
+// #endif
+
+#if PY_MAJOR_VERSION >= 3
+
+static int tqapi_traverse(PyObject *m, visitproc visit, void *arg)
+{
+    //Py_VISIT(GETSTATE(m)->error);
+    return 0;
+}
+
+static int tqapi_clear(PyObject *m)
+{
+    //Py_CLEAR(GETSTATE(m)->error);
+    return 0;
+}
+
+
+static struct PyModuleDef module_def = {
+    PyModuleDef_HEAD_INIT,
+    "_tqapi",
+    NULL,
+    sizeof(struct module_tqapi),
+    tqapi_methods,
+    NULL,
+    tqapi_traverse,
+    tqapi_clear,
+    NULL
+};
+
+#define INITERROR return NULL
+
+PyMODINIT_FUNC PyInit__tqapi(void)
+
+#else
+
+#define INITERROR return
+
+PyMODINIT_FUNC init_tqapi(void)
+#endif
 {
     PyEval_InitThreads();
 
-    Py_InitModule("_tqapi", Methods);
+
+#if PY_MAJOR_VERSION >= 3
+    PyObject *module = PyModule_Create(&module_def);
+#else
+    PyObject *module = Py_InitModule("_tqapi", tqapi_methods);
+#endif
+
+    if (module == NULL)
+        INITERROR;
+    
+    // struct module_tqapi *st = GETTQAPI(module);
+
+    // st->error = PyErr_NewException("myextension.Error", NULL, NULL);
+    // if (st->error == NULL) {
+    //     Py_DECREF(module);
+    //     INITERROR;
+    // }
+
+#if PY_MAJOR_VERSION >= 3
+    return module;
+#endif
 }
+
+// PyMODINIT_FUNC API_EXPORT init_tqapi(void)
+// {
+//     PyEval_InitThreads();
+
+//     Py_InitModule("_tqapi", Methods);
+// }
 
 PyObject* _wrap_set_params(PyObject* self, PyObject *args, PyObject* kwargs)
 {
@@ -92,9 +166,16 @@ int main(int argc, char** argv)
 {
     Py_Initialize();
 
-    init_tqapi();
+#if PY_MAJOR_VERSION >= 3
+    PyInit__tqapi();
 
+    Py_Main(0, nullptr);
+#else
+    init_tqapi();
     Py_Main(argc, argv);
+#endif
+
+
 
     return 0;
 }

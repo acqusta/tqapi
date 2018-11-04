@@ -45,17 +45,19 @@ if (WIN32)
 
 else()
 
-  add_definitions(-fvisibility=hidden )
+  #add_definitions(-fvisibility=hidden)
 
   include_directories(
-    /usr/include/python2.7
+    /usr/include/python3.5m
+    #usr/include/python2.7
     /Users/terryxu/anaconda/include/python2.7
     /Users/terryxu/anaconda/lib/python2.7/site-packages/numpy/core/include
     )
   link_directories(
     /Users/terryxu/anaconda/lib
     )
-  set(EXTRA_LIBS python2.7 dl)
+#  set(EXTRA_LIBS python2.7 dl)
+  set(EXTRA_LIBS python3.5m dl)
 endif()
 
 add_library(tqapi_py SHARED ${SRC})

@@ -34,7 +34,7 @@ PyObject* _wrap_tqs_sc_trading_day(PyObject* self, PyObject *args, PyObject* kwa
     if (!h) return Py_BuildValue("Os", Py_None, "null handle");
 
     auto sc = reinterpret_cast<StraletContext*>(h);
-    return PyInt_FromLong(sc->trading_day());
+    return PyLong_FromLong(sc->trading_day());
 }
 
 PyObject* _wrap_tqs_sc_cur_time(PyObject* self, PyObject *args, PyObject* kwargs)

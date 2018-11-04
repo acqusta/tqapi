@@ -1,4 +1,4 @@
-import _tqapi
+from . import _tqapi
 import pandas as pd
 import traceback
 

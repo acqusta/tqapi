@@ -26,9 +26,9 @@ if (WIN32)
     -D_WINSOCK_DEPRECATED_NO_WARNINGS
 #    -Dsnprintf=_snprintf
     -DNOMINMAX
-	-DMSGPACK_DLLEXPORT=
+    -DMSGPACK_DLLEXPORT=
 #	/MT
-    )
+  )
 
   set(COMMON_LIB
     ws2_32
