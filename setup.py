@@ -8,8 +8,8 @@ if hasattr(os, 'uname'):
 else:
     OSNAME = 'Windows'
 
-if OSNAME == 'Darwin':
-    os.environ['MACOSX_DEPLOYMENT_TARGET'] = '10.9'
+#if OSNAME == 'Darwin':
+#    os.environ['MACOSX_DEPLOYMENT_TARGET'] = '10.9'
     
 msgpack = ( 'msgpack',
     {
