@@ -20,29 +20,38 @@ include_directories(
 
 if (WIN32)
   # add_definitions(-DPy_NO_ENABLE_SHARED)
-  if (BUILD_WIN64)
-    include_directories(
-      D:/WinPython-64bit-2.7.10.3/python-2.7.10.amd64/include
-      D:/WinPython-64bit-2.7.10.3/python-2.7.10.amd64/Lib/site-packages/numpy/core/include
-      D:/WinPython-64bit-2.7.13.1Zero/python-2.7.13.amd64/include
-      D:/WinPython-64bit-2.7.13.1Zero/python-2.7.13.amd64/Lib/site-packages/numpy/core/include
-      )
-    link_directories(
-      D:/WinPython-64bit-2.7.10.3/python-2.7.10.amd64/libs
-      D:/WinPython-64bit-2.7.13.1Zero/python-2.7.13.amd64/libs
-      )
-  else()
-    include_directories(
-      D:/WinPython-32bit-2.7.10.3/python-2.7.10/include
-      D:/WinPython-32bit-2.7.10.3/python-2.7.10/Lib/site-packages/numpy/core/include
-      )
-    link_directories(
-      D:/python2.7-win32/libs
-      )
-  endif()
+  #if (BUILD_WIN64)
+  #  include_directories(
+  #    D:/WinPython-64bit-2.7.10.3/python-2.7.10.amd64/include
+  #    D:/WinPython-64bit-2.7.10.3/python-2.7.10.amd64/Lib/site-packages/numpy/core/include
+  #    D:/WinPython-64bit-2.7.13.1Zero/python-2.7.13.amd64/include
+  #    D:/WinPython-64bit-2.7.13.1Zero/python-2.7.13.amd64/Lib/site-packages/numpy/core/include
+  #    )
+  #  link_directories(
+  #    D:/WinPython-64bit-2.7.10.3/python-2.7.10.amd64/libs
+  #    D:/WinPython-64bit-2.7.13.1Zero/python-2.7.13.amd64/libs
+  #    )
+  #else()
+  #  include_directories(
+  #    D:/WinPython-32bit-2.7.10.3/python-2.7.10/include
+  #    D:/WinPython-32bit-2.7.10.3/python-2.7.10/Lib/site-packages/numpy/core/include
+  #    )
+  #  link_directories(
+  #    D:/python2.7-win32/libs
+  #    )
+  #endif()
+  #
+  #set(EXTRA_LIBS python27)
 
-  set(EXTRA_LIBS python27)
+  include_directories(
+    D:/WinPython-64bit-3.6.6.2/python-3.6.6.amd64/include
+    D:/WinPython-64bit-3.6.6.2/python-3.6.6.amd64/Lib/site-packages/numpy/core/include
+  )
 
+  link_directories(
+    D:/WinPython-64bit-3.6.6.2/python-3.6.6.amd64/libs
+  )
+  set(EXTRA_LIBS python36)
 else()
 
   #add_definitions(-fvisibility=hidden)

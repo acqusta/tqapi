@@ -2,6 +2,12 @@ from . import _tqapi
 import pandas as pd
 import traceback
 
+try:
+    from future.builtins import int
+except:
+    pass
+
+
 # def _to_date(row):
 #     date = int(row['date'])
 #     return pd.datetime(year=date // 10000, month=date // 100 % 100, day=date % 100)
@@ -46,14 +52,14 @@ def _add_index(df):
 class TradeApi:
     
     def __init__(self, addr):
-        if type(addr) is str:
+        if isinstance(addr, str):
             self._handle = _tqapi.tapi_create(addr)
             self._on_order_status   = None
             self._on_order_trade    = None
             self._on_account_status = None
             self._tqapi_created = True
 
-        elif type(addr) is int or type(addr) is long:
+        elif isinstance(addr, int):
             self._handle = addr
             self._on_order_status   = None
             self._on_order_trade    = None
@@ -133,7 +139,7 @@ class TradeApi:
     def place_order(self, account_id, code, price, size, action, price_type="", order_id=0):
         """Place an order and return entrust_no"""
         return _tqapi.tapi_place_order(self._handle, str(account_id), str(code),
-                                       float(price), long(size), str(action),
+                                       float(price), int(size), str(action),
                                        str(price_type), int(order_id))
             
     def cancel_order(self, account_id, code, entrust_no="", order_id=0):
@@ -146,14 +152,14 @@ class TradeApi:
 
 class DataApi:
     def __init__(self, addr):
-        if type(addr) is str:
+        if isinstance(addr, str):
             self._handle = _tqapi.dapi_create(addr)
             self._on_quote = None
             self._on_bar = None
             self._tqapi_created = True
             _tqapi.dapi_set_callback(self._handle, self._on_callback)
 
-        elif type(addr) is int or type(addr) is long:
+        elif isinstance(addr, int):
             self._handle   = addr
             self._on_quote = None
             self._on_bar   = None
