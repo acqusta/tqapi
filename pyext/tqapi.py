@@ -21,10 +21,13 @@ except:
 #                        hour=time // 10000, minute=time // 100 % 100, second=time % 100, millisecond=ms)
 
 def to_datetime(int_date, int_time):
-    ms   = time % 1000
-    time = time // 1000
+    int_date = int(int_date)
+    int_time = int(int_time)
+    ms   = int_time % 1000
+    time = int_time // 1000
     return pd.datetime(year=int_date // 10000, month=int_date // 100 % 100, day=int_date % 100,
-                       hour=int_time // 10000, minute=int_time // 100 % 100, second=int_time % 100, millisecond=ms)
+                       hour=time // 10000, minute=time // 100 % 100, second=time % 100, microsecond=ms*1000)
+
 
 def to_date(int_date):    
     return pd.datetime(year=int_date // 10000, month=int_date // 100 % 100, day=int_date % 100)
