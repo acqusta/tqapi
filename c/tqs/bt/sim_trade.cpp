@@ -212,8 +212,9 @@ SimAccount::SimAccount(SimStraletContext* ctx, const string& account_id,
         pos->account_id  = account_id;
         pos->code        = h.code;
         pos->enable_size = pos->current_size = pos->init_size = h.size;
-        pos->cost_price  = h.cost_price * h.size;
+        pos->cost_price  = h.cost_price;
         pos->cost        = h.cost_price * h.size;
+        pos->side        = h.side;
         tdata->positions[h.code + "-" + h.side] = pos;
     }
 
