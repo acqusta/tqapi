@@ -68,7 +68,7 @@ class StraletContext:
         return _tqapi.tqs_sc_set_timer(self._handle, id, delay, data)
 
     def kill_timer(self, id):
-        return _tqapi.tqs_sc_kill_timer(self, id)
+        return _tqapi.tqs_sc_kill_timer(self._handle, id)
 
     @property
     def data_api(self):
@@ -162,6 +162,8 @@ class StraletWrap:
         elif evt == StraletEvent.ON_BAR:
             self._stralet.on_bar(data[0], data[1])
 
+        elif evt == StraletEvent.ON_TIMER:
+            self._stralet.on_timer(data[0], data[1])
         else:
             self._evt_map[evt](data)
 
