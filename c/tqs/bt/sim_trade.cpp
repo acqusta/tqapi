@@ -849,10 +849,15 @@ void SimAccount::try_buy(OrderData* od)
         estimate_vol_in_queue(od, q.get());
 
         if (check_quote_time(q.get(), od->order.get())) {
-            if (od->price_type == "any" && q->ask_vol1 > 0)
+            if (od->price_type == "any" && q->ask_vol1 > 0) {
                 make_trade(od->order.get(), q->ask1);
-            else if (q->last <= od->order->entrust_price && od->volume_in_queue == 0)
+            }
+            else if (q->last <= od->order->entrust_price && od->volume_in_queue == 0) {
                 make_trade(od->order.get(), od->order->entrust_price);
+            }
+            else if (od->price_type == "fak" || od->price_type == "fok") {
+                reject_order(od->order.get(), od->price_type.c_str());
+            }
         }
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
@@ -866,6 +871,9 @@ void SimAccount::try_buy(OrderData* od)
         else if (bar && bar->low < od->order->entrust_price) {
             double fill_price = min(od->order->entrust_price, bar->high);
             make_trade(od->order.get(), fill_price);
+        }
+        else if (od->price_type == "fak" || od->price_type == "fok") {
+            reject_order(od->order.get(), od->price_type.c_str());
         }
     }
     else {
@@ -892,6 +900,9 @@ void SimAccount::try_sell(OrderData* od)
             else if (q->last >= od->order->entrust_price && od->volume_in_queue == 0) {
                 make_trade(od->order.get(), od->order->entrust_price);
             }
+            else if (od->price_type == "fak" || od->price_type == "fok") {
+                reject_order(od->order.get(), od->price_type.c_str());
+            }
         }
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
@@ -905,6 +916,9 @@ void SimAccount::try_sell(OrderData* od)
         else if (bar && bar->high > od->order->entrust_price) {
             double fill_price = max(od->order->entrust_price, bar->low);
             make_trade(od->order.get(), fill_price);
+        }
+        else if (od->price_type == "fak" || od->price_type == "fok") {
+            reject_order(od->order.get(), od->price_type.c_str());
         }
     }
     else {
@@ -927,10 +941,14 @@ void SimAccount::try_short(OrderData* od)
         estimate_vol_in_queue(od, q.get());
 
         if (check_quote_time(q.get(), od->order.get())) {
-            if (od->price_type == "any" && q->bid_vol1 > 0)
+            if (od->price_type == "any" && q->bid_vol1 > 0) {
                 make_trade(od->order.get(), q->bid1);
+            }
             else if (q->last >= od->order->entrust_price && od->volume_in_queue == 0) {
                 make_trade(od->order.get(), od->order->entrust_price);
+            }
+            else if (od->price_type == "fak" || od->price_type == "fok") {
+                reject_order(od->order.get(), od->price_type.c_str());
             }
         }
     }
@@ -945,6 +963,9 @@ void SimAccount::try_short(OrderData* od)
         else if (bar && bar->high > od->order->entrust_price) {
             double fill_price = max(od->order->entrust_price, bar->low);
             make_trade(od->order.get(), fill_price);
+        }
+        else if (od->price_type == "fak" || od->price_type == "fok") {
+            reject_order(od->order.get(), od->price_type.c_str());
         }
     }
     else {
@@ -966,10 +987,15 @@ void SimAccount::try_cover(OrderData* od)
         estimate_vol_in_queue(od, q.get());
 
         if (check_quote_time(q.get(), od->order.get())) {
-            if (od->price_type == "any" && q->ask_vol1 > 0 )
+            if (od->price_type == "any" && q->ask_vol1 > 0) {
                 make_trade(od->order.get(), q->ask1);
-            else if (q->last <= od->order->entrust_price && od->volume_in_queue == 0)
+            }
+            else if (q->last <= od->order->entrust_price && od->volume_in_queue == 0) {
                 make_trade(od->order.get(), od->order->entrust_price);
+            }
+            else if (od->price_type == "fak" || od->price_type == "fok") {
+                reject_order(od->order.get(), od->price_type.c_str());
+            }
         }
     }
     else if (m_ctx->data_level() == BT_BAR1M) {
@@ -983,6 +1009,9 @@ void SimAccount::try_cover(OrderData* od)
         else if (bar && bar->low < od->order->entrust_price) {
             double fill_price = min(od->order->entrust_price, bar->high);
             make_trade(od->order.get(), fill_price);
+        }
+        else if (od->price_type == "fak" || od->price_type == "fok") {
+            reject_order(od->order.get(), od->price_type.c_str());
         }
     }
     else {
