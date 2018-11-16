@@ -10,6 +10,31 @@ namespace TQuant
         {
             public Int32 Date;
             public Int32 Time;
+
+            public FinDataTime(Int32 Date, Int32 Time)
+            {
+                this.Date = Date;
+                this.Time = Time;
+            }
+
+            public FinDataTime(DateTime dt)
+            {
+                this.Date = dt.Year * 10000 + dt.Month * 100 + dt.Day;
+                this.Time = (dt.Hour * 10000 + dt.Minute * 100 + dt.Second) * 1000 + dt.Millisecond;
+            }
+
+            public DateTime AsDateTime()
+            {
+                int y = Date / 10000;
+                int m = (Date / 100) % 100;
+                int d = Date % 100;
+                int MS = Time % 1000;
+                Time /= 1000;
+                int H = Time / 10000;
+                int M = (Time / 100)% 100;
+                int S = Time % 100;
+                return new DateTime(y, m, d, H, M, S, MS);
+            }
         }
 
         namespace Impl

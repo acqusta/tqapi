@@ -9,24 +9,25 @@ using Newtonsoft.Json;
 
 namespace TQuant.Stralet
 {
-    public interface ILoggingAdapter
+    public interface ILogger
     {
-        void Debug(String format, params object[] objs);
         void Info(String format, params object[] objs);
-        void Warning(String format, params object[] objs);
+        void Warn(String format, params object[] objs);
         void Error(String format, params object[] objs);
-        void Error(Exception e, String format, params object[] objs);
+        void Fatal(String format, params object[] objs);
     }
 
     public interface IStraletContext
     {
-        ILoggingAdapter Logger { get; }
+        ILogger Logger { get; }
 
         Dictionary<String, Object> Props { get; }
 
         Int32 TradingDay { get; }
 
         TQuant.Stralet.FinDataTime CurTime { get; }
+
+        DateTime CurDateTime { get; }
 
         void PostEvent(String evt, long data);
 
@@ -68,11 +69,11 @@ namespace TQuant.Stralet
 
     }
 
-    class LogginAdpterImpl : ILoggingAdapter
+    class LoggerImpl : ILogger
     {
         StraletContextImpl context;
 
-        public LogginAdpterImpl(StraletContextImpl context)
+        public LoggerImpl(StraletContextImpl context)
         {
             this.context = context;
         }
@@ -91,15 +92,16 @@ namespace TQuant.Stralet
             context.Log(LogSeverity.ERROR, String.Format(format, objs));
         }
 
-        public void Error(Exception e, string format, params object[] objs)
-        {
-            context.Log(LogSeverity.ERROR, String.Format(format, objs));
-            throw e;
-        }
-
-        public void Warning(string format, params object[] objs)
+        public void Warn(string format, params object[] objs)
         {
             context.Log(LogSeverity.WARNING, String.Format(format, objs));
+        }
+
+        public void Fatal(string format, params object[] objs)
+        {
+            string msg = String.Format(format, objs);
+            context.Log(LogSeverity.ERROR, msg);
+            throw new Exception(msg);
         }
     }
 
@@ -119,7 +121,7 @@ namespace TQuant.Stralet
             TradeApi = new TradeApiImpl(TqsDll.tqs_sc_trade_api(this.handle), false);
             DataApi  = new DataApiImpl(TqsDll.tqs_sc_data_api(this.handle), false);
 
-            this.Logger = new LogginAdpterImpl(this);
+            this.Logger = new LoggerImpl(this);
 
             IntPtr str = TqsDll.tqs_sc_get_properties(h);
             string properties = Marshal.PtrToStringAnsi(str);
@@ -130,7 +132,8 @@ namespace TQuant.Stralet
 
         public Int32 TradingDay { get { return trading_day; } }
 
-        public FinDataTime CurTime { get { return TqsDll.tqs_sc_cur_time(this.handle); } }
+        public FinDataTime CurTime     { get { return TqsDll.tqs_sc_cur_time(this.handle); } }
+        public DateTime    CurDateTime { get { return TqsDll.tqs_sc_cur_time(this.handle).AsDateTime();} }
 
         public void PostEvent(String evt, long data)
         {
@@ -169,7 +172,7 @@ namespace TQuant.Stralet
             TqsDll.tqs_sc_log(this.handle, l, str);
         }
 
-        public ILoggingAdapter Logger { get; }
+        public ILogger Logger { get; }
 
         public void Stop()
         {

@@ -9,7 +9,8 @@ namespace TQuant.Stralet
 
         public class Config
         {
-            public string tqapi_addr;
+            public string dapi_addr;
+            public string tapi_addr;
         }
 
         static public void Run(Config cfg, CreateStralet creatae_stralet)
