@@ -91,10 +91,10 @@ Stralet *create_doublema();
 int test3()
 {
     backtest::BackTestConfig cfg;
-    cfg.dapi_addr = "tcp://127.0.0.1:10001";
-    cfg.begin_date = 20170101;
-    cfg.end_date = 20180321;
-    cfg.data_level = "1m";
+    cfg.dapi_addr  = "ipc://tqc_10001";
+    cfg.begin_date = 20181001;
+    cfg.end_date   = 20181031;
+    cfg.data_level = "tk";
     cfg.accounts.push_back(backtest::AccountConfig("sim", 1e8));
 
     auto begin_time = system_clock::now();

@@ -27,3 +27,4 @@ cs/**/*.pdb
 cs/**/*.dll
 cs/**/*.xml
 cs/**/*.exe
+.vs

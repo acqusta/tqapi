@@ -67,8 +67,7 @@ CallResultWrap* dapi_get_bar(void* h, const char* code, const char* cycle, int t
         cr->value_type = VT_BAR_ARRAY;
     }
     else {
-        cr->_msg = r.msg;
-        cr->msg = _T(cr->_msg);
+		cr->msg = _T(r.msg, cr->_msg);
     }
     return cr;
 }
@@ -89,8 +88,7 @@ CallResultWrap* dapi_get_daily_bar(void* h, const char* code, const char* price_
         cr->value_type = VT_DAILYBAR_ARRAY;
     }
     else {
-        cr->_msg = r.msg;
-        cr->msg = _T(cr->_msg);
+		cr->msg = _T(r.msg, cr->_msg);
     }
     return cr;
 }
@@ -111,8 +109,7 @@ CallResultWrap* dapi_get_tick(void* h, const char* code, int trading_day)
         cr->value_type = VT_QUOTE_ARRAY;
     }
     else {
-        cr->_msg = r.msg;
-        cr->msg = _T(cr->_msg);
+		cr->msg = _T(r.msg, cr->_msg);
     }
     return cr;
 }
@@ -133,8 +130,7 @@ CallResultWrap* dapi_get_quote(void* h, const char* code)
         cr->value_type = VT_QUOTE;
     }
     else {
-        cr->_msg = r.msg;
-        cr->msg = _T(cr->_msg);
+		cr->msg = _T(r.msg, cr->_msg);
     }
     return cr;
 }
@@ -164,8 +160,7 @@ CallResultWrap* dapi_subscribe(void* h, const char* codes)
         cr->value_type = VT_STRING;
     }
     else {
-        cr->_msg = r.msg;
-        cr->msg = _T(cr->_msg);
+		cr->msg = _T(r.msg, cr->_msg);
     }
     return cr;
 }
@@ -194,8 +189,7 @@ CallResultWrap* dapi_unsubscribe(void* h, const char* codes)
         cr->value_type = VT_STRING;
     }
     else {
-        cr->_msg = r.msg;
-        cr->msg = _T(cr->_msg);
+		cr->msg = _T(r.msg, cr->_msg);
     }
     return cr;
 }
@@ -264,8 +258,7 @@ CallResultWrap* tapi_query_account_status(void* h)
     }
     else 
     {
-        cr->_msg = r.msg;
-        cr->msg = _T(cr->_msg);
+        cr->msg = _T(r.msg, cr->_msg);
     }
     return cr;
 }
@@ -286,8 +279,7 @@ CallResultWrap* tapi_query_balance(void* h, const char* account_id)
         cr->value_type = VT_BALANCE;
     }
     else {
-        cr->_msg = r.msg;
-        cr->msg = _T(cr->_msg);
+		cr->msg = _T(r.msg, cr->_msg);
     }
     return cr;
 }
@@ -302,18 +294,17 @@ CallResultWrap* tapi_query_positions(void* h, const char* account_id, const char
     CallResultWrap* cr = new CallResultWrap();
     if (r.value) {
 
-        cr->positions = make_shared<vector<PositionWrap>>();
+		cr->positions = make_shared<PositionWrapArray>();
         for (auto& tmp : *r.value)
-            cr->positions->push_back(PositionWrap(tmp));
+            cr->positions->wraps.push_back(new PositionWrap(&tmp));
 
-        cr->value = reinterpret_cast<const void*>(cr->positions->data());
+        cr->value = reinterpret_cast<const void*>(cr->positions->wraps.data());
         cr->element_size = sizeof(PositionWrap);
-        cr->element_count = (int32_t)cr->positions->size();
+        cr->element_count = (int32_t)cr->positions->wraps.size();
         cr->value_type = VT_POSITION_ARRAY;
     }
     else {
-        cr->_msg = r.msg;
-        cr->msg = _T(cr->_msg);
+		cr->msg = _T(r.msg, cr->_msg);
     }
     return cr;
 }
@@ -327,18 +318,17 @@ CallResultWrap* tapi_query_orders(void* h, const char* account_id, const char* c
     auto r = tapi->query_orders(account_id, codes);
     CallResultWrap* cr = new CallResultWrap();
     if (r.value) {
-        cr->orders = make_shared<vector<OrderWrap>>();
-        for (auto& tmp : *r.value)
-            cr->orders->push_back(OrderWrap(tmp));
+        cr->orders = make_shared<OrderWrapArray>();
+		for (auto& tmp : *r.value)
+			cr->orders->wraps.push_back(new OrderWrap(&tmp));
 
-        cr->value = reinterpret_cast<const void*>(cr->orders->data());
+        cr->value = reinterpret_cast<const void*>(cr->orders->wraps.data());
         cr->element_size = sizeof(OrderWrap);
-        cr->element_count = (int32_t)cr->orders->size();
+        cr->element_count = (int32_t)cr->orders->wraps.size();
         cr->value_type = VT_ORDER_ARRAY;
     }
     else {
-        cr->_msg = r.msg;
-        cr->msg = _T(cr->_msg);
+        cr->msg = _T(r.msg, cr->_msg);
     }
     return cr;
 }
@@ -352,18 +342,17 @@ CallResultWrap* tapi_query_trades(void* h, const char* account_id, const char* c
     auto r = tapi->query_trades(account_id, codes);
     CallResultWrap* cr = new CallResultWrap();
     if (r.value) {
-        cr->trades = make_shared<vector<TradeWrap>>();
+		cr->trades = make_shared<TradeWrapArray>();
         for (auto& tmp : *r.value)
-            cr->trades->push_back(TradeWrap(tmp));
+            cr->trades->wraps.push_back(new TradeWrap(&tmp));
 
-        cr->value = reinterpret_cast<const void*>(cr->trades->data());
+        cr->value = reinterpret_cast<const void*>(cr->trades->wraps.data());
         cr->element_size = sizeof(TradeWrap);
-        cr->element_count = (int32_t)cr->trades->size();
+        cr->element_count = (int32_t)cr->trades->wraps.size();
         cr->value_type = VT_TRADE_ARRAY;
     }
     else {
-        cr->_msg = r.msg;
-        cr->msg = _T(cr->_msg);
+		cr->msg = _T(r.msg, cr->_msg);
     }
     return cr;
 }
@@ -383,15 +372,14 @@ CallResultWrap* tapi_place_order(void* h, const char* account_id,
     auto r = tapi->place_order(account_id, code, price, size, action, price_type, order_id);
     CallResultWrap* cr = new CallResultWrap();
     if (r.value) {
-        cr->order_id = make_shared<OrderIDWrap>(*r.value);
+        cr->order_id = make_shared<OrderIDWrap>(r.value.get());
         cr->value = reinterpret_cast<const void*>(cr->order_id.get());
         cr->element_size = sizeof(OrderID);
         cr->element_count = 1;
         cr->value_type = VT_ORDER_ID;
     }
     else {
-        cr->_msg = r.msg;
-        cr->msg = _T(cr->_msg);
+		cr->msg = _T(r.msg, cr->_msg);
     }
     return cr;
 }
@@ -415,8 +403,7 @@ CallResultWrap* tapi_cancel_order1(void* h, const char* account_id,
         cr->value_type = VT_BOOL;
     }
     else {
-        cr->_msg = r.msg;
-        cr->msg = _T(cr->_msg);
+		cr->msg = _T(r.msg, cr->_msg);
     }
     return cr;
 }
@@ -439,8 +426,7 @@ CallResultWrap* tapi_cancel_order2(void* h, const char* account_id,
         cr->value_type = VT_BOOL;
     }
     else {
-        cr->_msg = r.msg;
-        cr->msg = _T(cr->_msg);
+        cr->msg = _T(r.msg, cr->_msg);
     }
     return cr;
 }
@@ -455,13 +441,11 @@ CallResultWrap* tapi_query(void* h, const char* account_id, const char* command,
     auto r = tapi->query(account_id, command, data);
     CallResultWrap* cr = new CallResultWrap();
     if (r.value) {
-        cr->text = _T(*r.value);
-        cr->value = cr->text.c_str();
+		cr->value = _T(*r.value, cr->text);
         cr->value_type = VT_STRING;
     }
     else {
-        cr->_msg = r.msg;
-        cr->msg = _T(cr->_msg);
+        cr->msg = _T(r.msg, cr->_msg);
     }
     return cr;
 }
@@ -487,13 +471,13 @@ public:
 
     virtual void on_order_status(shared_ptr<Order> order) override
     {
-        auto v = OrderWrap(*order);
+        auto v = OrderWrap(order.get());
         if (m_on_order) m_on_order(&v);
     }
 
     virtual void on_order_trade(shared_ptr<Trade> trade) override
     {
-        auto v = TradeWrap(*trade);
+        auto v = TradeWrap(trade.get());
         if (m_on_trade) m_on_trade(&v);
     }
 

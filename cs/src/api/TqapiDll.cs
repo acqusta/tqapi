@@ -122,6 +122,25 @@ namespace TQuant
                     }
                     return ar;
                 }
+
+                public static T[] CopyPointerArray<T>(CallResultWrap r)
+                {
+                    T[] ar = new T[r.element_count];
+
+                    if (r.element_count == 0) return ar;
+
+                    for (int i = 0; i < r.element_count; i++)
+                    {
+                        // memory :
+                        //    T* data[]
+                        //    T** p1 = &data[i];
+                        //    p2 = *p1
+                        IntPtr p1 = new IntPtr(r.value.ToInt64() + i * IntPtr.Size);//r.element_size);
+                        IntPtr p2 = Marshal.PtrToStructure<IntPtr>(p1);
+                        ar[i] = Marshal.PtrToStructure<T>(p2);
+                    }
+                    return ar;
+                }
             }
 
             class DataApiImpl : DataApi
@@ -390,7 +409,7 @@ namespace TQuant
 
                 private string codes_to_str(string[] codes)
                 {
-                    if (codes == null && codes.Length == 0)
+                    if (codes == null || codes.Length == 0)
                         return "";
 
                     string str = "";
@@ -412,7 +431,7 @@ namespace TQuant
 
                     CallResult<Order[]> ret;
                     if (cr.value_type != 0)
-                        ret = new CallResult<Order[]>(TqapiDll.CopyArray<Order>(cr));
+                        ret = new CallResult<Order[]>(TqapiDll.CopyPointerArray<Order>(cr));
                     else
                         ret = new CallResult<Order[]>(cr.msg);
 
@@ -428,7 +447,7 @@ namespace TQuant
 
                     CallResult<Position[]> ret;
                     if (cr.value_type != 0)
-                        ret = new CallResult<Position[]>(TqapiDll.CopyArray<Position>(cr));
+                        ret = new CallResult<Position[]>(TqapiDll.CopyPointerArray<Position>(cr));
                     else
                         ret = new CallResult<Position[]>(cr.msg);
 
@@ -444,7 +463,7 @@ namespace TQuant
 
                     CallResult<Trade[]> ret;
                     if (cr.value_type != 0)
-                        ret = new CallResult<Trade[]>(TqapiDll.CopyArray<Trade>(cr));
+                        ret = new CallResult<Trade[]>(TqapiDll.CopyPointerArray<Trade>(cr));
                     else
                         ret = new CallResult<Trade[]>(cr.msg);
 

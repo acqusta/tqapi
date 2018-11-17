@@ -169,13 +169,13 @@ public:
         }
         case STRALET_EVENT_ID::ON_ORDER: {
             auto on_order = reinterpret_cast<OnOrder*>(evt.get());
-            OrderWrap order(*on_order->order);
+            OrderWrap order(on_order->order.get());
             m_stralet.on_event(evt->evt_id, &order);
             break;
         }
         case STRALET_EVENT_ID::ON_TRADE: {
             auto on_trade = reinterpret_cast<OnTrade*>(evt.get());
-            TradeWrap trade(*on_trade->trade);
+            TradeWrap trade(on_trade->trade.get());
             m_stralet.on_event(evt->evt_id, &trade);
             break;
         }

@@ -238,47 +238,55 @@ CallResult<const Balance> SimAccount::query_balance()
 
 CallResult<const vector<Order>> SimAccount::query_orders(const unordered_set<string>* codes)
 {
-    auto orders = make_shared<vector<Order>>();
+	vector<const Order*> orders;
     for (auto & e : m_tdata->orders) {
         if (!codes || codes->empty() || codes->find(e.second->order->code) != codes->end())
-            orders->push_back(*e.second->order);
+            orders.push_back(e.second->order.get());
     }
 
-    sort(orders->begin(), orders->end(), [](Order& a, Order&b) {
-        return a.entrust_no < b.entrust_no;
+    sort(orders.begin(), orders.end(), [](const Order* a, const Order* b) {
+        return a->entrust_no < b->entrust_no;
     });
 
-    return CallResult<const vector<Order>>(orders);
+	auto ret_orders = make_shared<vector<Order>>();
+	for (auto& o : orders) ret_orders->push_back(*o);
+
+	return CallResult<const vector<Order>>(ret_orders);
 }
 
 CallResult<const vector<Trade>> SimAccount::query_trades(const unordered_set<string>* codes)
 {
-    auto trades = make_shared<vector<Trade>>();
+	vector<const Trade*> trades;
+
     for (auto & e : m_tdata->trades) {
         if (!codes || codes->empty() || codes->find(e.second->code) != codes->end())
-            trades->push_back(*e.second);
+            trades.push_back(e.second.get());
     }
 
-    sort(trades->begin(), trades->end(), [](Trade& a, Trade&b) {
-        return a.fill_no < b.fill_no;
+    sort(trades.begin(), trades.end(), [](const Trade* a, const Trade* b) {
+        return a->fill_no < b->fill_no;
     });
 
-    return CallResult<const vector<Trade>>(trades);
+	auto ret_trades = make_shared<vector<Trade>>();
+	for (auto& t : trades) ret_trades->push_back(*t);
+	return CallResult<const vector<Trade>>(ret_trades);
 }
 
 CallResult<const vector<Position>> SimAccount::query_positions(const unordered_set<string>* codes)
 {
-    auto poses = make_shared<vector<Position>>();
+	vector<const Position*> positions;
     for (auto & e : m_tdata->positions) {
         if (!codes || codes->empty() || codes->find(e.second->code) != codes->end())
-            poses->push_back(*e.second);
+            positions.push_back(e.second.get());
     }
 
-    sort(poses->begin(), poses->end(), [](Position& a, Position&b) {
-        return a.code < b.code;
+    sort(positions.begin(), positions.end(), [](const Position *a, const Position* b) {
+        return a->code < b->code;
     });
 
-    return CallResult<const vector<Position>>(poses);
+	auto ret_value = make_shared<vector<Position>>();
+	for (auto& p : positions) ret_value->push_back(*p);
+	return CallResult<const vector<Position>>(ret_value);
 }
 
 CallResult<const OrderID> SimAccount::validate_order(const string& code, double price, int64_t size, const string& action, const string& price_type)
