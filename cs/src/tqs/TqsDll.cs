@@ -76,40 +76,40 @@ namespace TQuant
 
             class TqsDll
             {
-                [DllImport("tqapi.dll", EntryPoint = "tqs_sc_trading_day", CallingConvention =CallingConvention.Cdecl)]
+                [DllImport("tqapi", EntryPoint = "tqs_sc_trading_day", CallingConvention =CallingConvention.Cdecl)]
                 public static extern Int32 tqs_sc_trading_day(IntPtr h);
 
-                [DllImport("tqapi.dll", EntryPoint = "tqs_sc_cur_time", CallingConvention = CallingConvention.Cdecl)]
+                [DllImport("tqapi", EntryPoint = "tqs_sc_cur_time", CallingConvention = CallingConvention.Cdecl)]
                 public static extern FinDataTime tqs_sc_cur_time(IntPtr h);
 
-                [DllImport("tqapi.dll", EntryPoint = "tqs_sc_post_event", CallingConvention = CallingConvention.Cdecl)]
+                [DllImport("tqapi", EntryPoint = "tqs_sc_post_event", CallingConvention = CallingConvention.Cdecl)]
                 public static extern void tqs_sc_post_event(IntPtr h, String evt, IntPtr data);
 
-                [DllImport("tqapi.dll", EntryPoint = "tqs_sc_set_timer", CallingConvention = CallingConvention.Cdecl)]
+                [DllImport("tqapi", EntryPoint = "tqs_sc_set_timer", CallingConvention = CallingConvention.Cdecl)]
                 public static extern void tqs_sc_set_timer(IntPtr h, Int64 id, Int64 delay, IntPtr data);
 
-                [DllImport("tqapi.dll", EntryPoint = "tqs_sc_kill_timer", CallingConvention = CallingConvention.Cdecl)]
+                [DllImport("tqapi", EntryPoint = "tqs_sc_kill_timer", CallingConvention = CallingConvention.Cdecl)]
                 public static extern void tqs_sc_kill_timer(IntPtr h, Int64 id);
 
-                [DllImport("tqapi.dll", EntryPoint = "tqs_sc_data_api", CallingConvention = CallingConvention.Cdecl)]
+                [DllImport("tqapi", EntryPoint = "tqs_sc_data_api", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tqs_sc_data_api(IntPtr h);
 
-                [DllImport("tqapi.dll", EntryPoint = "tqs_sc_trade_api", CallingConvention = CallingConvention.Cdecl)]
+                [DllImport("tqapi", EntryPoint = "tqs_sc_trade_api", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tqs_sc_trade_api(IntPtr h);
 
-                [DllImport("tqapi.dll", EntryPoint = "tqs_sc_log", CallingConvention = CallingConvention.Cdecl)]
+                [DllImport("tqapi", EntryPoint = "tqs_sc_log", CallingConvention = CallingConvention.Cdecl)]
                 public static extern void tqs_sc_log(IntPtr h, Int32 severity, String str);
 
-                [DllImport("tqapi.dll", EntryPoint = "tqs_sc_get_properties", CallingConvention = CallingConvention.Cdecl)]
+                [DllImport("tqapi", EntryPoint = "tqs_sc_get_properties", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tqs_sc_get_properties(IntPtr h);
 
-                [DllImport("tqapi.dll", EntryPoint = "tqs_sc_mode", CallingConvention = CallingConvention.Cdecl)]
+                [DllImport("tqapi", EntryPoint = "tqs_sc_mode", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tqs_sc_mode(IntPtr h);
 
-                [DllImport("tqapi.dll", EntryPoint = "tqs_stralet_create", CallingConvention = CallingConvention.Cdecl)]
+                [DllImport("tqapi", EntryPoint = "tqs_stralet_create", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tqs_stralet_create(ref DotNetStralet stralet);
 
-                [DllImport("tqapi.dll", EntryPoint = "tqs_stralet_destroy", CallingConvention = CallingConvention.Cdecl)]
+                [DllImport("tqapi", EntryPoint = "tqs_stralet_destroy", CallingConvention = CallingConvention.Cdecl)]
                 public static extern void tqs_stralet_destroy(IntPtr stralet);
 
                 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -162,10 +162,10 @@ namespace TQuant
                 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
                 public delegate IntPtr StraletCreator();
 
-                [DllImport("tqapi.dll", EntryPoint = "tqs_bt_run", CallingConvention = CallingConvention.Cdecl)]
+                [DllImport("tqapi", EntryPoint = "tqs_bt_run", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tqs_bt_run(String cfg, StraletCreator stralet_creator);
 
-                [DllImport("tqapi.dll", EntryPoint = "tqs_rt_run", CallingConvention = CallingConvention.Cdecl)]
+                [DllImport("tqapi", EntryPoint = "tqs_rt_run", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr tqs_rt_run(String cfg, StraletCreator stralet_creator);
             }
 
