@@ -17,16 +17,21 @@ namespace Test
         {
             Context.Logger.Info(String.Format("OnFini: {0}", Context.TradingDay));
         }
+
         public override void OnQuote(MarketQuote quote)
         {
-            Context.Logger.Info(String.Format("OnQuote {0} {1} {2} {3}", quote.Code, quote.Time, quote.Last, quote.Volume));
+            //Context.Logger.Info(String.Format("OnQuote {0} {1} {2} {3}", quote.Code, quote.Time, quote.Last, quote.Volume));
+            Context.TradeApi.QueryOrders("sim");
         }
+
         public override void OnBar(string cycle, Bar bar)
         {
             Context.Logger.Info(String.Format("OnBar {0} {1} {2} {3}", bar.Code, bar.Time, bar.Close, bar.Volume));
+
+            var q = Context.DataApi.GetQuote("600000.SH").Value;
+            Context.TradeApi.PlaceOrder("sim", "600000.SH", q.Last, 100, EntrustAction.Buy);
         }
     }
-
 
     class Demo
     {
@@ -38,11 +43,11 @@ namespace Test
         static int Test()
         {
             BackTest.Config cfg = new BackTest.Config();
-            cfg.data_level = "1m";
+            cfg.data_level = "tk";
             cfg.begin_date = 20180101;
-            cfg.end_date = 20180102;
+            cfg.end_date   = 20180201;
 
-            TQuant.Stralet.BackTest.Run(cfg, CreateStralet);
+            BackTest.Run(cfg, CreateStralet);
             return 0;
         }
 
@@ -50,7 +55,7 @@ namespace Test
         {
             RealTime.Config cfg = new RealTime.Config();
 
-            TQuant.Stralet.RealTime.Run(cfg, CreateStralet);
+            RealTime.Run(cfg, CreateStralet);
             return 0;
         }
 

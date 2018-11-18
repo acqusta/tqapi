@@ -39,40 +39,40 @@ namespace TQuant
 
         namespace Impl
         {
-            [StructLayout(LayoutKind.Sequential)]
-            struct TimerWrap
-            {
-                public Int64  id;
-                public IntPtr data;
-            };
+            //[StructLayout(LayoutKind.Sequential)]
+            //struct TimerWrap
+            //{
+            //    public Int64  id;
+            //    public IntPtr data;
+            //};
 
-            [StructLayout(LayoutKind.Sequential)]
-            struct EventWrap
-            {
-                public string name;
-                public IntPtr data;
-            };
+            //[StructLayout(LayoutKind.Sequential)]
+            //struct EventWrap
+            //{
+            //    public string name;
+            //    public IntPtr data;
+            //};
 
-            [StructLayout(LayoutKind.Sequential)]
-            struct BarWrap
-            {
-                public string cycle;
-                public IntPtr bar;
-            };
+            //[StructLayout(LayoutKind.Sequential)]
+            //struct BarWrap
+            //{
+            //    public string cycle;
+            //    public IntPtr bar;
+            //};
 
-            class STRALET_EVENT_ID
-            {
-                public const int ZERO_ID  = 0;
-                public const int ON_INIT  = 1;
-                public const int ON_FINI  = 2;
-                public const int ON_QUOTE = 3;
-                public const int ON_BAR   = 4;
-                public const int ON_TIMER = 5;
-                public const int ON_EVENT = 6;
-                public const int ON_ORDER = 7;
-                public const int ON_TRADE = 8;
-                public const int ON_ACCOUNT_STATUS = 9;
-            };
+            //class STRALET_EVENT_ID
+            //{
+            //    public const int ZERO_ID  = 0;
+            //    public const int ON_INIT  = 1;
+            //    public const int ON_FINI  = 2;
+            //    public const int ON_QUOTE = 3;
+            //    public const int ON_BAR   = 4;
+            //    public const int ON_TIMER = 5;
+            //    public const int ON_EVENT = 6;
+            //    public const int ON_ORDER = 7;
+            //    public const int ON_TRADE = 8;
+            //    public const int ON_ACCOUNT_STATUS = 9;
+            //};
 
             class TqsDll
             {
@@ -119,14 +119,44 @@ namespace TQuant
                 public delegate void StraletSetContext(IntPtr sc);
 
                 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-                public delegate void StraletOnEvent(Int32 evt_id, IntPtr sc);
+                public delegate void StraletOnInit(IntPtr sc);
+
+                [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+                public delegate void StraletOnFini ();
+
+                [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+                public delegate void StraletOnQuote(IntPtr q);
+
+                [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+                public delegate void StraletOnBar  (string cycle, IntPtr bar);
+
+                [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+                public delegate void StraletOnOrder(IntPtr p);
+
+                [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+                public delegate void StraletOnTrade(IntPtr p);
+
+                [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+                public delegate void StraletOnTimer(Int64 id, IntPtr data);
+
+                [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+                public delegate void StraletOnEvent(string name, IntPtr data);
+
+                [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+                public delegate void StraletOnAccountStatus(IntPtr p);
 
                 [StructLayout(LayoutKind.Sequential)]
                 public struct DotNetStralet
                 {
-                    //public StraletOnDestroy         OnDestroy;
-                    //public StraletSetContext        SetContext;
-                    public StraletOnEvent           OnEvent;
+                    public StraletOnInit            OnInit           ;
+                    public StraletOnFini            OnFini           ;
+                    public StraletOnQuote           OnQuote          ;
+                    public StraletOnBar             OnBar            ;
+                    public StraletOnOrder           OnOrder          ;
+                    public StraletOnTrade           OnTrade          ;
+                    public StraletOnTimer           OnTimer          ;
+                    public StraletOnEvent           OnEvent          ;
+                    public StraletOnAccountStatus   OnAccountStatus  ;
                 }
 
                 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]

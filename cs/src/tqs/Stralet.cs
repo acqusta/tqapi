@@ -46,10 +46,6 @@ namespace TQuant.Stralet
 
     public abstract class Stralet
     {
-        //public Stralet()
-        //{
-        //}
-
         private IStraletContext ctx;
         internal void _SetContext(IStraletContext sc)
         {
@@ -59,12 +55,12 @@ namespace TQuant.Stralet
 
         public virtual void OnInit() { }
         public virtual void OnFini() { }
-        public virtual void OnQuote(MarketQuote quote) { }
-        public virtual void OnBar(String cycle, Bar bar) { }
-        public virtual void OnOrder(Order order) { }
-        public virtual void OnTrade(Trade trade) { }
-        public virtual void OnTimer(long id, long data) { }
-        public virtual void OnEvent(String name, long data) { }
+        public virtual void OnQuote  (MarketQuote quote) { }
+        public virtual void OnBar    (String cycle, Bar bar) { }
+        public virtual void OnOrder  (Order order) { }
+        public virtual void OnTrade  (Trade trade) { }
+        public virtual void OnTimer  (long id, long data) { }
+        public virtual void OnEvent  (String name, long data) { }
         public virtual void OnAccountStatus(AccountInfo account) { }
 
     }
@@ -185,7 +181,7 @@ namespace TQuant.Stralet
     class StraletWrap
     {
         TqsDll.DotNetStralet wrap = new TqsDll.DotNetStralet();
-        StraletContextImpl ctx;
+        //StraletContextImpl ctx;
         internal IntPtr handle;
         Stralet stralet;
 
@@ -193,16 +189,15 @@ namespace TQuant.Stralet
         {
             this.stralet = stralet;
 
-            //wrap.OnDestroy = () =>
-            //{
-            //    this.handle = IntPtr.Zero;
-            //    //stralet._OnDestroy();
-            //};
-
-            wrap.OnEvent = (evt, data) =>
-            {
-                _OnEvent(evt, data);
-            };
+            wrap.OnInit           = this.OnInit          ;
+            wrap.OnFini           = this.OnFini          ;
+            wrap.OnQuote          = this.OnQuote         ;
+            wrap.OnBar            = this.OnBar           ;
+            wrap.OnOrder          = this.OnOrder         ;
+            wrap.OnTrade          = this.OnTrade         ;
+            wrap.OnTimer          = this.OnTimer         ;
+            wrap.OnEvent          = this.OnEvent         ;
+            wrap.OnAccountStatus  = this.OnAccountStatus ;
 
             handle = TqsDll.tqs_stralet_create(ref wrap);
         }
@@ -216,64 +211,55 @@ namespace TQuant.Stralet
             }
         }
 
-        internal void _OnEvent(Int32 evt_id, IntPtr evt_data)
+        internal void OnInit(IntPtr ctx)
         {
-            switch (evt_id)
-            {
-                case STRALET_EVENT_ID.ON_INIT:
-                    {
-                        ctx = new StraletContextImpl(evt_data);
-                        stralet._SetContext(ctx);
+            stralet._SetContext(new StraletContextImpl(ctx));
+            stralet.OnInit();
+        }
 
-                        stralet.OnInit();
-                        break;
-                    }
-                case STRALET_EVENT_ID.ON_FINI:
-                    {
-                        stralet.OnFini();
-                        stralet = null;
-                        handle = IntPtr.Zero;
-                        break;
-                    }
-                case STRALET_EVENT_ID.ON_QUOTE:
-                    {
-                        stralet.OnQuote(Marshal.PtrToStructure<MarketQuote>(evt_data));
-                        break;
-                    }
-                case STRALET_EVENT_ID.ON_BAR:
-                    {
-                        var bar_wrap = Marshal.PtrToStructure<Impl.BarWrap>(evt_data);
-                        stralet.OnBar(bar_wrap.cycle, Marshal.PtrToStructure<Bar>(bar_wrap.bar));
-                        break;
-                    }
-                case STRALET_EVENT_ID.ON_TIMER:
-                    {
-                        var timer_wrap = Marshal.PtrToStructure<Impl.TimerWrap>(evt_data);
-                        stralet.OnTimer(timer_wrap.id, timer_wrap.data.ToInt64());
-                        break;
-                    }
-                case STRALET_EVENT_ID.ON_EVENT:
-                    {
-                        var event_wrap = Marshal.PtrToStructure<Impl.EventWrap>(evt_data);
-                        stralet.OnEvent(event_wrap.name, event_wrap.data.ToInt64());
-                        break;
-                    }
-                case STRALET_EVENT_ID.ON_ORDER:
-                    {
-                        stralet.OnOrder(Marshal.PtrToStructure<Order>(evt_data));
-                        break;
-                    }
-                case STRALET_EVENT_ID.ON_TRADE:
-                    {
-                        stralet.OnTrade(Marshal.PtrToStructure<Trade>(evt_data));
-                        break;
-                    }
-                case STRALET_EVENT_ID.ON_ACCOUNT_STATUS:
-                    {
-                        stralet.OnAccountStatus(Marshal.PtrToStructure<AccountInfo>(evt_data));
-                        break;
-                    }
-            }
+        internal void OnFini()
+        {
+            stralet.OnFini();
+            stralet = null;
+            handle = IntPtr.Zero;
+        }
+
+        internal void OnQuote(IntPtr p)
+        {
+            stralet.OnQuote(Marshal.PtrToStructure<MarketQuote>(p));
+        }
+
+        internal void OnBar(string cycle, IntPtr p)
+        {
+            //var bar_wrap = Marshal.PtrToStructure<Impl.BarWrap>(p);
+            stralet.OnBar(cycle, Marshal.PtrToStructure<Bar>(p));
+        }
+
+        internal void OnOrder(IntPtr p)
+        {
+            stralet.OnOrder(Marshal.PtrToStructure<Order>(p));
+        }
+
+        internal void OnTrade(IntPtr p)
+        {
+            stralet.OnTrade(Marshal.PtrToStructure<Trade>(p));
+        }
+
+        internal void OnTimer(Int64 id, IntPtr data)
+        {
+            //var timer_wrap = Marshal.PtrToStructure<Impl.TimerWrap>(evt_data);
+            stralet.OnTimer(id, data.ToInt64());
+        }
+
+        internal void OnEvent(string name, IntPtr data)
+        {
+            //var event_wrap = Marshal.PtrToStructure<Impl.EventWrap>(evt_data);
+            stralet.OnEvent(name, data.ToInt64());
+        }
+
+        internal void OnAccountStatus(IntPtr p)
+        {
+            stralet.OnAccountStatus(Marshal.PtrToStructure<AccountInfo>(p));
         }
     }
 }

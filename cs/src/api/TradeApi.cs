@@ -5,7 +5,7 @@ namespace TQuant
 {
     namespace Api
     {
-        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
         public class AccountInfo
         {
             public String AccountId;       // 帐号编号
@@ -16,7 +16,7 @@ namespace TQuant
             public String AccountType;     // 帐号类型，如 stock, ctp
         }
 
-        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
 		public class Balance
         {
             public String AccountId;       // 帐号编号
@@ -49,7 +49,7 @@ namespace TQuant
             public const String SellYesterday = "SellYesterday"   ;
         }
 
-        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
 		public class Order
         {
             public String AccountId;       // 帐号编号
@@ -68,7 +68,7 @@ namespace TQuant
             public Int32  OrderId;         // 自定义订单编号
         }
 
-        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
 		public class Trade
         {
             public String AccountId;       // 帐号编号
@@ -90,7 +90,7 @@ namespace TQuant
             public const String Short = "Short";
         }
 
-        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
 		public class Position
         {
             public String AccountId;       // 帐号编号
@@ -111,7 +111,7 @@ namespace TQuant
             public Double Commission;       // 手续费
         }
 
-        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
+        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
 		public class OrderID
         {
             public String EntrustNo;

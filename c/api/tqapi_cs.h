@@ -7,9 +7,10 @@ using namespace tquant::api;
 
 static inline const char* _T(const string& src, string& dst)
 {
-    dst = utf8_to_gbk(src);
+    utf8_to_utf16(src, &dst);
     return dst.c_str();
 }
+
 
 #pragma pack(1)
 struct AccountInfoWrap {
@@ -65,6 +66,7 @@ struct BalanceWrap {
         float_pnl       = m_orig.float_pnl         ;
         close_pnl       = m_orig.close_pnl         ;
     }
+
     BalanceWrap(const BalanceWrap& rhs) : m_orig(rhs.m_orig)
     {
         account_id      = m_orig.account_id   .c_str();

@@ -97,9 +97,15 @@ const char* tqs_sc_mode(void* h)
 }
 
 struct DotNetStalet {
-    //void (*on_destroy)       ();
-    //void (*set_context)      (StraletContext* sc);
-    void (*on_event)         (int evt_id, void* data);
+    void (*on_init) (StraletContext* ctx);
+    void (*on_fini) ();
+    void (*on_quote)(const MarketQuote* quote);
+    void (*on_bar)  (const char* cycle, const Bar* bar);
+    void (*on_order)(const OrderWrap* order);
+    void (*on_trade)(const TradeWrap* trade);
+    void (*on_timer)(int64_t id, void* data);
+    void (*on_event)(const char* name, void* data);
+    void (*on_account_status)(const AccountInfoWrap* account);
 };
 
 class StraletWrap : public Stralet {
@@ -127,67 +133,43 @@ public:
         const RawBar*   bar;
     };
 
-    virtual void on_event(shared_ptr<StraletEvent> evt)
-    {
-        switch (evt->evt_id) {
-        case STRALET_EVENT_ID::ON_INIT:
-            m_stralet.on_event(evt->evt_id, m_ctx);
-            break;
-        case STRALET_EVENT_ID::ON_FINI:
-            m_stralet.on_event(evt->evt_id, nullptr);
-            break;
-        case STRALET_EVENT_ID::ON_QUOTE: {
-            auto on_quote = reinterpret_cast<OnQuote*>(evt.get());
-            m_stralet.on_event(evt->evt_id, (void*)on_quote->quote.get());
-            break;
-        }
-        case STRALET_EVENT_ID::ON_BAR: {
-            auto on_bar = reinterpret_cast<OnBar*>(evt.get());
-            BarWrap bar;
-            bar.cycle = on_bar->cycle.c_str();
-            bar.bar   = on_bar->bar.get();
-            m_stralet.on_event(evt->evt_id, (void*)&bar);
-            break;
-        }
-        case STRALET_EVENT_ID::ON_TIMER: {
-            auto on_timer = reinterpret_cast<OnTimer*>(evt.get());
-            TimerWrap timer;
-            timer.id = on_timer->id;
-            timer.data = on_timer->data;
+    virtual void on_init() {
+        m_stralet.on_init(m_ctx);
+    }
 
-            m_stralet.on_event(evt->evt_id, &timer);
-            break;
-        }
-        case STRALET_EVENT_ID::ON_EVENT: {
-            auto on_event = reinterpret_cast<OnEvent*>(evt.get());
-            EventWrap event;
-            event.name = on_event->name.c_str();
-            event.data = on_event->data;
+    virtual void on_fini() { 
+        m_stralet.on_fini();
+    }
 
-            m_stralet.on_event(evt->evt_id, &event);
-            break;
-        }
-        case STRALET_EVENT_ID::ON_ORDER: {
-            auto on_order = reinterpret_cast<OnOrder*>(evt.get());
-            OrderWrap order(on_order->order.get());
-            m_stralet.on_event(evt->evt_id, &order);
-            break;
-        }
-        case STRALET_EVENT_ID::ON_TRADE: {
-            auto on_trade = reinterpret_cast<OnTrade*>(evt.get());
-            TradeWrap trade(on_trade->trade.get());
-            m_stralet.on_event(evt->evt_id, &trade);
-            break;
-        }
-        case STRALET_EVENT_ID::ON_ACCOUNT_STATUS: {
-            auto on_account = reinterpret_cast<OnAccountStatus*>(evt.get());
-            AccountInfoWrap account(*on_account->account);
-            m_stralet.on_event(evt->evt_id, &account);
-            break;
-        }
-        default:
-                break;
-        }
+    virtual void on_quote(shared_ptr<const MarketQuote> quote) {
+        m_stralet.on_quote(quote.get());
+    }
+
+    virtual void on_bar(const string& cycle, shared_ptr<const Bar> bar) {
+        m_stralet.on_bar(cycle.c_str(), bar.get());
+    }
+
+    virtual void on_order(shared_ptr<const Order> order) { 
+        OrderWrap wrap(order.get());
+        m_stralet.on_order(&wrap);
+    }
+
+    virtual void on_trade(shared_ptr<const Trade> trade) { 
+        TradeWrap wrap(trade.get());
+        m_stralet.on_trade(&wrap);
+    }
+
+    virtual void on_timer(int64_t id, void* data) { 
+        m_stralet.on_timer(id, data);
+    }
+
+    virtual void on_event(const string& name, void* data) { 
+        m_stralet.on_event(name.c_str(), data);
+    }
+
+    virtual void on_account_status(shared_ptr<const AccountInfo> account) { 
+        AccountInfoWrap wrap(*account);
+        m_stralet.on_account_status(&wrap);
     }
 };
 
