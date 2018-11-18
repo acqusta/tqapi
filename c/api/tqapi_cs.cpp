@@ -88,7 +88,7 @@ CallResultWrap* dapi_get_daily_bar(void* h, const char* code, const char* price_
         cr->value_type = VT_DAILYBAR_ARRAY;
     }
     else {
-		cr->msg = _T(r.msg, cr->_msg);
+        cr->msg = _T(r.msg, cr->_msg);
     }
     return cr;
 }

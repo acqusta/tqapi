@@ -11,7 +11,6 @@ static inline const char* _T(const string& src, string& dst)
     return dst.c_str();
 }
 
-
 #pragma pack(1)
 struct AccountInfoWrap {
     const char* account_id;       // ’ ∫≈±‡∫≈

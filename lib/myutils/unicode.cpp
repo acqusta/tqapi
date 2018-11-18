@@ -160,10 +160,13 @@ std::string& utf8_to_utf16(const std::string& utf8, string* out)
 
 static string& convert(const char* from, const char* to, const char* src, size_t size, string* out)
 {
-    if (size == 0 ) return "";
+    if (size == 0 ) {
+        *out = "";
+        return *out;
+    }
 
     size_t buf_len = size*2 + 10;
-    out->resize(buf_size);
+    out->resize(buf_len);
     char* buf = (char*)out->data();
 
     const char* src_orig = src;
@@ -175,7 +178,8 @@ static string& convert(const char* from, const char* to, const char* src, size_t
     //CHECK( (size_t)ic != -1 ) << "iconv_open failed";
     if ((size_t)ic == -1) {
         cerr << "iconv_open error: " << from << " -> " << to << endl;
-        return "";
+        *out = "";
+        return *out;
     }
 
     size_t ret = iconv(ic, (char**)&src, &src_len, &dst, &dst_len);
@@ -194,7 +198,7 @@ static string& convert(const char* from, const char* to, const char* src, size_t
 
 string& gbk_to_utf8(const string& gbk, string* out)
 {
-    return convert("GBK", "UTF-8", gbk.c_str(), gbk.size());
+    return convert("GBK", "UTF-8", gbk.c_str(), gbk.size(), out);
 }
 
 string& utf8_to_gbk(const string& utf8, string* out)
@@ -208,14 +212,20 @@ std::string& utf8_to_local(const std::string& utf8, string* out)
     return *out;
 }
 
+std::string& local_to_utf8(const string& str, string* out)
+{
+    *out = str;
+    return *out;
+}
+
 std::string& gbk_to_local(const std::string& gbk, string* out)
 {
     return convert("GBK", "UTF-8", gbk.c_str(), gbk.size(), out);
 }
 
-std::string local_to_utf8(const string& str)
+std::string& utf8_to_utf16(const std::string& utf8, string* out)
 {
-    return str;
+    return convert("UTF-8", "UTF-16LE", utf8.c_str(), utf8.size(), out);
 }
 
 

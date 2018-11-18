@@ -11,6 +11,7 @@ namespace TQuant
         {
             class TqapiDll
             {
+                [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Unicode)]
                 public struct CallResultWrap
                 {
                     public String msg;
