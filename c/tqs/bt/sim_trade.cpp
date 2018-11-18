@@ -238,54 +238,66 @@ CallResult<const Balance> SimAccount::query_balance()
 
 CallResult<const vector<Order>> SimAccount::query_orders(const unordered_set<string>* codes)
 {
-	vector<const Order*> orders;
+	vector<const Order*> orders(m_tdata->orders.size());
+    size_t count = 0;
     for (auto & e : m_tdata->orders) {
         if (!codes || codes->empty() || codes->find(e.second->order->code) != codes->end())
-            orders.push_back(e.second->order.get());
+            orders[count++] = e.second->order.get();
     }
+    orders.resize(count);
 
     sort(orders.begin(), orders.end(), [](const Order* a, const Order* b) {
         return a->entrust_no < b->entrust_no;
     });
 
-	auto ret_orders = make_shared<vector<Order>>();
-	for (auto& o : orders) ret_orders->push_back(*o);
+	auto ret_orders = make_shared<vector<Order>>(count);
+    for (size_t i = 0; i < orders.size(); i++)
+        (*ret_orders)[i] = *orders[i];
 
 	return CallResult<const vector<Order>>(ret_orders);
 }
 
 CallResult<const vector<Trade>> SimAccount::query_trades(const unordered_set<string>* codes)
 {
-	vector<const Trade*> trades;
+	vector<const Trade*> trades(m_tdata->trades.size());
 
+    size_t count = 0;
     for (auto & e : m_tdata->trades) {
-        if (!codes || codes->empty() || codes->find(e.second->code) != codes->end())
-            trades.push_back(e.second.get());
+        if (!codes || codes->empty() || codes->find(e.second->code) != codes->end()) {
+            trades[count++] = e.second.get();
+        }
     }
+    trades.resize(count);
 
     sort(trades.begin(), trades.end(), [](const Trade* a, const Trade* b) {
         return a->fill_no < b->fill_no;
     });
 
-	auto ret_trades = make_shared<vector<Trade>>();
-	for (auto& t : trades) ret_trades->push_back(*t);
+	auto ret_trades = make_shared<vector<Trade>>(count);
+    for (size_t i = 0; i < count; i++)
+        (*ret_trades)[i] = *trades[i];
+
 	return CallResult<const vector<Trade>>(ret_trades);
 }
 
 CallResult<const vector<Position>> SimAccount::query_positions(const unordered_set<string>* codes)
 {
-	vector<const Position*> positions;
+	vector<const Position*> positions(m_tdata->positions.size());
+    size_t count = 0;
     for (auto & e : m_tdata->positions) {
         if (!codes || codes->empty() || codes->find(e.second->code) != codes->end())
-            positions.push_back(e.second.get());
+            positions[count++] = e.second.get();
     }
+    positions.resize(count);
 
     sort(positions.begin(), positions.end(), [](const Position *a, const Position* b) {
         return a->code < b->code;
     });
 
-	auto ret_value = make_shared<vector<Position>>();
-	for (auto& p : positions) ret_value->push_back(*p);
+	auto ret_value = make_shared<vector<Position>>(count);
+    for (size_t i = 0; i < count; i++)
+        (*ret_value)[i] = *positions[i];
+
 	return CallResult<const vector<Position>>(ret_value);
 }
 

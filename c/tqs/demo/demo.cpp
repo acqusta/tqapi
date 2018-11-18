@@ -7,40 +7,31 @@ using namespace tquant::stralet;
 
 class MyStralet : public Stralet {
 public:
-    virtual void on_event(shared_ptr<StraletEvent> evt) {
-        switch (evt->evt_id) {
-            case STRALET_EVENT_ID::ON_INIT: {
-                ctx()->logger() << "on_init: " << ctx()->trading_day() << endl;
-                vector<string> codes = { "000001.SH", "600000.SH", "000001.SZ", "399001.SZ" };
-                ctx()->data_api()->subscribe(codes);
-                break;
-            }
-            case STRALET_EVENT_ID::ON_FINI: {
-                ctx()->logger() << "on_fini: " << ctx()->trading_day() << endl;
-                break;
-            }
-            case STRALET_EVENT_ID::ON_QUOTE: {
-                auto q = evt->as<OnQuote>()->quote;
-                //ctx()->logger() << "on_quote: " << q->code << "," << q->date << "," << q->time << "," << q->last << endl;
-                break;
-            }
-            case STRALET_EVENT_ID::ON_BAR: {
-                auto bar = evt->as<OnBar>()->bar;
-                //ctx()->logger() << "on_bar: " << bar->code << "," << bar->date << "," << bar->time << "," << bar->close << endl;
-                break;
-            }
-            case STRALET_EVENT_ID::ON_ORDER: {
-                auto order = evt->as<OnOrder>()->order;
-                cout << "on_order: " << order->code << "," << order->entrust_action << "," << order->status << endl;
-                break;
-            }
-            case STRALET_EVENT_ID::ON_TRADE: {
-                auto trade = evt->as<OnTrade>()->trade;
-                cout << "on_trade: " << trade->code << "," << trade->entrust_action << "," << trade->fill_price << endl;
-                break;
-            }
-            default: break;
-        }
+    virtual void on_init() override {
+        ctx()->logger() << "on_init: " << ctx()->trading_day() << endl;
+        vector<string> codes = { "000001.SH", "600000.SH", "000001.SZ", "399001.SZ" };
+        ctx()->data_api()->subscribe(codes);
+    }
+
+    virtual void on_fini() override {
+        ctx()->logger() << "on_fini: " << ctx()->trading_day() << endl;
+    }
+
+    virtual void on_quote(shared_ptr<const MarketQuote> quote) override {
+        auto q = quote.get();
+        ctx()->logger() << "on_quote: " << q->code << "," << q->date << "," << q->time << "," << q->last;
+    }
+
+    virtual void on_bar(const string& cycle, shared_ptr<const Bar> bar) override {
+        ctx()->logger() << "on_bar: " << bar->code << "," << bar->date << "," << bar->time << "," << bar->close;
+    }
+    
+    virtual void on_order(shared_ptr<const Order> order) override {
+        ctx()->logger() << "on_order: " << order->code << "," << order->entrust_action << "," << order->status;
+
+    }
+    virtual void on_trade(shared_ptr<const Trade> trade) override {
+        ctx()->logger() << "on_trade: " << trade->code << "," << trade->entrust_action << "," << trade->fill_price;
     }
 };
 
@@ -72,7 +63,7 @@ int test2()
     cfg.dapi_addr = "tcp://127.0.0.1:10001";
     cfg.begin_date = 20170101;
     cfg.end_date = 20180321;
-    cfg.data_level = "1m";
+    cfg.data_level = "tk";
     cfg.accounts.push_back(backtest::AccountConfig("sim", 1e8));
 
     auto begin_time = system_clock::now();

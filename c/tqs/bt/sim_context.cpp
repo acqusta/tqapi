@@ -161,7 +161,7 @@ void SimStraletContext::execute_timer()
 
     for (auto& t : timers) {
         if (!t->is_dead)
-            m_stralet->on_event(make_shared<OnTimer>(t->id, t->data));
+			m_stralet->on_timer(t->id, t->data);
     }
 }
 
@@ -220,8 +220,8 @@ void SimStraletContext::run_one_day(Stralet* stralet)
 
     m_stralet = stralet;
 
-    stralet->set_context(this);
-    stralet->on_event(make_shared<OnInit>());
+    m_stralet->set_context(this);
+    m_stralet->on_init();
 
     DateTime end_dt(m_trading_day, HMS(15, 0, 0));
 
@@ -257,14 +257,14 @@ void SimStraletContext::run_one_day(Stralet* stralet)
                 auto ind_list = act->m_ord_status_ind_list;
                 act->m_ord_status_ind_list.clear();
                 for (auto& ind : ind_list) {                    
-                    stralet->on_event(make_shared<OnOrder>(ind));
+                    stralet->on_order(ind);
                 }
             }
             {
                 auto ind_list = act->m_trade_ind_list;
                 act->m_trade_ind_list.clear();
                 for (auto& ind : ind_list) {
-                    stralet->on_event(make_shared<OnTrade>(ind));
+                    stralet->on_trade(ind);
                 }
             }
         }
@@ -273,19 +273,16 @@ void SimStraletContext::run_one_day(Stralet* stralet)
             auto events = m_events;
             m_events.clear();
             for (auto evt : events)
-                stralet->on_event(make_shared<OnEvent>(evt->name, evt->data));
+                stralet->on_event(evt->name, evt->data);
         }
 
-        for (auto & q : quotes)
-            stralet->on_event(make_shared<OnQuote>(q));
+        for (auto & q : quotes) stralet->on_quote(q);
 
-        for (auto& bar : bars) {
-            const char* cycle = "1m";
-            stralet->on_event(make_shared<OnBar>(cycle, bar));
-        }
+        string cycle = "1m";
+        for (auto& bar : bars) stralet->on_bar(cycle, bar);
 
         execute_timer();
     }
 
-    stralet->on_event(make_shared<OnFini>());
+    stralet->on_fini();
 }

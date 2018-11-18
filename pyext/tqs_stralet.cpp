@@ -13,13 +13,20 @@ using namespace tquant::stralet;
 
 class StraletWrap : public Stralet {
 public:
-
     StraletWrap(PyObject* cb)
         : m_callback(cb)
     {
     }
 
-    virtual void on_event(shared_ptr<StraletEvent> evt) override;
+	virtual void on_init			() override;
+	virtual void on_fini			() override;
+	virtual void on_quote			(shared_ptr<const MarketQuote> quote) override;
+	virtual void on_bar				(const string& cycle, shared_ptr<const Bar> bar) override;
+	virtual void on_order			(shared_ptr<const Order> order) override;
+	virtual void on_trade			(shared_ptr<const Trade> trade) override;
+	virtual void on_timer			(int64_t id, void* data) override;
+	virtual void on_event			(const string& name, void* data) override;
+	virtual void on_account_status	(shared_ptr<const AccountInfo> account) override;
 
     PyObjectHolder  m_callback;
 };
@@ -271,77 +278,99 @@ static void call_callback(PyObject* callback, PyObject* arg)
     Py_XDECREF(arg);
 }
 
-void StraletWrap::on_event(shared_ptr<StraletEvent> evt)
+//void StraletWrap::on_event(shared_ptr<StraletEvent> evt)
+
+void StraletWrap::on_init()
 {
     auto gstate = PyGILState_Ensure();
 
-    switch (evt->evt_id) {
-        case STRALET_EVENT_ID::ON_INIT: {
-            PyObject* arg = Py_BuildValue("iL", evt->evt_id, m_ctx);
-            call_callback(m_callback.obj, arg);
-            break;
-        }
-        case STRALET_EVENT_ID::ON_FINI: {
-            PyObject* arg = Py_BuildValue("iO", evt->evt_id, Py_None);
-            call_callback(m_callback.obj, arg);
-            break;
-        }
-        case STRALET_EVENT_ID::ON_QUOTE: {
-            auto quote = convert_tick(evt->as<OnQuote>()->quote.get());
-            PyObject* arg = Py_BuildValue("iN", evt->evt_id, quote);
-            call_callback(m_callback.obj, arg);
-            break;
-        }
-        case STRALET_EVENT_ID::ON_BAR: {
-            auto on_bar = evt->as<OnBar>();
-            PyObject* tmp = Py_BuildValue("sN",
-                                           on_bar->cycle.c_str(),
-                                           convert_bar(on_bar->bar.get()));
-            PyObject* arg = Py_BuildValue("iN", evt->evt_id, tmp);
-            call_callback(m_callback.obj, arg);
-            break;
-        }
-        case STRALET_EVENT_ID::ON_TIMER: {
-            auto on_timer = evt->as<OnTimer>();
-            PyObject* tmp = Py_BuildValue("LL", on_timer->id, on_timer->data);
-            PyObject* arg = Py_BuildValue("iN", evt->evt_id, tmp);
-            call_callback(m_callback.obj, arg);
-            break;
-        }
-        case STRALET_EVENT_ID::ON_EVENT: {
-            auto on_event = evt->as<OnEvent>();
-            PyObject* tmp = Py_BuildValue("sL", on_event->name.c_str(), on_event->data);
-            PyObject* arg = Py_BuildValue("iN", evt->evt_id, tmp);
-            call_callback(m_callback.obj, arg);
-            break;
-        }
-        case STRALET_EVENT_ID::ON_ORDER: {
-            auto on_order = evt->as<OnOrder>();
-            PyObject* arg = Py_BuildValue("iN",
-                                          evt->evt_id,
-                                          convert_order(on_order->order.get()));
-            call_callback(m_callback.obj, arg);
-            break;
-        }
-        case STRALET_EVENT_ID::ON_TRADE: {
-            auto on_trade = evt->as<OnTrade>();
-            PyObject* arg = Py_BuildValue("iN",
-                                           evt->evt_id,
-                                           convert_trade(on_trade->trade.get()));
-            call_callback(m_callback.obj, arg);
-            break;
-        }
-        case STRALET_EVENT_ID::ON_ACCOUNT_STATUS: {
-            auto on_account = reinterpret_cast<OnAccountStatus*>(evt.get());
-            PyObject* arg = Py_BuildValue("iN",
-                                          evt->evt_id, 
-                                          convert_account_info(on_account->account.get()));
-            call_callback(m_callback.obj, arg);
-            break;
-        }
-        default:
-            break;
-    }
+    PyObject* arg = Py_BuildValue("iL", ON_INIT, m_ctx);
+    call_callback(m_callback.obj, arg);
+
+    PyGILState_Release(gstate);
+}
+
+void StraletWrap::on_fini()
+{
+    auto gstate = PyGILState_Ensure();
+
+    PyObject* arg = Py_BuildValue("iL", ON_INIT, m_ctx);
+    call_callback(m_callback.obj, arg);
+
+    PyGILState_Release(gstate);
+}
+
+void StraletWrap::on_quote(shared_ptr<const MarketQuote> quote)
+{
+    auto gstate = PyGILState_Ensure();
+
+    PyObject* arg = Py_BuildValue("iN", ON_QUOTE, quote.get());
+    call_callback(m_callback.obj, arg);
+
+    PyGILState_Release(gstate);
+}
+
+void StraletWrap::on_bar(const string& cycle, shared_ptr<const Bar> bar)
+{
+    auto gstate = PyGILState_Ensure();
+
+    PyObject* tmp = Py_BuildValue("sN", cycle.c_str(), convert_bar(bar.get()));
+    PyObject* arg = Py_BuildValue("iN", ON_BAR, tmp);
+
+    call_callback(m_callback.obj, arg);
+
+    PyGILState_Release(gstate);
+}
+
+void StraletWrap::on_order(shared_ptr<const Order> order)
+{
+    auto gstate = PyGILState_Ensure();
+
+    PyObject* arg = Py_BuildValue("iN", ON_ORDER, order.get());
+    call_callback(m_callback.obj, arg);
+
+    PyGILState_Release(gstate);
+}
+
+void StraletWrap::on_trade(shared_ptr<const Trade> trade)
+{
+    auto gstate = PyGILState_Ensure();
+
+    PyObject* arg = Py_BuildValue("iN", ON_TRADE, convert_trade(trade.get()));
+    call_callback(m_callback.obj, arg);
+
+    PyGILState_Release(gstate);
+}
+
+void StraletWrap::on_timer(int64_t id, void* data)
+{
+    auto gstate = PyGILState_Ensure();
+
+    PyObject* tmp = Py_BuildValue("LL", id, data);
+    PyObject* arg = Py_BuildValue("iN", ON_TIMER, tmp);
+
+    call_callback(m_callback.obj, arg);
+
+    PyGILState_Release(gstate);
+}
+
+void StraletWrap::on_event(const string& name, void* data)
+{
+    auto gstate = PyGILState_Ensure();
+
+    PyObject* tmp = Py_BuildValue("sL", name.c_str(), data);
+    PyObject* arg = Py_BuildValue("iN", ON_EVENT, tmp);
+    call_callback(m_callback.obj, arg);
+
+    PyGILState_Release(gstate);
+}
+
+void StraletWrap::on_account_status(shared_ptr<const AccountInfo> account)
+{
+    auto gstate = PyGILState_Ensure();
+
+    PyObject* arg = Py_BuildValue("iN", ON_ACCOUNT_STATUS, convert_account_info(account.get()));
+    call_callback(m_callback.obj, arg);
 
     PyGILState_Release(gstate);
 }

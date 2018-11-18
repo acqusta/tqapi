@@ -16,11 +16,15 @@ static inline int HMS(int h, int m, int s = 0, int ms = 0) { return h * 10000000
 
 class DoubleMAStralet : public Stralet {
 public:
-    virtual void on_event(shared_ptr<StraletEvent> evt) override;
-
-    void on_init();
-    void on_bar(const char* cycle, shared_ptr<const Bar> bar);
-    void on_fini();
+	virtual void on_init			() override;
+	virtual void on_fini			() override;
+	//virtual void on_quote			(shared_ptr<const MarketQuote> quote) override;
+	virtual void on_bar				(const string& cycle, shared_ptr<const Bar> bar) override;
+	//virtual void on_order			(shared_ptr<const Order> order) override;
+	//virtual void on_trade			(shared_ptr<const Trade> trade) override;
+	//virtual void on_timer			(int64_t id, int64_t data) override;
+	//virtual void on_event			(const string& name, int64_t data) { }
+	//virtual void on_account_status	(shared_ptr<const AccountInfo> account) { }
 
     int cancel_unfinished_order();
 
@@ -31,24 +35,6 @@ private:
     size_t m_fast_ma_len = 0;
     size_t m_slow_ma_len = 0;
 };
-
-void DoubleMAStralet::on_event(shared_ptr<StraletEvent> evt)
-{
-    switch (evt->evt_id) {
-        case STRALET_EVENT_ID::ON_INIT:
-            on_init();
-            break;
-        case STRALET_EVENT_ID::ON_FINI:
-            on_fini();
-            break;
-        case STRALET_EVENT_ID::ON_BAR: {
-            auto on_bar = evt->as<OnBar>();
-            this->on_bar(on_bar->cycle.c_str(), on_bar->bar);
-            break;
-        }
-        default: break;
-    }
-}
 
 void DoubleMAStralet::on_init()
 {
@@ -107,9 +93,10 @@ void DoubleMAStralet::place_order(const string& code, double price, int64_t size
         ctx()->logger(ERROR) << "place_order error:" << r.msg << endl;;
 }
 
-void DoubleMAStralet::on_bar(const char* cycle, shared_ptr<const Bar> bar)
+void DoubleMAStralet::on_bar(const string& cycle, shared_ptr<const Bar> bar)
 {
-    if (strcmp(cycle, "1m")) return;
+	if (cycle != "1m") return;
+
     if (bar->code != m_contract) return;
 
     auto tapi = ctx()->trade_api();

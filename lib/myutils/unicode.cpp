@@ -104,51 +104,53 @@ int UTF8ToUTF16(const unsigned char * lpUTF8Str, unsigned char * lpUTF16Str, int
         return nRetLen * 2;
     }
 }
-string gbk_to_utf8(const string& gbk)
+
+string& gbk_to_utf8(const string& gbk, string* out)
 {
     int buf_size = (int)gbk.size() * 2 + 10;
-    char* buf = new char[buf_size]; memset(buf, 0, buf_size);
+    out->resize(buf_size);
+    char* buf = (char*)out->data();
     int len = GBKToUTF8((const unsigned  char*)gbk.c_str(), (unsigned char*)buf, buf_size);
-    string utf8(buf, strlen(buf));
-    delete[] buf;
-    return utf8;
+    //string utf8(buf, strlen(buf));
+    out->resize(len);
+    return *out;
 }
 
-string utf8_to_gbk(const string& utf8)
+string& utf8_to_gbk(const string& utf8, string* out)
 {
     int buf_size = (int)utf8.size() * 4 + 10;
-    char* buf = new char[buf_size]; memset(buf, 0, buf_size);
+    out->resize(buf_size);
+    char* buf = (char*)out->data();
     int len = UTF8ToGBK((const unsigned  char*)utf8.c_str(), (unsigned char*)buf, buf_size);
-    string gbk(buf, strlen(buf));
-    delete[] buf;
-    return gbk;
+    out->resize(len);
+    return *out;
 }
 
-std::string utf8_to_local(const std::string& utf8)
+std::string& utf8_to_local(const std::string& utf8, string* out)
 {
-    return utf8_to_gbk(utf8);
+    return utf8_to_gbk(utf8, out);
 }
 
-std::string gbk_to_local(const std::string& gbk)
+std::string& gbk_to_local(const std::string& gbk, string* out)
 {
-    return gbk;
+    *out = gbk;
+    return *out;
 }
 
-std::string local_to_utf8(const string& str)
+std::string& local_to_utf8(const string& str, string* out)
 {
-    return gbk_to_utf8(str);
+    return gbk_to_utf8(str, out);
 }
 
-std::string utf8_to_utf16(const std::string& utf8)
+std::string& utf8_to_utf16(const std::string& utf8, string* out)
 {
     int buf_size = (int)utf8.size() * 4 + 10;
-    char* buf = new char[buf_size];
-    memset(buf, 0, buf_size);
+    out->resize(buf_size);
+    char* buf = (char*)out->data();
 
     int len = UTF8ToUTF16((const unsigned  char*)utf8.c_str(), (unsigned char*)buf, buf_size);
-    string gbk(buf, len);
-    delete[] buf;
-    return gbk;
+    out->resize(len);
+    return *out;
 }
 
 
@@ -156,12 +158,13 @@ std::string utf8_to_utf16(const std::string& utf8)
 
 #include <iconv.h>
 
-static string convert(const char* from, const char* to, const char* src, size_t size)
+static string& convert(const char* from, const char* to, const char* src, size_t size, string* out)
 {
     if (size == 0 ) return "";
 
     size_t buf_len = size*2 + 10;
-    char* buf = new char[buf_len];
+    out->resize(buf_size);
+    char* buf = (char*)out->data();
 
     const char* src_orig = src;
     char* dst = buf;
@@ -179,35 +182,35 @@ static string convert(const char* from, const char* to, const char* src, size_t 
 
     if (ret == (size_t)-1){
         cerr << "iconv failed: " << from << "," << to << ":" << strerror(errno);
-        delete[] buf;
         iconv_close(ic);
-        return src_orig;
+        *out = src;
+        return *out;
     }
 
-    string str(buf, buf_len - dst_len);
-    delete[] buf;
+    out->resize(buf_len - dst_len);
     iconv_close(ic);
-    return str;
+    return *out;
 }
 
-string gbk_to_utf8(const string& gbk)
+string& gbk_to_utf8(const string& gbk, string* out)
 {
     return convert("GBK", "UTF-8", gbk.c_str(), gbk.size());
 }
 
-string utf8_to_gbk(const string& utf8)
+string& utf8_to_gbk(const string& utf8, string* out)
 {
-    return convert("UTF-8", "GBK", utf8.c_str(), utf8.size());
+    return convert("UTF-8", "GBK", utf8.c_str(), utf8.size(), out);
 }
 
-std::string utf8_to_local(const std::string& utf8)
+std::string& utf8_to_local(const std::string& utf8, string* out)
 {
-    return utf8;
+    *out = utf8;
+    return *out;
 }
 
-std::string gbk_to_local(const std::string& gbk)
+std::string& gbk_to_local(const std::string& gbk, string* out)
 {
-    return convert("GBK", "UTF-8", gbk.c_str(), gbk.size());
+    return convert("GBK", "UTF-8", gbk.c_str(), gbk.size(), out);
 }
 
 std::string local_to_utf8(const string& str)
@@ -217,3 +220,44 @@ std::string local_to_utf8(const string& str)
 
 
 #endif
+
+std::string gbk_to_utf8(const std::string& gbk)
+{
+    std::string out;
+    gbk_to_utf8(gbk, &out);
+    return out;
+}
+
+std::string utf8_to_gbk(const std::string& utf8)
+{
+    std::string out;
+    utf8_to_gbk(utf8, &out);
+    return out;
+}
+
+std::string utf8_to_local(const std::string& utf8)
+{
+    std::string out;
+    utf8_to_local(utf8, &out);
+    return out;
+}
+std::string gbk_to_local(const std::string& gbk)
+{
+    std::string out;
+    gbk_to_local(gbk, &out);
+    return out;
+}
+
+std::string local_to_utf8(const std::string& str)
+{
+    std::string out;
+    local_to_utf8(str, &out);
+    return out;
+}
+
+std::string utf8_to_utf16(const std::string& utf8)
+{
+    std::string out;
+    utf8_to_utf16(utf8, &out);
+    return out;
+}

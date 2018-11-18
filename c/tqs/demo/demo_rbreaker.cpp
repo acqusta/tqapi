@@ -59,33 +59,14 @@ class RBreakerStralet : public Stralet {
     string contract = "CU.SHF";
 
 public:
-    virtual void on_event(shared_ptr<StraletEvent> evt) override;
-    void on_init();
-    void on_bar(const char* cycle, shared_ptr<const Bar> bar);
-    void on_fini();
+	virtual void on_init() override;
+	virtual void on_bar(const string& cycle, shared_ptr<const Bar> bar) override;
+	virtual void on_fini() override;
 
     int cancel_unfinished_order();
 
     void place_order(const string& code, double price, int64_t size, const string action);
 };
-
-void RBreakerStralet::on_event(shared_ptr<StraletEvent> evt)
-{
-    switch (evt->evt_id) {
-        case STRALET_EVENT_ID::ON_INIT:
-            on_init();
-            break;
-        case STRALET_EVENT_ID::ON_FINI:
-            on_fini();
-            break;
-        case STRALET_EVENT_ID::ON_BAR: {
-            auto on_bar = evt->as<OnBar>();
-            this->on_bar(on_bar->cycle.c_str(), on_bar->bar);
-            break;
-        }
-        default: break;
-    }
-}
 
 void RBreakerStralet::on_init()
 {
@@ -166,9 +147,10 @@ void RBreakerStralet::place_order(const string& code, double price, int64_t size
         ctx()->logger(ERROR) << "place_order error:" << r.msg << endl;;
 }
 
-void RBreakerStralet::on_bar(const char* cycle, shared_ptr<const Bar> bar)
+void RBreakerStralet::on_bar(const string& cycle, shared_ptr<const Bar> bar)
 {
-    if (strcmp(cycle, "1m")) return;
+	if (cycle != "1m") return;
+
     if (bar->code != this->contract) return;
 
     auto tapi = ctx()->trade_api();

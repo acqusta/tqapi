@@ -55,8 +55,6 @@ namespace tquant { namespace stralet { namespace backtest {
         }
     };
 
-    //typedef Stralet* (*create_stralet
-
     _TQAPI_EXPORT void run(const BackTestConfig & cfg, function<Stralet*()> creator);
     _TQAPI_EXPORT void run(const char* cfg, function<Stralet*()> creator);
 

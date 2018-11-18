@@ -14,7 +14,6 @@
 
 #include "realtime.h"
 
-
 namespace tquant { namespace stralet { namespace realtime {
 
     using namespace tquant::stralet;
@@ -231,7 +230,7 @@ namespace tquant { namespace stralet { namespace realtime {
         DataApiWrap*  m_dapi_wrap;
 
         std::unordered_map<int64_t, shared_ptr<TimerInfo>> m_timers;
-        Stralet* m_stralet;
+        Stralet*     m_stralet;
 
         loop::MessageLoop m_msgloop;
         string            m_mode;
@@ -243,8 +242,8 @@ namespace tquant { namespace stralet { namespace realtime {
 
     void RealTimeStraletContext::post_event(const char* evt, void* data)
     {
-        auto on_event = make_shared<OnEvent>(evt, data);
-        m_msgloop.post_task([this, on_event]() { m_stralet->on_event(on_event); });
+        string s_evt(evt);
+        m_msgloop.post_task([this, s_evt, data]() { m_stralet->on_event(s_evt, data); });
     }
 
     DataApi* RealTimeStraletContext::data_api()
@@ -285,7 +284,7 @@ namespace tquant { namespace stralet { namespace realtime {
     void RealTimeStraletContext::timer_tigger(shared_ptr<TimerInfo> timer)
     {
         if (!timer->is_dead) {
-            m_stralet->on_event(make_shared<OnTimer>(timer->id, timer->data));
+            m_stralet->on_timer(timer->id, timer->data);
             if (!timer->is_dead)
                 m_msgloop.post_delayed_task(bind(&RealTimeStraletContext::timer_tigger, this, timer), (uint32_t)timer->delay);
         }
@@ -330,41 +329,39 @@ namespace tquant { namespace stralet { namespace realtime {
     void RealTimeStraletContext::on_market_quote(shared_ptr<const MarketQuote> quote)
     {
         m_msgloop.post_task([this, quote]() {
-            m_stralet->on_event(make_shared<OnQuote>(quote));
+            m_stralet->on_quote(quote);
         });
     }
 
     void RealTimeStraletContext::on_bar(const string& cycle, shared_ptr<const Bar> bar)
     {
-        auto on_bar = make_shared<OnBar>(cycle, bar);
-        m_msgloop.post_task([this, on_bar]() {
-            m_stralet->on_event(on_bar);
+        m_msgloop.post_task([this, cycle, bar]() {
+            m_stralet->on_bar(cycle, bar);
         });
     }
 
     void RealTimeStraletContext::on_order_status(shared_ptr<Order> order)
     {
         m_msgloop.post_task([this, order]() {
-            m_stralet->on_event(make_shared<OnOrder>(order));
+            m_stralet->on_order(order);
         });
     }
 
     void RealTimeStraletContext::on_order_trade(shared_ptr<Trade> trade)
     {
         m_msgloop.post_task([this, trade]() {
-            m_stralet->on_event(make_shared<OnTrade>(trade));
+            m_stralet->on_trade(trade);
         });
     }
     void RealTimeStraletContext::on_account_status(shared_ptr<AccountInfo> account)
     {
         m_msgloop.post_task([this, account]() {
-            auto evt = make_shared<OnAccountStatus>(account);
-            m_stralet->on_event(evt);
+			m_stralet->on_account_status(account);
         });
     }
 
-    void run(const RealTimeConfig & a_cfg, function<Stralet*()> creator)
-    {
+	void run(const RealTimeConfig & a_cfg, function<Stralet*()> creator)
+	{
         RealTimeConfig cfg = a_cfg;
         if (cfg.data_api_addr.empty())   cfg.data_api_addr  = "ipc://tqc_10001";
         if (cfg.trade_api_addr.empty())  cfg.trade_api_addr = "ipc://tqc_10001";
@@ -377,8 +374,6 @@ namespace tquant { namespace stralet { namespace realtime {
         auto dapi = create_data_api (cfg.data_api_addr.c_str());
         auto tapi = create_trade_api(cfg.trade_api_addr.c_str());
 
-        auto stralet = creator();
-
         Json::Value properties;
         if (cfg.properties.size()) {
             Json::Reader reader;
@@ -388,18 +383,20 @@ namespace tquant { namespace stralet { namespace realtime {
             }
         }
 
+        auto stralet = creator();
+
         RealTimeStraletContext* sc = new RealTimeStraletContext(dapi, tapi, stralet, properties, cfg.output_dir);
 
         sc->logger() << "dapi_addr  : " << cfg.data_api_addr;
         sc->logger() << "tapi_addr : " << cfg.trade_api_addr;
 
         stralet->set_context(sc);
-        stralet->on_event(make_shared<OnInit>());
+        stralet->on_init();
+
         loop::RunLoop(&sc->m_msgloop).run();
 
-        stralet->on_event(make_shared<OnFini>());
+        stralet->on_fini();
 
-        delete stralet;
         delete sc;
         delete tapi;
         delete dapi;
