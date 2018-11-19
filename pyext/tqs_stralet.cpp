@@ -304,7 +304,7 @@ void StraletWrap::on_quote(shared_ptr<const MarketQuote> quote)
 {
     auto gstate = PyGILState_Ensure();
 
-    PyObject* arg = Py_BuildValue("iN", ON_QUOTE, quote.get());
+    PyObject* arg = Py_BuildValue("iN", ON_QUOTE, convert_tick(quote.get()));
     call_callback(m_callback.obj, arg);
 
     PyGILState_Release(gstate);
@@ -326,7 +326,7 @@ void StraletWrap::on_order(shared_ptr<const Order> order)
 {
     auto gstate = PyGILState_Ensure();
 
-    PyObject* arg = Py_BuildValue("iN", ON_ORDER, order.get());
+    PyObject* arg = Py_BuildValue("iN", ON_ORDER, convert_order(order.get()));
     call_callback(m_callback.obj, arg);
 
     PyGILState_Release(gstate);
