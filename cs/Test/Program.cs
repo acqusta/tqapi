@@ -428,13 +428,6 @@ namespace Test
                 PerfTest(dapi);
                 //PerfTest2(dapi);
             }
-
-            if (false)
-            {
-                TQuantApi.SetParams("embed_path", "d:/tquant/");
-                var dapi = TQuantApi.CreateDataApi("embed://tkapi/file://d:/tquant/tqc?hisdata_only=true");
-                PerfTest3(dapi);
-            }
             return 0;
         }
     }
