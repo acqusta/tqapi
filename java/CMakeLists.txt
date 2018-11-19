@@ -17,7 +17,7 @@ else()
     )
 endif()
 
-add_custom_target(build_tqapi ALL DEPENDS target/tqapi.jar)
+add_custom_target(build_java ALL DEPENDS target/tqapi.jar)
 
 install(FILES target/tqapi.jar DESTINATION java)
 

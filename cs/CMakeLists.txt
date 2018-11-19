@@ -1,10 +1,5 @@
 project(tqapi_cs)
 
-
-#    COMMAND npm install
-#    COMMAND bower install
-#    COMMAND grunt --output_dir=${CMAKE_CURRENT_BINARY_DIR}/web2
-
 if (WIN32)
   add_custom_command(
     OUTPUT TQuantApi.dll

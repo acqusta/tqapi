@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -16,10 +16,6 @@
     <OutputPath>..\bin\Release</OutputPath>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.1-beta1" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\src\TQuantApi.csproj" />
