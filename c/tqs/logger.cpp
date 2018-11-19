@@ -58,6 +58,7 @@ namespace tquant {
 
             color_console_output(buf, len, severity);
             file_output(log_dir, buf, len);
+            delete[] buf;
 
             if (severity == LogSeverity::FATAL) {
 #if defined(_DEBUG) && defined(_MSC_VER)
