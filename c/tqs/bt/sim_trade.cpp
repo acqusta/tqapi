@@ -343,6 +343,7 @@ CallResult<const OrderID> SimAccount::validate_order(const string& code, double 
 
     get_action_effect(action, &pos_side, &inc_dir);
     auto pos = get_position(code, pos_side);
+
     if (inc_dir == -1) {
         if (pos->enable_size - pos->frozen_size < size) {
             stringstream ss;
@@ -537,15 +538,10 @@ bool SimAccount::reject_order(Order* order, const char* msg)
 
     get_action_effect(order->entrust_action, &pos_side, &inc_dir);
     auto pos = get_position(order->code, pos_side);
-    if (inc_dir == 1) {
-        if (is_futures_or_index(order->code.c_str()))
-            pos->enable_size += fill_size;
-
+    if (inc_dir == 1)
         m_tdata->frozen_balance -= order->entrust_size * order->entrust_price;
-    }
-    else {
+    else
         pos->frozen_size -= order->entrust_size;
-    }
 
     order->fill_price = 0;
     order->fill_size = 0;
