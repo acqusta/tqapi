@@ -54,7 +54,7 @@ namespace tquant {
                 this->streambuf_ = left.streambuf_;
                 rdbuf(streambuf_.get());
             }
-#ifdef __APPLE__
+#ifdef __linux__
             LogStream(const LogStream& left)
                 : std::ostream(NULL) {
                 this->streambuf_ = left.streambuf_;
