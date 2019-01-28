@@ -250,6 +250,7 @@ void SimStraletContext::run_one_day(Stralet* stralet)
         // ×¢ÒâÊÂ¼þË³Ðò: try_match -> order -> trade -> event -> quote -> bar
 
         m_tapi->try_match();
+        m_tapi->update_last_prices();
 
         for (auto& e : m_tapi->m_accounts) {
             auto& act = e.second;

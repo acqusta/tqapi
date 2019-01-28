@@ -195,6 +195,11 @@ void SimTradeApi::try_match()
     for (auto & e : m_accounts) { e.second->try_match(); };
 }
 
+void SimTradeApi::update_last_prices()
+{
+    for (auto& e : m_accounts) { e.second->update_last_prices(); }
+}
+
 SimAccount::SimAccount(SimStraletContext* ctx, const string& account_id,
                        double init_balance,
                        const vector<Holding> & holdings)
@@ -1036,6 +1041,16 @@ void SimAccount::try_cover(OrderData* od)
     }
 }
 
+void SimAccount::update_last_prices()
+{
+    auto dapi = m_ctx->data_api();
+    for (auto& e : m_tdata->positions) {
+        auto q = dapi->quote(e.second->code).value;
+        if (q)
+            e.second->last_price = q->last;
+    }
+}
+
 void SimAccount::move_to(int trading_day)
 {
     if (m_tdata->trading_day == trading_day) return;
@@ -1110,7 +1125,7 @@ void SimAccount::save_data(const string& dir)
             return;
         }
         out << "account_id,trading_day,code,name,side,init_size,current_size,enable_size,frozen_size,today_size,"
-            << "cost,cost_price,close_pnl,float_pnl,margin,commission\n";
+            << "cost,cost_price,close_pnl,float_pnl,margin,commission,last_price\n";
         for (auto& tdata : m_his_tdata) {
             vector<shared_ptr<Position>> positions;
             for (auto& e : tdata->positions) positions.push_back(e.second);
@@ -1128,7 +1143,8 @@ void SimAccount::save_data(const string& dir)
                     << pos->init_size << "," << pos->current_size << ","
                     << pos->enable_size << "," << pos->frozen_size << "," << pos->today_size << ","
                     << pos->cost << "," << pos->cost_price << "," << pos->close_pnl << "," << pos->float_pnl << ","
-                    << pos->margin << "," << pos->commission << endl;
+                    << pos->margin << "," << pos->commission  << "," << pos->last_price
+                    << endl;
         }
         out.close();
     }

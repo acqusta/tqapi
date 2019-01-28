@@ -69,6 +69,7 @@ namespace tquant { namespace stralet { namespace backtest {
         void make_trade     (Order* order, double price);
         Position* get_position(const string& code, const string& side);
 
+        void update_last_prices();
 
         void move_to(int trading_day);
         void save_data(const string& dir);
@@ -117,6 +118,7 @@ namespace tquant { namespace stralet { namespace backtest {
         }
 
         void try_match();
+        void update_last_prices();
 
         void move_to(int trading_day);
 
