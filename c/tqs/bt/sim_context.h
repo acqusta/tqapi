@@ -44,8 +44,11 @@ namespace tquant { namespace stralet { namespace backtest {
 
         void move_to(int trading_day);
         void run_one_day(Stralet* stralet);
-        void calc_next_timer_time(DateTime* dt);
         void execute_timer();
+        void execute_trade();
+        void execute_event();
+        void execute_market_data(vector<shared_ptr<MarketQuote>>& quotes, vector<shared_ptr<Bar>>& bars);
+        void calc_next_timer_time(DateTime* dt);
         void set_sim_time(const DateTime& dt);
         void init_sim_time();
 
@@ -68,17 +71,19 @@ namespace tquant { namespace stralet { namespace backtest {
         virtual const string& get_properties() override;
 
         virtual const string& mode() override;
+
+        virtual void stop() override;
+
     private:
         SimDataApi*  m_dapi;
         SimTradeApi* m_tapi;
         DataLevel    m_data_level;
         int32_t      m_trading_day;
-
+        bool         m_should_exit;
         system_clock::time_point m_now_tp;
         DateTime m_now;
 
         struct TimerInfo {
-            //Stralet* stralet;
             int64_t  id;
             int64_t  delay;
             void*    data;

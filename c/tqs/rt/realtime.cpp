@@ -213,6 +213,8 @@ namespace tquant { namespace stralet { namespace realtime {
 
         virtual const string& mode() override;
 
+        virtual void stop() override;
+
         // DataApi Callback
         virtual void on_market_quote(shared_ptr<const MarketQuote> quote) override;
         virtual void on_bar(const string& cycle, shared_ptr<const Bar> bar) override;
@@ -353,11 +355,17 @@ namespace tquant { namespace stralet { namespace realtime {
             m_stralet->on_trade(trade);
         });
     }
+
     void RealTimeStraletContext::on_account_status(shared_ptr<AccountInfo> account)
     {
         m_msgloop.post_task([this, account]() {
 			m_stralet->on_account_status(account);
         });
+    }
+
+    void RealTimeStraletContext::stop()
+    {
+        m_msgloop.post_task(bind(&loop::MessageLoop::quit_now, &m_msgloop));
     }
 
 	void run(const RealTimeConfig & a_cfg, function<Stralet*()> creator)

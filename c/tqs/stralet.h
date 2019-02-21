@@ -183,6 +183,8 @@ namespace tquant { namespace stralet {
         virtual const string& get_properties() = 0;
 
         virtual const string& mode() = 0;
+
+        virtual void stop() = 0;
     };
 } }
 

@@ -12,6 +12,7 @@ SimStraletContext::SimStraletContext()
     , m_tapi(nullptr)
     , m_data_level(BT_TICK)
     , m_trading_day(0)
+    , m_should_exit(false)
     , m_mode("backtest")
 {
 }
@@ -131,6 +132,11 @@ const string& SimStraletContext::mode()
     return m_mode;
 }
 
+void SimStraletContext::stop()
+{
+    m_should_exit = true;
+}
+
 
 void SimStraletContext::calc_next_timer_time(DateTime* dt)
 {
@@ -160,8 +166,11 @@ void SimStraletContext::execute_timer()
     }
 
     for (auto& t : timers) {
-        if (!t->is_dead)
-			m_stralet->on_timer(t->id, t->data);
+        if (!t->is_dead) {
+            m_stralet->on_timer(t->id, t->data);
+            if (m_should_exit) break;
+        }
+
     }
 }
 
@@ -214,18 +223,70 @@ void SimStraletContext::init_sim_time()
     }
 }
 
+void SimStraletContext::execute_trade()
+{
+    m_tapi->try_match();
+    m_tapi->update_last_prices();
+
+    for (auto& e : m_tapi->m_accounts) {
+        auto& act = e.second;
+        {
+            auto ind_list = act->m_ord_status_ind_list;
+            act->m_ord_status_ind_list.clear();
+            for (auto& ind : ind_list) {
+                m_stralet->on_order(ind);
+                if (this->m_should_exit) return;
+            }
+        }
+        {
+            auto ind_list = act->m_trade_ind_list;
+            act->m_trade_ind_list.clear();
+            for (auto& ind : ind_list) {
+                m_stralet->on_trade(ind);
+                if (this->m_should_exit) return;
+            }
+        }
+    }
+}
+
+void SimStraletContext::execute_market_data(vector<shared_ptr<MarketQuote>>& quotes, vector<shared_ptr<Bar>>& bars)
+{
+    for (auto & q : quotes) {
+        m_stralet->on_quote(q);
+        if (this->m_should_exit) return;
+    }
+
+    string cycle = "1m";
+    for (auto& bar : bars) {
+        m_stralet->on_bar(cycle, bar);
+        if (this->m_should_exit) return;
+    }
+}
+
+void SimStraletContext::execute_event()
+{
+    if (m_events.empty()) return;
+    auto events = m_events;
+    m_events.clear();
+    for (auto evt : events) {
+        m_stralet->on_event(evt->name, evt->data);
+        if (this->m_should_exit) return;
+    }
+}
+
 void SimStraletContext::run_one_day(Stralet* stralet)
 {
     init_sim_time();
 
     m_stralet = stralet;
 
+    this->m_should_exit = false;
     m_stralet->set_context(this);
     m_stralet->on_init();
 
-    DateTime end_dt(m_trading_day, HMS(15, 0, 0));
+    DateTime end_dt(m_trading_day, HMS(15, 15, 0));
 
-    while (m_now.cmp(end_dt) < 0) {
+    while (m_now.cmp(end_dt) < 0 && !m_should_exit) {
         DateTime dt1, dt2;
         m_dapi->calc_nex_time(&dt1);
         calc_next_timer_time(&dt2);
@@ -249,40 +310,10 @@ void SimStraletContext::run_one_day(Stralet* stralet)
 
         // ×¢ÒâÊÂ¼þË³Ðò: try_match -> order -> trade -> event -> quote -> bar
 
-        m_tapi->try_match();
-        m_tapi->update_last_prices();
-
-        for (auto& e : m_tapi->m_accounts) {
-            auto& act = e.second;
-            {
-                auto ind_list = act->m_ord_status_ind_list;
-                act->m_ord_status_ind_list.clear();
-                for (auto& ind : ind_list) {                    
-                    stralet->on_order(ind);
-                }
-            }
-            {
-                auto ind_list = act->m_trade_ind_list;
-                act->m_trade_ind_list.clear();
-                for (auto& ind : ind_list) {
-                    stralet->on_trade(ind);
-                }
-            }
-        }
-
-        if (m_events.size()) {
-            auto events = m_events;
-            m_events.clear();
-            for (auto evt : events)
-                stralet->on_event(evt->name, evt->data);
-        }
-
-        for (auto & q : quotes) stralet->on_quote(q);
-
-        string cycle = "1m";
-        for (auto& bar : bars) stralet->on_bar(cycle, bar);
-
-        execute_timer();
+        if (!m_should_exit) execute_trade();
+        if (!m_should_exit) execute_event();
+        if (!m_should_exit) execute_market_data(quotes, bars);
+        if (!m_should_exit) execute_timer();
     }
 
     stralet->on_fini();
