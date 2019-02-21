@@ -326,10 +326,22 @@ CallResult<const OrderID> SimAccount::validate_order(const string& code, double 
 
     string mkt(p + 1);
     bool is_open_time = false;
-    if (mkt == "SH" || mkt == "SZ" ||  mkt == "CFE") {
+    if (mkt == "SH" || mkt == "SZ") {
         is_open_time =
             ((dt.time >= HMS(9, 30) && dt.time < HMS(11, 30)) ||
              (dt.time >= HMS(13, 0) && dt.time < HMS(15, 00)));
+    }
+    else if (mkt == "CFE") {
+        if (code[0] == 'T') {
+            is_open_time =
+                ((dt.time >= HMS(9, 15) && dt.time < HMS(11, 30)) ||
+                (dt.time >= HMS(13, 0) && dt.time < HMS(15, 15)));
+        }
+        else {
+            is_open_time =
+                ((dt.time >= HMS(9, 30) && dt.time < HMS(11, 30)) ||
+                (dt.time >= HMS(13, 0) && dt.time < HMS(15, 0)));
+        }
     }
     else {
         is_open_time =
@@ -574,10 +586,12 @@ static void get_commission_rate(const char* code, double* open_rate, double* clo
             *close_rate = 0.00125;
         }
     }
-    else if (strcmp(p, ".CFE") == 0) {
-        *open_rate  = 0.000025;
-        *close_rate = 0.000025;
-    }
+    //else if (strcmp(p, ".CFE") == 0) {
+    //    if (code[0] == 'I') {
+    //        *open_rate = 0.000025;
+    //        *close_rate = 0.000025;
+    //    }
+    //}
     else {
         *open_rate  = 0.0000;
         *close_rate = 0.0000;
@@ -874,6 +888,9 @@ void SimAccount::try_buy(OrderData* od)
             if (od->price_type == "any" && q->ask_vol1 > 0) {
                 make_trade(od->order.get(), q->ask1);
             }
+            else if (od->price_type == "any_test") {
+                make_trade(od->order.get(), od->order->entrust_price);
+            }
             else if (q->last <= od->order->entrust_price && od->volume_in_queue == 0) {
                 make_trade(od->order.get(), od->order->entrust_price);
             }
@@ -889,6 +906,9 @@ void SimAccount::try_buy(OrderData* od)
         if (bar && od->price_type == "any") {
             double fill_price = (bar->high + bar->low) / 2;
             make_trade(od->order.get(), fill_price);
+        }
+        else if (od->price_type == "any_test") {
+            make_trade(od->order.get(), od->order->entrust_price);
         }
         else if (bar && bar->low < od->order->entrust_price) {
             double fill_price = min(od->order->entrust_price, bar->high);
@@ -917,8 +937,12 @@ void SimAccount::try_sell(OrderData* od)
         estimate_vol_in_queue(od, q.get());
 
         if (check_quote_time(q.get(), od->order.get())) {
-            if (od->price_type == "any" && q->bid_vol1 > 0)
+            if (od->price_type == "any" && q->bid_vol1 > 0) {
                 make_trade(od->order.get(), q->bid1);
+            }
+            else if (od->price_type == "any_test") {
+                make_trade(od->order.get(), od->order->entrust_price);
+            }
             else if (q->last >= od->order->entrust_price && od->volume_in_queue == 0) {
                 make_trade(od->order.get(), od->order->entrust_price);
             }
@@ -934,6 +958,9 @@ void SimAccount::try_sell(OrderData* od)
         if (bar && od->price_type == "any") {
             double fill_price = (bar->high + bar->low) / 2;
             make_trade(od->order.get(), fill_price);
+        }
+        else if (od->price_type == "any_test") {
+            make_trade(od->order.get(), od->order->entrust_price);
         }
         else if (bar && bar->high > od->order->entrust_price) {
             double fill_price = max(od->order->entrust_price, bar->low);
@@ -966,6 +993,9 @@ void SimAccount::try_short(OrderData* od)
             if (od->price_type == "any" && q->bid_vol1 > 0) {
                 make_trade(od->order.get(), q->bid1);
             }
+            else if (od->price_type == "any_test") {
+                make_trade(od->order.get(), od->order->entrust_price);
+            }
             else if (q->last >= od->order->entrust_price && od->volume_in_queue == 0) {
                 make_trade(od->order.get(), od->order->entrust_price);
             }
@@ -981,6 +1011,9 @@ void SimAccount::try_short(OrderData* od)
         if (bar && od->price_type == "any") {
             double fill_price = (bar->high + bar->low) / 2;
             make_trade(od->order.get(), fill_price);
+        }
+        else if (od->price_type == "any_test") {
+            make_trade(od->order.get(), od->order->entrust_price);
         }
         else if (bar && bar->high > od->order->entrust_price) {
             double fill_price = max(od->order->entrust_price, bar->low);
@@ -1012,6 +1045,9 @@ void SimAccount::try_cover(OrderData* od)
             if (od->price_type == "any" && q->ask_vol1 > 0) {
                 make_trade(od->order.get(), q->ask1);
             }
+            else if (od->price_type == "any_test") {
+                make_trade(od->order.get(), od->order->entrust_price);
+            }
             else if (q->last <= od->order->entrust_price && od->volume_in_queue == 0) {
                 make_trade(od->order.get(), od->order->entrust_price);
             }
@@ -1027,6 +1063,9 @@ void SimAccount::try_cover(OrderData* od)
         if (bar && od->price_type == "any") {
             double fill_price = (bar->high + bar->low) / 2;
             make_trade(od->order.get(), fill_price);
+        }
+        else if (od->price_type == "any_test") {
+            make_trade(od->order.get(), od->order->entrust_price);
         }
         else if (bar && bar->low < od->order->entrust_price) {
             double fill_price = min(od->order->entrust_price, bar->high);
