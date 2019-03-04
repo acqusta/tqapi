@@ -25,7 +25,7 @@ namespace TQuant.Stralet
 
         Int32 TradingDay { get; }
 
-        TQuant.Stralet.FinDataTime CurTime { get; }
+        TQuant.Stralet.FinDateTime CurTime { get; }
 
         DateTime CurDateTime { get; }
 
@@ -128,7 +128,7 @@ namespace TQuant.Stralet
 
         public Int32 TradingDay { get { return trading_day; } }
 
-        public FinDataTime CurTime     { get { return TqsDll.tqs_sc_cur_time(this.handle); } }
+        public FinDateTime CurTime     { get { return TqsDll.tqs_sc_cur_time(this.handle); } }
         public DateTime    CurDateTime { get { return TqsDll.tqs_sc_cur_time(this.handle).AsDateTime();} }
 
         public void PostEvent(String evt, long data)

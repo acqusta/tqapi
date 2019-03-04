@@ -6,18 +6,18 @@ namespace TQuant
     namespace Stralet
     {
         [StructLayout(LayoutKind.Sequential)]
-        public struct FinDataTime
+        public struct FinDateTime
         {
             public Int32 Date;
             public Int32 Time;
 
-            public FinDataTime(Int32 Date, Int32 Time)
+            public FinDateTime(Int32 Date, Int32 Time)
             {
                 this.Date = Date;
                 this.Time = Time;
             }
 
-            public FinDataTime(DateTime dt)
+            public FinDateTime(DateTime dt)
             {
                 this.Date = dt.Year * 10000 + dt.Month * 100 + dt.Day;
                 this.Time = (dt.Hour * 10000 + dt.Minute * 100 + dt.Second) * 1000 + dt.Millisecond;
@@ -80,7 +80,7 @@ namespace TQuant
                 public static extern Int32 tqs_sc_trading_day(IntPtr h);
 
                 [DllImport("tqapi", EntryPoint = "tqs_sc_cur_time", CallingConvention = CallingConvention.Cdecl)]
-                public static extern FinDataTime tqs_sc_cur_time(IntPtr h);
+                public static extern FinDateTime tqs_sc_cur_time(IntPtr h);
 
                 [DllImport("tqapi", EntryPoint = "tqs_sc_post_event", CallingConvention = CallingConvention.Cdecl)]
                 public static extern void tqs_sc_post_event(IntPtr h, String evt, IntPtr data);

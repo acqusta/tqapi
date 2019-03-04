@@ -35,7 +35,7 @@ namespace TQuant.Stralet
             public Dictionary<string, object> properties = new Dictionary<string, object>();
         }
 
-        static public void Run(Config cfg, StraletCreator creatae_stralet)
+        static public void Run(Config cfg, StraletCreator create_stralet)
         {
             var json = JsonConvert.SerializeObject(cfg);
 
@@ -43,7 +43,7 @@ namespace TQuant.Stralet
             StraletWrap wrap = null;
             Impl.TqsDll.StraletCreator my_creatae_stralet = () =>
             {
-                var stralet = creatae_stralet();
+                var stralet = create_stralet();
 
                 wrap = new StraletWrap(stralet);
                 return wrap.handle;
