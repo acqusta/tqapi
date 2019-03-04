@@ -87,7 +87,7 @@ public interface TradeApi {
 
     class EntrustAction {
         public static String Buy             = "Buy";
-        public static String Short           = "Sell";
+        public static String Short           = "Short";
         public static String Cover           = "Cover";
         public static String Sell            = "Sell";
         public static String CoverToday      = "CoverToday";

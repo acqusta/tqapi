@@ -124,7 +124,11 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_quer
     try {
         jobjectArray arr = env->NewObjectArray((jsize)r.value->size(), env->FindClass("Lcom/acqusta/tquant/api/TradeApi$AccountInfo;"), nullptr);
         for (size_t i = 0; i < r.value->size(); i++) {
-            auto obj = convert_account_info(env, wrap->help_cls, wrap->createAccountInfo, &r.value->at(i));
+            auto obj = convert_account_info(env,
+                wrap->m_obj_creator->help_cls,
+                wrap->m_obj_creator->createAccountInfo,
+                &r.value->at(i));
+
             env->SetObjectArrayElement(arr, (jsize)i, obj);
             env->DeleteLocalRef(obj);
         }
@@ -160,7 +164,7 @@ JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_queryBala
     try {
         auto& bal = r.value;
 
-        jobject obj = env->CallStaticObjectMethod(wrap->help_cls, wrap->createBalance,
+        jobject obj = env->CallStaticObjectMethod(wrap->m_obj_creator->help_cls, wrap->m_obj_creator->createBalance,
             env->NewStringUTF(bal->account_id.c_str()),
             env->NewStringUTF(bal->fund_account.c_str()),
             bal->init_balance,
@@ -191,6 +195,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_quer
         return 0;
     }
 
+
     auto r = wrap->m_tapi->query_orders(get_string(env, account_id));
     if (!r.value) {
         throwJavaException(env, "%s", r.msg.c_str());
@@ -201,7 +206,11 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_quer
 
         jobjectArray arr = env->NewObjectArray((jsize)r.value->size(), env->FindClass("Lcom/acqusta/tquant/api/TradeApi$Order;"), nullptr);
         for (size_t i = 0; i < r.value->size(); i++) {
-            auto ord = convert_order(env, wrap->help_cls, wrap->createOrder, &r.value->at(i));
+            auto ord = convert_order(env,
+                wrap->m_obj_creator->help_cls,
+                wrap->m_obj_creator->createOrder,
+                &r.value->at(i));
+
             env->SetObjectArrayElement(arr, (jsize)i, ord);
             env->DeleteLocalRef(ord);
         }
@@ -239,7 +248,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_quer
 
         jobjectArray arr = env->NewObjectArray((jsize)r.value->size(), env->FindClass("Lcom/acqusta/tquant/api/TradeApi$Trade;"), nullptr);
         for (size_t i = 0; i < r.value->size(); i++) {
-            auto obj = convert_trade(env, wrap->help_cls, wrap->createTrade, &r.value->at(i));
+            auto obj = convert_trade(env, wrap->m_obj_creator->help_cls, wrap->m_obj_creator->createTrade, &r.value->at(i));
             env->SetObjectArrayElement(arr, (jsize)i, obj);
             env->DeleteLocalRef(obj);
         }
@@ -277,7 +286,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_quer
         jobjectArray arr = env->NewObjectArray((jsize)r.value->size(), env->FindClass("Lcom/acqusta/tquant/api/TradeApi$Position;"), nullptr);
         for (size_t i = 0; i < r.value->size(); i++) {
             auto ord = &r.value->at(i);
-            jobject obj = env->CallStaticObjectMethod(wrap->help_cls, wrap->createPosition,
+            jobject obj = env->CallStaticObjectMethod(wrap->m_obj_creator->help_cls, wrap->m_obj_creator->createPosition,
                 env->NewStringUTF(ord->account_id.c_str()),
                 env->NewStringUTF(ord->code.c_str()) ,
                 env->NewStringUTF(ord->name.c_str()) ,
@@ -296,9 +305,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_quer
                 ord->commission                      );
 
             env->SetObjectArrayElement(arr, (jsize)i, obj);
+            env->DeleteLocalRef(obj);
         }
 
-        env->DeleteLocalRef(wrap->help_cls);
         return arr;
     }
     catch (const exception& e) {
@@ -333,8 +342,11 @@ JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_placeOrde
             return 0;
         }
 
-        return env->CallStaticObjectMethod(wrap->help_cls, wrap->createOrderID,
-            LocalRef(env, env->NewStringUTF(r.value->entrust_no.c_str())).m_obj,
+        return env->CallStaticObjectMethod(
+            wrap->m_obj_creator->help_cls,
+            wrap->m_obj_creator->createOrderID,
+            //LocalRef(env, env->NewStringUTF(r.value->entrust_no.c_str())).m_obj,
+            env->NewStringUTF(r.value->entrust_no.c_str()),
             r.value->order_id);
     }
     catch (const exception& e) {
@@ -480,23 +492,23 @@ JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_TradeApiJni_setCallback
         }
 
         callback = env->NewGlobalRef(callback);
-        wrap->msg_loop().post_task([wrap, callback, onOrderStatus, onOrderTrade, onAccountStatus]() {
+        wrap->m_callback->msg_loop().post_task([wrap, callback, onOrderStatus, onOrderTrade, onAccountStatus]() {
             if (wrap->m_tapi_callback)
-                wrap->jenv->DeleteGlobalRef(wrap->m_tapi_callback);
+                wrap->m_callback->jenv->DeleteGlobalRef(wrap->m_tapi_callback);
             wrap->m_tapi_callback      = callback;
-            wrap->tapi_onOrderStatus   = onOrderStatus;
-            wrap->tapi_onOrderTrade    = onOrderTrade;
-            wrap->tapi_onAccountStatus = onAccountStatus;
+            wrap->m_callback->tapi_onOrderStatus   = onOrderStatus;
+            wrap->m_callback->tapi_onOrderTrade    = onOrderTrade;
+            wrap->m_callback->tapi_onAccountStatus = onAccountStatus;
         });
     }
     else {
-        wrap->msg_loop().post_task([wrap]() {
+        wrap->m_callback->msg_loop().post_task([wrap]() {
             if (wrap->m_tapi_callback) {
-                wrap->jenv->DeleteGlobalRef(wrap->m_tapi_callback);
+                wrap->m_callback->jenv->DeleteGlobalRef(wrap->m_tapi_callback);
                 wrap->m_tapi_callback = nullptr;
-                wrap->tapi_onOrderStatus = nullptr;
-                wrap->tapi_onOrderTrade  = nullptr;
-                wrap->tapi_onAccountStatus = nullptr;
+                wrap->m_callback->tapi_onOrderStatus = nullptr;
+                wrap->m_callback->tapi_onOrderTrade  = nullptr;
+                wrap->m_callback->tapi_onAccountStatus = nullptr;
             }
         });
     }
@@ -508,14 +520,19 @@ void TradeApiWrap::on_order_status(shared_ptr<Order> order)
 {
     if (!m_tapi_callback) return;
 
-    msg_loop().post_task([this, order]() {
+    m_callback->msg_loop().post_task([this, order]() {
         try {
-            auto ord = convert_order(jenv, this->help_cls, createBar, order.get());
-            this->jenv->CallVoidMethod(m_tapi_callback, this->tapi_onOrderStatus, ord);
-            jenv->DeleteLocalRef(ord);
+            auto ord = convert_order(
+                this->m_callback->jenv,
+                this->m_obj_creator->help_cls,
+                this->m_obj_creator->createBar,
+                order.get());
+
+            this->m_callback->jenv->CallVoidMethod(m_tapi_callback, this->m_callback->tapi_onOrderStatus, ord);
+            this->m_callback->jenv->DeleteLocalRef(ord);
         }
         catch (const exception& e) {
-            throwJavaException(this->jenv, "exception: ", e.what());
+            throwJavaException(this->m_callback->jenv, "exception: ", e.what());
         }
     });
 }
@@ -524,14 +541,18 @@ void TradeApiWrap::on_order_trade(shared_ptr<Trade> trade)
 {
     if (!m_tapi_callback) return;
 
-    msg_loop().post_task([this, trade]() {
+    m_callback->msg_loop().post_task([this, trade]() {
         try {
-            auto trd = convert_trade(jenv, this->help_cls, createTrade, trade.get());
-            this->jenv->CallVoidMethod(m_tapi_callback, this->tapi_onOrderTrade, trd);
-            jenv->DeleteLocalRef(trd);
+            auto trd = convert_trade(
+                this->m_callback->jenv,
+                this->m_obj_creator->help_cls,
+                this->m_obj_creator->createTrade,
+                trade.get());
+            this->m_callback->jenv->CallVoidMethod(m_tapi_callback, this->m_callback->tapi_onOrderTrade, trd);
+            this->m_callback->jenv->DeleteLocalRef(trd);
         }
         catch (const exception& e) {
-            throwJavaException(this->jenv, "exception: ", e.what());
+            throwJavaException(this->m_callback->jenv, "exception: ", e.what());
         }
     });
 }
@@ -540,14 +561,18 @@ void TradeApiWrap::on_account_status(shared_ptr<AccountInfo> account)
 {
     if (!m_tapi_callback) return;
 
-    msg_loop().post_task([this, account]() {
+    m_callback->msg_loop().post_task([this, account]() {
         try {
-            auto ord = convert_account_info(jenv, this->help_cls, createAccountInfo, account.get());
-            this->jenv->CallVoidMethod(m_tapi_callback, this->tapi_onAccountStatus, ord);
-            jenv->DeleteLocalRef(ord);
+            auto ord = convert_account_info(
+                this->m_callback->jenv,
+                this->m_obj_creator->help_cls,
+                this->m_obj_creator->createAccountInfo,
+                account.get());
+            this->m_callback->jenv->CallVoidMethod(m_tapi_callback, this->m_callback->tapi_onAccountStatus, ord);
+            this->m_callback->jenv->DeleteLocalRef(ord);
         }
         catch (const exception& e) {
-            throwJavaException(this->jenv, "exception: ", e.what());
+            throwJavaException(this->m_callback->jenv, "exception: ", e.what());
         }
     });
 }

@@ -3,6 +3,7 @@ project(tqapi_jni)
 include_directories(
   .
   ../../../../c/api
+  ../../../../c/tqs
   ../../../../lib
   )
 
@@ -21,6 +22,10 @@ set(SRC
   com_acqusta_tquant_api_impl_TradeApiJni.h
   com_acqusta_tquant_api_impl_TQuantApiJni.cpp
   com_acqusta_tquant_api_impl_TQuantApiJni.h
+  com_acqusta_tquant_stralet_impl_StraletContextJni.cpp
+  com_acqusta_tquant_stralet_impl_StraletContextJni.h
+  com_acqusta_tquant_stralet_impl_StraletJni.cpp
+  com_acqusta_tquant_stralet_impl_StraletJni.h
   )
 
 add_library(tqapi_jni SHARED ${SRC})

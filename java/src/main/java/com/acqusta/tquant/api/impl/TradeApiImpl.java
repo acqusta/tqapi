@@ -12,9 +12,14 @@ public class TradeApiImpl implements TradeApi {
         this.handle = TradeApiJni.create(addr);
     }
 
+    public TradeApiImpl(long handle){
+
+        this.handle = handle;
+    }
+
     @Override
-    public void finalize()
-    {
+    public void finalize() {
+
         TradeApiJni.destroy(this.handle);
     }
 

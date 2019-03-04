@@ -25,7 +25,8 @@ string get_string(JNIEnv* env, jstring str)
     return ret;
 }
 
-JniHelper::JniHelper(JNIEnv* env)
+JniObjectCreator::JniObjectCreator(JNIEnv* env)
+    : env(env)
 {
     this->help_cls = (jclass)env->FindClass("Lcom/acqusta/tquant/api/impl/JniHelper;");
     if (!this->help_cls) {
@@ -43,7 +44,7 @@ JniHelper::JniHelper(JNIEnv* env)
         "JJJJJJJJJJJJJJJJJJJJ"
         "DDJJ"
         ")Lcom/acqusta/tquant/api/DataApi$MarketQuote;");
-    if (!createMarketQuote) 
+    if (!createMarketQuote)
         throwJavaException(env, "No createMarketQuote in JniHelper");
 
     createBar = env->GetStaticMethodID(help_cls, "createBar",
@@ -108,8 +109,8 @@ JniHelper::JniHelper(JNIEnv* env)
         "DJII"
         ")Lcom/acqusta/tquant/api/TradeApi$Trade;");
 
-    if (!createOrder)
-        throwJavaException(env, "No createOrder in JniHelper");
+    if (!createTrade)
+        throwJavaException(env, "No createTrade in JniHelper");
 
     createPosition = env->GetStaticMethodID(help_cls, "createPosition",
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;"
@@ -125,9 +126,17 @@ JniHelper::JniHelper(JNIEnv* env)
         "(Ljava/lang/String;I"
         ")Lcom/acqusta/tquant/api/TradeApi$OrderID;");
 
-    if (!createPosition)
+    if (!createOrderID)
         throwJavaException(env, "No createOrderID in JniHelper");
+}
 
+JniObjectCreator::~JniObjectCreator()
+{
+    RELEASE_JOBJECT(help_cls);
+}
+
+JniCallbackHelper::JniCallbackHelper(JNIEnv* env)
+{
     env->GetJavaVM(&this->jvm);
 
     msg_loop().post_task([this]() {
@@ -135,22 +144,15 @@ JniHelper::JniHelper(JNIEnv* env)
         if (r == JNI_EDETACHED)
             jvm->AttachCurrentThreadAsDaemon((void**)&jenv, nullptr);
     });
-
-    //RELEASE_JOBJECT(help_cls);
-
 }
 
-JniHelper::~JniHelper()
+JniCallbackHelper::~JniCallbackHelper()
 {
 }
 
-void JniHelper::destroy(JNIEnv* env)
+void JniCallbackHelper::destroy(JNIEnv* env)
 {
     msg_loop().post_task([this]() {
         jvm->DetachCurrentThread();
     });
-
-    RELEASE_JOBJECT(help_cls);
-
-    RELEASE_JOBJECT(help_cls);
 }

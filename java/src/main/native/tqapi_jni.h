@@ -17,62 +17,9 @@ using namespace tquant::api;
     }
 
 
-//class TQuantApiWrap :
-//    public tquant::api::TradeApi_Callback {
-//
-//public:
-//    virtual void on_order_status(shared_ptr<Order> order) override;
-//    virtual void on_order_trade(shared_ptr<Trade> trade) override;
-//    virtual void on_account_status(shared_ptr<AccountInfo> account) override;
-//
-//
-//    tquant::api::TQuantApi* api;
-//    JavaVM* jvm;
-//
-//    jclass help_cls;
-//    jmethodID createMarketQuote;
-//    jmethodID createBar;
-//    jmethodID createDailyBar;
-//    jmethodID createAccountInfo;
-//    jmethodID createBalance;
-//    jmethodID createOrder;
-//    jmethodID createTrade;
-//    jmethodID createPosition;
-//    jmethodID createOrderID;
-//
-//    jmethodID dapi_onMarketQuote;
-//    jmethodID dapi_onBar;
-//
-//    jmethodID tapi_onOrderStatus;
-//    jmethodID tapi_onOrderTrade;
-//    jmethodID tapi_onAccountStatus;
-//
-//    jobject tapi_callback;
-//
-//    JNIEnv* dapi_jenv;
-//    JNIEnv* tapi_jenv;
-//
-//    loop::MsgLoopRun  m_dapi_loop;
-//    loop::MsgLoopRun  m_tapi_loop;
-//
-//    TQuantApiWrap()
-//        : jvm(nullptr)
-//        , help_cls(nullptr) 
-//        , api(nullptr)
-//        , tapi_callback(nullptr)
-//        , dapi_jenv(nullptr)
-//        , tapi_jenv(nullptr)
-//    {}
-//
-//    bool init(JNIEnv* env);
-//    void destroy(JNIEnv* env);
-//private:
-//    ~TQuantApiWrap() {}
-//};
-
-class JniHelper : public loop::MsgLoopRun {
+class JniObjectCreator {
+    JNIEnv*   env;
 public:
-    JavaVM*  jvm;
     jclass    help_cls;
     jmethodID createMarketQuote;
     jmethodID createBar;
@@ -84,6 +31,14 @@ public:
     jmethodID createPosition;
     jmethodID createOrderID;
 
+    JniObjectCreator(JNIEnv* jenv);
+    ~JniObjectCreator();
+};
+
+class JniCallbackHelper : public loop::MsgLoopRun {
+public:
+    JavaVM*   jvm;
+    JNIEnv*   jenv;
     jmethodID dapi_onMarketQuote;
     jmethodID dapi_onBar;
 
@@ -91,23 +46,27 @@ public:
     jmethodID tapi_onOrderTrade;
     jmethodID tapi_onAccountStatus;
 
-    JNIEnv* jenv;
+    JniCallbackHelper(JNIEnv* env);
 
-    JniHelper(JNIEnv* env);
-
-    ~JniHelper();
+    ~JniCallbackHelper();
 
     void destroy(JNIEnv* env);
 };
 
-class DataApiWrap : public tquant::api::DataApi_Callback, public JniHelper {
+class DataApiWrap : public tquant::api::DataApi_Callback {
 public:
-    DataApiWrap(DataApi* dapi, JNIEnv* env)
+    DataApiWrap(DataApi* dapi, JNIEnv* env, bool has_callback=true)
         : m_dapi(dapi)
         , m_dapi_callback(nullptr)
-        , JniHelper(env)
     {
-        m_dapi->set_callback(this);
+        m_obj_creator = new JniObjectCreator(env);
+        if (has_callback) {
+            m_callback = new JniCallbackHelper(env);
+            m_dapi->set_callback(this);
+        }
+        else {
+            m_callback = nullptr;
+        }
     }
 
     ~DataApiWrap() {
@@ -115,25 +74,42 @@ public:
     }
 
     void destroy(JNIEnv* env) {
-        JniHelper::destroy(env);
+        if (m_callback) {
+            delete m_callback;
+            m_callback = nullptr;
+        }
+
+        if (m_obj_creator) {
+            delete m_obj_creator;
+            m_obj_creator = nullptr;
+        }
+
         RELEASE_JOBJECT(m_dapi_callback);
     }
 
     virtual void on_market_quote(shared_ptr<const MarketQuote> quote) override;
     virtual void on_bar(const string& cycle, shared_ptr<const Bar> bar) override;
 
-    DataApi*          m_dapi;
-    jobject           m_dapi_callback;
+    DataApi*           m_dapi;
+    jobject            m_dapi_callback;
+    JniObjectCreator*  m_obj_creator;
+    JniCallbackHelper* m_callback;
 };
 
-class TradeApiWrap : public tquant::api::TradeApi_Callback, public JniHelper {
+class TradeApiWrap :public tquant::api::TradeApi_Callback {
 public:
-    TradeApiWrap(TradeApi* tapi, JNIEnv* env)
+    TradeApiWrap(TradeApi* tapi, JNIEnv* env, bool has_callback=true)
         : m_tapi(tapi)
         , m_tapi_callback(nullptr)
-        , JniHelper(env)
     {
-        tapi->set_callback(this);
+        m_obj_creator = new JniObjectCreator(env);
+        if (has_callback) {
+            m_callback = new JniCallbackHelper(env);
+            m_tapi->set_callback(this);
+        }
+        else {
+            m_callback = nullptr;
+        }
     }
 
     ~TradeApiWrap() {
@@ -141,7 +117,16 @@ public:
     }
 
     void destroy(JNIEnv* env) {
-        JniHelper::destroy(env);
+        if (m_callback) {
+            delete m_callback;
+            m_callback = nullptr;
+        }
+
+        if (m_obj_creator) {
+            delete m_obj_creator;
+            m_obj_creator = nullptr;
+        }
+
         RELEASE_JOBJECT(m_tapi_callback);
     }
 
@@ -149,9 +134,11 @@ public:
     virtual void on_order_trade(shared_ptr<Trade> trade) override;
     virtual void on_account_status(shared_ptr<AccountInfo> account) override;
 
-    TradeApi*         m_tapi;
-    jobject           m_tapi_callback;
-    
+    TradeApi*          m_tapi;
+    jobject            m_tapi_callback;
+    JniObjectCreator*  m_obj_creator;
+    JniCallbackHelper* m_callback;
+
 };
 
 class LocalRef {
@@ -171,5 +158,10 @@ void throwJavaException(JNIEnv* env, const char* fmt, ...);
 
 std::string get_string(JNIEnv* env, jstring str);
 
+jobject convert_order        (JNIEnv* env, jclass help_cls, jmethodID createOrder, const tquant::api::Order* ord);
+jobject convert_trade        (JNIEnv* env, jclass help_cls, jmethodID createTrade, const tquant::api::Trade* trd);
+jobject convert_account_info (JNIEnv* env, jclass help_cls, jmethodID createAccountInfo, const tquant::api::AccountInfo* act);
+jobject convert_quote        (JNIEnv* env, jclass help_cls, jmethodID createMarketQuote, const tquant::api::RawMarketQuote* q);
+jobject convert_bar          (JNIEnv* env, jclass help_cls, jmethodID createBar, const tquant::api::RawBar* bar);
 
 #endif

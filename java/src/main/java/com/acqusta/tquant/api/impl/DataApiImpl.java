@@ -2,14 +2,16 @@ package com.acqusta.tquant.api.impl;
 
 import com.acqusta.tquant.api.DataApi;
 
-import javax.xml.transform.Source;
-
 public class DataApiImpl implements DataApi {
 
     private long handle;
 
     public DataApiImpl(String addr) throws Exception {
         this.handle = DataApiJni.create(addr);
+    }
+
+    public DataApiImpl(long handle) {
+        this.handle = handle;
     }
 
     @Override

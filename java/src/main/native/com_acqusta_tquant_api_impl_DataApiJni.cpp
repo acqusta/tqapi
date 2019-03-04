@@ -154,7 +154,11 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getTi
 
         jobjectArray arr = env->NewObjectArray((jsize)r.value->size(), env->FindClass("Lcom/acqusta/tquant/api/DataApi$MarketQuote;"), nullptr);
         for (size_t i = 0; i < r.value->size(); i++) {
-            auto obj = convert_quote(env, wrap->help_cls, wrap->createMarketQuote, &r.value->at(i));
+            auto obj = convert_quote(
+                wrap->m_callback->jenv,
+                wrap->m_obj_creator->help_cls,
+                wrap->m_obj_creator->createMarketQuote,
+                &r.value->at(i));
             env->SetObjectArrayElement(arr, (jsize)i, obj);
             env->DeleteLocalRef(obj);
         }
@@ -193,7 +197,11 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getBa
 
         jobjectArray arr = env->NewObjectArray((jsize)r.value->size(), env->FindClass("Lcom/acqusta/tquant/api/DataApi$Bar;"), nullptr);
         for (size_t i = 0; i < r.value->size(); i++) {
-            auto obj = convert_bar(env, wrap->help_cls, wrap->createBar, &r.value->at(i));
+            auto obj = convert_bar(
+                wrap->m_callback->jenv,
+                wrap->m_obj_creator->help_cls,
+                wrap->m_obj_creator->createBar,
+                &r.value->at(i));
             env->SetObjectArrayElement(arr, (jsize)i, obj);
             env->DeleteLocalRef(obj);
         }
@@ -234,19 +242,21 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getDa
         jobjectArray arr = env->NewObjectArray((jsize)r.value->size(), env->FindClass("Lcom/acqusta/tquant/api/DataApi$DailyBar;"), nullptr);
         for (size_t i = 0; i < r.value->size(); i++) {
             auto bar = &r.value->at(i);
-            jobject obj = env->CallStaticObjectMethod(wrap->help_cls, wrap->createDailyBar,
-                                LocalRef(env, env->NewStringUTF(bar->code)).m_obj,
-                                bar->date              ,
-                                bar->open              ,
-                                bar->high              ,
-                                bar->low               ,
-                                bar->close             ,
-                                bar->volume            ,
-                                bar->turnover          ,
-                                bar->oi                ,
-                                bar->settle            ,
-                                bar->pre_close         ,
-                                bar->pre_settle        );
+            jobject obj = env->CallStaticObjectMethod(
+                wrap->m_obj_creator->help_cls,
+                wrap->m_obj_creator->createMarketQuote,
+                LocalRef(env, env->NewStringUTF(bar->code)).m_obj,
+                bar->date              ,
+                bar->open              ,
+                bar->high              ,
+                bar->low               ,
+                bar->close             ,
+                bar->volume            ,
+                bar->turnover          ,
+                bar->oi                ,
+                bar->settle            ,
+                bar->pre_close         ,
+                bar->pre_settle        );
 
             env->SetObjectArrayElement(arr, (jsize)i, obj);
             env->DeleteLocalRef(obj);
@@ -284,7 +294,10 @@ JNIEXPORT jobject JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getQuote
             return 0;
         }
 
-        return convert_quote(env, wrap->help_cls, wrap->createMarketQuote, r.value.get());
+        return convert_quote(env, 
+            wrap->m_obj_creator->help_cls,
+            wrap->m_obj_creator->createMarketQuote,
+            r.value.get());
     }
     catch (const std::exception& e) {
         throwJavaException(env, "exception: %s", e.what());
@@ -428,22 +441,23 @@ JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_setCallback
         }
 
         callback = env->NewGlobalRef(callback);
-        wrap->msg_loop().post_task([wrap, callback, onMarketQuote, onBar]() {
+        wrap->m_callback->msg_loop().post_task([wrap, callback, onMarketQuote, onBar]() {
             if (wrap->m_dapi_callback)
-                wrap->jenv->DeleteGlobalRef(wrap->m_dapi_callback);
+                wrap->m_callback->jenv->DeleteGlobalRef(wrap->m_dapi_callback);
 
             wrap->m_dapi_callback = callback;
-            wrap->dapi_onMarketQuote = onMarketQuote;
-            wrap->dapi_onBar = onBar;
+            wrap->m_callback->dapi_onMarketQuote = onMarketQuote;
+            wrap->m_callback->dapi_onBar = onBar;
         });
     }
     else {
-        wrap->msg_loop().post_task([wrap]() {
+        wrap->m_callback->msg_loop().post_task([wrap]() {
             if (wrap->m_dapi_callback) {
-                wrap->jenv->DeleteGlobalRef(wrap->m_dapi_callback);
+                wrap->m_callback->jenv->DeleteGlobalRef(wrap->m_dapi_callback);
+
                 wrap->m_dapi_callback = nullptr;
-                wrap->dapi_onMarketQuote = nullptr;
-                wrap->dapi_onBar = nullptr;
+                wrap->m_callback->dapi_onMarketQuote = nullptr;
+                wrap->m_callback->dapi_onBar = nullptr;
             }
         });
     }
@@ -453,16 +467,21 @@ void DataApiWrap::on_market_quote(shared_ptr<const MarketQuote> quote)
 {
     if (!m_dapi_callback) return;
 
-    msg_loop().post_task([this, quote]() {
+    m_callback->msg_loop().post_task([this, quote]() {
         try {
-            if (jenv) {
-                auto q = convert_quote(jenv, help_cls, createMarketQuote, quote.get());
-                jenv->CallVoidMethod(m_dapi_callback, dapi_onMarketQuote, q);
-                jenv->DeleteLocalRef(q);
+            if (m_callback->jenv) {
+                auto q = convert_quote(
+                    m_callback->jenv,
+                    m_obj_creator->help_cls,
+                    m_obj_creator->createMarketQuote,
+                    quote.get());
+
+                m_callback->jenv->CallVoidMethod(m_dapi_callback, m_callback->dapi_onMarketQuote, q);
+                m_callback->jenv->DeleteLocalRef(q);
             }
         }
         catch (const exception& e) {
-            throwJavaException(jenv, "exception: ", e.what());
+            throwJavaException(m_callback->jenv, "exception: ", e.what());
         }
     });
 }
@@ -470,17 +489,21 @@ void DataApiWrap::on_bar(const string& cycle, shared_ptr<const Bar> bar)
 {
     if (!m_dapi_callback) return;
 
-    msg_loop().post_task([this, cycle, bar]() {
+    m_callback->msg_loop().post_task([this, cycle, bar]() {
         try {
-            if (jenv) {
-                auto py_cycle = jenv->NewStringUTF(cycle.c_str());
-                auto py_bar = convert_bar(jenv, help_cls, createBar, bar.get());
-                jenv->CallVoidMethod(m_dapi_callback, dapi_onBar, cycle, py_bar);
-                jenv->DeleteLocalRef(py_bar);
+            if (m_callback->jenv) {
+                auto py_cycle = m_callback->jenv->NewStringUTF(cycle.c_str());
+                auto py_bar = convert_bar(
+                    m_callback->jenv,
+                    m_obj_creator->help_cls,
+                    m_obj_creator->createBar,
+                    bar.get());
+                m_callback->jenv->CallVoidMethod(m_dapi_callback, m_callback->dapi_onBar, cycle, py_bar);
+                m_callback->jenv->DeleteLocalRef(py_bar);
             }
         }
         catch (const exception& e) {
-            throwJavaException(jenv, "exception: ", e.what());
+            throwJavaException(m_callback->jenv, "exception: ", e.what());
         }
     });
 }

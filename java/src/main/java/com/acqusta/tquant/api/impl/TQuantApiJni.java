@@ -4,7 +4,7 @@ import com.acqusta.tquant.api.DataApi;
 import com.acqusta.tquant.api.TQuantApi;
 import com.acqusta.tquant.api.TradeApi;
 
-class TQuantApiJni {
+public class TQuantApiJni {
     static {
         //System.load("D:\\work\\github\\tqapi\\build_x64\\dist\\java\\tqapi_jni.dll");
         //System.load("/Users/terryxu/work/tquant/tqapi/build/dist/java/libtqapi_jni.dylib");
