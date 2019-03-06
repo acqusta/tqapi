@@ -27,6 +27,6 @@ class StraletContextJni {
 
     static native String getMode(long h);
 
-    static native void stop();
+    static native void stop(long h);
 
 }

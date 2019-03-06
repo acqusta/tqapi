@@ -107,7 +107,7 @@ public class StraletContxtImpl implements StraletContext {
 
     @Override
     public void stop() {
-        StraletContextJni.stop();
+        StraletContextJni.stop(this.handle);
 
     }
 

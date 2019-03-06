@@ -90,10 +90,10 @@ JNIEXPORT jstring JNICALL Java_com_acqusta_tquant_stralet_impl_StraletContextJni
 /*
  * Class:     com_acqusta_tquant_stralet_impl_StraletContextJni
  * Method:    stop
- * Signature: ()V
+ * Signature: (J)V
  */
 JNIEXPORT void JNICALL Java_com_acqusta_tquant_stralet_impl_StraletContextJni_stop
-  (JNIEnv *, jclass);
+  (JNIEnv *, jclass, jlong);
 
 #ifdef __cplusplus
 }
