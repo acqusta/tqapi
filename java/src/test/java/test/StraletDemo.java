@@ -4,9 +4,7 @@ import com.acqusta.tquant.api.DataApi;
 import com.acqusta.tquant.stralet.*;
 
 public class StraletDemo extends Stralet {
-    StraletDemo() {
-        System.out.println("HelloWorld");
-    }
+
     @Override
     public void onInit() {
         StraletContext ctx = getContext();
@@ -14,7 +12,7 @@ public class StraletDemo extends Stralet {
         ctx.getLogger().info("onInit %d", ctx.getTradingDay());
 
         DataApi dapi = this.getContext().getDataApi();
-        dapi.subscribe( new String[] { "000001.SH", "600000.SH"});
+        dapi.subscribe( new String[] { "000001.SH", "600000.SH", "RB1905.SHF"});
     }
 
     @Override
@@ -36,7 +34,7 @@ public class StraletDemo extends Stralet {
         ctx.getLogger().info("onBar %s %d %d %f %d", bar.code, bar.date, bar.time, bar.close, bar.volume);
     }
 
-    public static void main(String[] args) throws Exception {
+    static void runBackTest() throws Exception {
         BackTest.Config cfg = new BackTest.Config();
         cfg.dapi_addr  = "ipc://tqc_10001";
         cfg.data_level = "tk";
@@ -46,7 +44,27 @@ public class StraletDemo extends Stralet {
         BackTest.run(cfg, new StraletCreator() {
             @Override
             public Stralet createStralet() {
-               return new StraletDemo();
+                return new StraletDemo();
             }});
+    }
+
+    static void runRealTime() throws Exception {
+        RealTime.Config cfg = new RealTime.Config();
+        //cfg.dapi_addr = "ipc://10002";
+        //cfg.dapi_addr = "tcp://127.0.0.1:10001";
+        cfg.dapi_addr = "ipc://10002";
+        cfg.tapi_addr = "ipc://10202";
+
+        RealTime.run(cfg, new StraletCreator() {
+            @Override
+            public Stralet createStralet() {
+                return new StraletDemo();
+            }});
+    }
+
+    public static void main(String[] args) throws Exception {
+
+        //runBackTest();
+        runRealTime();
     }
 }
