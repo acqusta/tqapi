@@ -1,19 +1,13 @@
 package com.acqusta.tquant.stralet;
 
 import com.acqusta.tquant.stralet.impl.StraletJni;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class RealTime {
 
-    //@JsonIgnoreProperties(ignoreUnknown = true)
-    public class Config {
-        @JsonProperty("dapi_addr")
-        public String dapiAddr;
-
-        @JsonProperty("tapi_addr")
-        public String tapiAddr;
+    static public class Config {
+        public String dapi_addr;
+        public String tapi_addr;
     }
 
     static public void run(Config cfg, StraletCreator straletCreator) throws Exception {
