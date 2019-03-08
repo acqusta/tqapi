@@ -6,6 +6,7 @@
 #include "tqapi_jni.h"
 
 using namespace tquant::stralet;
+using namespace std;
 
 class StraletWrap : public Stralet, public JniObjectCreator {
 public:
@@ -48,12 +49,12 @@ public:
     {
         jenv->CallVoidMethod(m_stralet, m_setContext, (jlong)ctx());
         if (jenv->ExceptionCheck())
-            throw exception("catch exception in JVM");
+            throw runtime_error("catch exception in JVM");
 
         jenv->CallVoidMethod(m_stralet, m_onInit);
 
         if (jenv->ExceptionCheck())
-            throw exception("catch exception in JVM");
+            throw runtime_error("catch exception in JVM");
     }
 
     virtual void on_fini() override
@@ -61,7 +62,7 @@ public:
         jenv->CallVoidMethod(m_stralet, m_onFini);
 
         if (jenv->ExceptionCheck())
-            throw exception("catch exception in JVM");
+            throw runtime_error("catch exception in JVM");
 
         destroy();
     }
@@ -233,7 +234,7 @@ Stralet* StraletCreator::createStralet()
     auto stralet = new StraletWrap(jenv);
     if (!stralet->init(java_stralet)) {
         delete stralet;
-        throw exception("Exception in createStralet");
+        throw runtime_error("Exception in createStralet");
     }
     return stralet;
 }

@@ -1,11 +1,12 @@
 #!/bin/sh
 
-if [ -e target/out ]; then
-   rm -rf target/out
-fi
+#if [ -e target/out ]; then
+#   rm -rf target/out
+#fi
 
-mkdir -p target/out
+#mkdir -p target/out
 
-javac -d target/out @files
-jar cvf target/tqapi.jar -C target/out .
+#javac -d target/out @files
+#jar cvf target/tqapi.jar -C target/out .
+mvn package
 

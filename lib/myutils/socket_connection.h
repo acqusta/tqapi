@@ -7,6 +7,7 @@
 #include <memory>
 #include <thread>
 #include <mutex>
+#include <functional>
 #include "connection.h"
 #include "socketutils.h"
 

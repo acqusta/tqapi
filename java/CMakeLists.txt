@@ -17,9 +17,13 @@ else()
     )
 endif()
 
-add_custom_target(build_java ALL DEPENDS target/tqapi.jar)
+add_custom_target(build_java ALL DEPENDS
+  target/tquant-api-0.0.1-SNAPSHOT.jar)
 
-install(FILES target/tqapi.jar DESTINATION java)
+install(FILES
+  target/tquant-api-0.0.1-SNAPSHOT-sources.jar
+  target/tquant-api-0.0.1-SNAPSHOT.jar
+  DESTINATION java)
 
-set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${CMAKE_CURRENT_SOURCE_DIR}/target/tqapi.jar)
+set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES ${CMAKE_CURRENT_SOURCE_DIR}/target/tquant-api-0.0.1-SNAPSHOT-sources.jar)
 
