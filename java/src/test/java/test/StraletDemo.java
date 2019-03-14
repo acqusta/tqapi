@@ -12,7 +12,7 @@ public class StraletDemo extends Stralet {
         ctx.getLogger().info("onInit %d", ctx.getTradingDay());
 
         DataApi dapi = this.getContext().getDataApi();
-        dapi.subscribe( new String[] { "000001.SH", "600000.SH", "RB1905.SHF"});
+        dapi.subscribe( new String[] { "000001.SH", "399001.SH", "000001.SZ", "600000.SH", "RB1905.SHF", "T1906.CFE", "IF1904.CFE"});
     }
 
     @Override
@@ -51,9 +51,9 @@ public class StraletDemo extends Stralet {
     static void runRealTime() throws Exception {
         RealTime.Config cfg = new RealTime.Config();
         //cfg.dapi_addr = "ipc://10002";
-        //cfg.dapi_addr = "tcp://127.0.0.1:10001";
-        cfg.dapi_addr = "ipc://10002";
-        cfg.tapi_addr = "ipc://10202";
+        cfg.dapi_addr = "tcp://127.0.0.1:10001";
+//        cfg.dapi_addr = "ipc://10002";
+//        cfg.tapi_addr = "ipc://10202";
 
         RealTime.run(cfg, new StraletCreator() {
             @Override

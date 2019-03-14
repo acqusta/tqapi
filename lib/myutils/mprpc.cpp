@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <iostream>
 
 #include "mprpc.h"
 #include "snappy/snappy.h"
@@ -122,7 +123,7 @@ namespace mprpc {
             do_send_heartbeat();
         }
 
-#if 0
+#if 1
        // FIXME: how to check heartbeat timeout?
         if (now - m_last_hb_rsp_time > seconds(4)) {
             if (m_connected) {

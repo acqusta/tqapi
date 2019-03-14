@@ -9,7 +9,9 @@ class MyStralet : public Stralet {
 public:
     virtual void on_init() override {
         ctx()->logger() << "on_init: " << ctx()->trading_day() << endl;
-        vector<string> codes = { "000001.SH", "600000.SH", "000001.SZ", "399001.SZ" };
+        vector<string> codes = {
+			"000001.SH", "399001.SH", "000001.SZ", "600000.SH", "RB1905.SHF", "T1906.CFE", "IF1904.CFE" };
+			//"000001.SH", "600000.SH", "000001.SZ", "399001.SZ" };
         ctx()->data_api()->subscribe(codes);
     }
 
@@ -99,8 +101,19 @@ int test3()
     return 0;
 }
 
+int test_realtime()
+{
+	realtime::RealTimeConfig cfg;
+	cfg.data_api_addr = "tcp://127.0.0.1:10001";
+
+	realtime::run(cfg, []() { return new MyStralet(); });
+
+	getchar();
+	return 0;
+}
+
 int main()
 {
-    test3();
+	test_realtime();
     return 0;
 }

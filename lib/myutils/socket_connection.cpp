@@ -15,7 +15,6 @@ SocketConnection::SocketConnection()
     : m_socket(INVALID_SOCKET)
     , m_callback(nullptr)
     , m_should_exit(false)
-    , m_connected(false)
     , m_send_count(0)
 {
     bool r = myutils::create_cmd_sock_pair(&m_cmd_server, &m_cmd_client);
@@ -53,7 +52,7 @@ void SocketConnection::main_run()
         }
 
         FD_SET(m_cmd_server, &rset);
-        high_sock = max(m_cmd_server, m_socket);
+        high_sock = max(m_cmd_server, high_sock);
 
         struct timeval tv;
         tv.tv_sec = 0;
@@ -276,5 +275,5 @@ void SocketConnection::send(const string& data)
 
 bool SocketConnection::is_connected()
 {
-    return m_connected;
+	return m_socket != INVALID_SOCKET;
 }

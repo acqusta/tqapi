@@ -56,7 +56,6 @@ private:
     Connection_Callback*        m_callback;
     thread*                     m_main_thread;
     volatile bool               m_should_exit;
-    bool                        m_connected;
     string                      m_recv_buf;
     int32_t                     m_pkt_size;
     int32_t                     m_recv_size;
