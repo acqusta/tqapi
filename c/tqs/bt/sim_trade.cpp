@@ -13,6 +13,7 @@
 #include "sim_data.h"
 #include "sim_trade.h"
 #include "myutils/stringutils.h"
+#include "myutils/misc.h"
 
 using namespace tquant::api;
 using namespace tquant::stralet;
@@ -889,7 +890,17 @@ void SimAccount::try_buy(OrderData* od)
             if (od->price_type == "any" && q->ask_vol1 > 0) {
                 make_trade(od->order.get(), q->ask1);
             }
-            else if (od->price_type == "any_test") {
+            else if (strncmp(od->price_type.c_str(), "any_test", 8) == 0) {
+                const char* p = od->price_type.c_str() + 8;
+                if (*p && *p == ':') {
+                    p++;
+                    uint32_t rate = atof(p) * 1000;
+                    uint32_t t = ((uint32_t)myutils::random()) % 1000;
+                    if (t > rate) {
+                        reject_order(od->order.get(), "reject any_test:xxx");
+                        return;
+                    }
+                }
                 make_trade(od->order.get(), od->order->entrust_price);
             }
             else if (q->last <= od->order->entrust_price && od->volume_in_queue == 0) {
@@ -908,7 +919,17 @@ void SimAccount::try_buy(OrderData* od)
             double fill_price = (bar->high + bar->low) / 2;
             make_trade(od->order.get(), fill_price);
         }
-        else if (od->price_type == "any_test") {
+        else if (strncmp(od->price_type.c_str(), "any_test", 8) == 0) {
+            const char* p = od->price_type.c_str() + 8;
+            if (*p && *p == ':') {
+                p++;
+                uint32_t rate = atof(p) * 1000;
+                uint32_t t = ((uint32_t)myutils::random()) % 1000;
+                if (t > rate) {
+                    reject_order(od->order.get(), "reject any_test:xxx");
+                    return;
+                }
+            }
             make_trade(od->order.get(), od->order->entrust_price);
         }
         else if (bar && bar->low < od->order->entrust_price) {
@@ -941,7 +962,17 @@ void SimAccount::try_sell(OrderData* od)
             if (od->price_type == "any" && q->bid_vol1 > 0) {
                 make_trade(od->order.get(), q->bid1);
             }
-            else if (od->price_type == "any_test") {
+            else if (strncmp(od->price_type.c_str(), "any_test", 8) == 0) {
+                const char* p = od->price_type.c_str() + 8;
+                if (*p && *p == ':') {
+                    p++;
+                    uint32_t rate = atof(p) * 1000;
+                    uint32_t t = ((uint32_t)myutils::random()) % 1000;
+                    if (t > rate) {
+                        reject_order(od->order.get(), "reject any_test:xxx");
+                        return;
+                    }
+                }
                 make_trade(od->order.get(), od->order->entrust_price);
             }
             else if (q->last >= od->order->entrust_price && od->volume_in_queue == 0) {
@@ -960,7 +991,17 @@ void SimAccount::try_sell(OrderData* od)
             double fill_price = (bar->high + bar->low) / 2;
             make_trade(od->order.get(), fill_price);
         }
-        else if (od->price_type == "any_test") {
+        else if (strncmp(od->price_type.c_str(), "any_test", 8) == 0) {
+            const char* p = od->price_type.c_str() + 8;
+            if (*p && *p == ':') {
+                p++;
+                uint32_t rate = atof(p) * 1000;
+                uint32_t t = ((uint32_t)myutils::random()) % 1000;
+                if (t > rate) {
+                    reject_order(od->order.get(), "reject any_test:xxx");
+                    return;
+                }
+            }
             make_trade(od->order.get(), od->order->entrust_price);
         }
         else if (bar && bar->high > od->order->entrust_price) {
@@ -994,7 +1035,17 @@ void SimAccount::try_short(OrderData* od)
             if (od->price_type == "any" && q->bid_vol1 > 0) {
                 make_trade(od->order.get(), q->bid1);
             }
-            else if (od->price_type == "any_test") {
+            else if (strncmp(od->price_type.c_str(), "any_test", 8) == 0) {
+                const char* p = od->price_type.c_str() + 8;
+                if (*p && *p == ':') {
+                    p++;
+                    uint32_t rate = atof(p) * 1000;
+                    uint32_t t = ((uint32_t)myutils::random()) % 1000;
+                    if (t > rate) {
+                        reject_order(od->order.get(), "reject any_test:xxx");
+                        return;
+                    }
+                }
                 make_trade(od->order.get(), od->order->entrust_price);
             }
             else if (q->last >= od->order->entrust_price && od->volume_in_queue == 0) {
@@ -1013,7 +1064,17 @@ void SimAccount::try_short(OrderData* od)
             double fill_price = (bar->high + bar->low) / 2;
             make_trade(od->order.get(), fill_price);
         }
-        else if (od->price_type == "any_test") {
+        else if (strncmp(od->price_type.c_str(), "any_test", 8) == 0) {
+            const char* p = od->price_type.c_str() + 8;
+            if (*p && *p == ':') {
+                p++;
+                uint32_t rate = atof(p) * 1000;
+                uint32_t t = ((uint32_t)myutils::random()) % 1000;
+                if (t > rate) {
+                    reject_order(od->order.get(), "reject any_test:xxx");
+                    return;
+                }
+            }
             make_trade(od->order.get(), od->order->entrust_price);
         }
         else if (bar && bar->high > od->order->entrust_price) {
@@ -1046,7 +1107,17 @@ void SimAccount::try_cover(OrderData* od)
             if (od->price_type == "any" && q->ask_vol1 > 0) {
                 make_trade(od->order.get(), q->ask1);
             }
-            else if (od->price_type == "any_test") {
+            else if (strncmp(od->price_type.c_str(), "any_test", 8) == 0) {
+                const char* p = od->price_type.c_str() + 8;
+                if (*p && *p == ':') {
+                    p++;
+                    uint32_t rate = atof(p) * 1000;
+                    uint32_t t = ((uint32_t)myutils::random()) % 1000;
+                    if (t > rate) {
+                        reject_order(od->order.get(), "reject any_test:xxx");
+                        return;
+                    }
+                }
                 make_trade(od->order.get(), od->order->entrust_price);
             }
             else if (q->last <= od->order->entrust_price && od->volume_in_queue == 0) {
@@ -1065,7 +1136,17 @@ void SimAccount::try_cover(OrderData* od)
             double fill_price = (bar->high + bar->low) / 2;
             make_trade(od->order.get(), fill_price);
         }
-        else if (od->price_type == "any_test") {
+        else if (strncmp(od->price_type.c_str(), "any_test", 8) == 0) {
+            const char* p = od->price_type.c_str() + 8;
+            if (*p && *p == ':') {
+                p++;
+                uint32_t rate = atof(p) * 1000;
+                uint32_t t = ((uint32_t)myutils::random()) % 1000;
+                if (t > rate) {
+                    reject_order(od->order.get(), "reject any_test:xxx");
+                    return;
+                }
+            }
             make_trade(od->order.get(), od->order->entrust_price);
         }
         else if (bar && bar->low < od->order->entrust_price) {
