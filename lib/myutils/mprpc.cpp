@@ -115,7 +115,7 @@ namespace mprpc {
 
     void MpRpcClient::on_check_timer()
     {
-        msg_loop().post_delayed_task(bind(&MpRpcClient::on_check_timer, this), 100);
+        msg_loop().post_delayed_task(bind(&MpRpcClient::on_check_timer, this), 500);
 
         auto now = system_clock::now();
         if (now - m_last_hb_time > seconds(2)) {
@@ -123,8 +123,6 @@ namespace mprpc {
             do_send_heartbeat();
         }
 
-#if 1
-       // FIXME: how to check heartbeat timeout?
         if (now - m_last_hb_rsp_time > seconds(4)) {
             if (m_connected) {
                 m_connected = false;
@@ -133,7 +131,7 @@ namespace mprpc {
             m_last_hb_rsp_time = now;
             m_conn->reconnect();
         }
-#endif
+
         for (auto it = m_on_rsp_map.begin(); it != m_on_rsp_map.end(); ) {
             if (it->second.dead_time < now) {
                 it->second.promise->set_error(make_shared<pair<int, string>>(-1, "timeout"));
@@ -171,7 +169,9 @@ namespace mprpc {
 
         msg_loop().post_task([this, rpcmsg]() {
             if (rpcmsg->method == ".sys.heartbeat") {
+
                 m_last_hb_rsp_time = system_clock::now();
+
                 if (!m_connected) {
                     m_connected = true;
                     if (m_callback) m_callback->on_connected();
