@@ -33,6 +33,12 @@ namespace loop {
                 m_thread = nullptr;
             }
         }
+
+        void  post_task(std::function<void()> func, int timeout = 0)
+        {
+            m_msg_loop.post_delayed_task(func, timeout);
+        }
+
     protected:
         void join() {
             m_thread->join();
