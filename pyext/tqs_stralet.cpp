@@ -294,7 +294,7 @@ void StraletWrap::on_fini()
 {
     auto gstate = PyGILState_Ensure();
 
-    PyObject* arg = Py_BuildValue("iL", ON_INIT, m_ctx);
+    PyObject* arg = Py_BuildValue("iL", ON_FINI, m_ctx);
     call_callback(m_callback.obj, arg);
 
     PyGILState_Release(gstate);

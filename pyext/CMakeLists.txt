@@ -46,10 +46,13 @@ if (WIN32)
   include_directories(
     D:/WinPython-64bit-3.6.6.2/python-3.6.6.amd64/include
     D:/WinPython-64bit-3.6.6.2/python-3.6.6.amd64/Lib/site-packages/numpy/core/include
+    D:/WPy-3670/python-3.6.7.amd64/include
+    D:/WPy-3670/python-3.6.7.amd64/Lib/site-packages/numpy/core/include
   )
 
   link_directories(
     D:/WinPython-64bit-3.6.6.2/python-3.6.6.amd64/libs
+    D:/WPy-3670/python-3.6.7.amd64/libs    
   )
   set(EXTRA_LIBS python36)
 else()
