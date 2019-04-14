@@ -1382,6 +1382,7 @@ shared_ptr<CodeInfo> get_code_info(const string& code)
         { "SM.CZC", "SM.CZC", "CZC", "SM.CZC", "Futures", 5, 2.0, 0.1 },
         { "SN.SHF", "SN.SHF", "SHF", "SN.SHF", "Futures", 1, 10.0, 0.1 },
         { "SR.CZC", "SR.CZC", "CZC", "SR.CZC", "Futures", 10, 1.0, 0.1 },
+        { "SP.SHF", "SP.SHF", "SHF", "SP.SHF", "Futures", 10, 2.0, 0.1 },
         { "T.CFE", "T.CFE", "CFE", "T.CFE", "Futures", 10000, 0.005, 0.1 },
         { "TA.CZC", "TA.CZC", "CZC", "TA.CZC", "Futures", 5, 2.0, 0.1 },
         { "TF.CFE", "TF.CFE", "CFE", "TF.CFE", "Futures", 10000, 0.005, 0.1 },
