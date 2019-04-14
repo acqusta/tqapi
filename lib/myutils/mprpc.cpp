@@ -251,14 +251,16 @@ namespace mprpc {
     {
         int callid = ++m_cur_callid;
 
-        mutex mtx;
-        condition_variable  cond;
-        shared_ptr<MpRpcMessage> rsp_msg;
-
         if (!timeout) {
             asnyc_call(method, params, params_size, timeout);
             return nullptr;
         } else {
+            mutex mtx;
+            condition_variable  cond;
+            shared_ptr<MpRpcMessage> rsp_msg;
+
+            unique_lock<mutex> lock(mtx);
+
             asnyc_call(method, params, params_size, timeout)
                 .in_loop(nullptr)
                 .on_success([&mtx, &cond, &rsp_msg](shared_ptr<MpRpcMessage> msg) {
@@ -277,7 +279,7 @@ namespace mprpc {
                     cond.notify_one();
                 });
         
-            unique_lock<mutex> lock(mtx);
+
             cond.wait(lock);
             return rsp_msg;
         }
