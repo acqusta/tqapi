@@ -98,7 +98,7 @@ namespace tquant { namespace stralet { namespace backtest {
         }
 
         // TradeApi
-        virtual CallResult<const vector<AccountInfo>>   query_account_status();
+        virtual CallResult<const vector<AccountInfo>>   query_account_status() override;
         virtual CallResult<const Balance>               query_balance  (const string& account_id) override;
         virtual CallResult<const vector<Order>>         query_orders   (const string& account_id, const unordered_set<string>* codes) override;
         virtual CallResult<const vector<Trade>>         query_trades   (const string& account_id, const unordered_set<string>* codes) override;
@@ -110,7 +110,7 @@ namespace tquant { namespace stralet { namespace backtest {
         virtual CallResult<bool>                        cancel_order   (const string& account_id, const string& code, int order_id) override;
         virtual CallResult<bool>                        cancel_order   (const string& account_id, const string& code, const string& entrust_no) override;
         virtual CallResult<string>                      query          (const string& account_id, const string& command, const string& params) override;
-        virtual TradeApi_Callback* set_callback(TradeApi_Callback* callback);
+        virtual TradeApi_Callback* set_callback(TradeApi_Callback* callback) override;
 
         SimAccount* get_account(const string& account_id) {
             auto it = m_accounts.find(account_id);
