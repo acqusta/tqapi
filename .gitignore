@@ -28,3 +28,6 @@ cs/**/*.dll
 cs/**/*.xml
 cs/**/*.exe
 .vs
+.idea
+.vscode
+rs/target

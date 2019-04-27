@@ -8,6 +8,8 @@ set(SRC
     impl_trade_api.h
     tqapi_cs.cpp
     tqapi_cs.h
+    tqapi_ffi.h
+    tqapi_ffi.cpp
 )
 
 add_library(tqapi-static STATIC ${SRC})
@@ -53,4 +55,4 @@ install(TARGETS tqapi_test DESTINATION bin)
 endif()
 
 install(FILES tquant_api.h DESTINATION cpp)
- 
+

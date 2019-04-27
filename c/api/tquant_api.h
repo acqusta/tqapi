@@ -25,7 +25,7 @@ namespace tquant {  namespace api {
 
     using namespace std;
 
-    template<typename T> 
+    template<typename T>
     class TickDataHolder : public T {
         string _code;
     public:
@@ -106,7 +106,7 @@ namespace tquant {  namespace api {
                 p += _type_size;
             }
         }
-    protected:
+    //protected:
         uint8_t*    _data;
         int         _type_size;
         int         _size;
@@ -237,11 +237,11 @@ namespace tquant {  namespace api {
 
 
     /**
-    *  Êý¾Ý²éÑ¯½Ó¿Ú
+    *  ï¿½ï¿½ï¿½Ý²ï¿½Ñ¯ï¿½Ó¿ï¿½
     *
-    *  ¹¦ÄÜ£º
-    *      ²éÊµÊ±ÐÐÇé£¬µ±ÌìµÄtick, ·ÖÖÓÏß
-    *      ¶©ÔÄºÍÍÆËÍÐÐÇé
+    *  ï¿½ï¿½ï¿½Ü£ï¿½
+    *      ï¿½ï¿½ÊµÊ±ï¿½ï¿½ï¿½é£¬ï¿½ï¿½ï¿½ï¿½ï¿½tick, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    *      ï¿½ï¿½ï¿½Äºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     */
     class DataApi_Callback {
     public:
@@ -263,6 +263,9 @@ namespace tquant {  namespace api {
             : msg(a_msg)
         {
         }
+        CallResult()
+        {
+        }
     };
 
     class DataApi {
@@ -272,9 +275,9 @@ namespace tquant {  namespace api {
         virtual ~DataApi() {}
 
         /**
-        * È¡Ä³½»Ò×ÈÕµÄÄ³¸ö´úÂëµÄ ticks
+        * È¡Ä³ï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½Ä³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ticks
         *
-        * µ±tradingdayÎª0£¬±íÊ¾µ±Ç°½»Ò×ÈÕ
+        * ï¿½ï¿½tradingdayÎª0ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         *
         * @param code
         * @param trading_day
@@ -283,34 +286,34 @@ namespace tquant {  namespace api {
         virtual CallResult<const MarketQuoteArray> tick(const string& code, int trading_day) = 0;
 
         /**
-        * È¡Ä³¸ö´úÂëµÄBar
+        * È¡Ä³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Bar
         *
-        * Ä¿Ç°Ö»Ö§³Ö·ÖÖÓÏß
-        *  µ± cycle == "1m"Ê±£¬·µ»Øtrading_dayµÄ·ÖÖÓÏß£¬trading_day=0±íÊ¾µ±Ç°½»Ò×ÈÕ¡£
+        * Ä¿Ç°Ö»Ö§ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½
+        *  ï¿½ï¿½ cycle == "1m"Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½trading_dayï¿½Ä·ï¿½ï¿½ï¿½ï¿½ß£ï¿½trading_day=0ï¿½ï¿½Ê¾ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½Õ¡ï¿½
         *
-        * @param code          Ö¤È¯´úÂë
+        * @param code          Ö¤È¯ï¿½ï¿½ï¿½ï¿½
         * @param cycle         "1m""
-        * @param trading_day   ½»Ò×ÈÕ
-        * @param align         ÊÇ·ñ¶ÔÆë
+        * @param trading_day   ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        * @param align         ï¿½Ç·ï¿½ï¿½ï¿½ï¿½
         * @return
         */
         virtual CallResult<const BarArray> bar(const string& code, const string& cycle, int trading_day, bool align) = 0;
 
         /**
-        * È¡Ä³¸ö´úÂëµÄÈÕÏß
+        * È¡Ä³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         *
         *
-        * @param code          Ö¤È¯´úÂë
-        * @param price_adj     ¼Û¸ñ¸´È¨£¬È¡Öµ
-        *                        back -- ºó¸´È¨
-        *                        forward -- Ç°¸´È¨
-        * @param align         ÊÇ·ñ¶ÔÆë
+        * @param code          Ö¤È¯ï¿½ï¿½ï¿½ï¿½
+        * @param price_adj     ï¿½Û¸ï¿½È¨ï¿½ï¿½È¡Öµ
+        *                        back -- ï¿½ï¿½È¨
+        *                        forward -- Ç°ï¿½ï¿½È¨
+        * @param align         ï¿½Ç·ï¿½ï¿½ï¿½ï¿½
         * @return
         */
         virtual CallResult<const DailyBarArray> daily_bar(const string& code, const string& price_adj, bool align) = 0;
 
         /**
-        * È¡µ±Ç°µÄÐÐÇé¿ìÕÕ
+        * È¡ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         *
         * @param code
         * @return
@@ -318,20 +321,20 @@ namespace tquant {  namespace api {
         virtual CallResult<const MarketQuote> quote(const string& code) = 0;
 
         /**
-        * ¶©ÔÄÐÐÇé
+        * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         *
-        * codesÎªÐÂÔöµÄ¶©ÔÄÁÐ±í£¬·µ»ØËùÓÐÒÑ¾­¶©ÔÄµÄ´úÂë,°üÀ¨ÐÂÔöµÄÁÐ±í¡£Èç¹ûcodesÎª¿Õ£¬¿ÉÒÔ·µ»ØÒÑ¶©ÔÄÁÐ±í¡£
+        * codesÎªï¿½ï¿½ï¿½ï¿½ï¿½Ä¶ï¿½ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½ÄµÄ´ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½codesÎªï¿½Õ£ï¿½ï¿½ï¿½ï¿½Ô·ï¿½ï¿½ï¿½ï¿½Ñ¶ï¿½ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½
         *
         * @param codes
-        * @return ËùÓÐÒÑ¾­¶©ÔÄµÄ´úÂë
+        * @return ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½ÄµÄ´ï¿½ï¿½ï¿½
         */
         virtual CallResult<const vector<string>> subscribe(const vector<string>& codes) = 0;
 
         /**
-        * È¡Ïû¶©ÔÄ
+        * È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         *
-        * codesÎªÐèÒªÈ¡ÏûµÄÁÐ±í£¬·µ»ØËùÓÐ»¹ÔÚ¶©ÔÄµÄ´úÂë¡£
-        * Èç¹ûÐèÒªÈ¡ÏûËùÓÐ¶©ÔÄ£¬ÏÈÍ¨¹ý subscribe µÃµ½ËùÓÐÁÐ±í£¬È»ºóÊ¹ÓÃunscribeÈ¡Ïû
+        * codesÎªï¿½ï¿½ÒªÈ¡ï¿½ï¿½ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½ï¿½Ú¶ï¿½ï¿½ÄµÄ´ï¿½ï¿½ë¡£
+        * ï¿½ï¿½ï¿½ï¿½ï¿½ÒªÈ¡ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½Ä£ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ subscribe ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½È»ï¿½ï¿½Ê¹ï¿½ï¿½unscribeÈ¡ï¿½ï¿½
 
         * @param codes
         * @return
@@ -339,9 +342,9 @@ namespace tquant {  namespace api {
         virtual CallResult<const vector<string>> unsubscribe(const vector<string>& codes) = 0;
 
         /**
-        * ÉèÖÃÍÆËÍÐÐÇéµÄ»Øµ÷º¯Êý
+        * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä»Øµï¿½ï¿½ï¿½ï¿½ï¿½
         *
-        * µ±¶©ÔÄµÄ´úÂëÁÐ±íÖÐÓÐÐÂµÄÐÐÇé£¬»áÍ¨¹ý¸ÃcallbackÍ¨ÖªÓÃ»§¡£
+        * ï¿½ï¿½ï¿½ï¿½ï¿½ÄµÄ´ï¿½ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Âµï¿½ï¿½ï¿½ï¿½é£¬ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½callbackÍ¨Öªï¿½Ã»ï¿½ï¿½ï¿½
         *
         * @param callback
         */
@@ -352,26 +355,26 @@ namespace tquant {  namespace api {
     // TradeApi
 
     struct AccountInfo {
-        string account_id;       // ÕÊºÅ±àºÅ
-        string broker;           // ½»Ò×ÉÌÃû³Æ£¬ÈçÕÐÉÌÖ¤È¯
-        string account;          // ½»Ò×ÕÊºÅ
-        string status;           // Á¬½Ó×´Ì¬£¬È¡Öµ Disconnected, Connected, Connecting
-        string msg;              // ×´Ì¬ÐÅÏ¢£¬ÈçµÇÂ¼Ê§°ÜÔ­Òò
-        string account_type;     // ÕÊºÅÀàÐÍ£¬Èç stock, ctp
+        string account_id;       // ï¿½ÊºÅ±ï¿½ï¿½
+        string broker;           // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¤È¯
+        string account;          // ï¿½ï¿½ï¿½ï¿½ï¿½Êºï¿½
+        string status;           // ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½È¡Öµ Disconnected, Connected, Connecting
+        string msg;              // ×´Ì¬ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½Â¼Ê§ï¿½ï¿½Ô­ï¿½ï¿½
+        string account_type;     // ï¿½Êºï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½ stock, ctp
     };
 
     struct Balance {
-        string account_id;       // ÕÊºÅ±àºÅ
-        string fund_account;     // ×Ê½ðÕÊºÅ
-        double init_balance;     // ³õÊ¼»¯×Ê½ð
-        double enable_balance;   // ¿ÉÓÃ×Ê½ð
-        double margin;           // ±£Ö¤½ð
-        double float_pnl;        // ¸¡¶¯Ó¯¿÷
-        double close_pnl;        // ÊµÏÖÓ¯¿÷
+        string account_id;       // ï¿½ÊºÅ±ï¿½ï¿½
+        string fund_account;     // ï¿½Ê½ï¿½ï¿½Êºï¿½
+        double init_balance;     // ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½Ê½ï¿½
+        double enable_balance;   // ï¿½ï¿½ï¿½ï¿½ï¿½Ê½ï¿½
+        double margin;           // ï¿½ï¿½Ö¤ï¿½ï¿½
+        double float_pnl;        // ï¿½ï¿½ï¿½ï¿½Ó¯ï¿½ï¿½
+        double close_pnl;        // Êµï¿½ï¿½Ó¯ï¿½ï¿½
 
         Balance() : init_balance(0.0), enable_balance(0.0), margin(0.0)
             , float_pnl(0.0), close_pnl(0.0)
-        {}            
+        {}
     };
 
     //struct OrderStatus {
@@ -394,39 +397,39 @@ namespace tquant {  namespace api {
     //}
 
     struct Order {
-        string  account_id;       // ÕÊºÅ±àºÅ
-        string  code;             // Ö¤È¯´úÂë
-        string  name;             // Ö¤È¯Ãû³Æ
-        string  entrust_no;       // Î¯ÍÐ±àºÅ
-        string  entrust_action;   // Î¯ÍÐ¶¯×÷
-        double  entrust_price;    // Î¯ÍÐ¼Û¸ñ
-        int64_t entrust_size;     // Î¯ÍÐÊýÁ¿£¬µ¥Î»£º¹É
-        int32_t entrust_date;     // Î¯ÍÐÈÕÆÚ
-        int32_t entrust_time;     // Î¯ÍÐÊ±¼ä
-        double  fill_price;       // ³É½»¼Û¸ñ
-        int64_t fill_size;        // ³É½»ÊýÁ¿
-        string  status;           // ¶©µ¥×´Ì¬£ºÈ¡Öµ: OrderStatus
-        string  status_msg;       // ×´Ì¬ÏûÏ¢
-        int32_t order_id;         // ×Ô¶¨Òå¶©µ¥±àºÅ
+        string  account_id;       // ï¿½ÊºÅ±ï¿½ï¿½
+        string  code;             // Ö¤È¯ï¿½ï¿½ï¿½ï¿½
+        string  name;             // Ö¤È¯ï¿½ï¿½ï¿½ï¿½
+        string  entrust_no;       // Î¯ï¿½Ð±ï¿½ï¿½
+        string  entrust_action;   // Î¯ï¿½Ð¶ï¿½ï¿½ï¿½
+        double  entrust_price;    // Î¯ï¿½Ð¼Û¸ï¿½
+        int64_t entrust_size;     // Î¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½
+        int32_t entrust_date;     // Î¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        int32_t entrust_time;     // Î¯ï¿½ï¿½Ê±ï¿½ï¿½
+        double  fill_price;       // ï¿½É½ï¿½ï¿½Û¸ï¿½
+        int64_t fill_size;        // ï¿½É½ï¿½ï¿½ï¿½ï¿½ï¿½
+        string  status;           // ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½È¡Öµ: OrderStatus
+        string  status_msg;       // ×´Ì¬ï¿½ï¿½Ï¢
+        int32_t order_id;         // ï¿½Ô¶ï¿½ï¿½å¶©ï¿½ï¿½ï¿½ï¿½ï¿½
 
-        Order() 
+        Order()
             : entrust_price(0.0), entrust_size(0), entrust_date(0), entrust_time(0)
             , fill_price(0.0), fill_size(0), order_id(0)
         {}
     };
 
     struct Trade {
-        string  account_id;       // ÕÊºÅ±àºÅ
-        string  code;             // Ö¤È¯´úÂë
-        string  name;             // Ö¤È¯Ãû³Æ
-        string  entrust_no;       // Î¯ÍÐ±àºÅ
-        string  entrust_action;   // Î¯ÍÐ¶¯×÷
-        string  fill_no;          // ³É½»±àºÅ
-        int64_t fill_size;        // ³É½»ÊýÁ¿
-        double  fill_price;       // ³É½»¼Û¸ñ
-        int32_t fill_date;        // ³É½»ÈÕÆÚ
-        int32_t fill_time;        // ³É½»Ê±¼ä
-        int32_t order_id;         // ×Ô¶¨Òå¶©µ¥±àºÅ
+        string  account_id;       // ï¿½ÊºÅ±ï¿½ï¿½
+        string  code;             // Ö¤È¯ï¿½ï¿½ï¿½ï¿½
+        string  name;             // Ö¤È¯ï¿½ï¿½ï¿½ï¿½
+        string  entrust_no;       // Î¯ï¿½Ð±ï¿½ï¿½
+        string  entrust_action;   // Î¯ï¿½Ð¶ï¿½ï¿½ï¿½
+        string  fill_no;          // ï¿½É½ï¿½ï¿½ï¿½ï¿½
+        int64_t fill_size;        // ï¿½É½ï¿½ï¿½ï¿½ï¿½ï¿½
+        double  fill_price;       // ï¿½É½ï¿½ï¿½Û¸ï¿½
+        int32_t fill_date;        // ï¿½É½ï¿½ï¿½ï¿½ï¿½ï¿½
+        int32_t fill_time;        // ï¿½É½ï¿½Ê±ï¿½ï¿½
+        int32_t order_id;         // ï¿½Ô¶ï¿½ï¿½å¶©ï¿½ï¿½ï¿½ï¿½ï¿½
 
         Trade() : fill_size(0), fill_price(0.0), fill_date(0), fill_time(0), order_id(0)
         {}
@@ -438,22 +441,22 @@ namespace tquant {  namespace api {
     //}
 
     struct Position {
-        string  account_id;       // ÕÊºÅ±àºÅ
-        string  code;             // Ö¤È¯´úÂë
-        string  name;             // Ö¤È¯Ãû³Æ
-        int64_t current_size;     // µ±Ç°³Ö²Ö
-        int64_t enable_size;      // ¿ÉÓÃ£¨¿É½»Ò×£©³Ö²Ö
-        int64_t init_size;        // ³õÊ¼³Ö²Ö
-        int64_t today_size;       // ½ñÈÕ³Ö²Ö
-        int64_t frozen_size;      // ¶³½á³Ö²Ö
-        string  side;             // ³Ö²Ö·½Ïò£¬¹ÉÆ±µÄ³Ö²Ö·½ÏòÎª Long, ÆÚ»õ·Ö Long, Short
-        double  cost;             // ³É±¾
-        double  cost_price;       // ³É±¾¼Û¸ñ
-        double  last_price;       // ×îÐÂ¼Û¸ñ
-        double  float_pnl;        // ³Ö²ÖÓ¯¿÷
-        double  close_pnl;        // Æ½²ÖÓ¯¿÷
-        double  margin;           // ±£Ö¤½ð
-        double  commission;       // ÊÖÐø·Ñ
+        string  account_id;       // ï¿½ÊºÅ±ï¿½ï¿½
+        string  code;             // Ö¤È¯ï¿½ï¿½ï¿½ï¿½
+        string  name;             // Ö¤È¯ï¿½ï¿½ï¿½ï¿½
+        int64_t current_size;     // ï¿½ï¿½Ç°ï¿½Ö²ï¿½
+        int64_t enable_size;      // ï¿½ï¿½ï¿½Ã£ï¿½ï¿½É½ï¿½ï¿½×£ï¿½ï¿½Ö²ï¿½
+        int64_t init_size;        // ï¿½ï¿½Ê¼ï¿½Ö²ï¿½
+        int64_t today_size;       // ï¿½ï¿½ï¿½Õ³Ö²ï¿½
+        int64_t frozen_size;      // ï¿½ï¿½ï¿½ï¿½Ö²ï¿½
+        string  side;             // ï¿½Ö²Ö·ï¿½ï¿½ò£¬¹ï¿½Æ±ï¿½Ä³Ö²Ö·ï¿½ï¿½ï¿½Îª Long, ï¿½Ú»ï¿½ï¿½ï¿½ Long, Short
+        double  cost;             // ï¿½É±ï¿½
+        double  cost_price;       // ï¿½É±ï¿½ï¿½Û¸ï¿½
+        double  last_price;       // ï¿½ï¿½ï¿½Â¼Û¸ï¿½
+        double  float_pnl;        // ï¿½Ö²ï¿½Ó¯ï¿½ï¿½
+        double  close_pnl;        // Æ½ï¿½ï¿½Ó¯ï¿½ï¿½
+        double  margin;           // ï¿½ï¿½Ö¤ï¿½ï¿½
+        double  commission;       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
         Position()
             : current_size(0), enable_size(0), init_size(0), today_size(0), frozen_size(0)
@@ -464,8 +467,8 @@ namespace tquant {  namespace api {
     };
 
     struct OrderID {
-        string  entrust_no;       // ¶©µ¥Î¯ÍÐºÅ
-        int32_t order_id;         // ×Ô¶¨Òå±àºÅ
+        string  entrust_no;       // ï¿½ï¿½ï¿½ï¿½Î¯ï¿½Ðºï¿½
+        int32_t order_id;         // ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½
     };
 
 
@@ -484,14 +487,14 @@ namespace tquant {  namespace api {
         virtual ~TradeApi() {}
 
         /**
-        * ²éÑ¯ÕÊºÅÁ¬½Ó×´Ì¬¡£
+        * ï¿½ï¿½Ñ¯ï¿½Êºï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½
         *
         * @return
         */
         virtual CallResult<const vector<AccountInfo>> query_account_status() = 0;
 
         /**
-        * ²éÑ¯Ä³¸öÕÊºÅµÄ×Ê½ðÊ¹ÓÃÇé¿ö
+        * ï¿½ï¿½Ñ¯Ä³ï¿½ï¿½ï¿½ÊºÅµï¿½ï¿½Ê½ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½
         *
         * @param account_id
         * @return
@@ -499,7 +502,7 @@ namespace tquant {  namespace api {
         virtual CallResult<const Balance> query_balance(const string& account_id) = 0;
 
         /**
-        * ²éÑ¯Ä³¸öÕÊºÅµÄµ±ÌìµÄ¶©µ¥
+        * ï¿½ï¿½Ñ¯Ä³ï¿½ï¿½ï¿½ÊºÅµÄµï¿½ï¿½ï¿½Ä¶ï¿½ï¿½ï¿½
         *
         * @param account_id
         * @return
@@ -508,7 +511,7 @@ namespace tquant {  namespace api {
         virtual CallResult<const vector<Order>> query_orders(const string& account_id, const string& codes) = 0;
 
         /**
-        * ²éÑ¯Ä³¸öÕÊºÅµÄµ±ÌìµÄ³É½»
+        * ï¿½ï¿½Ñ¯Ä³ï¿½ï¿½ï¿½ÊºÅµÄµï¿½ï¿½ï¿½Ä³É½ï¿½
         *
         * @param account_id
         * @return
@@ -517,7 +520,7 @@ namespace tquant {  namespace api {
         virtual CallResult<const vector<Trade>> query_trades(const string& account_id, const string& codes) = 0;
 
         /**
-        * ²éÑ¯Ä³¸öÕÊºÅµÄµ±ÌìµÄ³Ö²Ö
+        * ï¿½ï¿½Ñ¯Ä³ï¿½ï¿½ï¿½ÊºÅµÄµï¿½ï¿½ï¿½Ä³Ö²ï¿½
         *
         * @param account_id
         * @return
@@ -526,54 +529,54 @@ namespace tquant {  namespace api {
         virtual CallResult<const vector<Position>> query_positions(const string& account_id, const string& codes) = 0;
 
         /**
-        * ÏÂµ¥
+        * ï¿½Âµï¿½
         *
-        * ¹ÉÆ±Í¨µÀÎªÍ¬²½ÏÂµ¥Ä£Ê½£¬¼´±ØÐëÏÂµ¥³É¹¦±ØÐë·µ»ØÎ¯ÍÐºÅ entrust_no¡£
+        * ï¿½ï¿½Æ±Í¨ï¿½ï¿½ÎªÍ¬ï¿½ï¿½ï¿½Âµï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Âµï¿½ï¿½É¹ï¿½ï¿½ï¿½ï¿½ë·µï¿½ï¿½Î¯ï¿½Ðºï¿½ entrust_noï¿½ï¿½
         *
-        * CTP½»Ò×Í¨µÀÎªÒì²½ÏÂµ¥Ä£Ê½£¬ÏÂµ¥ºóÁ¢¼´·µ»Ø×Ô¶¨Òå±àºÅorder_id¡£µ±½»Ò×Ëù½ÓÊÜ¶©µ¥£¬Éú³ÉÎ¯ÍÐºÅºÃ£¬Í¨¹ý Callback.on_order_statusÍ¨Öª
-        * ÓÃ»§¡£ÓÃ»§¿ÉÒÔÍ¨¹ýorder_idÆ¥Åä¡£Èç¹û¶©µ¥Ã»ÓÐ±»½ÓÊÕ£¬on_order_status»Øµ÷º¯ÊýÖÐentrust_noÎª¿Õ£¬×´Ì¬ÎªRejected¡£
-        * µ±²ÎÊýorder_id²»Îª0£¬±íÊ¾ÓÃ»§×Ô¼º¶Ô¶©µ¥±àºÅ£¬ÕâÊ±ÓÃ»§±ØÐë±£Ö¤±àºÅµÄÎ¨Ò»ÐÔ¡£Èç¹û½»Ò×Í¨µÀ²»Ö§³Öorder_id£¬¸Ãº¯Êý·µ»Ø´íÎó´úÂë¡£
+        * CTPï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½Îªï¿½ì²½ï¿½Âµï¿½Ä£Ê½ï¿½ï¿½ï¿½Âµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½order_idï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¯ï¿½ÐºÅºÃ£ï¿½Í¨ï¿½ï¿½ Callback.on_order_statusÍ¨Öª
+        * ï¿½Ã»ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½order_idÆ¥ï¿½ä¡£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½Ð±ï¿½ï¿½ï¿½ï¿½Õ£ï¿½on_order_statusï¿½Øµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½entrust_noÎªï¿½Õ£ï¿½×´Ì¬ÎªRejectedï¿½ï¿½
+        * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½order_idï¿½ï¿½Îª0ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½Ã»ï¿½ï¿½Ô¼ï¿½ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½Ê±ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ë±£Ö¤ï¿½ï¿½Åµï¿½Î¨Ò»ï¿½Ô¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½Ö§ï¿½ï¿½order_idï¿½ï¿½ï¿½Ãºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø´ï¿½ï¿½ï¿½ï¿½ï¿½ë¡£
         *
-        * @param account_id    ÕÊºÅ±àºÅ
-        * @param code          Ö¤È¯´úÂë
-        * @param price         Î¯ÍÐ¼Û¸ñ
-        * @param size          Î¯ÍÐÊýÁ¿
-        * @param action        Î¯ÍÐ¶¯×÷
-        * @param price_type    ¼Û¸ñÀàÐÍ£¬È±Ê¡ÎªÏÞ¼Ûµ¥(LimitPrice)
-        * @param order_id      ×Ô¶¨Òå¶©µ¥±àºÅ£¬²»Îª0±íÊ¾ÓÐÖµ
-        * @return OrderID      ¶©µ¥ID
+        * @param account_id    ï¿½ÊºÅ±ï¿½ï¿½
+        * @param code          Ö¤È¯ï¿½ï¿½ï¿½ï¿½
+        * @param price         Î¯ï¿½Ð¼Û¸ï¿½
+        * @param size          Î¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        * @param action        Î¯ï¿½Ð¶ï¿½ï¿½ï¿½
+        * @param price_type    ï¿½Û¸ï¿½ï¿½ï¿½ï¿½Í£ï¿½È±Ê¡Îªï¿½Þ¼Ûµï¿½(LimitPrice)
+        * @param order_id      ï¿½Ô¶ï¿½ï¿½å¶©ï¿½ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½Îª0ï¿½ï¿½Ê¾ï¿½ï¿½Öµ
+        * @return OrderID      ï¿½ï¿½ï¿½ï¿½ID
         */
         virtual CallResult<const OrderID> place_order(const string& account_id, const string& code, double price, int64_t size, const string& action, const string& price_type, int order_id) = 0;
 
         /**
-        * ¸ù¾Ý¶©µ¥ºÅ³·µ¥
+        * ï¿½ï¿½ï¿½Ý¶ï¿½ï¿½ï¿½ï¿½Å³ï¿½ï¿½ï¿½
         *
-        * security ²»ÄÜÎª¿Õ
+        * security ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½
         *
-        * @param account_id    ÕÊºÅ±àºÅ
-        * @param code          Ö¤È¯´úÂë
-        * @param order_id      ¶©µ¥ºÅ
-        * @return ÊÇ·ñ³É¹¦
+        * @param account_id    ï¿½ÊºÅ±ï¿½ï¿½
+        * @param code          Ö¤È¯ï¿½ï¿½ï¿½ï¿½
+        * @param order_id      ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        * @return ï¿½Ç·ï¿½É¹ï¿½
         */
         virtual CallResult<bool> cancel_order(const string& account_id, const string& code, int order_id) = 0;
 
         /**
-        * ¸ù¾ÝÎ¯ÍÐºÅ³·µ¥
+        * ï¿½ï¿½ï¿½ï¿½Î¯ï¿½ÐºÅ³ï¿½ï¿½ï¿½
         *
-        * security ²»ÄÜÎª¿Õ
+        * security ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½
         *
-        * @param account_id    ÕÊºÅ±àºÅ
-        * @param code          Ö¤È¯´úÂë
-        * @param entrust_no    Î¯ÍÐ±àºÅ
-        * @return ÊÇ·ñ³É¹¦
+        * @param account_id    ï¿½ÊºÅ±ï¿½ï¿½
+        * @param code          Ö¤È¯ï¿½ï¿½ï¿½ï¿½
+        * @param entrust_no    Î¯ï¿½Ð±ï¿½ï¿½
+        * @return ï¿½Ç·ï¿½É¹ï¿½
         */
         virtual CallResult<bool> cancel_order(const string& account_id, const string& code, const string& entrust_no) = 0;
 
         /**
-        * Í¨ÓÃ²éÑ¯½Ó¿Ú
+        * Í¨ï¿½Ã²ï¿½Ñ¯ï¿½Ó¿ï¿½
         *
-        * ÓÃÓÚ²éÑ¯½»Ò×Í¨µÀÌØÓÐµÄÐÅÏ¢¡£Èç²éÑ¯ CTPµÄ´úÂë±í command="ctp_codetable".
-        * ·µ»Ø×Ö·û´®¡£
+        * ï¿½ï¿½ï¿½Ú²ï¿½Ñ¯ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½Ðµï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¯ CTPï¿½Ä´ï¿½ï¿½ï¿½ï¿½ command="ctp_codetable".
+        * ï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½
         *
         * @param account_id
         * @param command
@@ -583,7 +586,7 @@ namespace tquant {  namespace api {
         virtual CallResult<string> query(const string& account_id, const string& command, const string& params) = 0;
 
         /**
-        * ÉèÖÃ TradeApi.Callback
+        * ï¿½ï¿½ï¿½ï¿½ TradeApi.Callback
         *
         * @param callback
         */

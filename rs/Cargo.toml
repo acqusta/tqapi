@@ -1,0 +1,12 @@
+[package]
+name = "tqapi"
+version = "0.1.0"
+authors = ["Xu Tiezhu <xutiezhu@gmail.com>"]
+edition = "2018"
+
+[build]
+rustc-link-search = ["../build/dist/bin"]
+
+[dependencies]
+libc = "0.2.53"
+

@@ -56,7 +56,7 @@ CallResultWrap* dapi_get_bar(void* h, const char* code, const char* cycle, int t
 {
     auto dapi = reinterpret_cast<DataApi*>(h);
     assert(dapi);
-    
+
     CallResultWrap* cr = new CallResultWrap();
     auto r = dapi->bar(code, cycle, trading_day, align);
     if (r.value) {
@@ -142,7 +142,7 @@ CallResultWrap* dapi_subscribe(void* h, const char* codes)
     assert(dapi);
 
     vector<string> ss;
-    if (codes) 
+    if (codes)
         split(codes, ",", &ss);
 
     auto r = dapi->subscribe(ss);
@@ -208,12 +208,12 @@ public:
     {
     }
 
-    virtual void on_market_quote(shared_ptr<const MarketQuote> quote) override 
+    virtual void on_market_quote(shared_ptr<const MarketQuote> quote) override
     {
         if (m_on_quote) m_on_quote(quote.get());
     }
 
-    virtual void on_bar(const string& cycle, shared_ptr<const Bar> bar) override 
+    virtual void on_bar(const string& cycle, shared_ptr<const Bar> bar) override
     {
         if (m_on_bar) m_on_bar(cycle.c_str(), bar.get());
     }
@@ -256,7 +256,7 @@ CallResultWrap* tapi_query_account_status(void* h)
         cr->element_count = (int32_t)cr->account_infos->size();
         cr->value_type = VT_ACCOUNT_INFO_ARRAY;
     }
-    else 
+    else
     {
         cr->msg = _T(r.msg, cr->_msg);
     }
@@ -359,7 +359,7 @@ CallResultWrap* tapi_query_trades(void* h, const char* account_id, const char* c
 
 extern "C" _TQAPI_EXPORT
 CallResultWrap* tapi_place_order(void* h, const char* account_id,
-                                 const char* code, 
+                                 const char* code,
                                  double price,
                                  int64_t size,
                                  const char* action,

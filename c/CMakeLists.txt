@@ -20,6 +20,8 @@ set(SRC
   api/impl_trade_api.h
   api/tqapi_cs.cpp
   api/tqapi_cs.h
+  api/tqapi_ffi.h
+  api/tqapi_ffi.cpp
 
   tqs/rt/realtime.cpp
   tqs/rt/realtime.h
@@ -101,7 +103,7 @@ install(TARGETS tqapi_test DESTINATION bin)
 
 # Demo
 
-add_executable(tqs_demo 
+add_executable(tqs_demo
   tqs/demo/demo.cpp
   tqs/demo/demo_rbreaker.cpp
   tqs/demo/demo_doublema.cpp
