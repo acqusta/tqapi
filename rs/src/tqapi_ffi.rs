@@ -185,6 +185,12 @@ pub struct FFITraitObject {
     vtable: usize,
 }
 
+impl FFITraitObject {
+    pub fn copy(&self) -> FFITraitObject {
+        FFITraitObject { data : self.data, vtable : self.vtable}
+    }
+}
+
 #[repr(C, packed)]
 pub struct CDataApiCallback {
     pub obj        : *mut FFITraitObject,

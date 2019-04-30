@@ -110,7 +110,6 @@ pub trait DataApiCallback {
 pub struct DataApi <'a> {
     cb     : Option<&'a DataApiCallback>,
     dapi   : *mut CDataApi,
-    //raw_cb : *mut CDataApiCallback,
 }
 
 impl <'a> Drop for DataApi<'a> {
@@ -126,10 +125,6 @@ impl <'a> Drop for DataApi<'a> {
     }
 }
 
-//struct UserData {
-//    dapi : &'static DataApi
-//}
-
 impl <'a> DataApi<'a> {
     pub fn new(addr: &str) -> DataApi {
         unsafe {
@@ -139,56 +134,56 @@ impl <'a> DataApi<'a> {
         }
     }
 
-    //extern "C" fn on_quote(c_quote: *mut CMarketQuote, userdata : *mut libc::c_void){
-    extern "C" fn on_quote(c_quote: *mut CMarketQuote, obj : *mut FFITraitObject) { //callback: Box<DataApiCallback>) { //userdata : *mut libc::c_void){
+    extern "C" fn on_quote(c_quote: *mut CMarketQuote, obj : *mut FFITraitObject) {
 
-        let mut cb: Box<DataApiCallback> = unsafe { mem::transmute(*Box::from_raw(obj)) };
-        //let mut cb: Box<DataApiCallback> = unsafe { mem::transmute(*obj) };
-        // XXX multiple thread issue
-        //assert!(!userdata.is_null());
-        //let dapi = unsafe { Box::from_raw(userdata as *mut UserData).dapi };
+        assert!(!c_quote.is_null() && !obj.is_null());
+        let mut cb: Box<DataApiCallback> = unsafe {
+            mem::transmute( (*obj).copy())
+        };
         let quote = unsafe { (*c_quote).to_rs()};
         cb.as_mut().on_quote(quote);
-//        if dapi.cb.is_some() {
-//            dapi.cb.unwrap().on_quote(quote);
-//        }
     }
 
     extern "C" fn on_bar(c_cycle : *mut c_char, c_bar: *mut CBar, obj : *mut FFITraitObject) {
-        let mut cb: Box<DataApiCallback> = unsafe { mem::transmute(*Box::from_raw(obj)) };
+        let mut cb: Box<DataApiCallback> = unsafe {
+            mem::transmute( (*obj).copy())
+        };
+
         let cycle = unsafe {CStr::from_ptr(c_cycle).to_str().unwrap()};
         let bar   = unsafe {(*c_bar).to_rs()};
 
         cb.as_mut().on_bar(cycle, bar);
     }
 
-    //pub fn set_callback<T: DataApiCallback + 'static >(&mut self, cb : Option<&'static T>) {
     pub fn set_callback(&mut self, cb : Option<&'a DataApiCallback>) {
         self.cb = cb;
-        if self.cb.is_none() {
-            unsafe { tqapi_dapi_set_callback(self.dapi, core::ptr::null_mut()); }
-        } else {
-            unsafe {
-                let trait_obj : FFITraitObject = mem::transmute(self.cb.unwrap());
-
-                let raw_cb = Box::into_raw(
-                    Box::new(CDataApiCallback {
-                        obj      : Box::into_raw(Box::new(trait_obj)) as *mut FFITraitObject,
-                        on_bar   : DataApi::on_bar,
-                        on_quote : DataApi::on_quote,
-                    }));
-
-                let old_cb = tqapi_dapi_set_callback(self.dapi, raw_cb);
-                if !old_cb.is_null() {
-                    Box::from_raw( (*old_cb).obj);
-                    Box::from_raw(old_cb);
+        match self.cb {
+            None =>
+                unsafe {
+                    tqapi_dapi_set_callback(self.dapi, core::ptr::null_mut());
                 }
-            }
+            Some(callback) =>
+                unsafe {
+                    println!("set_callback");
+                    let trait_obj : FFITraitObject = mem::transmute(callback);
+
+                    let raw_cb = Box::into_raw(
+                        Box::new(CDataApiCallback {
+                            obj      : Box::into_raw(Box::new(trait_obj)) as *mut FFITraitObject,
+                            on_bar   : DataApi::on_bar,
+                            on_quote : DataApi::on_quote,
+                        }));
+
+                    let old_cb = tqapi_dapi_set_callback(self.dapi, raw_cb);
+                    if !old_cb.is_null() {
+                        Box::from_raw( (*old_cb).obj);
+                        Box::from_raw(old_cb);
+                    }
+                }
         }
     }
 
     pub fn subscribe(&mut self, codes: & str) -> Result<Vec<String>, String> {
-        //let c_codes = CString::new(codes.join(".")).unwrap();
         let c_codes = CString::new(codes).unwrap();
         let mut result : Result<Vec<String>, String>;
         unsafe {
@@ -211,7 +206,6 @@ impl <'a> DataApi<'a> {
     }
 
     pub fn unsubscribe(&mut self, codes: & str) -> Result<Vec<String>, String> {
-        //let c_codes = CString::new(codes.join(".")).unwrap();
         let c_codes = CString::new(codes).unwrap();
         let mut result : Result<Vec<String>, String>;
         unsafe {

@@ -13,10 +13,10 @@ struct Callback {
 
 impl DataApiCallback for Callback {
     fn on_quote(&mut self, quote : MarketQuote) {
-        print!("on_quote {}", quote);
+        println!("on_quote {}", quote);
     }
     fn on_bar  (&mut self, cycle : &str, bar : Bar) {
-        print!("on_bar {}, {}",cycle, bar);
+        println!("on_bar {}, {}",cycle, bar);
     }
 }
 
@@ -27,24 +27,28 @@ fn test() {
 
     print!("subscribe\n");
     let code = "RB.SHF";
-    api.subscribe( &vec!["RB.SHF", "000001.SH"].join(".")).expect("subscribed error");
+    api.subscribe( &vec!["RB.SHF", "000001.SH"].join(",")).expect("subscribed error");
     print!("call get_ticks\n");
 
-    let count = 1;
-    let begin_time = chrono::Local::now();
-
-    for _ in 0..count {
-        let quotes = api.get_bars(code, "1m", 0, true).ok().expect("get_ticks failed");
-        for q in quotes {
-            println!("{}", q);
-        }
+    match api.get_ticks(code, 0) {
+        Ok(quotes) => for q in quotes { }//println!("{}", q);}
+        Err(msg) => println!("error: {}", msg)
     }
+    // let count = 1;
+    // let begin_time = chrono::Local::now();
 
-    let end_time = chrono::Local::now();
-    println!("{} ", (end_time - begin_time) / count);
-    println!("call get_ticks done\n");
+    // for _ in 0..count {
+    //     match api.get_ticks(code, 0) {
+    //         Ok(quotes) => for q in quotes { println!("{}", q);}
+    //         Err(msg) => println!("error: {}", msg)
+    //     }
+    // }
 
-    while true {
+    // let end_time = chrono::Local::now();
+    // println!("{} ", (end_time - begin_time) / count);
+    // println!("call get_ticks done\n");
+
+    for _ in 0..10 {
         sleep(Duration::new(1,0));
     }
 }

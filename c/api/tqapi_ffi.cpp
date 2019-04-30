@@ -29,12 +29,14 @@ extern "C" {
         auto dapi = new DataApi();
         dapi->instance = inst;
         dapi->cb = nullptr;
+        inst->set_callback(dapi);
         return dapi;
     }
 
     void tqapi_free_data_api(DataApi* dapi)
     {
         if (dapi) {
+            dapi->instance->set_callback(nullptr);
             delete dapi->instance;
             delete dapi;
         }
@@ -54,6 +56,11 @@ extern "C" {
     GetTickResult* tqapi_dapi_get_ticks(DataApi* dapi, const char* code, int trade_date)
     {
         auto r = dapi->instance->tick(code, trade_date);
+
+        //dapi->cb->on_quote(nullptr, dapi->cb->user_data);
+        // for (int i = 0; i < r.value->size(); i++) {
+        //     dapi->cb->on_quote((const MarketQuote*)&r.value->at(i), dapi->cb->user_data);
+        // }
         auto gtr = new GetTickResult;
         gtr->data =  new GetTickResultData;
         gtr->data->result = r;
