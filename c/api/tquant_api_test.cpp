@@ -402,8 +402,8 @@ void perf_test3(DataApi* dapi)
     size_t total_count = 0;
     int loop = 1000;
     for (int i = 0; i < loop; i++) {
-        //auto ticks = dapi->tick(code, 20);
-        auto ticks = dapi->bar(code, "1m", 0, true);
+        auto ticks = dapi->tick(code, 20190426);
+        //auto ticks = dapi->bar(code, "1m", 0, true);
         if (ticks.value) {
             total_count += ticks.value->size();
 #if 0
@@ -426,7 +426,7 @@ void perf_test3(DataApi* dapi)
 
 int main(int argc, const char** argv)
 {
-    if (0) {
+    if (1) {
         const char* addr[3] = {
             "ipc://tqc_10001",
             "tcp://127.0.0.1:10001"
@@ -441,7 +441,7 @@ int main(int argc, const char** argv)
         set_params("plugin_path", "/opt/tquant/md/lib");
 #endif
 
-        int i = 0;
+        int i = 1;
         if (argc>1) i = atoi(argv[1]);
         std::cout << addr[i] << endl;
         

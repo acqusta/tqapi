@@ -5,16 +5,30 @@
 
 using namespace std;
 
-struct DataApi {
+struct DataApi : public tquant::api::DataApi_Callback {
+
     tquant::api::DataApi* instance;
+    DataApiCallback* cb;
+
+    virtual void on_market_quote(shared_ptr<const tquant::api::MarketQuote> quote) override {
+        if (cb)
+            cb->on_quote((const MarketQuote*)quote.get(), cb->user_data);
+    }
+
+    virtual void on_bar(const string& cycle, shared_ptr<const tquant::api::Bar> bar) override {
+        if (cb)
+            cb->on_bar(cycle.c_str(), (const Bar*)bar.get(), cb->user_data);
+    }
 };
 
 extern "C" {
+
     DataApi* tqapi_create_data_api(const char* addr)
     {
         auto inst = tquant::api::create_data_api(addr);
         auto dapi = new DataApi();
         dapi->instance = inst;
+        dapi->cb = nullptr;
         return dapi;
     }
 
@@ -26,14 +40,20 @@ extern "C" {
         }
     }
 
+    DataApiCallback*   tqapi_dapi_set_callback(DataApi* dapi, DataApiCallback* callback)
+    {
+        auto old = dapi->cb;
+        dapi->cb = callback;
+        return old;
+    }
+
     struct GetTickResultData {
         tquant::api::CallResult<const tquant::api::MarketQuoteArray> result;
     };
 
     GetTickResult* tqapi_dapi_get_ticks(DataApi* dapi, const char* code, int trade_date)
     {
-        std::cout<<"get_ticks: " <<code <<"," << strlen(code) << "," << trade_date << endl;
-        auto r = dapi->instance->tick(code, 0);//trade_date);
+        auto r = dapi->instance->tick(code, trade_date);
         auto gtr = new GetTickResult;
         gtr->data =  new GetTickResultData;
         gtr->data->result = r;
@@ -57,6 +77,109 @@ extern "C" {
     {
         if (result) {
             delete result->data;
+            delete result;
+        }
+    }
+
+    struct GetBarResultData {
+        tquant::api::CallResult<const tquant::api::BarArray> result;
+    };
+
+    GetBarResult* tqapi_dapi_get_bars(DataApi* dapi, const char* code, const char* cycle, int trade_date, int align)
+    {
+        auto r = dapi->instance->bar(code, cycle, trade_date, align);
+        auto gbr = new GetBarResult;
+        gbr->data =  new GetBarResultData;
+        gbr->data->result = r;
+
+        if (gbr->data->result.value) {
+            auto& tmp = gbr->data->result.value;
+            gbr->array = (Bar*)tmp->_data;
+            gbr->array_length = tmp->_size;
+            gbr->element_size = tmp->_type_size;
+            gbr->msg = nullptr;
+        } else {
+            gbr->msg = gbr->data->result.msg.c_str();
+            gbr->array = nullptr;
+            gbr->array_length = 0;
+            gbr->element_size = 0;
+        }
+        return gbr;
+    }
+
+    void tqapi_dapi_free_get_bars_result(DataApi* dapi, GetBarResult* result)
+    {
+        if (result) {
+            delete result->data;
+            delete result;
+        }
+    }
+
+    struct GetDailyBarResultData {
+        tquant::api::CallResult<const tquant::api::DailyBarArray> result;
+    };
+
+    GetDailyBarResult* tqapi_dapi_get_dailybars(DataApi* dapi, const char* code, const char* price_type, int align)
+    {
+        auto r = dapi->instance->daily_bar(code, price_type, align);
+        auto gbr  = new GetDailyBarResult;
+        gbr->data = new GetDailyBarResultData;
+        gbr->data->result = r;
+
+        if (gbr->data->result.value) {
+            auto& tmp = gbr->data->result.value;
+            gbr->array = (DailyBar*)tmp->_data;
+            gbr->array_length = tmp->_size;
+            gbr->element_size = tmp->_type_size;
+            gbr->msg = nullptr;
+        }
+        else {
+            gbr->msg = gbr->data->result.msg.c_str();
+            gbr->array = nullptr;
+            gbr->array_length = 0;
+            gbr->element_size = 0;
+        }
+        return gbr;
+    }
+
+    void tqapi_dapi_free_get_dailybars_result(DataApi* dapi, GetDailyBarResult* result)
+    {
+        if (result) {
+            delete result->data;
+            delete result;
+        }
+    }
+
+    struct GetQuoteResultData {
+        tquant::api::CallResult<const tquant::api::MarketQuote> result;
+    };
+
+    static_assert(sizeof(MarketQuote) == sizeof(tquant::api::RawMarketQuote), "Wrong MarketQuote size");
+    static_assert(sizeof(Bar)         == sizeof(tquant::api::RawBar),         "Wrong Bar size");
+    static_assert(sizeof(DailyBar)    == sizeof(tquant::api::RawDailyBar),    "Wrong DailyBar size");
+
+    GetQuoteResult* tqapi_dapi_get_quote(DataApi* dapi, const char* code)
+    {
+        auto r = dapi->instance->quote(code);
+        auto gbr  = new GetQuoteResult;
+        gbr->_data = new GetQuoteResultData;
+        gbr->_data->result = r;
+
+        if (gbr->_data->result.value) {
+            gbr->quote = (const MarketQuote*)gbr->_data->result.value.get();
+            gbr->msg = nullptr;
+        }
+        else {
+            gbr->msg = gbr->_data->result.msg.c_str();
+            gbr->quote = nullptr;
+        }
+        return gbr;
+    }
+
+    void tqapi_dapi_free_get_quote_result(DataApi* dapi, GetQuoteResult* result)
+    {
+        if (result) {
+            delete result->_data;
             delete result;
         }
     }

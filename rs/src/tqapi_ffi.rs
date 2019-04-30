@@ -1,9 +1,10 @@
 extern crate libc;
 
-use std::fmt;
 use std::ffi::CStr;
 use std::os::raw::c_char;
 use super::dapi::MarketQuote;
+use super::dapi::Bar;
+use super::dapi::DailyBar;
 
 
 #[repr(C, packed)]
@@ -68,8 +69,9 @@ impl CMarketQuote {
     }
 }
 
+#[repr(C, packed)]
 pub struct CBar {
-    code  : String,
+    code  : *const c_char,
     date  : i32,
     time  : i32,
     trade_date : i32,
@@ -81,39 +83,84 @@ pub struct CBar {
     turnover : f64,
     oi       : i64
 }
-// impl Bar {
-//     pub fn new() -> Bar{
-//         Bar { code : String::from(""), date : 0, time : 0, trade_date : 0,
-//          open : 0.0, high : 0.0, low : 0.0, close : 0.0,
-//          volume : 0, turnover : 0.0, oi : 0}
-//     }
-// }
 
-pub struct CDailyBar {
-    code : String,
-    date : i32,
-    time : i32,
-    trade_date : i32,
-    open     : f64,
-    high     : f64,
-    low      : f64,
-    close    : f64,
-    volume   : i64,
-    turnover : f64,
-    oi       : i64,
-    settle   : f64,
-    pre_close : f64,
-    pre_settle : f64,
-    af  : f64
+impl CBar {
+    pub fn to_rs(&self) -> Bar{
+        unsafe {
+            Bar {
+                code: CStr::from_ptr(self.code).to_string_lossy().into_owned(),
+                date : self.date, time : self.time, trade_date : self.trade_date,
+                open : self.open, high : self.high, low : self.low, close : self.close,
+                volume : self.volume, turnover : self.turnover, oi : self.oi
+            }
+        }
+    }
 }
 
-#[derive(Debug)]
+#[repr(C, packed)]
+pub struct CDailyBar {
+    code       : *const c_char,
+    trade_date : i32,
+    time       : i32,
+    open       : f64,
+    high       : f64,
+    low        : f64,
+    close      : f64,
+    volume     : i64,
+    turnover   : f64,
+    oi         : i64,
+    settle     : f64,
+    pre_close  : f64,
+    pre_settle : f64,
+    af         : f64
+}
+
+impl CDailyBar {
+    pub fn to_rs(&self) -> DailyBar{
+        unsafe {
+            DailyBar {
+                code: CStr::from_ptr(self.code).to_string_lossy().into_owned(),
+                trade_date : self.trade_date, time : self.time,
+                open : self.open, high : self.high, low : self.low, close : self.close,
+                volume : self.volume, turnover : self.turnover, oi : self.oi,
+                settle : self.settle, pre_close : self.pre_close, pre_settle : self.pre_settle,
+                af : self.af
+            }
+        }
+    }
+}
+
 #[repr(C, packed)]
 pub struct GetTicksResult {
     _data            : *mut libc::c_void,
     pub ticks        : *mut CMarketQuote,
     pub ticks_length : i32,
     pub element_size : i32,
+    pub msg          : *const c_char,
+}
+
+#[repr(C, packed)]
+pub struct GetBarsResult {
+    _data            : *mut libc::c_void,
+    pub ticks        : *mut CBar,
+    pub ticks_length : i32,
+    pub element_size : i32,
+    pub msg          : *const c_char,
+}
+
+#[repr(C, packed)]
+pub struct GetDailyBarResult {
+    _data            : *mut libc::c_void,
+    pub ticks        : *mut CDailyBar,
+    pub ticks_length : i32,
+    pub element_size : i32,
+    pub msg          : *const c_char,
+}
+
+#[repr(C, packed)]
+pub struct GetQuoteResult {
+    _data            : *mut libc::c_void,
+    pub quote        : *mut CMarketQuote,
     pub msg          : *const c_char,
 }
 
@@ -131,44 +178,67 @@ pub struct UnSubscribeResult {
     pub msg          : *const c_char,
 }
 
+#[repr(C)]
+#[no_mangle]
+pub struct FFITraitObject {
+    data  : usize,
+    vtable: usize,
+}
+
+#[repr(C, packed)]
+pub struct CDataApiCallback {
+    pub obj        : *mut FFITraitObject,
+    pub on_quote   : extern "C" fn(quote : *mut CMarketQuote, obj : *mut FFITraitObject),
+    pub on_bar     : extern "C" fn(cycle : *mut c_char, bar: * mut CBar, obj : *mut FFITraitObject),
+}
+
 pub enum CDataApi {  }
 
 #[link(name = "tqapi")]//, kind = "static")]
 extern "C" {
     pub fn tqapi_create_data_api(addr : *const c_char) -> *mut CDataApi;
-    pub fn tqapi_free_data_api(dapi : *mut CDataApi);
+    pub fn tqapi_free_data_api  (dapi : *mut CDataApi);
 
-    pub fn tqapi_dapi_get_ticks(dapi : *mut CDataApi, code : *const c_char, trade_date : i32) -> *mut GetTicksResult;
-    pub fn tqapi_dapi_free_get_ticks_result(dapi : *mut CDataApi, result : *mut GetTicksResult);
+    pub fn tqapi_dapi_get_ticks                (dapi : *mut CDataApi, code : *const c_char, trade_date : i32) -> *mut GetTicksResult;
+    pub fn tqapi_dapi_free_get_ticks_result    (dapi : *mut CDataApi, result : *mut GetTicksResult);
+    pub fn tqapi_dapi_get_bars                 (dapi : *mut CDataApi, code : *const c_char, cycle : *const c_char, trade_date : i32, align : i32) -> *mut GetBarsResult;
+    pub fn tqapi_dapi_free_get_bars_result     (dapi : *mut CDataApi, result : *mut GetBarsResult);
 
-    pub fn tqapi_dapi_subscribe (dapi: *mut CDataApi, codes : *const c_char) -> *mut SubscribeResult;
-    pub fn tqapi_dapi_free_subscribe_result (dapi: *mut CDataApi, result : *mut SubscribeResult);
+    pub fn tqapi_dapi_get_dailybars            (dapi : *mut CDataApi, code : *const c_char, price_type : *const c_char, align : i32) -> *mut GetDailyBarResult;
+    pub fn tqapi_dapi_free_get_dailybars_result(dapi : *mut CDataApi, result : *mut GetDailyBarResult);
 
-    pub fn tqapi_dapi_unsubscribe (dapi: *mut CDataApi, codes : *const c_char) -> *mut UnSubscribeResult;
-    pub fn tqapi_dapi_free_unsubscribe_result (dapi: *mut CDataApi, result : *mut UnSubscribeResult);
+    pub fn tqapi_dapi_get_quote                (dapi : *mut CDataApi, code : *const c_char) -> *mut GetQuoteResult;
+    pub fn tqapi_dapi_free_get_quote_result    (dapi : *mut CDataApi, result : *mut GetQuoteResult);
 
+    pub fn tqapi_dapi_subscribe                (dapi: *mut CDataApi, codes : *const c_char) -> *mut SubscribeResult;
+    pub fn tqapi_dapi_free_subscribe_result    (dapi: *mut CDataApi, result : *mut SubscribeResult);
+
+    pub fn tqapi_dapi_unsubscribe              (dapi: *mut CDataApi, codes : *const c_char) -> *mut UnSubscribeResult;
+    pub fn tqapi_dapi_free_unsubscribe_result  (dapi: *mut CDataApi, result : *mut UnSubscribeResult);
+
+    pub fn tqapi_dapi_set_callback             (dapi: *mut CDataApi, callback : *mut CDataApiCallback) -> * mut CDataApiCallback;
 }
 
 // TradeApi
 
-struct CAccountInfo {
-    account_id   : String,    // 帐号编号
-    broker       : String,    // 交易商名称，如招商证券
-    account      : String,    // 交易帐号
-    status       : String,    // 连接状态，取值 Disconnected, Connected, Connecting
-    msg          : String,    // 状态信息，如登录失败原因
-    account_type : String,    // 帐号类型，如 stock, ctp
-}
-
-struct CBalance {
-    account_id : String,
-    fund_account : String,
-    init_balance : String,
-    enable_balance : String,
-    margin : f64,
-    float_pnl : f64,
-    close_pnl : f64,
-}
+//struct CAccountInfo {
+//    account_id   : String,    // 帐号编号
+//    broker       : String,    // 交易商名称，如招商证券
+//    account      : String,    // 交易帐号
+//    status       : String,    // 连接状态，取值 Disconnected, Connected, Connecting
+//    msg          : String,    // 状态信息，如登录失败原因
+//    account_type : String,    // 帐号类型，如 stock, ctp
+//}
+//
+//struct CBalance {
+//    account_id : String,
+//    fund_account : String,
+//    init_balance : String,
+//    enable_balance : String,
+//    margin : f64,
+//    float_pnl : f64,
+//    close_pnl : f64,
+//}
 
 
 // struct COrder {

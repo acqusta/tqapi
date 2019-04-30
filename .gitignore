@@ -27,6 +27,8 @@ cs/**/*.pdb
 cs/**/*.dll
 cs/**/*.xml
 cs/**/*.exe
+cs/src/target
+cs/test/target
 .vs
 .idea
 .vscode

@@ -1,5 +1,5 @@
 extern crate libc;
-
+use std::mem;
 
 use std::fmt;
 use std::ffi::CStr;
@@ -57,17 +57,17 @@ impl fmt::Display for MarketQuote {
 }
 
 pub struct Bar {
-    code  : String,
-    date  : i32,
-    time  : i32,
-    trade_date : i32,
-    open  : f64,
-    high  : f64,
-    low   : f64,
-    close : f64,
-    volume : i64,
-    turnover : f64,
-    oi       : i64
+    pub code       : String,
+    pub date       : i32,
+    pub time       : i32,
+    pub trade_date : i32,
+    pub open       : f64,
+    pub high       : f64,
+    pub low        : f64,
+    pub close      : f64,
+    pub volume     : i64,
+    pub turnover   : f64,
+    pub oi         : i64
 }
 
 impl Bar {
@@ -85,51 +85,111 @@ impl fmt::Display for Bar {
 }
 
 pub struct DailyBar {
-    code : String,
-    date : i32,
-    time : i32,
-    trade_date : i32,
-    open     : f64,
-    high     : f64,
-    low      : f64,
-    close    : f64,
-    volume   : i64,
-    turnover : f64,
-    oi       : i64,
-    settle   : f64,
-    pre_close : f64,
-    pre_settle : f64,
-    af  : f64
+    pub code       : String,
+    pub trade_date : i32,
+    pub time       : i32,
+    pub open       : f64,
+    pub high       : f64,
+    pub low        : f64,
+    pub close      : f64,
+    pub volume     : i64,
+    pub turnover   : f64,
+    pub oi         : i64,
+    pub settle     : f64,
+    pub pre_close  : f64,
+    pub pre_settle : f64,
+    pub af         : f64
 }
 
 pub trait DataApiCallback {
     fn on_quote(&mut self, quote : MarketQuote);
-    fn on_bar  (&mut self, cycle : String, bar : Bar);
+    fn on_bar  (&mut self, cycle : &str, bar : Bar);
 }
 
 
-pub struct DataApi {
-    cb : Option<Box<DataApiCallback>>,
-    dapi : *mut CDataApi,
+pub struct DataApi <'a> {
+    cb     : Option<&'a DataApiCallback>,
+    dapi   : *mut CDataApi,
+    //raw_cb : *mut CDataApiCallback,
 }
 
-impl Drop for DataApi {
+impl <'a> Drop for DataApi<'a> {
     fn drop(&mut self) {
         unsafe {
+            let old_cb = tqapi_dapi_set_callback(self.dapi, core::ptr::null_mut());
+            if !old_cb.is_null() {
+                Box::from_raw((*old_cb).obj);
+                Box::from_raw(old_cb);
+            }
             tqapi_free_data_api(self.dapi);
         }
     }
 }
-impl DataApi {
+
+//struct UserData {
+//    dapi : &'static DataApi
+//}
+
+impl <'a> DataApi<'a> {
     pub fn new(addr: &str) -> DataApi {
         unsafe {
             let dapi = tqapi_create_data_api(addr.as_ptr() as *const c_char);
-            DataApi{ cb : None, dapi : dapi }
+
+            DataApi{ cb : None, dapi : dapi}
         }
     }
 
-    pub fn subscribe(&mut self, codes: & Vec<String>) -> Result<Vec<String>, String> {
-        let c_codes = CString::new(codes.join(".")).unwrap();
+    //extern "C" fn on_quote(c_quote: *mut CMarketQuote, userdata : *mut libc::c_void){
+    extern "C" fn on_quote(c_quote: *mut CMarketQuote, obj : *mut FFITraitObject) { //callback: Box<DataApiCallback>) { //userdata : *mut libc::c_void){
+
+        let mut cb: Box<DataApiCallback> = unsafe { mem::transmute(*Box::from_raw(obj)) };
+        //let mut cb: Box<DataApiCallback> = unsafe { mem::transmute(*obj) };
+        // XXX multiple thread issue
+        //assert!(!userdata.is_null());
+        //let dapi = unsafe { Box::from_raw(userdata as *mut UserData).dapi };
+        let quote = unsafe { (*c_quote).to_rs()};
+        cb.as_mut().on_quote(quote);
+//        if dapi.cb.is_some() {
+//            dapi.cb.unwrap().on_quote(quote);
+//        }
+    }
+
+    extern "C" fn on_bar(c_cycle : *mut c_char, c_bar: *mut CBar, obj : *mut FFITraitObject) {
+        let mut cb: Box<DataApiCallback> = unsafe { mem::transmute(*Box::from_raw(obj)) };
+        let cycle = unsafe {CStr::from_ptr(c_cycle).to_str().unwrap()};
+        let bar   = unsafe {(*c_bar).to_rs()};
+
+        cb.as_mut().on_bar(cycle, bar);
+    }
+
+    //pub fn set_callback<T: DataApiCallback + 'static >(&mut self, cb : Option<&'static T>) {
+    pub fn set_callback(&mut self, cb : Option<&'a DataApiCallback>) {
+        self.cb = cb;
+        if self.cb.is_none() {
+            unsafe { tqapi_dapi_set_callback(self.dapi, core::ptr::null_mut()); }
+        } else {
+            unsafe {
+                let trait_obj : FFITraitObject = mem::transmute(self.cb.unwrap());
+
+                let raw_cb = Box::into_raw(
+                    Box::new(CDataApiCallback {
+                        obj      : Box::into_raw(Box::new(trait_obj)) as *mut FFITraitObject,
+                        on_bar   : DataApi::on_bar,
+                        on_quote : DataApi::on_quote,
+                    }));
+
+                let old_cb = tqapi_dapi_set_callback(self.dapi, raw_cb);
+                if !old_cb.is_null() {
+                    Box::from_raw( (*old_cb).obj);
+                    Box::from_raw(old_cb);
+                }
+            }
+        }
+    }
+
+    pub fn subscribe(&mut self, codes: & str) -> Result<Vec<String>, String> {
+        //let c_codes = CString::new(codes.join(".")).unwrap();
+        let c_codes = CString::new(codes).unwrap();
         let mut result : Result<Vec<String>, String>;
         unsafe {
             let r = tqapi_dapi_subscribe(self.dapi, c_codes.as_ptr() as *const c_char);
@@ -150,6 +210,29 @@ impl DataApi {
         return result;
     }
 
+    pub fn unsubscribe(&mut self, codes: & str) -> Result<Vec<String>, String> {
+        //let c_codes = CString::new(codes.join(".")).unwrap();
+        let c_codes = CString::new(codes).unwrap();
+        let mut result : Result<Vec<String>, String>;
+        unsafe {
+            let r = tqapi_dapi_unsubscribe(self.dapi, c_codes.as_ptr() as *const c_char);
+            if !(*r).codes.is_null() {
+
+                let mut v : Vec<String> = Vec::new();
+                for code in CStr::from_ptr( (*r).codes).to_string_lossy().split(",") {
+                    v.push(String::from(code));
+                }
+
+                result = Ok(v);
+            } else {
+                result = Err(CStr::from_ptr( (*r).msg).to_string_lossy().to_string());
+            }
+
+            tqapi_dapi_free_unsubscribe_result(self.dapi, r);
+        }
+        return result;
+    }
+
     pub fn get_ticks(&mut self, code : &str, trade_date : i32) -> Result<Vec<MarketQuote>, String> {
         let c_code = CString::new(code).unwrap();
         let mut result : Result<Vec<MarketQuote>, String>;
@@ -158,6 +241,7 @@ impl DataApi {
             let r = tqapi_dapi_get_ticks(self.dapi, c_code.as_ptr() as *const c_char, trade_date);
             if !(*r).ticks.is_null() {
                 let mut quotes : Vec<MarketQuote> = Vec::new();
+                quotes.reserve_exact( (*r).ticks_length as usize);
                 for i in 0..((*r).ticks_length) {
                     let q : *mut CMarketQuote= (*r).ticks.offset(i as isize);
                     quotes.push( (*q).to_rs())
@@ -172,20 +256,77 @@ impl DataApi {
         return result;
     }
 
-    pub fn get_bars(&mut self, code : &str, trade_date : i32) -> Result<Vec<Bar>, String> {
-        let bars = Vec::<Bar>::new();
-        return Ok(bars);
+    pub fn get_bars(&mut self, code : &str, cycle : &str, trade_date : i32, align : bool) -> Result<Vec<Bar>, String> {
+        let c_code = CString::new(code).unwrap();
+        let c_cycle = CString::new(cycle).unwrap();
+
+        let mut result : Result<Vec<Bar>, String>;
+        unsafe {
+            let r = tqapi_dapi_get_bars(self.dapi,
+                                        c_code.as_ptr() as *const c_char,
+                                        c_cycle.as_ptr() as *const c_char,
+                                        trade_date,
+                                        if align { 1 } else { 0 } );
+            if !(*r).ticks.is_null() {
+                let mut bars : Vec<Bar> = Vec::new();
+                bars.reserve_exact( (*r).ticks_length as usize);
+                for i in 0..((*r).ticks_length) {
+                    let q : *mut CBar = (*r).ticks.offset(i as isize);
+                    bars.push( (*q).to_rs())
+                }
+                result = Ok(bars)
+            } else {
+                result = Err(CStr::from_ptr( (*r).msg).to_string_lossy().to_string());
+            }
+
+            tqapi_dapi_free_get_bars_result(self.dapi, r);
+        }
+        return result;
     }
 
-    pub fn get_dailybars(&mut self, code : &str, trade_date : i32) -> Result<Vec<DailyBar>, String> {
-        Err("Wrong".to_string())
+    pub fn get_dailybars(&mut self, code : &str, price_type : &str, align : bool) -> Result<Vec<DailyBar>, String> {
+        let c_code       = CString::new(code).unwrap();
+        let c_price_type = CString::new(price_type).unwrap();
+
+        let mut result : Result<Vec<DailyBar>, String>;
+
+        unsafe {
+            let r = tqapi_dapi_get_dailybars(self.dapi,
+                                             c_code.as_ptr() as *const c_char,
+                                             c_price_type.as_ptr() as *const c_char,
+                                             if align { 1} else {0});
+            if !(*r).ticks.is_null() {
+                let mut bars : Vec<DailyBar> = Vec::new();
+                bars.reserve_exact( (*r).ticks_length as usize);
+                for i in 0..((*r).ticks_length) {
+                    let q : *mut CDailyBar = (*r).ticks.offset(i as isize);
+                    bars.push( (*q).to_rs())
+                }
+                result = Ok(bars)
+            } else {
+                result = Err(CStr::from_ptr( (*r).msg).to_string_lossy().to_string());
+            }
+
+            tqapi_dapi_free_get_dailybars_result(self.dapi, r);
+        }
+        return result;
     }
 
-    pub fn get_quote(&mut self, code : &str, trade_date : i32) -> Result<Vec<MarketQuote>, String> {
-        Err("Wrong".to_string())
+    pub fn get_quote(&mut self, code : &str) -> Result<MarketQuote, String> {
+        let c_code = CString::new(code).unwrap();
+        let mut result : Result<MarketQuote, String>;
+
+        unsafe {
+            let r = tqapi_dapi_get_quote(self.dapi, c_code.as_ptr() as *const c_char);
+            if !(*r).quote.is_null() {
+                result = Ok( (*(*r).quote).to_rs());
+            } else {
+                result = Err(CStr::from_ptr( (*r).msg).to_string_lossy().to_string());
+            }
+
+            tqapi_dapi_free_get_quote_result(self.dapi, r);
+        }
+        return result;
     }
 
-    pub fn set_callback<T: DataApiCallback + 'static >(&mut self, cb : T) {
-        self.cb = Some(Box::new(cb));
-    }
 }

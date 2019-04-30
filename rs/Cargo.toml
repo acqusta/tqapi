@@ -9,4 +9,5 @@ rustc-link-search = ["../build/dist/bin"]
 
 [dependencies]
 libc = "0.2.53"
+chrono = "0.4.6"
 
