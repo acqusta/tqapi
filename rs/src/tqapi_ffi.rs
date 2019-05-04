@@ -5,6 +5,14 @@ use std::os::raw::c_char;
 use super::dapi::MarketQuote;
 use super::dapi::Bar;
 use super::dapi::DailyBar;
+use super::tapi::{Balance, AccountInfo, Order, Trade, Position, EntrustAction, OrderStatus, Side};
+
+
+pub fn c_str_to_string(s : *const c_char) -> String {
+    unsafe {
+        CStr::from_ptr(s).to_string_lossy().into_owned()
+    }
+}
 
 
 #[repr(C, packed)]
@@ -178,24 +186,11 @@ pub struct UnSubscribeResult {
     pub msg          : *const c_char,
 }
 
-#[repr(C)]
-#[no_mangle]
-pub struct FFITraitObject {
-    data  : usize,
-    vtable: usize,
-}
-
-impl FFITraitObject {
-    pub fn copy(&self) -> FFITraitObject {
-        FFITraitObject { data : self.data, vtable : self.vtable}
-    }
-}
-
 #[repr(C, packed)]
 pub struct CDataApiCallback {
-    pub obj        : *mut FFITraitObject,
-    pub on_quote   : extern "C" fn(quote : *mut CMarketQuote, obj : *mut FFITraitObject),
-    pub on_bar     : extern "C" fn(cycle : *mut c_char, bar: * mut CBar, obj : *mut FFITraitObject),
+    pub obj        : *mut libc::c_void,
+    pub on_quote   : extern "C" fn(obj : *mut libc::c_void, quote : *mut CMarketQuote ),
+    pub on_bar     : extern "C" fn(obj : *mut libc::c_void, cycle : *mut c_char, bar : *mut CBar )
 }
 
 pub enum CDataApi {  }
@@ -227,78 +222,317 @@ extern "C" {
 
 // TradeApi
 
-//struct CAccountInfo {
-//    account_id   : String,    // 帐号编号
-//    broker       : String,    // 交易商名称，如招商证券
-//    account      : String,    // 交易帐号
-//    status       : String,    // 连接状态，取值 Disconnected, Connected, Connecting
-//    msg          : String,    // 状态信息，如登录失败原因
-//    account_type : String,    // 帐号类型，如 stock, ctp
-//}
-//
-//struct CBalance {
-//    account_id : String,
-//    fund_account : String,
-//    init_balance : String,
-//    enable_balance : String,
-//    margin : f64,
-//    float_pnl : f64,
-//    close_pnl : f64,
-//}
+#[repr(C, packed)]
+pub struct CAccountInfo {
+   pub account_id   : *const c_char,    // 帐号编号
+   pub broker       : *const c_char,    // 交易商名称，如招商证券
+   pub account      : *const c_char,    // 交易帐号
+   pub status       : *const c_char,    // 连接状态，取值 Disconnected, Connected, Connecting
+   pub msg          : *const c_char,    // 状态信息，如登录失败原因
+   pub account_type : *const c_char,    // 帐号类型，如 stock, ctp
+}
+
+impl CAccountInfo {
+    pub fn to_rs(&self) -> AccountInfo {
+        AccountInfo{
+            account_id   : c_str_to_string(self.account_id),
+            broker       : c_str_to_string(self.broker),
+            account      : c_str_to_string(self.account),
+            status       : c_str_to_string(self.status),
+            msg          : c_str_to_string(self.msg),
+            account_type : c_str_to_string(self.account_type)
+        }
+    }
+}
+
+#[repr(C, packed)]
+pub struct CBalance {
+   pub account_id     : *const c_char,
+   pub fund_account   : *const c_char,
+   pub init_balance   : f64,
+   pub enable_balance : f64,
+   pub margin         : f64,
+   pub float_pnl      : f64,
+   pub close_pnl      : f64,
+}
+
+impl CBalance {
+    pub fn to_rs(&self) -> Balance {
+        Balance{
+            account_id     : c_str_to_string(self.account_id),
+            fund_account   : c_str_to_string(self.fund_account),
+            init_balance   : self.init_balance,
+            enable_balance : self.enable_balance,
+            margin         : self.margin,
+            float_pnl      : self.float_pnl,
+            close_pnl      : self.close_pnl,
+        }
+    }
+}
+
+#[repr(C, packed)]
+pub struct COrder {
+    pub account_id       : *const c_char,         // 帐号编号
+    pub code             : *const c_char,         // 证券代码
+    pub name             : *const c_char,         // 证券名称
+    pub entrust_no       : *const c_char,         // 委托编号
+    pub entrust_action   : *const c_char,         // 委托动作
+    pub entrust_price    : f64,                   // 委托价格
+    pub entrust_size     : i64,                   // 委托数量，单位：股
+    pub entrust_date     : i32,                   // 委托日期
+    pub entrust_time     : i32,                   // 委托时间
+    pub fill_price       : f64,                   // 成交价格
+    pub fill_size        : i64,                   // 成交数量
+    pub status           : *const c_char,         // 订单状态：取值: OrderStatus
+    pub status_msg       : *const c_char,                // 状态消息
+    pub order_id         : i32                    // 自定义订单编号
+}
+
+impl COrder {
+    pub fn to_rs(&self) -> Order {
+        unsafe {
+            Order {
+                account_id       : c_str_to_string( self.account_id )      ,
+                code             : c_str_to_string( self.code       )      ,
+                name             : c_str_to_string( self.name       )      ,
+                entrust_no       : c_str_to_string( self.entrust_no )      ,
+                entrust_action   : EntrustAction::from(CStr::from_ptr(self.entrust_action).to_str().unwrap()),
+                entrust_price    : self.entrust_price    ,
+                entrust_size     : self.entrust_size     ,
+                entrust_date     : self.entrust_date     ,
+                entrust_time     : self.entrust_time     ,
+                fill_price       : self.fill_price       ,
+                fill_size        : self.fill_size        ,
+                status           : OrderStatus::from(CStr::from_ptr(self.status).to_str().unwrap()),
+                status_msg       : c_str_to_string( self.status_msg )      ,
+                order_id         : self.order_id         ,
+            }
+        }
+    }
+}
+#[repr(C, packed)]
+pub struct CTrade {
+    pub account_id       : *const c_char,     // 帐号编号
+    pub code             : *const c_char,     // 证券代码
+    pub name             : *const c_char,     // 证券名称
+    pub entrust_no       : *const c_char,     // 委托编号
+    pub entrust_action   : *const c_char, // 委托动作
+    pub fill_no          : *const c_char,        // 成交编号
+    pub fill_size        : i64,           // 成交数量
+    pub fill_price       : f64,           // 成交价格
+    pub fill_date        : i32,           // 成交日期
+    pub fill_time        : i32,           // 成交时间
+    pub order_id         : i32,           // 自定义订单编号
+}
+
+impl CTrade {
+    pub fn to_rs(&self) -> Trade {
+        unsafe {
+            Trade {
+                account_id       : c_str_to_string(self.account_id)         ,
+                code             : c_str_to_string(self.code      )         ,
+                name             : c_str_to_string(self.name      )         ,
+                entrust_no       : c_str_to_string(self.entrust_no)         ,
+                entrust_action   : EntrustAction::from(CStr::from_ptr(self.entrust_action).to_str().unwrap()) ,
+                fill_no          : c_str_to_string(self.fill_no)            ,
+                fill_size        : self.fill_size        ,
+                fill_price       : self.fill_price       ,
+                fill_date        : self.fill_date        ,
+                fill_time        : self.fill_time        ,
+                order_id         : self.order_id         ,
+            }
+        }
+    }
+}
+#[repr(C, packed)]
+pub struct CPosition {
+    pub account_id    : *const c_char,   // 帐号编号
+    pub code          : *const c_char,   // 证券代码
+    pub name          : *const c_char,   // 证券名称
+    pub current_size  : i64,      // 当前持仓
+    pub enable_size   : i64,      // 可用（可交易）持仓
+    pub init_size     : i64,      // 初始持仓
+    pub today_size    : i64,      // 今日持仓
+    pub frozen_size   : i64,      // 冻结持仓
+    pub side          : *const c_char,     // 持仓方向，股票的持仓方向为 Long, 期货分 Long, Short
+    pub cost          : f64,      // 成本
+    pub cost_price    : f64,      // 成本价格
+    pub last_price    : f64,      // 最新价格
+    pub float_pnl     : f64,      // 持仓盈亏
+    pub close_pnl     : f64,      // 平仓盈亏
+    pub margin        : f64,      // 保证金
+    pub commission    : f64,      // 手续费
+}
+
+impl CPosition {
+    pub fn to_rs(&self) -> Position {
+        unsafe {
+            Position {
+                account_id    : c_str_to_string(self.account_id)    ,
+                code          : c_str_to_string(self.code      )    ,
+                name          : c_str_to_string(self.name      )    ,
+                current_size  : self.current_size  ,
+                enable_size   : self.enable_size   ,
+                init_size     : self.init_size     ,
+                today_size    : self.today_size    ,
+                frozen_size   : self.frozen_size   ,
+                side          : Side::from(CStr::from_ptr(self.side).to_str().unwrap()),
+                cost          : self.cost          ,
+                cost_price    : self.cost_price    ,
+                last_price    : self.last_price    ,
+                float_pnl     : self.float_pnl     ,
+                close_pnl     : self.close_pnl     ,
+                margin        : self.margin        ,
+                commission    : self.commission    ,
+            }
+        }
+    }
+}
+
+#[repr(C, packed)]
+pub struct COrderId {
+    pub entrust_no   : *const c_char,    // 订单委托号
+    pub order_id     : i32               // 自定义编号
+}
+
+#[repr(C, packed)]
+pub struct CTradeApiCallback {
+    pub obj                : *mut libc::c_void,
+    pub on_trade           : extern "C" fn(obj : *mut libc::c_void, trade : *mut CTrade       ),
+    pub on_order           : extern "C" fn(obj : *mut libc::c_void, order : *mut COrder       ),
+    pub on_account_status  : extern "C" fn(obj : *mut libc::c_void, status: *mut CAccountInfo ),
+}
+
+#[repr(C, packed)]
+pub struct CNewOrder {
+    pub action     : *const c_char,
+    pub code       : *const c_char,
+    pub size       : i64,
+    pub price      : f64,
+    pub price_type : *const c_char,
+    pub order_id   : i32
+}
+
+#[repr(C, packed)]
+pub struct CPlaceOrderResult {
+    pub order_id : *mut COrderId,
+    pub msg      : *const c_char,
+}
+
+#[repr(C, packed)]
+pub struct CQueryPositionsResult {
+    pub array      : *mut CPosition,
+    pub array_size : i32,
+    pub msg        : *const c_char,
+}
+
+#[repr(C, packed)]
+pub struct CQueryTradesResult {
+    pub array      : *mut CTrade,
+    pub array_size : i32,
+    pub msg        : *const c_char,
+}
+
+#[repr(C, packed)]
+pub struct CQueryOrdersResult {
+    pub array      : *mut COrder,
+    pub array_size : i32,
+    pub msg        : *const c_char,
+}
+
+#[repr(C, packed)]
+pub struct CQueryBalanceResult {
+    pub balance    : *mut CBalance,
+    pub msg        : *const c_char,
+}
+
+#[repr(C, packed)]
+pub struct CQueryAccountsResult {
+    pub array      : *mut CAccountInfo,
+    pub array_size : i32,
+    pub msg        : *const c_char,
+}
+
+#[repr(C, packed)]
+pub struct CCancelOrderResult {
+    pub success   : i32, // bool
+    pub msg       : *const c_char,
+}
+
+#[repr(C, packed)]
+pub struct CQueryResult {
+    pub text      : *const c_char,
+    pub msg       : *const c_char,
+}
+
+pub enum CTradeApi {  }
 
 
-// struct COrder {
-//     account_id       : String,         // 帐号编号
-//     code             : String,         // 证券代码
-//     name             : String,         // 证券名称
-//     entrust_no       : String,         // 委托编号
-//     entrust_action   : EntrustAction,  // 委托动作
-//     entrust_price    : f64,            // 委托价格
-//     entrust_size     : i64,            // 委托数量，单位：股
-//     entrust_date     : i32,            // 委托日期
-//     entrust_time     : i32,            // 委托时间
-//     fill_price       : f64,            // 成交价格
-//     fill_size        : i64,            // 成交数量
-//     status           : OrderStatus,    // 订单状态：取值: OrderStatus
-//     status_msg       : String,         // 状态消息
-//     order_id         : i32             // 自定义订单编号
-// }
 
-// struct CTrade {
-//     account_id       : String,     // 帐号编号
-//     code             : String,     // 证券代码
-//     name             : String,     // 证券名称
-//     entrust_no       : String,     // 委托编号
-//     entrust_action   : EntrustAction, // 委托动作
-//     fill_no          : String,        // 成交编号
-//     fill_size        : i64,           // 成交数量
-//     fill_price       : f64,           // 成交价格
-//     fill_date        : i32,           // 成交日期
-//     fill_time        : i32,           // 成交时间
-//     order_id         : i32,           // 自定义订单编号
-// }
+//#[link(name = "tqapi")]//, kind = "static")]
+extern "C" {
+    pub fn tqapi_create_trade_api(addr : *const c_char) -> *mut CTradeApi;
+    pub fn tqapi_free_trade_api  (dapi : *mut CTradeApi);
 
-// struct CPosition {
-//     account_id    : String,   // 帐号编号
-//     code          : String,   // 证券代码
-//     name          : String,   // 证券名称
-//     current_size  : i64,      // 当前持仓
-//     enable_size   : i64,      // 可用（可交易）持仓
-//     init_size     : i64,      // 初始持仓
-//     today_size    : i64,      // 今日持仓
-//     frozen_size   : i64,      // 冻结持仓
-//     side          : Side,     // 持仓方向，股票的持仓方向为 Long, 期货分 Long, Short
-//     cost          : f64,      // 成本
-//     cost_price    : f64,      // 成本价格
-//     last_price    : f64,      // 最新价格
-//     float_pnl     : f64,      // 持仓盈亏
-//     close_pnl     : f64,      // 平仓盈亏
-//     margin        : f64,      // 保证金
-//     commission    : f64,      // 手续费
-// }
+    pub fn tqapi_tapi_place_order                  (tapi : *mut CTradeApi, account_id : *const c_char, order : *mut CNewOrder) -> *mut CPlaceOrderResult;
+    pub fn tqapi_tapi_cancel_order                 (tapi : *mut CTradeApi, account_id : *const c_char, code : *const c_char, oid : *mut COrderId) -> *mut CCancelOrderResult;
+    pub fn tqapi_tapi_query_balance                (tapi : *mut CTradeApi, account_id : *const c_char) ->*mut CQueryBalanceResult;
+    pub fn tqapi_tapi_query_positions              (tapi : *mut CTradeApi, account_id : *const c_char, codes: *const c_char) -> *mut CQueryPositionsResult;
+    pub fn tqapi_tapi_query_orders                 (tapi : *mut CTradeApi, account_id : *const c_char, codes: *const c_char) -> *mut CQueryOrdersResult;
+    pub fn tqapi_tapi_query_trades                 (tapi : *mut CTradeApi, account_id : *const c_char, codes: *const c_char) -> *mut CQueryTradesResult;
+    pub fn tqapi_tapi_query                        (tapi : *mut CTradeApi, account_id : *const c_char, command: *const c_char, params: *const c_char) -> *mut CQueryResult;
+    pub fn tqapi_tapi_query_accounts               (tapi : *mut CTradeApi) -> *mut CQueryAccountsResult;
+    pub fn tqapi_tapi_free_place_order_result      (tapi : *mut CTradeApi, result : *mut CPlaceOrderResult);
+    pub fn tqapi_tapi_free_cancel_order_result     (tapi : *mut CTradeApi, result : *mut CCancelOrderResult);
+    pub fn tqapi_tapi_free_query_accounts_result   (tapi : *mut CTradeApi, result : *mut CQueryAccountsResult);
+    pub fn tqapi_tapi_free_query_balance_result    (tapi : *mut CTradeApi, result : *mut CQueryBalanceResult);
+    pub fn tqapi_tapi_free_query_positions_result  (tapi : *mut CTradeApi, result : *mut CQueryPositionsResult);
+    pub fn tqapi_tapi_free_query_orders_result     (tapi : *mut CTradeApi, result : *mut CQueryOrdersResult);
+    pub fn tqapi_tapi_free_query_trades_result     (tapi : *mut CTradeApi, result : *mut CQueryTradesResult);
+    pub fn tqapi_tapi_free_query_result            (tapi : *mut CTradeApi, result : *mut CQueryResult);
+    pub fn tqapi_tapi_set_callback                 (tapi : *mut CTradeApi, callback : *mut CTradeApiCallback) -> * mut CTradeApiCallback;
+}
 
-// struct COrderID {
-//     entrust_no   : String,    // 订单委托号
-//     order_id     : i32        // 自定义编号
-// }
-//}
+
+#[repr(C, packed)]
+pub struct CDateTime {
+    pub date : i32,
+    pub time : i32
+}
+
+#[repr(C, packed)]
+pub struct CStralet {
+    pub obj               : *mut libc::c_void,
+    pub on_init           : extern "C" fn(obj : *mut libc::c_void, ctx: *mut CStraletContext),
+    pub on_fini           : extern "C" fn(obj : *mut libc::c_void, ctx: *mut CStraletContext),
+    pub on_quote          : extern "C" fn(obj : *mut libc::c_void, ctx: *mut CStraletContext, quote : *mut CMarketQuote),
+    pub on_bar            : extern "C" fn(obj : *mut libc::c_void, ctx: *mut CStraletContext, cycle : *const c_char, bar : *mut CBar),
+    pub on_order          : extern "C" fn(obj : *mut libc::c_void, ctx: *mut CStraletContext, order : *mut COrder),
+    pub on_trade          : extern "C" fn(obj : *mut libc::c_void, ctx: *mut CStraletContext, trade : *mut CTrade),
+    pub on_timer          : extern "C" fn(obj : *mut libc::c_void, ctx: *mut CStraletContext, id    : i64,  data : usize),
+    pub on_event          : extern "C" fn(obj : *mut libc::c_void, ctx: *mut CStraletContext, name  : *const c_char, data : usize),
+    pub on_account_status : extern "C" fn(obj : *mut libc::c_void, ctx: *mut CStraletContext, account : *mut CAccountInfo),
+}
+
+#[repr(C, packed)]
+pub struct CStraletFactory {
+    pub obj     : *mut libc::c_char,
+    pub create  : extern "C" fn (obj : *mut libc::c_void) -> *mut CStralet,
+    pub destroy : extern "C" fn (obj : *mut libc::c_void, stralet : *mut CStralet),// -> libc::c_void
+}
+
+pub enum CStraletContext {}
+extern "C" {
+    pub fn tqapi_sc_trading_day     (ctx : * mut CStraletContext ) -> i32;
+    pub fn tqapi_sc_cur_time        (ctx : * mut CStraletContext ) -> CDateTime;
+    pub fn tqapi_sc_post_event      (ctx : * mut CStraletContext, evt: *const c_char, data : usize);
+    pub fn tqapi_sc_set_timer       (ctx : * mut CStraletContext, id : i64, delay : i64, data: usize);
+    pub fn tqapi_sc_kill_timer      (ctx : * mut CStraletContext, id : i64);
+    pub fn tqapi_sc_data_api        (ctx : * mut CStraletContext  ) -> *mut CDataApi;
+    pub fn tqapi_sc_trade_api       (ctx : * mut CStraletContext  ) -> *mut CTradeApi;
+    pub fn tqapi_sc_log             (ctx : * mut CStraletContext, severity : i32, txt : *const c_char);
+    pub fn tqapi_sc_get_properties  (ctx : * mut CStraletContext ) -> * const c_char;
+    pub fn tqapi_sc_get_mode        (ctx : * mut CStraletContext ) -> * const c_char;
+    pub fn tqapi_bt_run             (cfg : * const c_char, factory : *mut CStraletFactory);
+    pub fn tqapi_rt_run             (cfg : * const c_char, factory : *mut CStraletFactory);
+}

@@ -2,6 +2,7 @@ extern crate libc;
 use std::mem;
 
 use std::fmt;
+use std::ptr;
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::os::raw::c_char;
@@ -106,80 +107,107 @@ pub trait DataApiCallback {
     fn on_bar  (&mut self, cycle : &str, bar : Bar);
 }
 
+struct DefaultDataApiCallback {}
 
-pub struct DataApi <'a> {
-    cb     : Option<&'a DataApiCallback>,
-    dapi   : *mut CDataApi,
+impl DataApiCallback for DefaultDataApiCallback {
+    fn on_quote(&mut self, _quote : MarketQuote)
+    {}
+    fn on_bar  (&mut self, _cycle : &str, _bar : Bar)
+    {}
 }
 
-impl <'a> Drop for DataApi<'a> {
+struct DataApiHook{
+    pub cb  : *mut DataApiCallback,
+}
+
+pub struct DataApi {
+    //cb       : *mut DataApiCallback,
+    dapi_cb_null  : *mut DataApiCallback,
+    dapi     : *mut CDataApi,
+    hook     : *mut DataApiHook,
+    is_owner : bool
+}
+
+impl <'a> Drop for DataApi {
     fn drop(&mut self) {
         unsafe {
-            let old_cb = tqapi_dapi_set_callback(self.dapi, core::ptr::null_mut());
-            if !old_cb.is_null() {
-                Box::from_raw((*old_cb).obj);
-                Box::from_raw(old_cb);
+            if (*self.hook).cb != self.dapi_cb_null {
+                let old_cb = tqapi_dapi_set_callback(self.dapi, ptr::null_mut());
+                //Box::from_raw(old_cb as *mut CDataApiCallback);
+                Box::from_raw( (*self.hook).cb);
+                (*self.hook).cb = self.dapi_cb_null;
             }
-            tqapi_free_data_api(self.dapi);
+            Box::from_raw(self.hook);
+            Box::from_raw(self.dapi_cb_null);
+
+            if self.is_owner {
+                tqapi_free_data_api(self.dapi);
+            }
         }
     }
 }
 
-impl <'a> DataApi<'a> {
+impl <'a> DataApi {
     pub fn new(addr: &str) -> DataApi {
         unsafe {
             let dapi = tqapi_create_data_api(addr.as_ptr() as *const c_char);
+            let null_cb = Box::into_raw(Box::new(DefaultDataApiCallback{}));
+            let hook = Box::into_raw(Box::new(DataApiHook{ cb : null_cb}));
 
-            DataApi{ cb : None, dapi : dapi}
+            DataApi{ dapi_cb_null : null_cb, hook: hook, dapi : dapi, is_owner : true}
         }
     }
 
-    extern "C" fn on_quote(c_quote: *mut CMarketQuote, obj : *mut FFITraitObject) {
+    pub fn from(dapi : *mut CDataApi) -> DataApi {
+            let null_cb = Box::into_raw(Box::new(DefaultDataApiCallback{}));
+            let hook = Box::into_raw(Box::new(DataApiHook{ cb : null_cb}));
 
-        assert!(!c_quote.is_null() && !obj.is_null());
-        let mut cb: Box<DataApiCallback> = unsafe {
-            mem::transmute( (*obj).copy())
-        };
-        let quote = unsafe { (*c_quote).to_rs()};
-        cb.as_mut().on_quote(quote);
+            DataApi{ dapi_cb_null : null_cb, hook: hook, dapi : dapi, is_owner : false}
     }
 
-    extern "C" fn on_bar(c_cycle : *mut c_char, c_bar: *mut CBar, obj : *mut FFITraitObject) {
-        let mut cb: Box<DataApiCallback> = unsafe {
-            mem::transmute( (*obj).copy())
-        };
+    extern "C" fn on_quote(obj : *mut libc::c_void, c_quote: *mut CMarketQuote) {
 
-        let cycle = unsafe {CStr::from_ptr(c_cycle).to_str().unwrap()};
-        let bar   = unsafe {(*c_bar).to_rs()};
-
-        cb.as_mut().on_bar(cycle, bar);
+        unsafe {
+            assert!(!c_quote.is_null() && !obj.is_null());
+            let quote = (*c_quote).to_rs();
+            let cb = (*(obj as *mut DataApiHook)).cb as *mut DataApiCallback;
+            (*cb).on_quote(quote);
+        }
     }
 
-    pub fn set_callback(&mut self, cb : Option<&'a DataApiCallback>) {
-        self.cb = cb;
-        match self.cb {
-            None =>
-                unsafe {
-                    tqapi_dapi_set_callback(self.dapi, core::ptr::null_mut());
-                }
-            Some(callback) =>
-                unsafe {
-                    println!("set_callback");
-                    let trait_obj : FFITraitObject = mem::transmute(callback);
+    extern "C" fn on_bar(obj: *mut libc::c_void, c_cycle : *mut c_char, c_bar: *mut CBar) {
 
-                    let raw_cb = Box::into_raw(
-                        Box::new(CDataApiCallback {
-                            obj      : Box::into_raw(Box::new(trait_obj)) as *mut FFITraitObject,
-                            on_bar   : DataApi::on_bar,
-                            on_quote : DataApi::on_quote,
-                        }));
+        unsafe {
+            let cycle = CStr::from_ptr(c_cycle).to_str().unwrap();
+            let bar   = (*c_bar).to_rs();
 
-                    let old_cb = tqapi_dapi_set_callback(self.dapi, raw_cb);
-                    if !old_cb.is_null() {
-                        Box::from_raw( (*old_cb).obj);
-                        Box::from_raw(old_cb);
-                    }
-                }
+            let cb = (*(obj as *mut DataApiHook)).cb;
+            (*cb).on_bar(cycle, bar);
+        }
+    }
+
+    pub fn set_callback(&mut self, cb : Option<Box<DataApiCallback>>) {
+        if !self.is_owner { return; }
+
+        unsafe {
+            if (*self.hook).cb != self.dapi_cb_null {
+                let old_cb = tqapi_dapi_set_callback(self.dapi, core::ptr::null_mut());
+                Box::from_raw(old_cb as *mut CDataApiCallback);
+                Box::from_raw( (*self.hook).cb);
+                (*self.hook).cb = self.dapi_cb_null;
+            }
+
+            if let Some(callback) = cb {
+                (*self.hook).cb = Box::into_raw(callback);
+                let raw_cb = Box::into_raw(
+                    Box::new(CDataApiCallback {
+                        obj      : self.hook as *mut libc::c_void,
+                        on_bar   : DataApi::on_bar,
+                        on_quote : DataApi::on_quote,
+                    }));
+
+                tqapi_dapi_set_callback(self.dapi, raw_cb);
+            }
         }
     }
 

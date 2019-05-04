@@ -5,10 +5,16 @@
 
 using namespace std;
 
+static_assert(sizeof(MarketQuote) == sizeof(tquant::api::RawMarketQuote), "Wrong MarketQuote size");
+static_assert(sizeof(Bar)         == sizeof(tquant::api::RawBar),         "Wrong Bar size");
+static_assert(sizeof(DailyBar)    == sizeof(tquant::api::RawDailyBar),    "Wrong DailyBar size");
+
+
 struct DataApi : public tquant::api::DataApi_Callback {
 
     tquant::api::DataApi* instance;
     DataApiCallback* cb;
+    bool is_owner;
 
     virtual void on_market_quote(shared_ptr<const tquant::api::MarketQuote> quote) override {
         if (cb)
@@ -29,17 +35,28 @@ extern "C" {
         auto dapi = new DataApi();
         dapi->instance = inst;
         dapi->cb = nullptr;
+        dapi->is_owner = true;
         inst->set_callback(dapi);
         return dapi;
     }
 
     void tqapi_free_data_api(DataApi* dapi)
     {
-        if (dapi) {
+        if (dapi && dapi->is_owner) {
             dapi->instance->set_callback(nullptr);
             delete dapi->instance;
             delete dapi;
         }
+    }
+
+    DataApi* tqapi_dapi_from(tquant::api::DataApi* inst)
+    {
+        auto dapi = new DataApi();
+        dapi->instance = inst;
+        dapi->cb = nullptr;
+        dapi->is_owner = true;
+        inst->set_callback(dapi);
+        return dapi;
     }
 
     DataApiCallback*   tqapi_dapi_set_callback(DataApi* dapi, DataApiCallback* callback)
@@ -161,10 +178,6 @@ extern "C" {
         tquant::api::CallResult<const tquant::api::MarketQuote> result;
     };
 
-    static_assert(sizeof(MarketQuote) == sizeof(tquant::api::RawMarketQuote), "Wrong MarketQuote size");
-    static_assert(sizeof(Bar)         == sizeof(tquant::api::RawBar),         "Wrong Bar size");
-    static_assert(sizeof(DailyBar)    == sizeof(tquant::api::RawDailyBar),    "Wrong DailyBar size");
-
     GetQuoteResult* tqapi_dapi_get_quote(DataApi* dapi, const char* code)
     {
         auto r = dapi->instance->quote(code);
@@ -200,8 +213,8 @@ extern "C" {
     {
         vector<string> ss;
         split(codes, ",", &ss);
-        for (auto& s : ss)
-            std::cout << "sub: " << s << endl;
+        // for (auto& s : ss)
+        //     std::cout << "sub: " << s << endl;
         auto r = dapi->instance->subscribe(ss);
 
         SubscribeResult* result = new SubscribeResult();
@@ -268,5 +281,4 @@ extern "C" {
             delete result;
         }
     }
-
 }

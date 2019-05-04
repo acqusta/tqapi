@@ -21,7 +21,9 @@ set(SRC
   api/tqapi_cs.cpp
   api/tqapi_cs.h
   api/tqapi_ffi.h
-  api/tqapi_ffi.cpp
+  api/tqapi_ffi_dapi.cpp
+  api/tqapi_ffi_tapi.cpp
+  api/tqapi_ffi_tqs.cpp
 
   tqs/rt/realtime.cpp
   tqs/rt/realtime.h

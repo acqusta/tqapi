@@ -9,7 +9,8 @@ set(SRC
     tqapi_cs.cpp
     tqapi_cs.h
     tqapi_ffi.h
-    tqapi_ffi.cpp
+    tqapi_ffi_dapi.cpp
+    tqapi_ffi_tapi.cpp
 )
 
 add_library(tqapi-static STATIC ${SRC})
