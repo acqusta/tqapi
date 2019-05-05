@@ -33,14 +33,14 @@ pub enum RunMode {
     REALTIME
 }
 
-pub trait StraletContext<'a>{
+pub trait StraletContext{
     fn get_trade_date (&self) -> i32 ;
     fn get_cur_time   (&self) -> DateTime;
     fn post_event     (&self, evt: &str, data: usize );
     fn set_timer      (&self, id: i64, delay : i64, data: usize);
     fn kill_timer     (&self, id : i64);
-    fn get_data_api   (&self) -> &'a mut DataApi;
-    fn get_trade_api  (&self) -> &'a mut TradeApi;
+    fn get_data_api   (&self) -> & mut DataApi;
+    fn get_trade_api  (&self) -> & mut TradeApi;
     fn log            (&self, severity: LogSeverity, txt: &str);
     fn log_info       (&self, txt: &str);
     fn log_error      (&self, txt: &str);
@@ -49,16 +49,16 @@ pub trait StraletContext<'a>{
     fn get_mode       (&self ) -> RunMode;
 }
 
-pub trait Stralet<'a> {
-    fn on_init           (&mut self, ctx: &'a mut StraletContext<'a>);
-    fn on_fini           (&mut self, ctx: &'a mut StraletContext<'a>);
-    fn on_quote          (&mut self, ctx: &'a mut StraletContext<'a>, quote : MarketQuote);
-    fn on_bar            (&mut self, ctx: &'a mut StraletContext<'a>, cycle : &str, bar : Bar);
-    fn on_order          (&mut self, ctx: &'a mut StraletContext<'a>, order : Order);
-    fn on_trade          (&mut self, ctx: &'a mut StraletContext<'a>, trade : Trade);
-    fn on_timer          (&mut self, ctx: &'a mut StraletContext<'a>, id    : i64,  data : usize);
-    fn on_event          (&mut self, ctx: &'a mut StraletContext<'a>, name  : &str, data : usize);
-    fn on_account_status (&mut self, ctx: &'a mut StraletContext<'a>, account : AccountInfo);
+pub trait Stralet {
+    fn on_init           (&mut self, ctx: & mut StraletContext);
+    fn on_fini           (&mut self, ctx: & mut StraletContext);
+    fn on_quote          (&mut self, ctx: & mut StraletContext, quote : MarketQuote);
+    fn on_bar            (&mut self, ctx: & mut StraletContext, cycle : &str, bar : Bar);
+    fn on_order          (&mut self, ctx: & mut StraletContext, order : Order);
+    fn on_trade          (&mut self, ctx: & mut StraletContext, trade : Trade);
+    fn on_timer          (&mut self, ctx: & mut StraletContext, id    : i64,  data : usize);
+    fn on_event          (&mut self, ctx: & mut StraletContext, name  : &str, data : usize);
+    fn on_account_status (&mut self, ctx: & mut StraletContext, account : AccountInfo);
 }
 
 
@@ -68,7 +68,7 @@ pub struct StraletContextImpl {
     tapi : * mut TradeApi,
 }
 
-impl <'a> StraletContext<'a> for StraletContextImpl {
+impl <'a> StraletContext for StraletContextImpl {
 
     fn get_trade_date(&self) -> i32 {
         unsafe {
@@ -101,13 +101,13 @@ impl <'a> StraletContext<'a> for StraletContextImpl {
         }
     }
 
-    fn get_data_api(&self) -> &'a mut DataApi {
+    fn get_data_api(&self) -> &mut DataApi {
         unsafe {
             &mut (*self.dapi)
         }
     }
 
-    fn get_trade_api(&self) -> &'a mut TradeApi {
+    fn get_trade_api(&self) -> &mut TradeApi {
         unsafe {
             &mut (*self.tapi)
         }
@@ -164,12 +164,12 @@ impl <'a> StraletContext<'a> for StraletContextImpl {
 }
 
 
-struct StraletWrap<'a> {
-    pub stralet : *mut Stralet<'a>, //FFITraitObject,
+struct StraletWrap {
+    pub stralet : *mut Stralet, //FFITraitObject,
     pub sc      : *mut StraletContextImpl,
 }
 
-impl <'a> StraletWrap<'a> {
+impl StraletWrap {
     extern "C" fn on_init (obj : *mut libc::c_void, ctx: *mut CStraletContext) {
         unsafe {
             let sw = obj as *mut StraletWrap;
@@ -252,11 +252,11 @@ impl <'a> StraletWrap<'a> {
 //     return Box::into_raw(Box::new(s)) as *mut CStralet;
 // }
 
-pub struct StraletFactory<'a> {
-    create_stralet : fn() -> Box<Stralet<'a>>
+pub struct StraletFactory {
+    create_stralet : fn() -> Box<Stralet>
 }
 
-impl <'a> StraletFactory <'a>{
+impl StraletFactory {
     pub extern "C" fn create  (user_data : *mut libc::c_void) -> *mut CStralet {
         unsafe {
             //let mut factory: Box<StraletFactory> = mem::transmute((*(user_data as *mut StraletFactory)).copy());
@@ -313,7 +313,7 @@ pub struct BackTestConfig<'a> {
 
 impl <'a> BackTest {
 
-    pub fn run(cfg : &BackTestConfig, create_stralet : fn () -> Box<Stralet<'a>>) {
+    pub fn run(cfg : &BackTestConfig, create_stralet : fn () -> Box<Stralet>) {
 
         unsafe {
             let cfg_str = serde_json::to_string(&cfg).expect("Wrong cfg");

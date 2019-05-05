@@ -85,8 +85,8 @@ fn test_tapi() {
 pub struct TestStralet {
 }
 
-impl <'a>  Stralet<'a> for TestStralet {
-    fn on_init (&mut self, ctx: &'a mut StraletContext<'a>) {
+impl Stralet for TestStralet {
+    fn on_init (&mut self, ctx: &mut StraletContext) {
         ctx.log_info( format!{"on_init {}", ctx.get_trade_date()}.as_str() );
         ctx.get_data_api().subscribe("000001.SH").expect("subscribe error");
     }
@@ -95,7 +95,7 @@ impl <'a>  Stralet<'a> for TestStralet {
         ctx.log_info( format!{"on_fini {}", ctx.get_trade_date()}.as_str() );
     }
 
-    fn on_quote (&mut self, ctx: &mut StraletContext, _quote : MarketQuote) {
+    fn on_quote (&mut self, _ctx: &mut StraletContext, _quote : MarketQuote) {
         //ctx.log_info( format!{"on_quote: {}", quote}.as_str() );
     }
 
@@ -111,20 +111,20 @@ impl <'a>  Stralet<'a> for TestStralet {
 
     }
 
-    fn on_timer (&mut self, _ctx: &mut StraletContext, id    : i64,  data : usize) {
+    fn on_timer (&mut self, _ctx: &mut StraletContext, _id : i64,  _data : usize) {
 
     }
 
-    fn on_event (&mut self, ctx: &mut StraletContext, name  : &str, data : usize) {
+    fn on_event (&mut self, _ctx: &mut StraletContext, _name  : &str, _data : usize) {
 
     }
 
-    fn on_account_status (&mut self, ctx: &mut StraletContext, account : AccountInfo) {
+    fn on_account_status (&mut self, _ctx: &mut StraletContext, _account : AccountInfo) {
 
     }
 }
 
-fn create_stralet<'a>() -> Box<Stralet<'a>>{
+fn create_stralet() -> Box<Stralet>{
     Box::new(TestStralet{})
 }
 
@@ -144,6 +144,6 @@ pub fn test_stralet() {
 
 fn main() {
     //test_dapi();
-    test_tapi();
-    //test_stralet();
+    //test_tapi();
+    test_stralet();
 }

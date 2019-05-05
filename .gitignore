@@ -33,3 +33,7 @@ cs/test/target
 .idea
 .vscode
 rs/target
+rs/result
+rs/*.dll
+rs/*.so
+rs/*.dylib

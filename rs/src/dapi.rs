@@ -1,5 +1,5 @@
 extern crate libc;
-use std::mem;
+//use std::mem;
 
 use std::fmt;
 use std::ptr;
@@ -128,12 +128,11 @@ pub struct DataApi {
     is_owner : bool
 }
 
-impl <'a> Drop for DataApi {
+impl Drop for DataApi {
     fn drop(&mut self) {
         unsafe {
             if (*self.hook).cb != self.dapi_cb_null {
-                let old_cb = tqapi_dapi_set_callback(self.dapi, ptr::null_mut());
-                //Box::from_raw(old_cb as *mut CDataApiCallback);
+                tqapi_dapi_set_callback(self.dapi, ptr::null_mut());
                 Box::from_raw( (*self.hook).cb);
                 (*self.hook).cb = self.dapi_cb_null;
             }
@@ -147,7 +146,7 @@ impl <'a> Drop for DataApi {
     }
 }
 
-impl <'a> DataApi {
+impl DataApi {
     pub fn new(addr: &str) -> DataApi {
         unsafe {
             let dapi = tqapi_create_data_api(addr.as_ptr() as *const c_char);

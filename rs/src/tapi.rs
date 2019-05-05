@@ -1,8 +1,6 @@
 extern crate libc;
 
 use std::fmt;
-use std::ptr;
-use std::mem;
 use std::ffi::CString;
 use std::os::raw::c_char;
 use super::tqapi_ffi::*;
@@ -214,18 +212,17 @@ pub trait TradeApiCallback {
 }
 
 struct NullTradeApiCallback;
+
 impl TradeApiCallback for NullTradeApiCallback {
-    fn on_order          (&mut self, _order   : Order)
-    {}
-    fn on_trade          (&mut self, _trade   : Trade)
-    {}
-    fn on_account_status (&mut self, _account : AccountInfo)
-    {}
+    fn on_order          (&mut self, _order   : Order)       {}
+    fn on_trade          (&mut self, _trade   : Trade)       {}
+    fn on_account_status (&mut self, _account : AccountInfo) {}
 }
 
 struct TradeApiHook {
     cb : *mut TradeApiCallback,
 }
+
 pub struct TradeApi{
     null_cb  : *mut TradeApiCallback,
     hook     : *mut TradeApiHook,
@@ -240,6 +237,7 @@ impl Drop for TradeApi {
             if !old_cb.is_null() {
                 Box::from_raw(old_cb);
             }
+
             Box::from_raw(self.hook);
             Box::from_raw(self.null_cb);
 
@@ -250,7 +248,7 @@ impl Drop for TradeApi {
     }
 }
 
-impl <'a> TradeApi {
+impl TradeApi {
     pub fn new(addr: &str) -> TradeApi {
         unsafe {
             let tapi = tqapi_create_trade_api(addr.as_ptr() as *const c_char);

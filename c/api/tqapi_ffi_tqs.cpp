@@ -9,11 +9,11 @@
 // using namespace tquant::api;
 // using namespace tquant::stralet;
 
-#ifdef _WIN32
-#  define _TQS_EXPORT __declspec(dllexport)
-#else
-#  define _TQS_EXPORT
-#endif
+//#ifdef _WIN32
+//#  define _TQS_EXPORT __declspec(dllexport)
+//#else
+//#  define _TQS_EXPORT
+//#endif
 
 void init_corder      (Order* c,       const tquant::api::Order* order);
 void init_ctrade      (Trade* c,       const tquant::api::Trade* trade);
@@ -43,7 +43,7 @@ struct StraletContext {
     DataApi*  dapi;
 };
 
-extern "C" _TQS_EXPORT
+extern "C" _TQAPI_EXPORT
 int32_t tqapi_sc_trading_day(StraletContext* ctx)
 {
     return ctx->cpp_ctx->trading_day();
@@ -54,7 +54,7 @@ int32_t tqapi_sc_trading_day(StraletContext* ctx)
 //     int time;
 // };
 
-extern "C" _TQS_EXPORT
+extern "C" _TQAPI_EXPORT
 DateTime tqapi_sc_cur_time(StraletContext* ctx)
 {
     DateTime v;
@@ -64,37 +64,37 @@ DateTime tqapi_sc_cur_time(StraletContext* ctx)
     return v;
 }
 
-extern "C" _TQS_EXPORT
+extern "C" _TQAPI_EXPORT
 void tqapi_sc_post_event(StraletContext* ctx, const char* evt, void* data)
 {
     ctx->cpp_ctx->post_event(evt, data);
 }
 
-extern "C" _TQS_EXPORT
+extern "C" _TQAPI_EXPORT
 void tqapi_sc_set_timer(StraletContext* ctx, int64_t id, int64_t delay, void* data)
 {
     ctx->cpp_ctx->set_timer(id, delay, data);
 }
 
-extern "C" _TQS_EXPORT
+extern "C" _TQAPI_EXPORT
 void tqapi_sc_kill_timer(StraletContext* ctx, int64_t id)
 {
     ctx->cpp_ctx->kill_timer(id);
 }
 
-extern "C" _TQS_EXPORT
+extern "C" _TQAPI_EXPORT
 DataApi*  tqapi_sc_data_api(StraletContext* ctx)
 {
     return ctx->dapi;
 }
 
-extern "C" _TQS_EXPORT
+extern "C" _TQAPI_EXPORT
 TradeApi* tqapi_sc_trade_api(StraletContext* ctx)
 {
     return ctx->tapi;
 }
 
-extern "C" _TQS_EXPORT
+extern "C" _TQAPI_EXPORT
 void tqapi_sc_log(StraletContext* ctx, int32_t severity, const char* str)
 {
     const char* p = str + strlen(str) - 1;
@@ -104,13 +104,13 @@ void tqapi_sc_log(StraletContext* ctx, int32_t severity, const char* str)
         ctx->cpp_ctx->logger((tquant::stralet::LogSeverity)severity) << str;
 }
 
-extern "C" _TQS_EXPORT
+extern "C" _TQAPI_EXPORT
 const char* tqapi_sc_get_properties(StraletContext* ctx)
 {
     return ctx->cpp_ctx->get_properties().c_str();
 }
 
-extern "C" _TQS_EXPORT
+extern "C" _TQAPI_EXPORT
 const char* tqapi_sc_get_mode(StraletContext* ctx)
 {
     return ctx->cpp_ctx->mode().c_str();
@@ -209,7 +209,7 @@ public:
 //     delete stralet;
 // }
 
-extern "C" _TQS_EXPORT
+extern "C" _TQAPI_EXPORT
 void tqapi_bt_run(const char* cfg, StraletFactory* factory)
 {
     tquant::stralet::backtest::run(cfg, [factory](){
@@ -217,7 +217,7 @@ void tqapi_bt_run(const char* cfg, StraletFactory* factory)
     });
 }
 
-extern "C" _TQS_EXPORT
+extern "C" _TQAPI_EXPORT
 void tqapi_rt_run(const char* cfg, StraletFactory* factory)
 {
     tquant::stralet::backtest::run(cfg, [factory](){
