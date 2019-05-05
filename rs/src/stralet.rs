@@ -1,13 +1,8 @@
-//#![feature(proc_macro)]
-
 extern crate libc;
-// #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
 
 use std::ptr;
-// use std::fmt;
-// use std::ffi::CStr;
 use std::ffi::CString;
 use std::os::raw::c_char;
 use super::tqapi_ffi::*;
@@ -21,7 +16,6 @@ pub enum LogSeverity {
     ERROR,
     FATAL
 }
-
 
 pub struct DateTime {
     pub date : i32,
@@ -47,18 +41,20 @@ pub trait StraletContext{
     fn log_fatal      (&self, txt: &str);
     fn get_properties (&self ) -> String;
     fn get_mode       (&self ) -> RunMode;
+    fn stop           (&self);
 }
 
+#[allow(unused_variables)]
 pub trait Stralet {
-    fn on_init           (&mut self, ctx: & mut StraletContext);
-    fn on_fini           (&mut self, ctx: & mut StraletContext);
-    fn on_quote          (&mut self, ctx: & mut StraletContext, quote : MarketQuote);
-    fn on_bar            (&mut self, ctx: & mut StraletContext, cycle : &str, bar : Bar);
-    fn on_order          (&mut self, ctx: & mut StraletContext, order : Order);
-    fn on_trade          (&mut self, ctx: & mut StraletContext, trade : Trade);
-    fn on_timer          (&mut self, ctx: & mut StraletContext, id    : i64,  data : usize);
-    fn on_event          (&mut self, ctx: & mut StraletContext, name  : &str, data : usize);
-    fn on_account_status (&mut self, ctx: & mut StraletContext, account : AccountInfo);
+    fn on_init           (&mut self, ctx: & mut StraletContext)                             { }
+    fn on_fini           (&mut self, ctx: & mut StraletContext)                             { }
+    fn on_quote          (&mut self, ctx: & mut StraletContext, quote : MarketQuote)        { }
+    fn on_bar            (&mut self, ctx: & mut StraletContext, cycle : &str, bar : Bar)    { }
+    fn on_order          (&mut self, ctx: & mut StraletContext, order : Order)              { }
+    fn on_trade          (&mut self, ctx: & mut StraletContext, trade : Trade)              { }
+    fn on_timer          (&mut self, ctx: & mut StraletContext, id    : i64,  data : usize) { }
+    fn on_event          (&mut self, ctx: & mut StraletContext, name  : &str, data : usize) { }
+    fn on_account_status (&mut self, ctx: & mut StraletContext, account : AccountInfo)      { }
 }
 
 
@@ -160,6 +156,10 @@ impl <'a> StraletContext for StraletContextImpl {
                 _ => { assert!(false, "Unknown mode"); RunMode::BACKTEST}
             }
         }
+    }
+
+    fn stop(&self) {
+
     }
 }
 

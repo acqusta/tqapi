@@ -134,8 +134,9 @@ pub fn test_stralet() {
         data_level : Some("tk"),
         begin_date : 20190101,
         end_date   : 20190501,
-        result_dir : None,
-        properties : None
+        // result_dir : None,
+        // properties : None
+        ..Default::default()
     };
 
     BackTest::run(&cfg, create_stralet );
