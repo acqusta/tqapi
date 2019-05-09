@@ -8,7 +8,7 @@ use std::ffi::CString;
 use std::os::raw::c_char;
 use super::tqapi_ffi::*;
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct MarketQuote{
     pub code : String,
     pub date : i32,

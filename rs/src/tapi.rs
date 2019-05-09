@@ -64,8 +64,25 @@ impl OrderStatus {
             OrderStatus::Other(s)   => s
         }
     }
+
+    pub fn is_finished(&self) -> bool {
+        match self {
+            OrderStatus::Filled    => true,
+            OrderStatus::Rejected  => true,
+            OrderStatus::Cancelled => true,
+            _ => false
+        }
+    }
 }
 
+impl fmt::Display for OrderStatus {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str())
+    }
+}
+
+
+#[derive(Debug,Clone)]
 pub enum EntrustAction {
     Buy,
     Short,
@@ -106,7 +123,28 @@ impl EntrustAction {
             EntrustAction::Other(s)       =>  s,
         }
     }
+
+    pub fn is_long(&self) -> bool {
+        match self {
+            EntrustAction::Buy            => true,
+            EntrustAction::Short          => false,
+            EntrustAction::Cover          => true,
+            EntrustAction::Sell           => false,
+            EntrustAction::CoverToday     => true,
+            EntrustAction::CoverYesterday => true,
+            EntrustAction::SellToday      => false,
+            EntrustAction::SellYesterday  => false,
+            EntrustAction::Other(s)       => false,
+        }
+    }
 }
+
+impl fmt::Display for EntrustAction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.to_str())
+    }
+}
+
 
 pub struct Order {
     pub account_id       : String,         // 帐号编号
@@ -158,7 +196,7 @@ impl fmt::Display for Trade {
 pub enum Side {
     Long,
     Short,
-    Other(String)
+//    Other(String)
 }
 
 impl Side {
@@ -166,7 +204,8 @@ impl Side {
         match s {
             "Long"   => Side::Long,
             "Short"  => Side::Short,
-            _        => Side::Other(String::from(s))
+            _        => Side::Long,
+//            _        => Side::Other(String::from(s))
         }
     }
 }
@@ -392,14 +431,14 @@ impl TradeApi {
         return result;
     }
 
-    pub fn cancel_order(&mut self, account_id: &str, code : &str, oid: &OrderID) -> Result<bool, String> {
+    pub fn cancel_order(&mut self, account_id: &str, code : &str, entrust_no: &str, order_id: i32) -> Result<bool, String> {
         let c_account = CString::new(account_id).unwrap();
         let c_code    = CString::new(code).unwrap();
-        let c_entrust_no = CString::new(oid.entrust_no.as_str()).unwrap();
+        let c_entrust_no = CString::new(entrust_no).unwrap();
 
         let c_oid = COrderId {
             entrust_no : c_entrust_no.as_ptr(),
-            order_id   : oid.order_id
+            order_id   : order_id
             };
 
         let mut result;
