@@ -294,11 +294,14 @@ impl TradeApi {
             let null_cb = Box::into_raw(Box::new(NullTradeApiCallback{}));
             let hook = Box::into_raw(Box::new(TradeApiHook{ cb : null_cb}));
 
+            println!("----- TradeApi::new {}", tapi as i64);
+
             TradeApi{ null_cb : null_cb, hook : hook, tapi : tapi, is_owner: true}
         }
     }
 
     pub fn from(tapi : *mut CTradeApi) -> TradeApi {
+            println!("----- TradeApi::from {}", tapi as i64);
             let null_cb = Box::into_raw(Box::new(NullTradeApiCallback{}));
             let hook = Box::into_raw(Box::new(TradeApiHook{ cb : null_cb}));
 
@@ -345,6 +348,7 @@ impl TradeApi {
         let mut result;
         unsafe {
             let r = tqapi_tapi_query_orders(self.tapi, c_account.as_ptr(), c_codes.as_ptr());
+            //println!("query_orders result {:?}", *r);
             if !(*r).array.is_null() {
                 let mut v = Vec::new();
                 for i in 0..(*r).array_size {
@@ -404,13 +408,16 @@ impl TradeApi {
 
     pub fn place_order(&mut self, account_id : &str, order: &NewOrder) -> Result<OrderID, String> {
         let c_account = CString::new(account_id).unwrap();
+        let c_code = CString::new(order.code).unwrap();
+        let c_action = CString::new(order.action.to_str()).unwrap();
+        let c_price_type = CString::new(order.price_type).unwrap();
 
         let c_order = CNewOrder {
-                action     : CString::new(order.action.to_str()).unwrap().as_ptr(),
-                code       : CString::new(order.code).unwrap().as_ptr(),
+                action     : c_action.as_ptr(),
+                code       : c_code.as_ptr(),
                 size       : order.size,
                 price      : order.price,
-                price_type : CString::new(order.price_type).unwrap().as_ptr(),
+                price_type : c_price_type.as_ptr(),
                 order_id   : order.order_id
             };
 

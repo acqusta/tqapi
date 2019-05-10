@@ -421,22 +421,33 @@ pub struct CPlaceOrderResult {
 
 #[repr(C, packed)]
 pub struct CQueryPositionsResult {
+    pub _data      : *mut libc::c_void,
     pub array      : *mut CPosition,
     pub array_size : i32,
+    pub element_size : i32,
     pub msg        : *const c_char,
 }
 
 #[repr(C, packed)]
 pub struct CQueryTradesResult {
+    pub _data      : *mut libc::c_void,
     pub array      : *mut CTrade,
     pub array_size : i32,
+    pub element_size : i32,
     pub msg        : *const c_char,
 }
 
+    // Order*               array;
+    // int32_t              array_length;
+    // int32_t              element_size;
+
 #[repr(C, packed)]
+#[derive(Debug)]
 pub struct CQueryOrdersResult {
+    pub _data      : *mut libc::c_void,
     pub array      : *mut COrder,
     pub array_size : i32,
+    pub element_size : i32,
     pub msg        : *const c_char,
 }
 
@@ -448,8 +459,10 @@ pub struct CQueryBalanceResult {
 
 #[repr(C, packed)]
 pub struct CQueryAccountsResult {
+    pub _data      : *mut libc::c_void,
     pub array      : *mut CAccountInfo,
     pub array_size : i32,
+    pub element_size : i32,
     pub msg        : *const c_char,
 }
 

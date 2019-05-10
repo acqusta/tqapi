@@ -172,6 +172,7 @@ extern "C" {
         tapi->instance = inst;
         tapi->is_owner = false;
         tapi->cb  = nullptr;
+
         return tapi;
     }
 
@@ -280,6 +281,7 @@ extern "C" {
             result->array_length = result->_data->positions.size();
             result->element_size = sizeof(Position);
             result->msg = nullptr;
+            if (result->array_length==0) result->array += 1;
         }
         else {
             result->array = nullptr;
@@ -306,10 +308,11 @@ extern "C" {
 
         if (r.value) {
             init_corder_array(&result->_data->orders, r.value.get());
-            result->array = &result->_data->orders[0];
+            result->array        = &result->_data->orders[0];
             result->array_length = result->_data->orders.size();
             result->element_size = sizeof(Order);
             result->msg = nullptr;
+            if (result->array_length==0) result->array += 1;
         }
         else {
             result->array = nullptr;
@@ -340,6 +343,7 @@ extern "C" {
             result->array_length = result->_data->trades.size();
             result->element_size = sizeof(Trade);
             result->msg = nullptr;
+            if (result->array_length==0) result->array += 1;
         }
         else {
             result->array = nullptr;
@@ -395,6 +399,7 @@ extern "C" {
             result->array_length = result->_data->accounts.size();
             result->element_size = sizeof(AccountInfo);
             result->msg = nullptr;
+            if (result->array_length==0) result->array += 1;
         }
         else {
             result->array = nullptr;

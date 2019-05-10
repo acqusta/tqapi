@@ -64,7 +64,27 @@ pub struct StraletContextImpl {
     tapi : * mut TradeApi,
 }
 
-impl <'a> StraletContext for StraletContextImpl {
+impl Drop for StraletContextImpl {
+    fn drop(&mut self) {
+        unsafe {
+            Box::from_raw(self.dapi);
+            Box::from_raw(self.tapi);
+        }
+    }
+}
+
+impl StraletContextImpl {
+    fn new(ctx : *mut CStraletContext) -> StraletContextImpl {
+        unsafe {
+            StraletContextImpl {
+                ctx : ctx,
+                dapi : Box::into_raw(Box::new(DataApi::from( tqapi_sc_data_api(ctx)))),
+                tapi : Box::into_raw(Box::new(TradeApi::from( tqapi_sc_trade_api(ctx)))),
+            }
+        }
+    }
+}
+impl StraletContext for StraletContextImpl {
 
     fn get_trade_date(&self) -> i32 {
         unsafe {
@@ -164,24 +184,30 @@ impl <'a> StraletContext for StraletContextImpl {
 }
 
 
+#[derive(Debug)]
 struct StraletWrap {
-    pub stralet : *mut Stralet, //FFITraitObject,
-    pub sc      : *mut StraletContextImpl,
+    stralet : *mut Stralet,
+    sc      : *mut StraletContextImpl,
+}
+
+impl Drop for StraletWrap {
+    fn drop(&mut self) {
+        unsafe {
+            Box::from_raw(self.sc);
+            Box::from_raw(self.stralet);
+        }
+    }
 }
 
 impl StraletWrap {
+    fn new (stralet : Box<Stralet>) -> StraletWrap {
+        StraletWrap { stralet : Box::into_raw(stralet), sc : ptr::null_mut() }
+    }
+
     extern "C" fn on_init (obj : *mut libc::c_void, ctx: *mut CStraletContext) {
         unsafe {
+            let sc = Box::new(StraletContextImpl::new(ctx));
             let sw = obj as *mut StraletWrap;
-            let c_dapi = tqapi_sc_data_api(ctx);
-            let c_tapi = tqapi_sc_trade_api(ctx);
-
-            let mut dapi = DataApi::from(c_dapi);
-            let mut tapi = TradeApi::from(c_tapi);
-
-            //let mut stralet: Box<Stralet> = unsafe { mem::transmute((*(*s).stralet).copy()) };
-
-            let sc = Box::new(StraletContextImpl{ ctx : ctx, dapi : &mut dapi, tapi : &mut tapi});
             (*sw).sc =  Box::into_raw(sc);
             (*(*sw).stralet).on_init(& mut *((*sw).sc));
         }
@@ -245,13 +271,6 @@ impl StraletWrap {
     }
 }
 
-
-// fn create_stralet_wrap(user_data :*mut libc::c_void) ->*mut CStralet {
-//     //user_data
-//     let s = CStralet{};
-//     return Box::into_raw(Box::new(s)) as *mut CStralet;
-// }
-
 pub struct StraletFactory {
     create_stralet : fn() -> Box<Stralet>
 }
@@ -259,23 +278,13 @@ pub struct StraletFactory {
 impl StraletFactory {
     pub extern "C" fn create  (user_data : *mut libc::c_void) -> *mut CStralet {
         unsafe {
-            //let mut factory: Box<StraletFactory> = mem::transmute((*(user_data as *mut StraletFactory)).copy());
             let factory = user_data as *mut StraletFactory;
-            let stralet = Box::into_raw(((*factory).create_stralet)());
-            // let trait_obj : FFITraitObject = mem::transmute(callback);
+            let stralet = ((*factory).create_stralet)();
 
-                    // let raw_cb = Box::into_raw(
-                    //     Box::new(CTradeApiCallback {
-                    //         obj      : Box::into_raw(Box::new(trait_obj)) as *
-
-            Box::into_raw(
+            let x = Box::into_raw(
                 Box::new(
                     CStralet{
-                        obj      : Box::into_raw(Box::new(
-                                    StraletWrap{
-                                        stralet : stralet, //mem::transmute(stralet),
-                                        sc      : ptr::null_mut()
-                                    })) as *mut libc::c_void,
+                        obj      : Box::into_raw(Box::new(StraletWrap::new ( stralet))) as *mut libc::c_void,
                         on_init  : StraletWrap::on_init,
                         on_fini  : StraletWrap::on_fini,
                         on_quote : StraletWrap::on_quote,
@@ -285,15 +294,17 @@ impl StraletFactory {
                         on_timer : StraletWrap::on_timer,
                         on_event : StraletWrap::on_event,
                         on_account_status : StraletWrap::on_account_status,
-            }))
+            }));
+            println!("create CStralet {}", x as i64);
+            x
         }
     }
     pub extern "C" fn destory (_user_data : *mut libc::c_void, c_stralet : *mut CStralet) {
         unsafe {
+            println!("destroy CStralet {}", c_stralet as i64);
             let sw = (*c_stralet).obj as *mut StraletWrap;
-            Box::from_raw((*sw).stralet);
-            Box::from_raw((*sw).sc);
             Box::from_raw(sw);
+            // Box::from_raw(c_stralet);
         }
     }
 }
