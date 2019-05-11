@@ -293,15 +293,11 @@ impl TradeApi {
             let tapi = tqapi_create_trade_api(addr.as_ptr() as *const c_char);
             let null_cb = Box::into_raw(Box::new(NullTradeApiCallback{}));
             let hook = Box::into_raw(Box::new(TradeApiHook{ cb : null_cb}));
-
-            println!("----- TradeApi::new {}", tapi as i64);
-
             TradeApi{ null_cb : null_cb, hook : hook, tapi : tapi, is_owner: true}
         }
     }
 
     pub fn from(tapi : *mut CTradeApi) -> TradeApi {
-            println!("----- TradeApi::from {}", tapi as i64);
             let null_cb = Box::into_raw(Box::new(NullTradeApiCallback{}));
             let hook = Box::into_raw(Box::new(TradeApiHook{ cb : null_cb}));
 

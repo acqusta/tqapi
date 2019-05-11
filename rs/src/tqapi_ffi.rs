@@ -10,7 +10,11 @@ use super::tapi::{Balance, AccountInfo, Order, Trade, Position, EntrustAction, O
 
 pub fn c_str_to_string(s : *const c_char) -> String {
     unsafe {
-        CStr::from_ptr(s).to_string_lossy().into_owned()
+        if !s.is_null() {
+            CStr::from_ptr(s).to_string_lossy().into_owned()
+        } else {
+            String::from("")
+        }
     }
 }
 
@@ -415,6 +419,7 @@ pub struct CNewOrder {
 
 #[repr(C, packed)]
 pub struct CPlaceOrderResult {
+    pub _data      : *mut libc::c_void,
     pub order_id : *mut COrderId,
     pub msg      : *const c_char,
 }
@@ -437,10 +442,6 @@ pub struct CQueryTradesResult {
     pub msg        : *const c_char,
 }
 
-    // Order*               array;
-    // int32_t              array_length;
-    // int32_t              element_size;
-
 #[repr(C, packed)]
 #[derive(Debug)]
 pub struct CQueryOrdersResult {
@@ -453,6 +454,7 @@ pub struct CQueryOrdersResult {
 
 #[repr(C, packed)]
 pub struct CQueryBalanceResult {
+    pub _data      : *mut libc::c_void,
     pub balance    : *mut CBalance,
     pub msg        : *const c_char,
 }
@@ -468,12 +470,14 @@ pub struct CQueryAccountsResult {
 
 #[repr(C, packed)]
 pub struct CCancelOrderResult {
+    pub _data      : *mut libc::c_void,
     pub success   : i32, // bool
     pub msg       : *const c_char,
 }
 
 #[repr(C, packed)]
 pub struct CQueryResult {
+    pub _data      : *mut libc::c_void,
     pub text      : *const c_char,
     pub msg       : *const c_char,
 }

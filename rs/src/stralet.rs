@@ -17,7 +17,7 @@ pub enum LogSeverity {
     FATAL
 }
 
-pub struct DateTime {
+pub struct FinDateTime {
     pub date : i32,
     pub time : i32
 }
@@ -29,7 +29,7 @@ pub enum RunMode {
 
 pub trait StraletContext{
     fn get_trade_date (&self) -> i32 ;
-    fn get_cur_time   (&self) -> DateTime;
+    fn get_cur_time   (&self) -> FinDateTime;
     fn post_event     (&self, evt: &str, data: usize );
     fn set_timer      (&self, id: i64, delay : i64, data: usize);
     fn kill_timer     (&self, id : i64);
@@ -92,10 +92,10 @@ impl StraletContext for StraletContextImpl {
         }
     }
 
-    fn get_cur_time(&self) -> DateTime {
+    fn get_cur_time(&self) -> FinDateTime {
         unsafe {
             let t = tqapi_sc_cur_time(self.ctx);
-            DateTime{ date : t.date, time : t.time }
+            FinDateTime{ date : t.date, time : t.time }
         }
     }
 
@@ -158,8 +158,6 @@ impl StraletContext for StraletContextImpl {
         unsafe {
             let r = tqapi_sc_get_properties(self.ctx);
             let s = c_str_to_string(r);
-            // FREE
-            //tqapi_sc_
             return s;
         }
     }
@@ -280,11 +278,12 @@ impl StraletFactory {
         unsafe {
             let factory = user_data as *mut StraletFactory;
             let stralet = ((*factory).create_stralet)();
+            let sw = Box::into_raw(Box::new(StraletWrap::new (stralet))) as *mut libc::c_void;
 
-            let x = Box::into_raw(
+            Box::into_raw(
                 Box::new(
                     CStralet{
-                        obj      : Box::into_raw(Box::new(StraletWrap::new ( stralet))) as *mut libc::c_void,
+                        obj      : sw,
                         on_init  : StraletWrap::on_init,
                         on_fini  : StraletWrap::on_fini,
                         on_quote : StraletWrap::on_quote,
@@ -294,17 +293,13 @@ impl StraletFactory {
                         on_timer : StraletWrap::on_timer,
                         on_event : StraletWrap::on_event,
                         on_account_status : StraletWrap::on_account_status,
-            }));
-            println!("create CStralet {}", x as i64);
-            x
+            }))
         }
     }
     pub extern "C" fn destory (_user_data : *mut libc::c_void, c_stralet : *mut CStralet) {
         unsafe {
-            println!("destroy CStralet {}", c_stralet as i64);
             let sw = (*c_stralet).obj as *mut StraletWrap;
             Box::from_raw(sw);
-            // Box::from_raw(c_stralet);
         }
     }
 }
