@@ -92,7 +92,7 @@ pub enum EntrustAction {
     CoverYesterday,
     SellToday,
     SellYesterday,
-    Other(String)
+//    Other(String)
 }
 
 impl EntrustAction {
@@ -106,7 +106,7 @@ impl EntrustAction {
             "CoverYesterday"=> EntrustAction::CoverYesterday,
             "SellToday"     => EntrustAction::SellToday,
             "SellYesterday" => EntrustAction::SellYesterday,
-            _               => EntrustAction::Other(String::from(s))
+            _               => panic!("unkown action"), //EntrustAction::Other(String::from(s))
         }
     }
 
@@ -120,7 +120,7 @@ impl EntrustAction {
             EntrustAction::CoverYesterday => "CoverYesterday",
             EntrustAction::SellToday      => "SellToday"     ,
             EntrustAction::SellYesterday  => "SellYesterday" ,
-            EntrustAction::Other(s)       =>  s,
+            //EntrustAction::Other(s)       =>  s,
         }
     }
 
@@ -134,8 +134,14 @@ impl EntrustAction {
             EntrustAction::CoverYesterday => true,
             EntrustAction::SellToday      => false,
             EntrustAction::SellYesterday  => false,
-            EntrustAction::Other(s)       => false,
+            //EntrustAction::Other(s)       => false,
         }
+    }
+
+    // 1.0  -> get money
+    // -1.0 -> pay
+    pub fn money_flow(&self) -> f64 {
+        if self.is_long() { -1.0 } else { 1.0 }
     }
 }
 
