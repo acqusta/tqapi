@@ -2,6 +2,8 @@ extern crate libc;
 extern crate serde_derive;
 extern crate serde_json;
 
+use chrono;
+use chrono::TimeZone;
 use std::ptr;
 use std::ffi::CString;
 use std::os::raw::c_char;
@@ -18,8 +20,24 @@ pub enum LogSeverity {
 }
 
 pub struct FinDateTime {
-    pub date : i32,
-    pub time : i32
+    pub date : u32,
+    pub time : u32
+}
+
+impl FinDateTime {
+    pub fn to_time(&self) -> chrono::DateTime<chrono::Local> {
+        let y = self.date / 10000;
+        let m = (self.date / 100) % 100;
+        let d = self.date % 100;
+
+        let ms = self.time % 1000;
+        let t  = self.time / 1000;
+        let hour = t / 10000;
+        let min  = (t / 100) % 100;
+        let sec  = t % 100;
+
+        chrono::Local.ymd(y as i32, m, d).and_hms_milli(hour,min,sec,ms)
+    }
 }
 
 pub enum RunMode {
@@ -334,6 +352,40 @@ impl <'a> BackTest {
                 }));
 
             tqapi_bt_run(c_cfg.as_ptr(), c_factory);
+            Box::from_raw((*c_factory).obj);  // rust factory
+            Box::from_raw(c_factory);
+        }
+    }
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct RealTimeConfig<'a> {
+    pub dapi_addr : Option<&'a str>,
+    pub tapi_addr : Option<&'a str>,
+    pub output_dir : Option<&'a str>,
+    pub properties : Option<&'a str>
+}
+
+pub struct RealTime {}
+
+impl <'a> RealTime {
+
+    pub fn run(cfg : &RealTimeConfig, create_stralet : fn () -> Box<Stralet>) {
+
+        unsafe {
+            let cfg_str = serde_json::to_string(&cfg).expect("Wrong cfg");
+            let c_cfg = CString::new(cfg_str).unwrap();
+            let factory = StraletFactory{ create_stralet : create_stralet};
+
+            let c_factory = Box::into_raw(
+                Box::new(CStraletFactory {
+                    obj     : Box::into_raw(Box::new(factory)) as *mut libc::c_char,
+                    create  : StraletFactory::create,
+                    destroy : StraletFactory::destory,
+                }));
+
+            tqapi_rt_run(c_cfg.as_ptr(), c_factory);
             Box::from_raw((*c_factory).obj);  // rust factory
             Box::from_raw(c_factory);
         }

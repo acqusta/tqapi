@@ -220,7 +220,7 @@ void tqapi_bt_run(const char* cfg, StraletFactory* factory)
 extern "C" _TQAPI_EXPORT
 void tqapi_rt_run(const char* cfg, StraletFactory* factory)
 {
-    tquant::stralet::backtest::run(cfg, [factory](){
+    tquant::stralet::realtime::run(cfg, [factory](){
         return new StraletWrap(factory);
     });
 }

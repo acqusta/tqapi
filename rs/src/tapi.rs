@@ -160,8 +160,8 @@ pub struct Order {
     pub entrust_action   : EntrustAction,  // 委托动作
     pub entrust_price    : f64,            // 委托价格
     pub entrust_size     : i64,            // 委托数量，单位：股
-    pub entrust_date     : i32,            // 委托日期
-    pub entrust_time     : i32,            // 委托时间
+    pub entrust_date     : u32,            // 委托日期
+    pub entrust_time     : u32,            // 委托时间
     pub fill_price       : f64,            // 成交价格
     pub fill_size        : i64,            // 成交数量
     pub status           : OrderStatus,    // 订单状态：取值: OrderStatus
@@ -186,8 +186,8 @@ pub struct Trade {
     pub fill_no          : String,        // 成交编号
     pub fill_size        : i64,           // 成交数量
     pub fill_price       : f64,           // 成交价格
-    pub fill_date        : i32,           // 成交日期
-    pub fill_time        : i32,           // 成交时间
+    pub fill_date        : u32,           // 成交日期
+    pub fill_time        : u32,           // 成交时间
     pub order_id         : i32,           // 自定义订单编号
 }
 

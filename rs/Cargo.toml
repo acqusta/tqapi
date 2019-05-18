@@ -3,13 +3,11 @@ name = "tqapi"
 version = "0.1.0"
 authors = ["Xu Tiezhu <xutiezhu@gmail.com>"]
 edition = "2018"
-
-[build]
-rustc-link-search = ["../build/dist/bin"]
+build = "build.rs"
 
 [dependencies]
-libc = "0.2.53"
+libc = "0.2.54"
 chrono = "0.4.6"
-serde = "1.0.90"
-serde_derive = "1.0.90"
+serde = "1.0.91"
+serde_derive = "1.0.91"
 serde_json = "1.0.39"
