@@ -11,10 +11,10 @@ use super::tqapi_ffi::*;
 #[derive(Debug,Clone)]
 pub struct MarketQuote{
     pub code : String,
-    pub date : i32,
-    pub time : i32,
-    pub recv_time : i64,
-    pub trade_date: i32,
+    pub date : u32,
+    pub time : u32,
+    pub recv_time : u64,
+    pub trade_date: u32,
     pub open  : f64,
     pub high  : f64,
     pub low   : f64,
@@ -59,9 +59,9 @@ impl fmt::Display for MarketQuote {
 
 pub struct Bar {
     pub code       : String,
-    pub date       : i32,
-    pub time       : i32,
-    pub trade_date : i32,
+    pub date       : u32,
+    pub time       : u32,
+    pub trade_date : u32,
     pub open       : f64,
     pub high       : f64,
     pub low        : f64,
@@ -87,8 +87,8 @@ impl fmt::Display for Bar {
 
 pub struct DailyBar {
     pub code       : String,
-    pub trade_date : i32,
-    pub time       : i32,
+    pub trade_date : u32,
+    pub time       : u32,
     pub open       : f64,
     pub high       : f64,
     pub low        : f64,
@@ -254,7 +254,7 @@ impl DataApi {
         return result;
     }
 
-    pub fn get_ticks(&mut self, code : &str, trade_date : i32) -> Result<Vec<MarketQuote>, String> {
+    pub fn get_ticks(&mut self, code : &str, trade_date : u32) -> Result<Vec<MarketQuote>, String> {
         let c_code = CString::new(code).unwrap();
         let mut result : Result<Vec<MarketQuote>, String>;
 
@@ -277,7 +277,7 @@ impl DataApi {
         return result;
     }
 
-    pub fn get_bars(&mut self, code : &str, cycle : &str, trade_date : i32, align : bool) -> Result<Vec<Bar>, String> {
+    pub fn get_bars(&mut self, code : &str, cycle : &str, trade_date : u32, align : bool) -> Result<Vec<Bar>, String> {
         let c_code = CString::new(code).unwrap();
         let c_cycle = CString::new(cycle).unwrap();
 

@@ -22,10 +22,10 @@ pub fn c_str_to_string(s : *const c_char) -> String {
 #[repr(C, packed)]
 pub struct CMarketQuote{
     code : *const c_char,
-    date : i32,
-    time : i32,
-    recv_time : i64,
-    trade_date: i32,
+    date : u32,
+    time : u32,
+    recv_time : u64,
+    trade_date: u32,
     open  : f64,
     high  : f64,
     low   : f64,
@@ -84,9 +84,9 @@ impl CMarketQuote {
 #[repr(C, packed)]
 pub struct CBar {
     code  : *const c_char,
-    date  : i32,
-    time  : i32,
-    trade_date : i32,
+    date  : u32,
+    time  : u32,
+    trade_date : u32,
     open  : f64,
     high  : f64,
     low   : f64,
@@ -112,8 +112,8 @@ impl CBar {
 #[repr(C, packed)]
 pub struct CDailyBar {
     code       : *const c_char,
-    trade_date : i32,
-    time       : i32,
+    trade_date : u32,
+    time       : u32,
     open       : f64,
     high       : f64,
     low        : f64,
@@ -204,9 +204,9 @@ extern "C" {
     pub fn tqapi_create_data_api(addr : *const c_char) -> *mut CDataApi;
     pub fn tqapi_free_data_api  (dapi : *mut CDataApi);
 
-    pub fn tqapi_dapi_get_ticks                (dapi : *mut CDataApi, code : *const c_char, trade_date : i32) -> *mut GetTicksResult;
+    pub fn tqapi_dapi_get_ticks                (dapi : *mut CDataApi, code : *const c_char, trade_date : u32) -> *mut GetTicksResult;
     pub fn tqapi_dapi_free_get_ticks_result    (dapi : *mut CDataApi, result : *mut GetTicksResult);
-    pub fn tqapi_dapi_get_bars                 (dapi : *mut CDataApi, code : *const c_char, cycle : *const c_char, trade_date : i32, align : i32) -> *mut GetBarsResult;
+    pub fn tqapi_dapi_get_bars                 (dapi : *mut CDataApi, code : *const c_char, cycle : *const c_char, trade_date : u32, align : i32) -> *mut GetBarsResult;
     pub fn tqapi_dapi_free_get_bars_result     (dapi : *mut CDataApi, result : *mut GetBarsResult);
 
     pub fn tqapi_dapi_get_dailybars            (dapi : *mut CDataApi, code : *const c_char, price_type : *const c_char, align : i32) -> *mut GetDailyBarResult;
