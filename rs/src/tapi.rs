@@ -33,13 +33,14 @@ pub struct Balance {
     pub close_pnl      : f64,
 }
 
+#[derive(Debug,Clone,PartialEq, Eq)]
 pub enum OrderStatus {
     New,
     Accepted,
     Filled,
     Rejected,
     Cancelled,
-    Other(String)
+//    Other(String)
 }
 
 impl OrderStatus {
@@ -50,7 +51,7 @@ impl OrderStatus {
             "Filled"    => OrderStatus::Filled,
             "Rejected"  => OrderStatus::Rejected,
             "Cancelled" => OrderStatus::Cancelled,
-            _           => OrderStatus::Other(String::from(s))
+            _           => panic!("unknown order statuss")//OrderStatus::Other(String::from(s))
         }
     }
 
@@ -61,7 +62,7 @@ impl OrderStatus {
             OrderStatus::Filled     => "Filled",
             OrderStatus::Rejected   => "Rejected",
             OrderStatus::Cancelled  => "Cancelled",
-            OrderStatus::Other(s)   => s
+            //OrderStatus::Other(s)   => s
         }
     }
 
@@ -152,6 +153,7 @@ impl fmt::Display for EntrustAction {
 }
 
 
+#[derive(Clone)]
 pub struct Order {
     pub account_id       : String,         // 帐号编号
     pub code             : String,         // 证券代码
@@ -352,7 +354,7 @@ impl TradeApi {
             let r = tqapi_tapi_query_orders(self.tapi, c_account.as_ptr(), c_codes.as_ptr());
             //println!("query_orders result {:?}", *r);
             if !(*r).array.is_null() {
-                let mut v = Vec::new();
+                let mut v = Vec::with_capacity((*r).array_size as usize);
                 for i in 0..(*r).array_size {
                     v.push( (*(*r).array.offset(i as isize)).to_rs());
                 }
@@ -373,7 +375,7 @@ impl TradeApi {
         unsafe {
             let r = tqapi_tapi_query_trades(self.tapi, c_account.as_ptr(), c_codes.as_ptr());
             if !(*r).array.is_null() {
-                let mut v = Vec::new();
+                let mut v = Vec::with_capacity((*r).array_size as usize);
                 for i in 0..(*r).array_size {
                     v.push( (*(*r).array.offset(i as isize)).to_rs());
                 }
