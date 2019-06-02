@@ -25,7 +25,7 @@ pub struct CMarketQuote{
     date : u32,
     time : u32,
     recv_time : u64,
-    trade_date: u32,
+    trading_day: u32,
     open  : f64,
     high  : f64,
     low   : f64,
@@ -67,7 +67,7 @@ impl CMarketQuote {
         unsafe {
             MarketQuote {
                 code : CStr::from_ptr(self.code).to_string_lossy().into_owned(),
-                date : self.date, time : self.time, recv_time : self.recv_time, trade_date: self.trade_date,
+                date : self.date, time : self.time, recv_time : self.recv_time, trading_day: self.trading_day,
                 open : self.open, high : self.high, low : self.low,close : self.close,
                 last : self.last, high_limit : self.high_limit, low_limit : self.low_limit,
                 pre_close : self.pre_close, volume : self.volume, turnover : self.turnover,
@@ -86,7 +86,7 @@ pub struct CBar {
     code  : *const c_char,
     date  : u32,
     time  : u32,
-    trade_date : u32,
+    trading_day: u32,
     open  : f64,
     high  : f64,
     low   : f64,
@@ -101,7 +101,7 @@ impl CBar {
         unsafe {
             Bar {
                 code: CStr::from_ptr(self.code).to_string_lossy().into_owned(),
-                date : self.date, time : self.time, trade_date : self.trade_date,
+                date : self.date, time : self.time, trading_day: self.trading_day,
                 open : self.open, high : self.high, low : self.low, close : self.close,
                 volume : self.volume, turnover : self.turnover, oi : self.oi
             }
@@ -112,7 +112,7 @@ impl CBar {
 #[repr(C, packed)]
 pub struct CDailyBar {
     code       : *const c_char,
-    trade_date : u32,
+    trading_day: u32,
     time       : u32,
     open       : f64,
     high       : f64,
@@ -132,7 +132,7 @@ impl CDailyBar {
         unsafe {
             DailyBar {
                 code: CStr::from_ptr(self.code).to_string_lossy().into_owned(),
-                trade_date : self.trade_date, time : self.time,
+                trading_day: self.trading_day, time : self.time,
                 open : self.open, high : self.high, low : self.low, close : self.close,
                 volume : self.volume, turnover : self.turnover, oi : self.oi,
                 settle : self.settle, pre_close : self.pre_close, pre_settle : self.pre_settle,
@@ -204,9 +204,9 @@ extern "C" {
     pub fn tqapi_create_data_api(addr : *const c_char) -> *mut CDataApi;
     pub fn tqapi_free_data_api  (dapi : *mut CDataApi);
 
-    pub fn tqapi_dapi_get_ticks                (dapi : *mut CDataApi, code : *const c_char, trade_date : u32) -> *mut GetTicksResult;
+    pub fn tqapi_dapi_get_ticks                (dapi : *mut CDataApi, code : *const c_char, trading_day : u32) -> *mut GetTicksResult;
     pub fn tqapi_dapi_free_get_ticks_result    (dapi : *mut CDataApi, result : *mut GetTicksResult);
-    pub fn tqapi_dapi_get_bars                 (dapi : *mut CDataApi, code : *const c_char, cycle : *const c_char, trade_date : u32, align : i32) -> *mut GetBarsResult;
+    pub fn tqapi_dapi_get_bars                 (dapi : *mut CDataApi, code : *const c_char, cycle : *const c_char, trading_day : u32, align : i32) -> *mut GetBarsResult;
     pub fn tqapi_dapi_free_get_bars_result     (dapi : *mut CDataApi, result : *mut GetBarsResult);
 
     pub fn tqapi_dapi_get_dailybars            (dapi : *mut CDataApi, code : *const c_char, price_type : *const c_char, align : i32) -> *mut GetDailyBarResult;

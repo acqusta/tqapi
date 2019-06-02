@@ -46,7 +46,7 @@ pub enum RunMode {
 }
 
 pub trait StraletContext{
-    fn get_trade_date (&self) -> i32 ;
+    fn get_trading_day(&self) -> i32 ;
     fn get_cur_time   (&self) -> FinDateTime;
     fn post_event     (&self, evt: &str, data: usize );
     fn set_timer      (&self, id: i64, delay : i64, data: usize);
@@ -104,7 +104,7 @@ impl StraletContextImpl {
 }
 impl StraletContext for StraletContextImpl {
 
-    fn get_trade_date(&self) -> i32 {
+    fn get_trading_day(&self) -> i32 {
         unsafe {
             return tqapi_sc_trading_day(self.ctx);
         }

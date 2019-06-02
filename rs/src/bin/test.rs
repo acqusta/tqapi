@@ -87,12 +87,12 @@ pub struct TestStralet {
 
 impl Stralet for TestStralet {
     fn on_init (&mut self, ctx: &mut StraletContext) {
-        ctx.log_info( format!{"on_init {}", ctx.get_trade_date()}.as_str() );
+        ctx.log_info( format!{"on_init {}", ctx.get_trading_day()}.as_str() );
         ctx.get_data_api().subscribe("000001.SH").expect("subscribe error");
     }
 
     fn on_fini (&mut self, ctx: &mut StraletContext) {
-        ctx.log_info( format!{"on_fini {}", ctx.get_trade_date()}.as_str() );
+        ctx.log_info( format!{"on_fini {}", ctx.get_trading_day()}.as_str() );
     }
 
     fn on_quote (&mut self, _ctx: &mut StraletContext, _quote : MarketQuote) {
