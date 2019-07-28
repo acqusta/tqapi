@@ -51,7 +51,7 @@ impl OrderStatus {
             "Filled"    => OrderStatus::Filled,
             "Rejected"  => OrderStatus::Rejected,
             "Cancelled" => OrderStatus::Cancelled,
-            _           => panic!("unknown order statuss")//OrderStatus::Other(String::from(s))
+            _           => panic!("unknown order status: {}", s)//OrderStatus::Other(String::from(s))
         }
     }
 

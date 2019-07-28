@@ -188,7 +188,7 @@ impl StraletContext for StraletContextImpl {
             //tqapi_sc_
             match s.as_str() {
                 "backtest" => RunMode::BACKTEST,
-                "relatime" => RunMode::REALTIME,
+                "realtime" => RunMode::REALTIME,
                 _ => { assert!(false, "Unknown mode"); RunMode::BACKTEST}
             }
         }
