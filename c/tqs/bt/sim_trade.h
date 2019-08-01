@@ -50,10 +50,10 @@ namespace tquant { namespace stralet { namespace backtest {
         CallResult<const vector<Order>>       query_orders   (const unordered_set<string>* codes);
         CallResult<const vector<Trade>>       query_trades   (const unordered_set<string>* codes);
         CallResult<const vector<Position>>    query_positions(const unordered_set<string>* codes);
-        CallResult<const OrderID>             place_order(const string& code, double price, int64_t size, const string& action, const string& price_type, int order_id);
-        CallResult<bool>                      cancel_order(const string& code, int order_id);
-        CallResult<bool>                      cancel_order(const string& code, const string& entrust_no);
-        CallResult<const OrderID>             validate_order(const string& code, double price, int64_t size, const string& action, const string& price_type);
+        CallResult<const OrderID>             place_order    (const string& code, double price, int64_t size, const string& action, const string& price_type, int order_id);
+        //CallResult<bool>                      cancel_order   (const string& code, int order_id);
+        CallResult<bool>                      cancel_order   (const string& code, const string& entrust_no);
+        CallResult<const OrderID>             validate_order  (const string& code, double price, int64_t size, const string& action, const string& price_type);
 
         void try_match();
 

@@ -210,6 +210,7 @@ PyObject* _wrap_tqs_sc_log                  (PyObject* self, PyObject *args, PyO
 PyObject* _wrap_tqs_sc_get_properties       (PyObject* self, PyObject *args, PyObject* kwargs);
 PyObject* _wrap_tqs_sc_get_property         (PyObject* self, PyObject *args, PyObject* kwargs);
 PyObject* _wrap_tqs_sc_mode                 (PyObject* self, PyObject *args, PyObject* kwargs);
+PyObject* _wrap_tqs_sc_stop                 (PyObject* self, PyObject *args, PyObject* kwargs);
 PyObject* _wrap_tqs_bt_run                  (PyObject* self, PyObject *args, PyObject* kwargs);
 PyObject* _wrap_tqs_rt_run                  (PyObject* self, PyObject *args, PyObject* kwargs);
 

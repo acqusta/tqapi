@@ -137,7 +137,6 @@ void SimStraletContext::stop()
     m_should_exit = true;
 }
 
-
 void SimStraletContext::calc_next_timer_time(DateTime* dt)
 {
     if (m_timers.empty()) {

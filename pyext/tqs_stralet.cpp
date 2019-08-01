@@ -235,6 +235,21 @@ PyObject* _wrap_tqs_sc_mode(PyObject* self, PyObject *args, PyObject* kwargs)
     return Py_BuildValue("s", str.c_str());
 }
 
+PyObject* _wrap_tqs_sc_stop(PyObject* self, PyObject *args, PyObject* kwargs)
+{
+    int64_t h;
+
+    if (!PyArg_ParseTuple(args, "L", &h))
+        return NULL;
+
+    if (!h) return Py_BuildValue("Os", Py_None, "null handle");
+
+    auto sc = reinterpret_cast<StraletContext*>(h);
+    sc->stop();
+
+    Py_RETURN_NONE;
+}
+
 Stralet* create_stralet_wrap(PyObject* cb)
 {
     return new StraletWrap(cb);

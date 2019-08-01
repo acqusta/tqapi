@@ -1167,7 +1167,7 @@ void SimAccount::update_last_prices()
     auto dapi = m_ctx->data_api();
     for (auto& e : m_tdata->positions) {
         auto q = dapi->quote(e.second->code).value;
-        if (q)
+        if (q && q->last > 0.00000001)
             e.second->last_price = q->last;
     }
 }
@@ -1203,6 +1203,7 @@ void SimAccount::move_to(int trading_day)
         new_pos->cost         = pos->cost;
         new_pos->cost_price   = pos->cost_price;
         new_pos->margin       = pos->margin;
+        new_pos->last_price   = pos->last_price;
 
         tdata->positions[e.first] = new_pos;
     }

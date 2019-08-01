@@ -84,6 +84,9 @@ class StraletContext:
     def log(self, severity, msg):
         return _tqapi.tqs_sc_log(self._handle, severity, msg)
 
+    def stop(self):
+        _tqapi.tqs_sc_stop(self._handle)
+
 class Stralet:
 
     class Logger:

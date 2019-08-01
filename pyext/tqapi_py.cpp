@@ -58,6 +58,7 @@ static PyMethodDef tqapi_methods[] = {
     { (char *)"tqs_sc_get_properties",      (PyCFunction)_wrap_tqs_sc_get_properties,       METH_KEYWORDS | METH_VARARGS, NULL },
     { (char *)"tqs_sc_get_property",        (PyCFunction)_wrap_tqs_sc_get_property,         METH_KEYWORDS | METH_VARARGS, NULL },
     { (char *)"tqs_sc_mode",                (PyCFunction)_wrap_tqs_sc_mode,                 METH_KEYWORDS | METH_VARARGS, NULL },
+    { (char *)"tqs_sc_stop",                (PyCFunction)_wrap_tqs_sc_stop,                 METH_KEYWORDS | METH_VARARGS, NULL },
     { (char *)"tqs_bt_run",                 (PyCFunction)_wrap_tqs_bt_run,                  METH_KEYWORDS | METH_VARARGS, NULL },
     { (char *)"tqs_rt_run",                 (PyCFunction)_wrap_tqs_rt_run,                  METH_KEYWORDS | METH_VARARGS, NULL },
 
