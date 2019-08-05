@@ -3,6 +3,7 @@
 #  undef ERROR
 #endif
 
+#include <sstream>
 #include "stralet.h"
 #include "bt/backtest.h"
 #include "rt/realtime.h"
@@ -262,7 +263,14 @@ PyObject* _wrap_tqs_bt_run(PyObject* self, PyObject *args, PyObject* kwargs)
     if (!PyArg_ParseTuple(args, "sO", &cfg, &cb))
         return NULL;
 
-    backtest::run(cfg, [cb]() { return create_stralet_wrap(cb); });
+    try {
+        backtest::run(cfg, [cb]() { return create_stralet_wrap(cb); });
+    } catch(exception e) {
+        stringstream ss;
+        ss << "catch an exception in backtest::run, what()=" << e.what();
+	string s = ss.str();
+        PyErr_SetString(PyExc_RuntimeError, s.c_str());
+    }
 
     Py_RETURN_NONE;
 }
@@ -274,7 +282,14 @@ PyObject* _wrap_tqs_rt_run(PyObject* self, PyObject *args, PyObject* kwargs)
     if (!PyArg_ParseTuple(args, "sO", &cfg, &cb))
         return NULL;
 
-    realtime::run(cfg, [cb]() { return create_stralet_wrap(cb); });
+    try {
+        realtime::run(cfg, [cb]() { return create_stralet_wrap(cb); });
+    } catch(exception e) {
+        stringstream ss;
+        ss << "catch an exception in realtime::run, what()=" << e.what();
+	string s = ss.str();
+        PyErr_SetString(PyExc_RuntimeError, s.c_str());
+    }
 
     Py_RETURN_NONE;
 }
