@@ -179,28 +179,30 @@ bool SocketConnection::do_connect()
     int port = atoi(ss[1].c_str());
 
     SOCKET sock = myutils::connect_socket(ip.c_str(), port);
-    if (sock != INVALID_SOCKET && myutils::check_connect(sock, 2)) {
-        int recv_buf_size = 1*1024*1024;
-        int send_buf_size = 1*1024*1024;
-        setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (const char*)&recv_buf_size, sizeof(int));
-        setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (const char*)&send_buf_size, sizeof(int));
+    if (sock == INVALID_SOCKET) return false;
 
-        m_socket = sock;
-        if (m_callback) m_callback->on_conn_status(true);
-
-        {
-            unique_lock<mutex> lock(m_send_lock);
-            if (m_send_list.size() > 0 && m_send_list.front()->send_len) {
-                m_send_list.pop_front();
-                m_send_count--;
-            }
-        }
-
-        return true;
-    }
-    else {
+    if (!myutils::check_connect(sock, 2)) {
+        closesocket(sock);
         return false;
     }
+
+    int recv_buf_size = 1*1024*1024;
+    int send_buf_size = 1*1024*1024;
+    setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (const char*)&recv_buf_size, sizeof(int));
+    setsockopt(sock, SOL_SOCKET, SO_SNDBUF, (const char*)&send_buf_size, sizeof(int));
+
+    m_socket = sock;
+    if (m_callback) m_callback->on_conn_status(true);
+
+    {
+        unique_lock<mutex> lock(m_send_lock);
+        if (m_send_list.size() > 0 && m_send_list.front()->send_len) {
+            m_send_list.pop_front();
+            m_send_count--;
+        }
+    }
+
+    return true;
 }
 
 void SocketConnection::close()
