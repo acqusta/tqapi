@@ -191,6 +191,7 @@ void run(const BackTestConfig & a_cfg, function<Stralet*()> creator)
         if (date < cfg.begin_date) continue;
         if (date > cfg.end_date) break;
      
+        // tapi should be after dapi since tapi would add holding codes to dapi!
         sc->move_to(date);
         sim_dapi->move_to(date);
         sim_tapi->move_to(date);

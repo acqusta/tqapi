@@ -459,6 +459,9 @@ CallResult<const OrderID> SimAccount::place_order(const string& code, double pri
     if (r.value)
         m_ord_status_ind_list.push_back(make_shared<Order>(*order));
 
+    if (status == OS_New) {
+        m_ctx->sim_dapi()->pin_code(code);
+    }
     return r;
 }
 
@@ -1206,6 +1209,8 @@ void SimAccount::move_to(int trading_day)
         new_pos->last_price   = pos->last_price;
 
         tdata->positions[e.first] = new_pos;
+
+        m_ctx->sim_dapi()->pin_code(pos->code);
     }
 
     m_his_tdata.push_back(tdata);

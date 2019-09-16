@@ -40,6 +40,7 @@ namespace tquant { namespace stralet { namespace backtest {
         SimDataApi(SimStraletContext* ctx, DataApi* dapi)
             : m_ctx(ctx)
             , m_dapi(dapi)
+            , m_is_EOD(false)
         {
         }
 
@@ -59,6 +60,9 @@ namespace tquant { namespace stralet { namespace backtest {
         const RawBar*           last_bar(const string & code);
         const RawDailyBar*      cur_daily_bar(const string & code);
 
+        void set_data_to_curtime();
+        void set_end_of_day();
+
         DataApi* dapi() { return m_dapi; }
 
         void move_to(int trading_day);
@@ -68,6 +72,9 @@ namespace tquant { namespace stralet { namespace backtest {
         void preload_daily_bar  (const vector<string>& codes);
         void preload_tick       (const vector<string>& codes);
 
+        void pin_code    (const string& code);
+        void unpin_code  (const string& code);
+
     private:
         SimStraletContext* m_ctx;
         DataApi* m_dapi;
@@ -75,6 +82,8 @@ namespace tquant { namespace stralet { namespace backtest {
         unordered_map<string, shared_ptr<BarCache>     > m_bar_caches;
         unordered_map<string, shared_ptr<DailyBarCache>> m_dailybar_caches;
         unordered_set<string> m_codes;
+        unordered_set<string> m_pinned_codes;
+        bool m_is_EOD;
     };
 
 } } }

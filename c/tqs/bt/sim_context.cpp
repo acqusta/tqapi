@@ -283,28 +283,32 @@ void SimStraletContext::run_one_day(Stralet* stralet)
     m_stralet->set_context(this);
     m_stralet->on_init();
 
-    DateTime end_dt(m_trading_day, HMS(15, 15, 0));
+    const DateTime end_dt(m_trading_day, HMS(15, 16, 0));
 
     while (m_now.cmp(end_dt) < 0 && !m_should_exit) {
         DateTime dt1, dt2;
+
         m_dapi->calc_nex_time(&dt1);
         calc_next_timer_time(&dt2);
-
         set_sim_time(dt1.cmp(dt2) < 0 ? dt1 : dt2);
 
         // Set latest quotes before try_match
         vector<shared_ptr<MarketQuote>> quotes;
+        vector<shared_ptr<Bar>> bars;
         for (auto& code : m_dapi->m_codes) {
             auto q = m_dapi->next_quote(code);
             if (q)
                 quotes.push_back(q);
-        }
-
-        vector<shared_ptr<Bar>> bars;
-        for (auto& code : m_dapi->m_codes) {
             auto bar = m_dapi->next_bar(code);
             if (bar)
                 bars.push_back(bar);
+        }
+
+        // Move all tick data to right position
+        for (auto& code : m_dapi->m_pinned_codes) {
+            if (m_dapi->m_codes.find(code) != m_dapi->m_codes.end()) continue;
+            m_dapi->next_quote(code);
+            m_dapi->next_bar(code);
         }
 
         // ×¢ÒâÊÂ¼þË³Ðò: try_match -> order -> trade -> event -> quote -> bar
@@ -314,6 +318,11 @@ void SimStraletContext::run_one_day(Stralet* stralet)
         if (!m_should_exit) execute_market_data(quotes, bars);
         if (!m_should_exit) execute_timer();
     }
+
+    set_sim_time(end_dt);
+    m_dapi->set_data_to_curtime();
+    m_dapi->set_end_of_day();
+    m_tapi->update_last_prices();
 
     stralet->on_fini();
 }

@@ -104,11 +104,14 @@ CallResult<const MarketQuote> SimDataApi::quote(const string& code)
         q->date        = bar->date;
         q->time        = bar->time;
         q->trading_day = bar->trading_day;
-        q->last        = bar->close;
         q->oi          = bar->oi;
-        q->ask1 = q->bid1 = bar->close;
+        q->last = q->ask1 = q->bid1 = bar->close;
         auto dailybar = cur_daily_bar(code);
         q->pre_close  = dailybar ? dailybar->pre_close : 0.0;
+
+        // The close price of last bar is not the close price of the daily bar!
+        if (m_is_EOD)
+            q->last = q->ask1 = q->bid1 = dailybar->close;
 
         // TODO: get OHLC from bar1m
 
@@ -234,6 +237,35 @@ void SimDataApi::preload_tick(const vector<string>& codes)
 
 }
 
+void SimDataApi::pin_code(const string& code)
+{
+    if (m_pinned_codes.find(code) != m_pinned_codes.end()) return;
+    m_pinned_codes.insert(code);
+
+    if (m_ctx->data_level() == BT_BAR1M || m_ctx->data_level() == BT_TICK) {
+        preload_daily_bar(vector<string>{code});
+        preload_bar(vector<string>{code});
+    }
+
+    if (m_ctx->data_level() == BT_TICK) {
+        preload_tick(vector<string>{code});
+    }
+}
+
+void SimDataApi::unpin_code(const string& code)
+{
+    auto it = m_pinned_codes.find(code);
+    if (it== m_pinned_codes.end()) return;
+
+    m_pinned_codes.erase(it);
+
+    if (m_codes.find(code) == m_codes.end()) {
+        auto it1 = m_bar_caches.find(code);
+        if (it1 != m_bar_caches.end()) m_bar_caches.erase(it1);
+        auto it2 = m_tick_caches.find(code);
+        if (it2 != m_tick_caches.end()) m_tick_caches.erase(it2);
+    }
+}
 
 CallResult<const vector<string>> SimDataApi::subscribe(const vector<string>& old_codes)
 {
@@ -265,6 +297,9 @@ CallResult<const vector<string>> SimDataApi::subscribe(const vector<string>& old
 CallResult<const vector<string>> SimDataApi::unsubscribe(const vector<string>& codes)
 {
     for (auto & c : codes) {
+        // Reserve data for pinned code
+        if (m_pinned_codes.find(c) != m_pinned_codes.end()) continue;
+
         auto it1 = m_bar_caches.find(c);
         if (it1 != m_bar_caches.end()) m_bar_caches.erase(it1);
         auto it2 = m_tick_caches.find(c);
@@ -365,6 +400,46 @@ shared_ptr<Bar> SimDataApi::next_bar(const string& code)
     }
 }
 
+void SimDataApi::set_end_of_day()
+{
+    m_is_EOD = true;
+}
+
+void SimDataApi::set_data_to_curtime()
+{
+    DateTime dt = m_ctx->cur_time();
+
+    for (auto it = m_bar_caches.begin(); it != m_bar_caches.end(); it++) {
+        auto cache = it->second;
+        while(true) {
+            if (cache->pos + 1 >= cache->size) break;
+            auto bar = &cache->bars->at(cache->pos + 1);
+            if (cmp_time(bar->date, bar->time, dt.date, dt.time) <= 0) {
+                cache->pos += 1;
+                ((TickArray*)cache->bars.get())->set_size(cache->pos + 1);
+            }
+            else {
+                break;
+            }
+        }
+    }
+
+    for (auto it = m_tick_caches.begin(); it != m_tick_caches.end(); it++) {
+        auto cache = it->second;
+        while (true) {
+            if (cache->pos + 1 >= cache->size) break;
+            auto bar = &cache->ticks->at(cache->pos + 1);
+            if (cmp_time(bar->date, bar->time, dt.date, dt.time) <= 0) {
+                cache->pos += 1;
+                ((TickArray*)cache->ticks.get())->set_size(cache->pos + 1);
+            }
+            else {
+                break;
+            }
+        }
+    }
+}
+
 const RawBar* SimDataApi::last_bar(const string & code)
 {
     auto it = m_bar_caches.find(code);
@@ -393,6 +468,7 @@ const RawDailyBar* SimDataApi::cur_daily_bar(const string & code)
 
 void SimDataApi::move_to(int trading_day)
 {
+    m_is_EOD = false;
     this->m_tick_caches.clear();
     this->m_bar_caches.clear();
     this->m_codes.clear();
