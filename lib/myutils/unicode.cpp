@@ -19,7 +19,7 @@ int GBKToUTF8(const unsigned char * lpGBKStr, unsigned char * lpUTF8Str, int nUT
 
     nRetLen = ::MultiByteToWideChar(CP_ACP, 0, (char *)lpGBKStr, -1, NULL, NULL);
     lpUnicodeStr = new WCHAR[nRetLen + 1]; 
-    nRetLen = ::MultiByteToWideChar(CP_ACP, 0, (char *)lpGBKStr, -1, lpUnicodeStr, nRetLen);
+    nRetLen = ::MultiByteToWideChar(CP_ACP, 0, (char *)lpGBKStr, -1, lpUnicodeStr, nRetLen * sizeof(WCHAR) );
     if (!nRetLen)
         return 0;
 
@@ -57,7 +57,7 @@ int UTF8ToGBK(const unsigned char * lpUTF8Str, unsigned char * lpGBKStr, int nGB
 
     nRetLen = ::MultiByteToWideChar(CP_UTF8, 0, (char *)lpUTF8Str, -1, NULL, NULL);
     lpUnicodeStr = new WCHAR[nRetLen + 1];
-    nRetLen = ::MultiByteToWideChar(CP_UTF8, 0, (char *)lpUTF8Str, -1, lpUnicodeStr, nRetLen);
+    nRetLen = ::MultiByteToWideChar(CP_UTF8, 0, (char *)lpUTF8Str, -1, lpUnicodeStr, nRetLen * sizeof(WCHAR));
     if (!nRetLen)
         return 0;
 
