@@ -110,7 +110,7 @@ CallResult<const MarketQuote> SimDataApi::quote(const string& code)
         q->pre_close  = dailybar ? dailybar->pre_close : 0.0;
 
         // The close price of last bar is not the close price of the daily bar!
-        if (m_is_EOD)
+        if (m_is_EOD && dailybar)
             q->last = q->ask1 = q->bid1 = dailybar->close;
 
         // TODO: get OHLC from bar1m

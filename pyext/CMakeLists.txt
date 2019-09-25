@@ -60,7 +60,8 @@ else()
   #add_definitions(-fvisibility=hidden)
 
   include_directories(
-    /usr/include/python3.5m
+    /usr/include/python3.6
+    ~/.local/lib/python3.6/site-packages/numpy/core/include
     #usr/include/python2.7
     /Users/terryxu/anaconda/include/python2.7
     /Users/terryxu/anaconda/lib/python2.7/site-packages/numpy/core/include
@@ -69,7 +70,7 @@ else()
     /Users/terryxu/anaconda/lib
     )
 #  set(EXTRA_LIBS python2.7 dl)
-  set(EXTRA_LIBS python3.5m dl)
+  set(EXTRA_LIBS python3.6m dl)
 endif()
 
 add_library(tqapi_py SHARED ${SRC})

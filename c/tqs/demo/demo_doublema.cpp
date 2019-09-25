@@ -42,7 +42,7 @@ void DoubleMAStralet::on_init()
     m_fast_ma_len = 5;
     m_slow_ma_len = 10;
     m_account_id  = "sim";
-    m_contract    = "RB.SHF";
+    m_contract    = "00700.HK";
 
     auto r = ctx()->data_api()->subscribe(vector<string>{m_contract});
     assert(r.value);
@@ -55,7 +55,7 @@ void DoubleMAStralet::on_fini()
     if (r.value)
         ctx()->logger(INFO) <<  "on_fini: " << ctx()->trading_day() << ", bar count " << r.value->size() << endl;
     else
-        ctx()->logger(FATAL) << "on_fini: " << ctx()->trading_day() << "," << r.msg << endl;
+        ctx()->logger(ERROR) << "on_fini: " << ctx()->trading_day() << "," << r.msg << endl;
 }
 
 static bool is_finished(const Order* order)

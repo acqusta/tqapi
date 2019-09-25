@@ -283,7 +283,7 @@ void SimStraletContext::run_one_day(Stralet* stralet)
     m_stralet->set_context(this);
     m_stralet->on_init();
 
-    const DateTime end_dt(m_trading_day, HMS(15, 16, 0));
+    const DateTime end_dt(m_trading_day, HMS(16, 01, 0));
 
     while (m_now.cmp(end_dt) < 0 && !m_should_exit) {
         DateTime dt1, dt2;
@@ -317,6 +317,9 @@ void SimStraletContext::run_one_day(Stralet* stralet)
         if (!m_should_exit) execute_event();
         if (!m_should_exit) execute_market_data(quotes, bars);
         if (!m_should_exit) execute_timer();
+
+        // No more event, break
+        if (quotes.empty() && bars.empty() && m_timers.empty() && m_events.empty()) break;
     }
 
     set_sim_time(end_dt);

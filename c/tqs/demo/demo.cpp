@@ -84,9 +84,9 @@ Stralet *create_doublema();
 int test3()
 {
     backtest::BackTestConfig cfg;
-    cfg.dapi_addr  = "ipc://tqc_10001";
-    cfg.begin_date = 20181001;
-    cfg.end_date   = 20181031;
+    cfg.dapi_addr  = "tcp://127.0.0.1:10002";
+    cfg.begin_date = 20190101;
+    cfg.end_date   = 20191031;
     cfg.data_level = "tk";
     cfg.accounts.push_back(backtest::AccountConfig("sim", 1e8));
 
@@ -114,6 +114,7 @@ int test_realtime()
 
 int main()
 {
+    test3();
 	test_realtime();
     return 0;
 }
