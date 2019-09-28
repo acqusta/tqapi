@@ -338,10 +338,11 @@ static MarketOpenTime HK_open_time[] = {
 };
 
 static MarketOpenTime SHF_CZC_DCE_open_time[] = {
-        { 210000000,  20000000 , true}, // 21:00 ~ 2:00
+        {         0,  20000000 , true}, // 21:00 ~ 2:00
         {  90000000, 101500000 , false},
         { 103000000, 113000000 , false},
         { 133000000, 150000000 , false},
+        { 210000000, 240000000 , true}, // 21:00 ~ 2:00
         { -1, -1, false }
 };
 

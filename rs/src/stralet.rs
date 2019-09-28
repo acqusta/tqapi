@@ -40,6 +40,10 @@ impl FinDateTime {
     }
 }
 
+pub fn fin_hms(h:i32, m:i32, s:i32, ms:i32) -> i32{
+    return  (h*10000 + m * 100 + s) * 1000 + ms;
+}
+
 pub enum RunMode {
     BACKTEST,
     REALTIME
@@ -64,15 +68,15 @@ pub trait StraletContext{
 
 #[allow(unused_variables)]
 pub trait Stralet {
-    fn on_init           (&mut self, ctx: & mut StraletContext)                             { }
-    fn on_fini           (&mut self, ctx: & mut StraletContext)                             { }
-    fn on_quote          (&mut self, ctx: & mut StraletContext, quote : MarketQuote)        { }
-    fn on_bar            (&mut self, ctx: & mut StraletContext, cycle : &str, bar : Bar)    { }
-    fn on_order          (&mut self, ctx: & mut StraletContext, order : Order)              { }
-    fn on_trade          (&mut self, ctx: & mut StraletContext, trade : Trade)              { }
-    fn on_timer          (&mut self, ctx: & mut StraletContext, id    : i64,  data : usize) { }
-    fn on_event          (&mut self, ctx: & mut StraletContext, name  : &str, data : usize) { }
-    fn on_account_status (&mut self, ctx: & mut StraletContext, account : AccountInfo)      { }
+    fn on_init           (&mut self, ctx: & mut dyn StraletContext)                             { }
+    fn on_fini           (&mut self, ctx: & mut dyn StraletContext)                             { }
+    fn on_quote          (&mut self, ctx: & mut dyn StraletContext, quote : MarketQuote)        { }
+    fn on_bar            (&mut self, ctx: & mut dyn StraletContext, cycle : &str, bar : Bar)    { }
+    fn on_order          (&mut self, ctx: & mut dyn StraletContext, order : Order)              { }
+    fn on_trade          (&mut self, ctx: & mut dyn StraletContext, trade : Trade)              { }
+    fn on_timer          (&mut self, ctx: & mut dyn StraletContext, id    : i64,  data : usize) { }
+    fn on_event          (&mut self, ctx: & mut dyn StraletContext, name  : &str, data : usize) { }
+    fn on_account_status (&mut self, ctx: & mut dyn StraletContext, account : AccountInfo)      { }
 }
 
 

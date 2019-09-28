@@ -117,12 +117,12 @@ impl DataApiCallback for DefaultDataApiCallback {
 }
 
 struct DataApiHook{
-    pub cb  : *mut DataApiCallback,
+    pub cb  : *mut dyn DataApiCallback,
 }
 
 pub struct DataApi {
     //cb       : *mut DataApiCallback,
-    dapi_cb_null  : *mut DataApiCallback,
+    dapi_cb_null  : *mut dyn DataApiCallback,
     dapi     : *mut CDataApi,
     hook     : *mut DataApiHook,
     is_owner : bool
@@ -169,7 +169,7 @@ impl DataApi {
         unsafe {
             assert!(!c_quote.is_null() && !obj.is_null());
             let quote = (*c_quote).to_rs();
-            let cb = (*(obj as *mut DataApiHook)).cb as *mut DataApiCallback;
+            let cb = (*(obj as *mut DataApiHook)).cb as *mut dyn DataApiCallback;
             (*cb).on_quote(quote);
         }
     }
@@ -185,7 +185,7 @@ impl DataApi {
         }
     }
 
-    pub fn set_callback(&mut self, cb : Option<Box<DataApiCallback>>) {
+    pub fn set_callback(&mut self, cb : Option<Box<dyn DataApiCallback>>) {
         if !self.is_owner { return; }
 
         unsafe {

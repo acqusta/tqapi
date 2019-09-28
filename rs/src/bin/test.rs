@@ -86,45 +86,45 @@ pub struct TestStralet {
 }
 
 impl Stralet for TestStralet {
-    fn on_init (&mut self, ctx: &mut StraletContext) {
+    fn on_init (&mut self, ctx: &mut dyn StraletContext) {
         ctx.log_info( format!{"on_init {}", ctx.get_trading_day()}.as_str() );
         ctx.get_data_api().subscribe("000001.SH").expect("subscribe error");
     }
 
-    fn on_fini (&mut self, ctx: &mut StraletContext) {
+    fn on_fini (&mut self, ctx: &mut dyn StraletContext) {
         ctx.log_info( format!{"on_fini {}", ctx.get_trading_day()}.as_str() );
     }
 
-    fn on_quote (&mut self, _ctx: &mut StraletContext, _quote : MarketQuote) {
+    fn on_quote (&mut self, _ctx: &mut dyn StraletContext, _quote : MarketQuote) {
         //ctx.log_info( format!{"on_quote: {}", quote}.as_str() );
     }
 
-    fn on_bar (&mut self, _ctx: &mut StraletContext, _cycle : &str, _bar : Bar) {
+    fn on_bar (&mut self, _ctx: &mut dyn StraletContext, _cycle : &str, _bar : Bar) {
 
     }
 
-    fn on_order (&mut self, _ctx: &mut StraletContext, _order : Order) {
+    fn on_order (&mut self, _ctx: &mut dyn StraletContext, _order : Order) {
 
     }
 
-    fn on_trade (&mut self, _ctx: &mut StraletContext, _trade : Trade) {
+    fn on_trade (&mut self, _ctx: &mut dyn StraletContext, _trade : Trade) {
 
     }
 
-    fn on_timer (&mut self, _ctx: &mut StraletContext, _id : i64,  _data : usize) {
+    fn on_timer (&mut self, _ctx: &mut dyn StraletContext, _id : i64,  _data : usize) {
 
     }
 
-    fn on_event (&mut self, _ctx: &mut StraletContext, _name  : &str, _data : usize) {
+    fn on_event (&mut self, _ctx: &mut dyn StraletContext, _name  : &str, _data : usize) {
 
     }
 
-    fn on_account_status (&mut self, _ctx: &mut StraletContext, _account : AccountInfo) {
+    fn on_account_status (&mut self, _ctx: &mut dyn StraletContext, _account : AccountInfo) {
 
     }
 }
 
-fn create_stralet() -> Box<Stralet>{
+fn create_stralet() -> Box<dyn Stralet>{
     Box::new(TestStralet{})
 }
 

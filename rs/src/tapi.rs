@@ -267,11 +267,11 @@ impl TradeApiCallback for NullTradeApiCallback {
 }
 
 struct TradeApiHook {
-    cb : *mut TradeApiCallback,
+    cb : *mut dyn TradeApiCallback,
 }
 
 pub struct TradeApi{
-    null_cb  : *mut TradeApiCallback,
+    null_cb  : *mut dyn TradeApiCallback,
     hook     : *mut TradeApiHook,
     tapi     : *mut CTradeApi,
     is_owner : bool
@@ -490,7 +490,7 @@ impl TradeApi {
         unsafe {
             assert!(!c_order.is_null() && !obj.is_null());
             let order = (*c_order).to_rs();
-            let cb = (*(obj as *mut TradeApiHook)).cb as *mut TradeApiCallback;
+            let cb = (*(obj as *mut TradeApiHook)).cb as *mut dyn TradeApiCallback;
             (*cb).on_order(order);
         }
     }
@@ -499,7 +499,7 @@ impl TradeApi {
         unsafe {
             assert!(!c_trade.is_null() && !obj.is_null());
             let trade = (*c_trade).to_rs();
-            let cb = (*(obj as *mut TradeApiHook)).cb as *mut TradeApiCallback;
+            let cb = (*(obj as *mut TradeApiHook)).cb as *mut dyn TradeApiCallback;
             (*cb).on_trade (trade);
         }
     }
@@ -509,12 +509,12 @@ impl TradeApi {
             assert!(!account.is_null() && !obj.is_null());
 
             let account = (*account).to_rs();
-            let cb = (*(obj as *mut TradeApiHook)).cb as *mut TradeApiCallback;
+            let cb = (*(obj as *mut TradeApiHook)).cb as *mut dyn TradeApiCallback;
             (*cb).on_account_status(account);
         }
     }
 
-    pub fn set_callback(&mut self, cb : Option<Box<TradeApiCallback>>) {
+    pub fn set_callback(&mut self, cb : Option<Box<dyn TradeApiCallback>>) {
         if !self.is_owner { return;}
 
         unsafe {
