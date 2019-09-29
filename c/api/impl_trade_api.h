@@ -64,6 +64,7 @@ namespace tquant { namespace api { namespace impl {
             else if (str == "fill_price")       mp_get(p->val, &trd->fill_price);
             else if (str == "fill_date")        mp_get(p->val, &trd->fill_date);
             else if (str == "fill_time")        mp_get(p->val, &trd->fill_time);
+            else if (str == "order_id")         mp_get(p->val, &trd->order_id);
         }
 
         return true;

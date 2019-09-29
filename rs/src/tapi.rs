@@ -195,9 +195,9 @@ pub struct Trade {
 
 impl fmt::Display for Trade {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Trade({},{},{},{},{},{},{},{})", self.account_id, self.code,
+        write!(f, "Trade({},{},{},{},{},{},{},{},{})", self.account_id, self.code,
             self.entrust_action.to_str(), self.fill_price, self.fill_size, self.fill_time,
-            self.fill_no, self.entrust_no)
+            self.fill_no, self.entrust_no, self.order_id)
     }
 }
 

@@ -957,6 +957,7 @@ void SimAccount::estimate_vol_in_queue(OrderData* od, const MarketQuote* q)
             }
         }
     }
+    od->volume_in_queue = 0;
 }
 
 void SimAccount::try_buy(OrderData* od)
