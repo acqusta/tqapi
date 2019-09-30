@@ -990,7 +990,7 @@ void SimAccount::try_buy(OrderData* od)
                 }
                 make_trade(od->order.get(), od->order->entrust_price);
             }
-            else if (q->last <= od->order->entrust_price && od->volume_in_queue == 0) {
+            else if (q->ask1 <= od->order->entrust_price && od->volume_in_queue == 0) {
                 make_trade(od->order.get(), od->order->entrust_price);
             }
             else if (od->price_type == "fak" || od->price_type == "fok") {
@@ -1062,7 +1062,7 @@ void SimAccount::try_sell(OrderData* od)
                 }
                 make_trade(od->order.get(), od->order->entrust_price);
             }
-            else if (q->last >= od->order->entrust_price && od->volume_in_queue == 0) {
+            else if (q->bid1 >= od->order->entrust_price && od->volume_in_queue == 0) {
                 make_trade(od->order.get(), od->order->entrust_price);
             }
             else if (od->price_type == "fak" || od->price_type == "fok") {
@@ -1135,7 +1135,7 @@ void SimAccount::try_short(OrderData* od)
                 }
                 make_trade(od->order.get(), od->order->entrust_price);
             }
-            else if (q->last >= od->order->entrust_price && od->volume_in_queue == 0) {
+            else if (q->bid1 >= od->order->entrust_price && od->volume_in_queue == 0) {
                 make_trade(od->order.get(), od->order->entrust_price);
             }
             else if (od->price_type == "fak" || od->price_type == "fok") {
@@ -1207,7 +1207,7 @@ void SimAccount::try_cover(OrderData* od)
                 }
                 make_trade(od->order.get(), od->order->entrust_price);
             }
-            else if (q->last <= od->order->entrust_price && od->volume_in_queue == 0) {
+            else if (q->ask1 <= od->order->entrust_price && od->volume_in_queue == 0) {
                 make_trade(od->order.get(), od->order->entrust_price);
             }
             else if (od->price_type == "fak" || od->price_type == "fok") {
