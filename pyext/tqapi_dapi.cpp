@@ -246,9 +246,12 @@ void DataApiWrap::on_market_quote(shared_ptr<const MarketQuote> quote)
 
     msg_loop().post_task([this, quote]() {
         auto gstate = PyGILState_Ensure();
-        PyObject* obj = convert_tick(quote.get());
-        call_callback(this->m_dapi_cb, "dapi.quote", obj);
-        PyGILState_Release(gstate);
+
+        if (m_dapi_cb != Py_None) {
+            PyObject* obj = convert_tick(quote.get());
+            call_callback(this->m_dapi_cb, "dapi.quote", obj);
+            PyGILState_Release(gstate);
+        }
     });
 }
 
@@ -258,9 +261,11 @@ void DataApiWrap::on_bar(const string& cycle, shared_ptr<const Bar> bar)
 
     msg_loop().post_task([this, cycle, bar]() {
         auto gstate = PyGILState_Ensure();
-        PyObject* obj = Py_BuildValue("sN", cycle.c_str(), convert_bar(bar.get()));
-        call_callback(this->m_dapi_cb, "dapi.bar", obj);
-        PyGILState_Release(gstate);
+        if (m_dapi_cb != Py_None) {
+            PyObject *obj = Py_BuildValue("sN", cycle.c_str(), convert_bar(bar.get()));
+            call_callback(this->m_dapi_cb, "dapi.bar", obj);
+            PyGILState_Release(gstate);
+        }
     });
 }
 

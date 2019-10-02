@@ -160,7 +160,8 @@ class DataApi:
             self._on_quote = None
             self._on_bar = None
             self._tqapi_created = True
-            _tqapi.dapi_set_callback(self._handle, self._on_callback)
+            self.__callback = lambda m,d: self._on_callback(m, d)
+            _tqapi.dapi_set_callback(self._handle, self.__callback)
 
         elif isinstance(addr, int):
             self._handle   = addr

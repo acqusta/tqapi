@@ -96,8 +96,8 @@ void SocketConnection::main_run()
 
 void SocketConnection::do_close(const char* reason, bool should_notify)
 {
-    if (reason)
-        std::cerr << "close socket: " << reason << "," << WSAGetLastError() << std::endl;
+//    if (reason)
+//        std::cerr << "close socket: " << reason << "," << WSAGetLastError() << std::endl;
 
     if (m_socket != INVALID_SOCKET) {
         closesocket(m_socket);
