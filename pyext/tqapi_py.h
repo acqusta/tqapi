@@ -113,7 +113,8 @@ public:
     }
 
     virtual ~DataApiWrap() {
-
+        m_dapi->set_callback(nullptr);
+        delete m_dapi;
     }
 
     // DataApi_Callback
@@ -137,6 +138,8 @@ public:
     ~TradeApiWrap() {
         //for (auto e : m_dapi_map)
         //    delete e.second;
+        m_tapi->set_callback(nullptr);
+        delete m_tapi;
     }
 
     // TradeApi_Callback

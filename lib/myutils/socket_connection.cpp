@@ -27,6 +27,12 @@ SocketConnection::SocketConnection()
 SocketConnection::~SocketConnection()
 {
     close();
+
+    if (m_cmd_client != INVALID_SOCKET)
+        closesocket(m_cmd_client);
+
+    if (m_cmd_server != INVALID_SOCKET)
+        closesocket(m_cmd_server);
 }
 
 void SocketConnection::main_run()
@@ -66,12 +72,11 @@ void SocketConnection::main_run()
             ::recv(m_cmd_server, buf, 16, 0);
 
             if (buf[0] == 'C' || buf[0] == 'R') {
-                if (m_socket != INVALID_SOCKET) {
-                    closesocket(m_socket);
-                    m_socket = INVALID_SOCKET;
-                    m_recv_size = 0;
-                    m_pkt_size = 0;
+                do_close("",false);
                 }
+            else if (buf[0] == 'D') {
+                do_close("",false);
+                break;
             }
         }
 
@@ -89,7 +94,7 @@ void SocketConnection::main_run()
     }
 }
 
-void SocketConnection::do_close(const char* reason)
+void SocketConnection::do_close(const char* reason, bool should_notify)
 {
     if (reason)
         std::cerr << "close socket: " << reason << "," << WSAGetLastError() << std::endl;
@@ -99,6 +104,8 @@ void SocketConnection::do_close(const char* reason)
         m_socket = INVALID_SOCKET;
         m_recv_size = 0;
         m_pkt_size = 0;
+
+        if (should_notify)
         if (m_callback) m_callback->on_conn_status(false);
     }
 }
@@ -201,7 +208,6 @@ bool SocketConnection::do_connect()
             m_send_count--;
         }
     }
-
     return true;
 }
 
@@ -210,8 +216,13 @@ void SocketConnection::close()
     m_should_exit = true;
 
     if (m_main_thread) {
+        char buf[1] = { 'D' };
+        ::send(m_cmd_client, buf, 1, 0);
+
+        if (m_main_thread->joinable())
         m_main_thread->join();
         delete m_main_thread;
+
         m_main_thread = nullptr;
     }
 

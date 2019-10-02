@@ -194,16 +194,17 @@ namespace mprpc {
         });
     }
 
-    bool MpRpcClient::connect(const string& addr, MpRpcClient_Callback* callback)
+    bool MpRpcClient::connect(const string& addr, MpRpcClient_Callback* callback, int timeout)
     {
         if (addr.empty()) return false;
 
         m_addr = addr;
         m_conn->connect(addr, this);
 
-        auto begin_time = system_clock::now();
-        while (system_clock::now() - begin_time < seconds(1) && !m_connected) {
-            this_thread::sleep_for(milliseconds(10));
+        if (timeout) {
+            for (int i = 0; i < (timeout + 9 / 10) && !m_connected; i++) {
+                this_thread::sleep_for(microseconds(10));
+            }
         }
 
         m_msg_loop.post_task([this, callback]() { this->m_callback = callback; });

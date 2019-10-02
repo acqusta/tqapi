@@ -45,7 +45,7 @@ private:
     bool do_connect();
     void do_recv();
     void do_send_heartbeat();
-    void do_close(const char* reason=nullptr);
+    void do_close(const char* reason=nullptr, bool should_notify=true);
 
     void asyncall(function<void()>);
 

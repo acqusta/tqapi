@@ -290,7 +290,7 @@ namespace mprpc {
         
         virtual ~MpRpcClient();
 
-        bool connect(const string& addr, MpRpcClient_Callback* callback);
+        bool connect(const string& addr, MpRpcClient_Callback* callback, int timeout=1000);
 
         void close();
 
