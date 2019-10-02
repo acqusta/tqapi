@@ -108,6 +108,7 @@ class DataApiWrap : public DataApi_Callback, public loop::MsgLoopRun {
 public:
     DataApiWrap(DataApi* dapi)
         : m_dapi(dapi)
+        , m_dapi_cb(Py_None)
     {
         m_dapi->set_callback(this);
     }
@@ -121,8 +122,8 @@ public:
     virtual void on_market_quote (shared_ptr<const MarketQuote> quote) override;
     virtual void on_bar          (const string& cycle, shared_ptr<const Bar> bar) override;
 
-    PyObjectHolder  m_dapi_cb;
     DataApi* m_dapi;
+    PyObject*  m_dapi_cb;
 };
 
 class TradeApiWrap : public TradeApi_Callback, public loop::MsgLoopRun
@@ -131,6 +132,7 @@ class TradeApiWrap : public TradeApi_Callback, public loop::MsgLoopRun
 public:
     TradeApiWrap(TradeApi* tapi)
         : m_tapi(tapi)
+        , m_tapi_cb(Py_None)
     {
         m_tapi->set_callback(this);
     }
@@ -166,8 +168,8 @@ public:
     //}
 
     TradeApi*       m_tapi;
-    PyObjectHolder  m_tapi_cb;
-    mutex m_mtx;
+    PyObject*       m_tapi_cb;
+    mutex           m_mtx;
 };
 
 PyObject* convert_tick         (const RawMarketQuote* q);
