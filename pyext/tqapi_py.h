@@ -122,8 +122,8 @@ public:
     virtual void on_market_quote (shared_ptr<const MarketQuote> quote) override;
     virtual void on_bar          (const string& cycle, shared_ptr<const Bar> bar) override;
 
-    DataApi* m_dapi;
-    PyObject*  m_dapi_cb;
+    DataApi*        m_dapi;
+    PyObjectHolder  m_dapi_cb;
 };
 
 class TradeApiWrap : public TradeApi_Callback, public loop::MsgLoopRun
@@ -168,7 +168,7 @@ public:
     //}
 
     TradeApi*       m_tapi;
-    PyObject*       m_tapi_cb;
+    PyObjectHolder  m_tapi_cb;
     mutex           m_mtx;
 };
 

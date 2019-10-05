@@ -1,6 +1,7 @@
 from . import _tqapi
 import pandas as pd
 import traceback
+import weakref
 
 try:
     from future.builtins import int
@@ -52,6 +53,15 @@ def _add_index(df):
                                     "day"   : date % 100  })
     return df
 
+class CallbackHelper:
+    def __init__(self, cb):
+        self.cb = weakref.WeakMethod(cb)
+
+    def __call__(self, m, d):
+        cb = self.cb()
+        if cb:
+            cb(m,d)
+
 class TradeApi:
     
     def __init__(self, addr):
@@ -61,6 +71,8 @@ class TradeApi:
             self._on_order_trade    = None
             self._on_account_status = None
             self._tqapi_created = True
+            self.__callback = CallbackHelper(self._on_callback)
+            _tqapi.tapi_set_callback(self._handle, self.__callback)
 
         elif isinstance(addr, int):
             self._handle = addr
@@ -68,6 +80,7 @@ class TradeApi:
             self._on_order_trade    = None
             self._on_account_status = None
             self._tqapi_created = False
+
 
     def __del__(self):
         if self._handle and self._tqapi_created:
@@ -153,6 +166,7 @@ class TradeApi:
         """common query"""
         return _tqapi.tapi_query(self._handle, str(account_id), str(command), str(params))
 
+        
 class DataApi:
     def __init__(self, addr):
         if isinstance(addr, str):
@@ -160,7 +174,7 @@ class DataApi:
             self._on_quote = None
             self._on_bar = None
             self._tqapi_created = True
-            self.__callback = lambda m,d: self._on_callback(m, d)
+            self.__callback = CallbackHelper(self._on_callback)
             _tqapi.dapi_set_callback(self._handle, self.__callback)
 
         elif isinstance(addr, int):
@@ -171,7 +185,7 @@ class DataApi:
 
     def __del__(self):
         if self._handle and self._tqapi_created:
-                _tqapi.dapi_destroy(self._handle)
+            _tqapi.dapi_destroy(self._handle)
 
     def _on_callback(self, method, data):
         try:

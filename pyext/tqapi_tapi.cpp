@@ -360,36 +360,36 @@ PyObject* _wrap_tapi_query_account_status(PyObject* self, PyObject *args, PyObje
 // TradeApi_Callback
 void TradeApiWrap::on_order_status(shared_ptr<Order> order)
 {
-    if (m_tapi_cb == Py_None) return;
+    if (m_tapi_cb.obj == Py_None) return;
 
     m_msg_loop.post_task([this, order]() {
         auto gstate = PyGILState_Ensure();
         PyObject* obj = convert_order(order.get());
-        call_callback(this->m_tapi_cb, "tapi.order_status_ind", obj);
+        call_callback(this->m_tapi_cb.obj, "tapi.order_status_ind", obj);
         PyGILState_Release(gstate);
     });
 }
 
 void TradeApiWrap::on_order_trade(shared_ptr<Trade> trade)
 {
-    if (m_tapi_cb == Py_None) return;
+    if (m_tapi_cb.obj == Py_None) return;
 
     m_msg_loop.post_task([this, trade]() {
         auto gstate = PyGILState_Ensure();
         PyObject* obj = convert_trade(trade.get());
-        call_callback(this->m_tapi_cb, "tapi.order_trade_ind", obj);
+        call_callback(this->m_tapi_cb.obj, "tapi.order_trade_ind", obj);
         PyGILState_Release(gstate);
     });
 }
 
 void TradeApiWrap::on_account_status(shared_ptr<AccountInfo> account)
 {
-    if (m_tapi_cb == Py_None) return;
+    if (m_tapi_cb.obj == Py_None) return;
 
     m_msg_loop.post_task([this, account]() {
         auto gstate = PyGILState_Ensure();
         PyObject* obj = convert_account_info(account.get());
-        call_callback(this->m_tapi_cb, "tapi.account_status_ind", obj);
+        call_callback(this->m_tapi_cb.obj, "tapi.account_status_ind", obj);
         PyGILState_Release(gstate);
     });
 
