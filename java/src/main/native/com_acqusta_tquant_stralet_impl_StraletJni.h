@@ -17,7 +17,7 @@ JNIEXPORT jlong JNICALL Java_com_acqusta_tquant_stralet_impl_StraletJni_create
 
 /*
  * Class:     com_acqusta_tquant_stralet_impl_StraletJni
- * Method:    destry
+ * Method:    destroy
  * Signature: (J)V
  */
 JNIEXPORT void JNICALL Java_com_acqusta_tquant_stralet_impl_StraletJni_destroy

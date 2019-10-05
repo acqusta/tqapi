@@ -10,7 +10,7 @@ public class StraletJni {
     }
 
     public static native long create(Stralet stralet);
-    public static native void destry(long h);
+    public static native void destroy(long h);
 
     public static native void runBacktest(String cfg, StraletCreator straletCreator);
     public static native void runRealTime(String cfg, StraletCreator straletCreator);
