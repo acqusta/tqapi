@@ -106,16 +106,18 @@ static inline void dict_set_item(PyObject* obj, const char* key, bool value)
 
 class DataApiWrap : public DataApi_Callback, public loop::MsgLoopRun {
 public:
-    DataApiWrap(DataApi* dapi)
+    DataApiWrap(DataApi* dapi, bool is_owner)
         : m_dapi(dapi)
         , m_dapi_cb(Py_None)
+        , m_is_owner(is_owner)
     {
         m_dapi->set_callback(this);
     }
 
     virtual ~DataApiWrap() {
         m_dapi->set_callback(nullptr);
-        delete m_dapi;
+        if (m_is_owner)
+            delete m_dapi;
     }
 
     // DataApi_Callback
@@ -124,15 +126,17 @@ public:
 
     DataApi*        m_dapi;
     PyObjectHolder  m_dapi_cb;
+    bool            m_is_owner;
 };
 
 class TradeApiWrap : public TradeApi_Callback, public loop::MsgLoopRun
 {
     friend DataApiWrap;
 public:
-    TradeApiWrap(TradeApi* tapi)
+    TradeApiWrap(TradeApi* tapi, bool is_owner)
         : m_tapi(tapi)
         , m_tapi_cb(Py_None)
+        , m_is_owner(is_owner)
     {
         m_tapi->set_callback(this);
     }
@@ -141,7 +145,8 @@ public:
         //for (auto e : m_dapi_map)
         //    delete e.second;
         m_tapi->set_callback(nullptr);
-        delete m_tapi;
+        if (m_is_owner)
+            delete m_tapi;
     }
 
     // TradeApi_Callback
@@ -170,6 +175,7 @@ public:
     TradeApi*       m_tapi;
     PyObjectHolder  m_tapi_cb;
     mutex           m_mtx;
+    bool            m_is_owner;
 };
 
 PyObject* convert_tick         (const RawMarketQuote* q);

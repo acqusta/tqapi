@@ -138,7 +138,7 @@ PyObject* _wrap_tapi_create(PyObject* self, PyObject *args, PyObject* kwargs)
     if (!api)
         Py_RETURN_NONE;
 
-    auto wrap = new TradeApiWrap(api);
+    auto wrap = new TradeApiWrap(api, true);
 
     return PyLong_FromLongLong((int64_t)(wrap));
 }

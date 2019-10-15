@@ -121,7 +121,7 @@ PyObject* _wrap_tqs_sc_dapi_get(PyObject* self, PyObject *args, PyObject* kwargs
 
     auto sc = reinterpret_cast<StraletContext*>(h);
     DataApi* dapi = sc->data_api();
-    DataApiWrap* wrap = new DataApiWrap(dapi);
+    DataApiWrap* wrap = new DataApiWrap(dapi, false);
 
     return PyLong_FromLongLong((int64_t)(wrap));
 }
@@ -150,7 +150,7 @@ PyObject* _wrap_tqs_sc_tapi_get(PyObject* self, PyObject *args, PyObject* kwargs
 
     auto sc = reinterpret_cast<StraletContext*>(h);
     TradeApi* tapi = sc->trade_api();
-    TradeApiWrap* wrap = new TradeApiWrap(tapi);
+    TradeApiWrap* wrap = new TradeApiWrap(tapi, false);
 
     return PyLong_FromLongLong((int64_t)(wrap));
 }

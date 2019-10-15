@@ -26,7 +26,7 @@ PyObject* _wrap_dapi_create(PyObject* self, PyObject *args, PyObject* kwargs)
     if (!api)
         Py_RETURN_NONE;
 
-    auto wrap = new DataApiWrap(api);
+    auto wrap = new DataApiWrap(api, true);
 
     return PyLong_FromLongLong((int64_t)(wrap));
 }

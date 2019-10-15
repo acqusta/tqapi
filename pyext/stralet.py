@@ -25,7 +25,7 @@ class StraletContext:
 
     def __del__(self):
         _tqapi.tqs_sc_dapi_put(self._data_api._handle)
-        _tqapi.tqs_sc_dapi_put(self._trade_api._handle)
+        _tqapi.tqs_sc_tapi_put(self._trade_api._handle)
 
 
     @property
