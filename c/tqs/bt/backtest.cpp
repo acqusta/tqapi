@@ -1,4 +1,6 @@
 #include <iostream>
+#include <unordered_set>
+#include <algorithm>
 #include "sim_context.h"
 #include "sim_data.h"
 #include "sim_trade.h"
@@ -11,15 +13,29 @@ namespace tquant { namespace stralet { namespace backtest {
 
 static vector<int> get_calendar(DataApi* dapi)
 {
-    dapi->subscribe(vector<string>{"000001.SH"});
-    auto r = dapi->daily_bar("000001.SH", "", true);
-    if (!r.value) {
-        cerr << "Can't get daily_bar 000001.SH:" << r.msg;
+    vector<string> codes = { "000001.SH", "800000.HK" };
+    dapi->subscribe(codes);
+
+    unordered_set<int> date_set;
+    for (auto& code : codes) {
+        auto r = dapi->daily_bar(code, "", true);
+        if (!r.value) {
+            //cerr << "Can't get daily_bar 000001.SH:" << r.msg;
+            //throw std::runtime_error("Can't get calendar");
+            continue;
+        }
+
+        for (size_t i = 0; i < r.value->size(); i++)
+            date_set.insert(r.value->at(i).date);
+    }
+
+    vector<int> dates(date_set.size());
+    std::copy(date_set.begin(), date_set.end(), dates.begin());
+    std::sort(dates.begin(), dates.end());
+
+    if (dates.empty()) {
         throw std::runtime_error("Can't get calendar");
     }
-    vector<int> dates;
-    for (size_t i=0; i < r.value->size(); i++)
-        dates.push_back(r.value->at(i).date);
 
     return dates;
 }
