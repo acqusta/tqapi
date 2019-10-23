@@ -38,7 +38,8 @@ public:
 };
 
 int test1()
-{
+{	getchar();
+
     backtest::BackTestConfig cfg;
     //cfg.dapi_addr = "tcp://127.0.0.1:10001";
     cfg.begin_date = 20170101;
@@ -84,10 +85,10 @@ Stralet *create_doublema();
 int test3()
 {
     backtest::BackTestConfig cfg;
-    cfg.dapi_addr  = "tcp://127.0.0.1:10002";
+    cfg.dapi_addr  = "tcp://192.168.2.231:10002";
     cfg.begin_date = 20190101;
     cfg.end_date   = 20191031;
-    cfg.data_level = "tk";
+    cfg.data_level = "1m";
     cfg.accounts.push_back(backtest::AccountConfig("sim", 1e8));
 
     auto begin_time = system_clock::now();
@@ -97,7 +98,6 @@ int test3()
     auto end_time = system_clock::now();
     cout << "used time: " << duration_cast<milliseconds>(end_time - begin_time).count() << "ms\n";
 
-    getchar();
     return 0;
 }
 
@@ -108,13 +108,12 @@ int test_realtime()
 
 	realtime::run(cfg, []() { return new MyStralet(); });
 
-	getchar();
 	return 0;
 }
 
 int main()
 {
     test3();
-	test_realtime();
+	//test_realtime();
     return 0;
 }

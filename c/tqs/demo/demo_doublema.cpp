@@ -28,7 +28,7 @@ public:
 
     int cancel_unfinished_order();
 
-    void place_order(const string& code, double price, int64_t size, const string action);
+    void place_order(const string& code, double price, int64_t size, const string action, const string& price_type="");
 private:
     string m_account_id;
     string m_contract;
@@ -42,7 +42,7 @@ void DoubleMAStralet::on_init()
     m_fast_ma_len = 5;
     m_slow_ma_len = 10;
     m_account_id  = "sim";
-    m_contract    = "00700.HK";
+    m_contract    = "IF.CFE";
 
     auto r = ctx()->data_api()->subscribe(vector<string>{m_contract});
     assert(r.value);
@@ -85,10 +85,10 @@ int DoubleMAStralet::cancel_unfinished_order()
     return count;
 }
 
-void DoubleMAStralet::place_order(const string& code, double price, int64_t size, const string action)
+void DoubleMAStralet::place_order(const string& code, double price, int64_t size, const string action, const string& price_type)
 {
     ctx()->logger(INFO) << "place order: " << code << "," << price << "," << size << "," << action << endl;
-    auto r = m_ctx->trade_api()->place_order(m_account_id.c_str(), code.c_str(),price, size, action.c_str(), "", 0);
+    auto r = m_ctx->trade_api()->place_order(m_account_id.c_str(), code.c_str(),price, size, action.c_str(), price_type, 0);
     if (!r.value)
         ctx()->logger(ERROR) << "place_order error:" << r.msg << endl;;
 }
@@ -126,32 +126,35 @@ void DoubleMAStralet::on_bar(const string& cycle, shared_ptr<const Bar> bar)
     shared_ptr<const MarketQuote> quote = dapi->quote(m_contract.c_str()).value;
     if (!quote) return;
 
-    if (bar->time >= HMS(14, 55)) {
+    if (0 && bar->time >= HMS(14, 55)) {
         if (long_size != 0)
-            place_order(m_contract, quote->bid1, long_size, EA_Sell);
+            place_order(m_contract, quote->bid1, long_size, EA_Sell, "any");
         if (short_size != 0)
-            place_order(m_contract, quote->bid1, short_size, EA_Cover);
+            place_order(m_contract, quote->bid1, short_size, EA_Cover, "any");
         return;
     }
-    
 
     auto r = dapi->bar(m_contract.c_str(), "1m", 0, true);
     if (!r.value) return;
     auto bars = r.value;
 
-
-    double slow_ma = -1.0;
-    double fast_ma = -1.0;
-
     if (bars->size() < m_slow_ma_len) return;
 
-    for (size_t i = bars->size() - m_slow_ma_len - 1; i < bars->size(); i++)
+    double slow_ma = 0.0;
+    double fast_ma = 0.0;
+
+    for (size_t i = bars->size() - m_slow_ma_len; i < bars->size(); i++) {
+        //ctx()->logger(ERROR) << bars->at(i).close;
         slow_ma += bars->at(i).close;
+    }
     slow_ma /= m_slow_ma_len;
 
-    for (size_t i = bars->size() - m_fast_ma_len - 1; i < bars->size(); i++)
+    for (size_t i = bars->size() - m_fast_ma_len; i < bars->size(); i++)
         fast_ma += bars->at(i).close;
 
+    fast_ma /= m_fast_ma_len;
+
+//    ctx()->logger(ERROR) << "fast vs slow " << fast_ma << "," << slow_ma;
 
     // 交易逻辑：当快线向上穿越慢线且当前没有持仓，则买入1手；当快线向下穿越慢线且当前有持仓，则平仓
     if (fast_ma > slow_ma ) {

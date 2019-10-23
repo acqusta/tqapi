@@ -14,6 +14,11 @@ namespace tquant { namespace stralet { namespace backtest {
 
     class SimStraletContext;
 
+    enum TradeType {
+        MARGIN_TRADE,
+        CASH_TRADE
+    };
+
     struct OrderData {
         shared_ptr<Order> order;
         string            price_type;
@@ -24,18 +29,33 @@ namespace tquant { namespace stralet { namespace backtest {
         double            price_tick;
     };
 
+    struct PositionData {
+        shared_ptr<Position> position;
+        TradeType  trade_type;
+        double  price_multiple = 1.0;
+        double  margin_ratio = 1.0;
+        bool  is_t0 = false;
+    };
+
     struct TradeData {
         string  account_id;
-        int32_t trading_day;
-        double  init_balance;
-        double  avail_balance;
-        double  frozen_balance;
-        double  margin;
-        double  frozen_margin;
-        double  commission;
-        unordered_map<string, shared_ptr<Position>>     positions;  // code + side -> Position
+        int32_t trading_day = 0;
+        double  init_balance = 0.0;
+        double  avail_balance = 0.0;
+        double  frozen_balance = 0.0;
+        double  margin = 0.0;
+        double  frozen_margin = 0.0;
+        double  commission = 0.0;
+        double  stock_float_pnl = 0.0;
+        double  future_float_pnl = 0.0;
+
+        unordered_map<string, shared_ptr<PositionData>> positions;  // code + side -> Position
         unordered_map<string, shared_ptr<OrderData>>    orders;     // entrust_no -> order
         unordered_map<string, shared_ptr<Trade>>        trades;     // fill_no -> trade
+
+        double avail() {
+            return avail_balance - frozen_margin - frozen_balance + (future_float_pnl <0 ? future_float_pnl : 0);
+        }
     };
 
     class SimAccount {
@@ -53,7 +73,7 @@ namespace tquant { namespace stralet { namespace backtest {
         CallResult<const OrderID>             place_order    (const string& code, double price, int64_t size, const string& action, const string& price_type, int order_id);
         //CallResult<bool>                      cancel_order   (const string& code, int order_id);
         CallResult<bool>                      cancel_order   (const string& code, const string& entrust_no);
-        CallResult<const OrderID>             validate_order  (const string& code, double price, int64_t size, const string& action, const string& price_type);
+        CallResult<const OrderID>             validate_and_freeze  (const string& code, double price, int64_t size, const string& action, const string& price_type);
 
         void try_match();
 
@@ -67,12 +87,21 @@ namespace tquant { namespace stralet { namespace backtest {
 
         bool reject_order   (Order* order, const char* msg);
         void make_trade     (Order* order, double price);
-        Position* get_position(const string& code, const string& side);
+        shared_ptr<PositionData> get_position(const string& code, const string& side);
 
         void update_last_prices();
+        void update_float_pnl();
 
+        void settle();
         void move_to(int trading_day);
         void save_data(const string& dir);
+
+        void release_cash               (shared_ptr<PositionData> pd, double price, int64_t size);
+        bool freeze_cash_if_avail       (shared_ptr<PositionData> pd, double price, int64_t size);
+        void update_margin_if           (shared_ptr<PositionData> pos);
+        void update_float_pnl           (shared_ptr<PositionData> pos);
+        void update_cash_after_open  (shared_ptr<PositionData> pd, double inc_bal, double commission);
+        void update_balance_after_close (shared_ptr<PositionData> pd, double inc_bal, double commission);
 
     private:
         shared_ptr<TradeData> m_tdata;
@@ -121,6 +150,7 @@ namespace tquant { namespace stralet { namespace backtest {
         void update_last_prices();
 
         void move_to(int trading_day);
+        void settle();
 
         const unordered_map<string, SimAccount*> accounts() { return m_accounts; }
 

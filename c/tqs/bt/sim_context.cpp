@@ -326,6 +326,7 @@ void SimStraletContext::run_one_day(Stralet* stralet)
     m_dapi->set_data_to_curtime();
     m_dapi->set_end_of_day();
     m_tapi->update_last_prices();
+    m_tapi->settle();
 
     stralet->on_fini();
 }

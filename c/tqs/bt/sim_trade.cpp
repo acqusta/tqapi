@@ -19,6 +19,7 @@ using namespace tquant::api;
 using namespace tquant::stralet;
 using namespace tquant::stralet::backtest;
 
+static bool is_future(const char* code);
 
 int32_t SimAccount::g_fill_id = 0;
 int32_t SimAccount::g_order_id = 0;
@@ -28,24 +29,32 @@ static bool is_finished_status(const string& status)
     return status == OS_Filled || status == OS_Rejected || status == OS_Cancelled;
 }
 
-static void get_action_effect(const string& action, string* pos_side, int* size_inc_dir)
+static bool get_action_effect(const string& action, string* pos_side, int* size_inc_dir)
 {
     if (action == EA_Buy) {
         *pos_side = SD_Long;
         *size_inc_dir = 1;
+        return true;
     }
     else if (action == EA_Sell ||
         action == EA_SellToday || action == EA_SellYesterday) {
         *pos_side = SD_Long;
         *size_inc_dir = -1;
+        return true;
     }
     else if (action == EA_Short) {
         *pos_side = SD_Short;
         *size_inc_dir = 1;
+        return true;
     }
-    else {
+    else if (action == EA_Cover ||
+             action == EA_CoverToday || action == EA_CoverYesterday) {
         *pos_side = SD_Short;
         *size_inc_dir = -1;
+        return true;
+    }
+    else {
+        return false;
     }
 }
 
@@ -60,13 +69,69 @@ struct CodeInfo {
     string mkt;
     string product_id;
     string product_class; // "Futurs", "Options" ???
-    double volume_multiple;
+    double price_multiple;
     double price_tick;
     double margin_ratio;
     TradeRule trade_rule;
 };
 
 shared_ptr<CodeInfo> get_code_info(const string& code);
+
+static bool is_T0(const char* code)
+{
+    auto code_info = get_code_info(code);
+    if (code_info)
+        return code_info->trade_rule == TR_T0;
+    else
+        return false;
+}
+
+static bool is_future(const char* code)
+{
+    const char*p = strrchr(code, '.');
+    if (!p) return false;
+    p++;
+
+    return strcmp(p, "SHF") == 0 || strcmp(p, "CZC") == 0 || strcmp(p, "DCE") == 0 || strcmp(p, "CFE") == 0;
+}
+
+static bool inline is_future(const string& code)
+{
+    return is_future(code.c_str());
+}
+
+static bool allow_short(const char* code)
+{
+    const char*p = strrchr(code, '.');
+    if (!p) return false;
+    p++;
+
+    if (strcmp(p, "SH") == 0)
+        return false; //return strncmp(code, "000", 3) == 0;
+    else if (strcmp(p, "SZ") == 0)
+        return false; //return strncmp(code, "399", 3) == 0;
+    else
+        return true;
+}
+
+static TradeType get_trade_type(const char* code)
+{
+    const char*p = strrchr(code, '.');
+    if (!p) return TradeType::CASH_TRADE;
+
+    p++;
+
+    if (strcmp(p, "CFE") == 0 ||
+        strcmp(p, "CZC") == 0 ||
+        strcmp(p, "DCE") == 0 ||
+        strcmp(p, "SHF") == 0) {
+        return TradeType::MARGIN_TRADE;
+    }
+    else {
+        return TradeType::CASH_TRADE;
+    }
+}
+
 
 CallResult<const vector<AccountInfo>> SimTradeApi::query_account_status()
 {
@@ -207,6 +272,11 @@ void SimTradeApi::update_last_prices()
     for (auto& e : m_accounts) { e.second->update_last_prices(); }
 }
 
+void SimTradeApi::settle()
+{
+    for (auto& e : m_accounts) { e.second->settle(); }
+}
+
 SimAccount::SimAccount(SimStraletContext* ctx, const string& account_id,
                        double init_balance,
                        const vector<Holding> & holdings)
@@ -216,18 +286,18 @@ SimAccount::SimAccount(SimStraletContext* ctx, const string& account_id,
     tdata->account_id     = account_id;
     tdata->init_balance   = init_balance;
     tdata->avail_balance = init_balance;
+
     tdata->frozen_balance = 0.0;
     tdata->trading_day    = 0;
+    tdata->frozen_margin  = 0.0;
+    tdata->margin         = 0.0;
 
     for (auto& h : holdings) {
-        auto pos = make_shared<Position>();
-        pos->account_id  = account_id;
-        pos->code        = h.code;
+        auto pos = get_position(h.code, h.side)->position;
         pos->enable_size = pos->current_size = pos->init_size = h.size;
         pos->cost_price  = h.cost_price;
         pos->cost        = h.cost_price * h.size;
         pos->side        = h.side;
-        tdata->positions[h.code + "-" + h.side] = pos;
     }
 
     m_tdata = tdata;
@@ -240,7 +310,9 @@ CallResult<const Balance> SimAccount::query_balance()
     bal->account_id     = m_tdata->account_id;
     bal->fund_account   = m_tdata->account_id;
     bal->init_balance   = m_tdata->init_balance;
-    bal->enable_balance = m_tdata->avail_balance - m_tdata->frozen_balance;
+    bal->enable_balance = m_tdata->avail();
+    bal->margin         = m_tdata->margin;
+
     //bal->margin = m_margin;
     //bal->float_pnl = m_float_pnl;
     //bal->close_pnl = m_close_pnl;
@@ -297,8 +369,9 @@ CallResult<const vector<Position>> SimAccount::query_positions(const unordered_s
 	vector<const Position*> positions(m_tdata->positions.size());
     size_t count = 0;
     for (auto & e : m_tdata->positions) {
-        if (!codes || codes->empty() || codes->find(e.second->code) != codes->end())
-            positions[count++] = e.second.get();
+        auto pos = e.second->position.get();
+        if (!codes || codes->empty() || codes->find(pos->code) != codes->end())
+            positions[count++] = pos;
     }
     positions.resize(count);
 
@@ -369,7 +442,7 @@ static const MarketOpenTime* get_opentime(const char* mkt, const char* code)
     }
 }
 
-CallResult<const OrderID> SimAccount::validate_order(const string& code, double price, int64_t size, const string& action, const string& price_type)
+CallResult<const OrderID> SimAccount::validate_and_freeze(const string& code, double price, int64_t size, const string& action, const string& price_type)
 {
     DateTime dt = m_ctx->cur_time();
 
@@ -397,40 +470,23 @@ CallResult<const OrderID> SimAccount::validate_order(const string& code, double 
         }
     }
 
-//    if (mkt == "SH" || mkt == "SZ") {
-//        is_open_time =
-//            ((dt.time >= HMS(9, 30) && dt.time < HMS(11, 30)) ||
-//             (dt.time >= HMS(13, 0) && dt.time < HMS(15, 00)));
-//    }
-//    else if (mkt == "CFE") {
-//        if (code[0] == 'T') {
-//            is_open_time =
-//                ((dt.time >= HMS(9, 15) && dt.time < HMS(11, 30)) ||
-//                (dt.time >= HMS(13, 0) && dt.time < HMS(15, 15)));
-//        }
-//        else {
-//            is_open_time =
-//                ((dt.time >= HMS(9, 30) && dt.time < HMS(11, 30)) ||
-//                (dt.time >= HMS(13, 0) && dt.time < HMS(15, 0)));
-//        }
-//    }
-//    else {
-//        is_open_time =
-//            ((dt.time >= HMS( 9,  0) && dt.time < HMS(10, 15)) ||
-//             (dt.time >= HMS(10, 30) && dt.time < HMS(11, 30)) ||
-//             (dt.time >= HMS(13, 30) && dt.time < HMS(15, 00)) ||
-//             (dt.date < m_ctx->trading_day() && dt.time > HMS(21,0)) ||
-//             (dt.time < HMS(2,0)));
-//    }
-
     if (!is_open_time)
         return CallResult<const OrderID>("-1,market is closed");
 
     string pos_side;
     int inc_dir = 0;
 
-    get_action_effect(action, &pos_side, &inc_dir);
-    auto pos = get_position(code, pos_side);
+    if (!get_action_effect(action, &pos_side, &inc_dir)) {
+        stringstream ss;
+        ss << "-1,unknown action: " << action;
+        return CallResult<const OrderID>(ss.str());
+    }
+
+    if ( pos_side == SD_Short && !allow_short(code.c_str()))
+        return CallResult<const OrderID>("-1,can't short");
+
+    auto pd = get_position(code, pos_side);
+    auto pos = pd->position;
 
     if (inc_dir == -1) {
         if (pos->enable_size - pos->frozen_size < size) {
@@ -439,15 +495,12 @@ CallResult<const OrderID> SimAccount::validate_order(const string& code, double 
                 << pos->frozen_size << ", close " << size << ")";
             return CallResult<const OrderID>(ss.str());
         }
-        // XXX move to place_order
+
         pos->frozen_size += size;
     }
     else {
-        if (price*size > m_tdata->avail_balance - m_tdata->frozen_balance)
+        if (!freeze_cash_if_avail(pd, price, size))
             return CallResult<const OrderID>("-1,no enough money");
-
-        // XXX move to place_order
-        m_tdata->frozen_balance += price*size;
     }
 
     int32_t my_order_id = ++g_order_id;
@@ -462,7 +515,7 @@ CallResult<const OrderID> SimAccount::validate_order(const string& code, double 
 
 CallResult<const OrderID> SimAccount::place_order(const string& code, double price, int64_t size, const string& action, const string& price_type, int order_id)
 {
-    auto r = validate_order(code, price, size, action, price_type);
+    auto r = validate_and_freeze(code, price, size, action, price_type);
 
     auto code_info = get_code_info(code);
     if (!code_info && r.value) {
@@ -515,7 +568,7 @@ CallResult<const OrderID> SimAccount::place_order(const string& code, double pri
     od->volume_in_queue = 1e8;
 
     if (code_info) {
-        od->volume_multiple = code_info->volume_multiple;
+        od->volume_multiple = code_info->price_multiple;
         od->price_tick      = code_info->price_tick;
     }
     else {
@@ -548,12 +601,18 @@ CallResult<bool> SimAccount::cancel_order(const string& code, const string& entr
     if (!is_finished_status(od->order->status)) {
         string pos_side;
         int inc_dir;
-        get_action_effect(od->order->entrust_action, &pos_side, &inc_dir);
-        auto pos = get_position(code, pos_side);
-        if (inc_dir == 1)
-            m_tdata->frozen_balance -= od->order->entrust_price * od->order->entrust_size;
-        else
-            pos->frozen_size -= od->order->entrust_size;
+        if (!get_action_effect(od->order->entrust_action, &pos_side, &inc_dir)) {
+            return CallResult<bool>("-1,wrong entrust_action in database!");
+        }
+        auto pd = get_position(code, pos_side);
+
+        int64_t left_size = od->order->entrust_size - od->order->fill_size;
+        if (inc_dir == 1) {
+            release_cash(pd, od->order->entrust_price, left_size);
+        }
+        else {
+            pd->position->frozen_size -= left_size;
+        }
 
         od->order->status = OS_Cancelled;
     }
@@ -583,51 +642,105 @@ void SimAccount::try_match()
     }
 }
 
-//static bool is_futures_or_index(const char* code)
-//{
-//}
-
-static bool is_T0(const char* code)
+shared_ptr<PositionData> SimAccount::get_position(const string& code, const string& side)
 {
-    auto code_info = get_code_info(code);
-    if (code_info)
-        return code_info->trade_rule == TR_T0;
-    else
-        return false;
-}
-
-static bool can_short(const char* code)
-{
-    const char*p = strrchr(code, '.');
-    if (!p) return false;
-    p++;
-
-    if (strcmp(p, "SH") == 0)
-        return false; //return strncmp(code, "000", 3) == 0;
-    else if (strcmp(p, "SZ") == 0)
-        return false; //return strncmp(code, "399", 3) == 0;
-    else
-        return true;
-}
-
-Position* SimAccount::get_position(const string& code, const string& side)
-{
-    shared_ptr<Position> pos = nullptr;
     auto id = code + "-" + side;
     auto it = m_tdata->positions.find(id);
     if (it == m_tdata->positions.end()) {
-        pos = make_shared<Position>();
+        auto pos = make_shared<Position>();
         pos->account_id = m_tdata->account_id;
         pos->code = code;
         pos->side = side;
         pos->name = pos->code;
-        m_tdata->positions[id] = pos;
+
+        auto code_info = get_code_info(pos->code);
+        double margin_ratio = code_info ? code_info->margin_ratio : 1.0;
+        double price_multiple = code_info ? code_info->price_multiple : 1.0;
+
+        auto pd = make_shared<PositionData>();
+        pd->position = pos;
+        pd->margin_ratio = margin_ratio;
+        pd->price_multiple = price_multiple;
+        pd->trade_type = get_trade_type(pos->code.c_str());
+        pd->is_t0 = code_info? code_info->trade_rule == TR_T0 : false;
+        m_tdata->positions[id] = pd;
+        return pd;
     }
     else {
-        pos = it->second;
+        return it->second;
     }
+}
 
-    return pos.get();
+void SimAccount::update_margin_if(shared_ptr<PositionData> pd)
+{
+    //if (is_future(pos->code)) {
+    if (pd->trade_type == MARGIN_TRADE) {
+        auto pos = pd->position.get();
+        m_tdata->margin -= pos->margin;
+        pos->margin = pos->last_price * pos->current_size * pd->price_multiple * pd->margin_ratio;
+        m_tdata->margin += pos->margin;
+    }
+}
+
+void SimAccount::update_float_pnl(shared_ptr<PositionData> pd)
+{
+    auto pos = pd->position.get();
+    double money_side = pos->side == SD_Short ? -1 : 1;
+
+    if (pd->trade_type == MARGIN_TRADE) {
+        m_tdata->future_float_pnl -= pos->float_pnl;
+        pos->float_pnl = pos->current_size * (pos->last_price - pos->cost_price) * pd->price_multiple * money_side;
+        m_tdata->future_float_pnl += pos->float_pnl;
+    }
+    else {
+        m_tdata->stock_float_pnl -= pos->float_pnl;
+        pos->float_pnl = pos->current_size * (pos->last_price - pos->cost_price) * money_side;
+        m_tdata->stock_float_pnl += pos->float_pnl;
+    }
+}
+
+void SimAccount::update_cash_after_open(shared_ptr<PositionData> pd, double inc_bal, double commission)
+{
+    if (pd->trade_type == CASH_TRADE) {
+        m_tdata->avail_balance += inc_bal;
+    }
+    m_tdata->commission += commission;
+}
+
+void SimAccount::update_balance_after_close(shared_ptr<PositionData> pd, double inc_bal, double commission)
+{
+    m_tdata->avail_balance += inc_bal;
+    m_tdata->commission += commission;
+}
+
+void SimAccount::release_cash(shared_ptr<PositionData> pd, double price, int64_t size)
+{
+    if ( pd->trade_type == MARGIN_TRADE) {
+        m_tdata->frozen_margin -= price * size * pd->price_multiple * pd->margin_ratio;
+    } else {
+        m_tdata->frozen_balance -= price * size;
+    }
+}
+
+bool SimAccount::freeze_cash_if_avail(shared_ptr<PositionData> pd, double price, int64_t size)
+{
+    if (pd->trade_type == MARGIN_TRADE) {
+        double margin = price * size * pd->price_multiple * pd->margin_ratio;
+        if (margin < m_tdata->avail()) {
+            m_tdata->frozen_margin += margin;
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        double balance = price * size;
+        if (balance < m_tdata->avail()) {
+            m_tdata->frozen_balance += balance;
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
 
 bool SimAccount::reject_order(Order* order, const char* msg)
@@ -635,22 +748,26 @@ bool SimAccount::reject_order(Order* order, const char* msg)
     //cout << "make_trade: " << m_tdata->account_id << "," << order->code << "," << order->entrust_size << ","
     //    << order->entrust_action << "," << fill_price << endl;
 
-    string pos_side;
-    int inc_dir = 0;
-
-    int64_t fill_size = order->entrust_size;
-
-    get_action_effect(order->entrust_action, &pos_side, &inc_dir);
-    auto pos = get_position(order->code, pos_side);
-    if (inc_dir == 1)
-        m_tdata->frozen_balance -= order->entrust_size * order->entrust_price;
-    else
-        pos->frozen_size -= order->entrust_size;
 
     order->fill_price = 0;
     order->fill_size = 0;
     order->status = OS_Rejected;
     order->status_msg = msg;
+
+    string pos_side;
+    int inc_dir = 0;
+    if (!get_action_effect(order->entrust_action, &pos_side, &inc_dir))
+        return false;
+
+    auto pd = get_position(order->code, pos_side);
+
+    if (inc_dir == 1) {
+        int64_t left_size = order->entrust_size -order->fill_size;
+        release_cash(pd, order->entrust_price, left_size);
+    }
+    else {
+        pd->position->frozen_size -= order->entrust_size;
+    }
 
     // Must make a copy!
     m_ord_status_ind_list.push_back(make_shared<Order>(*order));
@@ -683,8 +800,8 @@ static void get_commission_rate(const char* code, double* open_rate, double* clo
         *open_rate  = 0.0000;
         *close_rate = 0.0000;
     }
-    return;
 }
+
 
 void SimAccount::make_trade(Order* order, double fill_price)
 {
@@ -697,7 +814,8 @@ void SimAccount::make_trade(Order* order, double fill_price)
     int64_t fill_size = order->entrust_size;
 
     get_action_effect(order->entrust_action, &pos_side, &inc_dir);
-    auto pos = get_position(order->code, pos_side);
+    auto pd = get_position(order->code, pos_side);
+    auto pos = pd->position;
 
     // Stock 
     //    cost = turnover + commission
@@ -709,32 +827,38 @@ void SimAccount::make_trade(Order* order, double fill_price)
     //  avail += -turnover - commission + profit
     // Commission is always removed from avail_balance.
 
+    //auto code_info = get_code_info(order->code);
+
     if (inc_dir == 1) {
         double open_rate = 0.0, close_rate = 0.0;
         get_commission_rate(order->code.c_str(), &open_rate, &close_rate);
 
-        double turnover = fill_price * fill_size;
-        double commisson = turnover *open_rate;
+        double turnover = fill_price * fill_size * pd->price_multiple;
+        double commission = turnover * open_rate;
 
+//        double old_price = pos->cost_price;
+//        double old_size = pos->current_size;
+        double old_cost = pos->cost;
         pos->current_size += fill_size;
 
         if (is_T0(order->code.c_str())) {
             pos->enable_size += fill_size;
-            pos->cost        += turnover;
-            pos->cost_price   = pos->cost / pos->current_size;
-        }
-        else {
-            pos->cost       += turnover + commisson;
-            pos->cost_price  = pos->cost / pos->current_size;
         }
 
-        pos->commission   += commisson;
+        pos->cost        += turnover;// + commission;
+        pos->cost_price = (old_cost +  turnover) / pos->current_size / pd->price_multiple;
 
-        m_tdata->frozen_balance -= order->entrust_size * order->entrust_price;
-        m_tdata->avail_balance  -= turnover + commisson;
-        m_tdata->commission     += commisson;
+        pos->commission   += commission;
+
+        release_cash(pd, order->entrust_price, fill_size);
+        update_margin_if(pd);
+        update_float_pnl(pd);
+        update_cash_after_open(pd, -(turnover + commission), commission);
     }
     else {
+//        double old_price = pos->cost_price;
+//        double old_size = pos->current_size;
+
         pos->frozen_size  -= order->entrust_size;
         pos->current_size -= fill_size;
         pos->enable_size  -= fill_size; // TODO: check if it is right
@@ -744,37 +868,39 @@ void SimAccount::make_trade(Order* order, double fill_price)
         double close_rate = 0.0;
         get_commission_rate(order->code.c_str(), &open_rate, &close_rate);
 
-        double turnover = 0;
-        double commission = 0;
+        double turnover = fill_price * fill_size * pd->price_multiple;
+        double commission = turnover * close_rate;
 
-        if (can_short(order->code.c_str())) {
-            // turnover is money payed to account!
-            if (pos->side == SD_Short) {
-                turnover = fill_size * (2 * pos->cost_price - fill_price);
-                pos->close_pnl += fill_size * (pos->cost_price - fill_price) - commission;
-            }
-            else {
-                turnover = fill_size * fill_price;
-                pos->close_pnl += fill_size * (fill_price - pos->cost_price) - commission;
-            }
-            commission = fill_size* fill_price *close_rate;
-            
-        } else {
-            turnover = fill_size* fill_price;
-            commission = turnover *close_rate;
-            pos->close_pnl += fill_size * (fill_price - pos->cost_price) - commission;
-        }
+        double money_side = pos->side == SD_Short ? -1 : 1;
+        double close_pnl = 0.0;
+        close_pnl = fill_size * (fill_price - pos->cost_price) * pd->price_multiple * money_side;
+        pos->close_pnl += close_pnl;// - commission;
         pos->commission += commission;
-        
+
+        if (pd->trade_type == MARGIN_TRADE) {
+            update_margin_if(pd);
+            update_balance_after_close(pd, close_pnl, commission);
+        }
+        else {
+            update_balance_after_close(pd, turnover, commission);
+        }
+        update_float_pnl(pd);
+
+        //if (is_future(order->code.c_str())) {
+        if (pd->trade_type == MARGIN_TRADE) {
+            // turnover is money payed to account!
+        } else {
+            pos->close_pnl += fill_size * (fill_price - pos->cost_price) - commission;
+            update_float_pnl(pd);
+
+        }
+
         if (pos->current_size) {
             pos->cost = pos->cost_price * pos->current_size;
         } else {
             pos->cost = 0.0;
             pos->cost_price = 0.0;
         }
-
-        m_tdata->avail_balance += turnover - commission;
-        m_tdata->commission += commission;
     }
 
     order->fill_price = fill_price;
@@ -1253,10 +1379,142 @@ void SimAccount::update_last_prices()
 {
     auto dapi = m_ctx->data_api();
     for (auto& e : m_tdata->positions) {
-        auto q = dapi->quote(e.second->code).value;
-        if (q && q->last > 0.00000001)
-            e.second->last_price = q->last;
+        auto &pos = e.second->position;
+        if (pos->current_size != 0) {
+            auto q = dapi->quote(pos->code).value;
+            if (q && q->last > 0.00000001) {
+                pos->last_price = q->last;
+            }
+        }
     }
+
+    update_float_pnl();
+}
+
+void SimAccount::settle()
+{
+    // XXX already call update_last_prices before!
+
+    // Cancel all orders
+    for (auto& e : m_tdata->orders) {
+        auto &od = e.second;
+        if (is_finished_status(od->order->status)) continue;
+        string pos_side;
+        int inc_dir;
+        get_action_effect(od->order->entrust_action, &pos_side, &inc_dir);
+        auto pd = get_position(od->order->code, pos_side);
+
+        int64_t left_size = od->order->entrust_size - od->order->fill_size;
+        if (inc_dir == 1) {
+            release_cash(pd, od->order->entrust_price, left_size);
+        } else {
+            pd->position->frozen_size -= left_size;
+        }
+
+        od->order->status = OS_Cancelled;
+    }
+
+    m_tdata->avail_balance += m_tdata->future_float_pnl;
+    m_tdata->future_float_pnl = 0.0;
+    m_tdata->margin = 0.0;
+
+    for(auto&e : m_tdata->positions) {
+        auto &pd = e.second;
+        auto& pos = pd->position;
+        if (pd->trade_type != MARGIN_TRADE || pos->current_size == 0) continue;
+
+        auto code_info = get_code_info(pos->code);
+        double margin_ratio = code_info ? code_info->margin_ratio : 1.0;
+        double price_multiple = code_info ? code_info->price_multiple : 1.0;
+        double money_side = pos->side == SD_Short ? -1 : 1;
+
+        pos->cost_price = pos->last_price;
+        pos->cost = pos->cost_price * pos->current_size * price_multiple;
+        pos->margin = pos->cost * margin_ratio;
+        pos->float_pnl = 0.0; // FIXME: Should it be kept for record?
+        m_tdata->margin += pos->margin;
+    }
+
+
+        // force closing all futures!
+    if (m_tdata->avail_balance - m_tdata->margin < 0.0) {
+        for(auto&e : m_tdata->positions) {
+            auto &pd = e.second;
+            auto& pos = pd->position;
+            if (pd->trade_type != MARGIN_TRADE || pos->current_size == 0) continue;
+
+            assert( fabs(pos->last_price - pos->cost_price) < 0.00000001 && "should set as settle_price before!");
+
+            int32_t my_order_id = ++g_order_id;
+            Order ord;
+            char entrust_no[100]; sprintf(entrust_no, "sim-%.6d", my_order_id);
+
+            auto oid = make_shared<OrderID>();
+            oid->entrust_no = entrust_no;
+            oid->order_id = my_order_id;
+
+            DateTime dt = m_ctx->cur_time();
+            auto order = make_shared<Order>();
+            order->account_id     = m_tdata->account_id;
+            order->code           = pos->code;
+            order->name           = pos->code;
+            order->entrust_no     = entrust_no;
+            order->entrust_action = pos->side == SD_Long ? EA_Sell : EA_Cover;
+            order->entrust_price  = pos->last_price;
+            order->entrust_size   = pos->current_size;
+            order->entrust_date   = dt.date;
+            order->entrust_time   = dt.time;
+            order->fill_price     = pos->last_price;
+            order->fill_size      = pos->current_size;
+            order->status         = OS_Filled;
+            order->status_msg     = "Force closed";
+            order->order_id       = my_order_id;
+
+            auto od = make_shared<OrderData>();
+            od->order           = order;
+            od->price_type      = "";
+            od->last_volume     = 0;
+            od->last_turnover   = 0.0;
+            od->volume_in_queue = 1e8;
+
+            // TODO: commission;
+
+            m_tdata->orders[entrust_no] = od;
+        }
+
+        update_float_pnl();
+    }
+}
+
+void SimAccount::update_float_pnl()
+{
+    double future_float_pnl = 0.0;
+    double stock_float_pnl = 0.0;
+    double margin = 0.0;
+    for (auto& e : m_tdata->positions) {
+        auto &pd = e.second;
+        auto& pos = pd->position;
+        if (!pos->current_size) continue;
+
+        if (pd->trade_type == MARGIN_TRADE) {
+//            auto code_info = get_code_info(pos->code);
+//            double margin_ratio = code_info ? code_info->margin_ratio : 1.0;
+//            double price_multiple = code_info ? code_info->price_multiple : 1.0;
+            double money_side = pos->side == SD_Short ? -1 : 1;
+            pos->float_pnl = pos->current_size * (pos->last_price - pos->cost_price) * pd->price_multiple * money_side;
+            pos->margin = pos->current_size * pos->last_price * pd->price_multiple * pd->margin_ratio;
+            margin = pos->margin;
+            future_float_pnl += pos->float_pnl;
+        }
+        else {
+            pos->float_pnl = pos->current_size * (pos->last_price - pos->cost_price);
+            stock_float_pnl += pos->float_pnl;
+        }
+    }
+
+    m_tdata->margin = margin;
+    m_tdata->stock_float_pnl = stock_float_pnl;
+    m_tdata->future_float_pnl = future_float_pnl;
 }
 
 void SimAccount::move_to(int trading_day)
@@ -1269,16 +1527,19 @@ void SimAccount::move_to(int trading_day)
     }
 
     auto tdata = make_shared<TradeData>();
-    tdata->account_id     = m_tdata->account_id;
-    tdata->init_balance   = m_tdata->avail_balance;
-    tdata->avail_balance = tdata->init_balance;
-    tdata->trading_day    = trading_day;
-    tdata->frozen_balance = 0.0;
+    tdata->account_id       = m_tdata->account_id;
+    tdata->init_balance     = m_tdata->avail_balance;
+    tdata->avail_balance    = tdata->init_balance;
+    tdata->trading_day      = trading_day;
+    tdata->stock_float_pnl  = tdata->stock_float_pnl;
+    tdata->future_float_pnl = tdata->future_float_pnl;
+    tdata->margin           = tdata->margin;
 
-    for (auto e : m_tdata->positions) {
-        if (e.second->current_size == 0) continue;
+    for (const auto& e : m_tdata->positions) {
+        auto &pd = e.second;
+        auto& pos = pd->position;
+        if (!pos->current_size) continue;
 
-        auto pos = e.second;
         auto new_pos = make_shared<Position>();
         new_pos->account_id   = pos->account_id;
         new_pos->code         = pos->code;
@@ -1292,7 +1553,14 @@ void SimAccount::move_to(int trading_day)
         new_pos->margin       = pos->margin;
         new_pos->last_price   = pos->last_price;
 
-        tdata->positions[e.first] = new_pos;
+        auto new_pd = make_shared<PositionData>();
+        new_pd->position = new_pos;
+        new_pd->trade_type = pd->trade_type;
+        new_pd->is_t0 = pd->is_t0;
+        new_pd->price_multiple = pd->price_multiple;
+        new_pd->margin_ratio = pd->margin_ratio;
+
+        tdata->positions[e.first] = new_pd;
 
         m_ctx->sim_dapi()->pin_code(pos->code);
     }
@@ -1315,14 +1583,17 @@ void SimAccount::save_data(const string& dir)
             cerr << "Can't open file " << ss.str();
             return;
         }
-        out << "account_id,trading_day,init_balance,avail_balance,frozen_balance\n";
+        out << "account_id,trading_day,init_balance,avail_balance,frozen_balance,margin,frozen_margin\n";
         for (auto& tdata : m_his_tdata) {
             out << setprecision(4) << fixed
                 << tdata->account_id << ","
                 << tdata->trading_day << ","
                 << tdata->init_balance << ","
                 << tdata->avail_balance << ","
-                << tdata->frozen_balance << endl;
+                << tdata->frozen_balance << ","
+                << tdata->margin << ","
+                << tdata->frozen_margin
+                << endl;
         }
         out.close();
     }
@@ -1339,7 +1610,9 @@ void SimAccount::save_data(const string& dir)
             << "cost,cost_price,close_pnl,float_pnl,margin,commission,last_price\n";
         for (auto& tdata : m_his_tdata) {
             vector<shared_ptr<Position>> positions;
-            for (auto& e : tdata->positions) positions.push_back(e.second);
+
+            for (auto& e : tdata->positions) positions.push_back(e.second->position);
+
             sort(positions.begin(), positions.end(), [](shared_ptr<Position> a, shared_ptr<Position> b) {
                 char buf1[100]; sprintf(buf1, "%s-%s", a->code.c_str(), a->side.c_str());
                 char buf2[100]; sprintf(buf2, "%s-%s", b->code.c_str(), b->side.c_str());
@@ -1499,7 +1772,7 @@ shared_ptr<CodeInfo> get_code_info(const string& code)
         info->margin_ratio = 1;
         info->mkt = p + 1;
         info->price_tick = 0.001;
-        info->volume_multiple = 1.0;
+        info->price_multiple = 1.0;
         info->trade_rule = TR_T1;
         return info;
     }
@@ -1511,7 +1784,7 @@ shared_ptr<CodeInfo> get_code_info(const string& code)
         info->mkt = p + 1;
         info->product_class = "Stock";
         info->price_tick = 0.001;
-        info->volume_multiple = 1.0;
+        info->price_multiple = 1.0;
         info->trade_rule = TR_T0;
         return info;
     }
