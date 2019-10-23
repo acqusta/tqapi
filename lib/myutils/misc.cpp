@@ -3,8 +3,9 @@
 #include <limits.h>
 #include <stdint.h>
 #ifdef _WIN32
-# include <filesystem>
-namespace fs = std::tr2::sys;
+// # include <filesystem>
+// namespace fs = std::tr2::sys;
+# include <Windows.h>
 #else
 # include <sys/stat.h>
 # include <unistd.h>
@@ -50,11 +51,18 @@ namespace myutils{
     bool make_abs_dir(const std::string& abs_path)
     {
 #ifdef _WIN32
-        if (!fs::exists(abs_path)) {
-            return fs::create_directories(abs_path);
+        // if (!fs::exists(abs_path)) {
+        //     return fs::create_directories(abs_path);
+        // }
+        // else {
+        //     return true;
+        // }
+        DWORD attribs = ::GetFileAttributesA(abs_path.c_str());
+        if (attribs == INVALID_FILE_ATTRIBUTES) {
+            return CreateDirectoryA (abs_path.c_str(), NULL);
         }
         else {
-            return true;
+            return (attribs & FILE_ATTRIBUTE_DIRECTORY);
         }
 #else
         struct stat s;
