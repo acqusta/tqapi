@@ -3,6 +3,7 @@ python/tquant_api.pyc
 build
 build_x64
 build_x86
+build_msvc
 *~
 MANIFEST
 dist

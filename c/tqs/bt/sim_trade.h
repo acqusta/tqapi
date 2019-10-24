@@ -54,7 +54,7 @@ namespace tquant { namespace stralet { namespace backtest {
         unordered_map<string, shared_ptr<Trade>>        trades;     // fill_no -> trade
 
         double avail() {
-            return avail_balance - frozen_margin - frozen_balance + (future_float_pnl <0 ? future_float_pnl : 0);
+            return avail_balance - margin - frozen_margin - frozen_balance + (future_float_pnl <0 ? future_float_pnl : 0);
         }
     };
 
