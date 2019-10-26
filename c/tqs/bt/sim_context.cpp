@@ -156,8 +156,8 @@ void SimStraletContext::execute_timer()
 {
     vector<shared_ptr<TimerInfo>> timers;
 
-    for (auto it = m_timers.begin(); it != m_timers.end(); it++) {
-        auto& timer = it->second;
+    for (auto & m_timer : m_timers) {
+        auto& timer = m_timer.second;
         if ( timer->trigger_time <= m_now_tp) {            
             timers.push_back(timer);
             timer->trigger_time = m_now_tp + milliseconds(timer->delay);
@@ -267,7 +267,7 @@ void SimStraletContext::execute_event()
     if (m_events.empty()) return;
     auto events = m_events;
     m_events.clear();
-    for (auto evt : events) {
+    for (auto& evt : events) {
         m_stralet->on_event(evt->name, evt->data);
         if (this->m_should_exit) return;
     }
