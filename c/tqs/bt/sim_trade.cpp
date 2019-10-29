@@ -886,14 +886,6 @@ void SimAccount::make_trade(Order* order, double fill_price)
         }
         update_float_pnl(pd);
 
-        //if (is_future(order->code.c_str())) {
-        if (pd->trade_type == MARGIN_TRADE) {
-            // turnover is money payed to account!
-        } else {
-            pos->close_pnl += fill_size * (fill_price - pos->cost_price) - commission;
-            update_float_pnl(pd);
-
-        }
 
         if (pos->current_size) {
             pos->cost = pos->cost_price * pos->current_size;
