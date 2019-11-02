@@ -1109,7 +1109,7 @@ void SimAccount::try_buy(OrderData* od)
                 make_trade(od->order.get(), od->order->entrust_price);
             }
             else if (q->ask1 <= od->order->entrust_price && od->volume_in_queue == 0) {
-                make_trade(od->order.get(), od->order->entrust_price);
+                make_trade(od->order.get(), q->ask1 /*od->order->entrust_price*/);
             }
             else if (od->price_type == "fak" || od->price_type == "fok") {
                 reject_order(od->order.get(), od->price_type.c_str());
@@ -1181,7 +1181,7 @@ void SimAccount::try_sell(OrderData* od)
                 make_trade(od->order.get(), od->order->entrust_price);
             }
             else if (q->bid1 >= od->order->entrust_price && od->volume_in_queue == 0) {
-                make_trade(od->order.get(), od->order->entrust_price);
+				make_trade(od->order.get(), q->bid1);// od->order->entrust_price);
             }
             else if (od->price_type == "fak" || od->price_type == "fok") {
                 reject_order(od->order.get(), od->price_type.c_str());
@@ -1254,7 +1254,7 @@ void SimAccount::try_short(OrderData* od)
                 make_trade(od->order.get(), od->order->entrust_price);
             }
             else if (q->bid1 >= od->order->entrust_price && od->volume_in_queue == 0) {
-                make_trade(od->order.get(), od->order->entrust_price);
+				make_trade(od->order.get(), q->bid1); // od->order->entrust_price);
             }
             else if (od->price_type == "fak" || od->price_type == "fok") {
                 reject_order(od->order.get(), od->price_type.c_str());
@@ -1326,7 +1326,7 @@ void SimAccount::try_cover(OrderData* od)
                 make_trade(od->order.get(), od->order->entrust_price);
             }
             else if (q->ask1 <= od->order->entrust_price && od->volume_in_queue == 0) {
-                make_trade(od->order.get(), od->order->entrust_price);
+				make_trade(od->order.get(), q->ask1);// od->order->entrust_price);
             }
             else if (od->price_type == "fak" || od->price_type == "fok") {
                 reject_order(od->order.get(), od->price_type.c_str());
