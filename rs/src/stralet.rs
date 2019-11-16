@@ -41,7 +41,7 @@ impl FinDateTime {
 }
 
 pub fn fin_hms(h:i32, m:i32, s:i32, ms:i32) -> i32{
-    return  (h*10000 + m * 100 + s) * 1000 + ms;
+    return  (h*10000 + m * 100 + s) * 1000 + ms
 }
 
 pub enum RunMode {
@@ -110,7 +110,7 @@ impl StraletContext for StraletContextImpl {
 
     fn get_trading_day(&self) -> i32 {
         unsafe {
-            return tqapi_sc_trading_day(self.ctx);
+            tqapi_sc_trading_day(self.ctx)
         }
     }
 
@@ -206,7 +206,7 @@ impl StraletContext for StraletContextImpl {
 
 #[derive(Debug)]
 struct StraletWrap {
-    stralet : *mut Stralet,
+    stralet : *mut dyn Stralet,
     sc      : *mut StraletContextImpl,
 }
 
@@ -220,7 +220,7 @@ impl Drop for StraletWrap {
 }
 
 impl StraletWrap {
-    fn new (stralet : Box<Stralet>) -> StraletWrap {
+    fn new (stralet : Box<dyn Stralet>) -> StraletWrap {
         StraletWrap { stralet : Box::into_raw(stralet), sc : ptr::null_mut() }
     }
 
@@ -292,7 +292,7 @@ impl StraletWrap {
 }
 
 pub struct StraletFactory {
-    create_stralet : fn() -> Box<Stralet>
+    create_stralet : fn() -> Box<dyn Stralet>
 }
 
 impl StraletFactory {
@@ -341,7 +341,7 @@ pub struct BackTestConfig<'a> {
 
 impl <'a> BackTest {
 
-    pub fn run(cfg : &BackTestConfig, create_stralet : fn () -> Box<Stralet>) {
+    pub fn run(cfg : &BackTestConfig, create_stralet : fn () -> Box<dyn Stralet>) {
 
         unsafe {
             let cfg_str = serde_json::to_string(&cfg).expect("Wrong cfg");
@@ -364,18 +364,18 @@ impl <'a> BackTest {
 
 
 #[derive(Serialize, Deserialize, Debug, Default)]
-pub struct RealTimeConfig<'a> {
-    pub dapi_addr : Option<&'a str>,
-    pub tapi_addr : Option<&'a str>,
-    pub output_dir : Option<&'a str>,
-    pub properties : Option<&'a str>
+pub struct RealTimeConfig {
+    pub dapi_addr : Option<String>,
+    pub tapi_addr : Option<String>,
+    pub output_dir : Option<String>,
+    pub properties : Option<String>
 }
 
 pub struct RealTime {}
 
 impl <'a> RealTime {
 
-    pub fn run(cfg : &RealTimeConfig, create_stralet : fn () -> Box<Stralet>) {
+    pub fn run(cfg : &RealTimeConfig, create_stralet : fn () -> Box<dyn Stralet>) {
 
         unsafe {
             let cfg_str = serde_json::to_string(&cfg).expect("Wrong cfg");
