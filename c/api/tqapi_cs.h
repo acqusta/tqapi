@@ -1,4 +1,4 @@
-#ifndef _TQAPI_CS_H
+ï»¿#ifndef _TQAPI_CS_H
 #define _TQAPI_CS_H
 
 #include "myutils/unicode.h"
@@ -13,12 +13,12 @@ static inline const char* _T(const string& src, string& dst)
 
 #pragma pack(1)
 struct AccountInfoWrap {
-    const char* account_id;       // ÕÊºÅ±àºÅ
-    const char* broker;           // ½»Ò×ÉÌÃû³Æ£¬ÈçÕĞÉÌÖ¤È¯
-    const char* account;          // ½»Ò×ÕÊºÅ
-    const char* status;           // Á¬½Ó×´Ì¬£¬È¡Öµ Disconnected, Connected, Connecting
-    const char* msg;              // ×´Ì¬ĞÅÏ¢£¬ÈçµÇÂ¼Ê§°ÜÔ­Òò
-    const char* account_type;     // ÕÊºÅÀàĞÍ£¬Èç stock, ctp
+    const char* account_id;       // å¸å·ç¼–å·
+    const char* broker;           // äº¤æ˜“å•†åç§°ï¼Œå¦‚æ‹›å•†è¯åˆ¸
+    const char* account;          // äº¤æ˜“å¸å·
+    const char* status;           // è¿æ¥çŠ¶æ€ï¼Œå–å€¼ Disconnected, Connected, Connecting
+    const char* msg;              // çŠ¶æ€ä¿¡æ¯ï¼Œå¦‚ç™»å½•å¤±è´¥åŸå› 
+    const char* account_type;     // å¸å·ç±»å‹ï¼Œå¦‚ stock, ctp
 
     AccountInfo m_orig;
 
@@ -45,13 +45,13 @@ struct AccountInfoWrap {
 };
 
 struct BalanceWrap {
-    const char* account_id;       // ÕÊºÅ±àºÅ
-    const char* fund_account;     // ×Ê½ğÕÊºÅ
-    double      init_balance;     // ³õÊ¼»¯×Ê½ğ
-    double      enable_balance;   // ¿ÉÓÃ×Ê½ğ
-    double      margin;           // ±£Ö¤½ğ
-    double      float_pnl;        // ¸¡¶¯Ó¯¿÷
-    double      close_pnl;        // ÊµÏÖÓ¯¿÷
+    const char* account_id;       // å¸å·ç¼–å·
+    const char* fund_account;     // èµ„é‡‘å¸å·
+    double      init_balance;     // åˆå§‹åŒ–èµ„é‡‘
+    double      enable_balance;   // å¯ç”¨èµ„é‡‘
+    double      margin;           // ä¿è¯é‡‘
+    double      float_pnl;        // æµ®åŠ¨ç›ˆäº
+    double      close_pnl;        // å®ç°ç›ˆäº
 
     Balance m_orig;
 
@@ -79,20 +79,20 @@ struct BalanceWrap {
 };
 
 struct OrderWrap {
-    const char* account_id;       // ÕÊºÅ±àºÅ
-    const char* code;             // Ö¤È¯´úÂë
-    const char* name;             // Ö¤È¯Ãû³Æ
-    const char* entrust_no;       // Î¯ÍĞ±àºÅ
-    const char* entrust_action;   // Î¯ÍĞ¶¯×÷
-    double      entrust_price;    // Î¯ÍĞ¼Û¸ñ
-    int64_t     entrust_size;     // Î¯ÍĞÊıÁ¿£¬µ¥Î»£º¹É
-    int32_t     entrust_date;     // Î¯ÍĞÈÕÆÚ
-    int32_t     entrust_time;     // Î¯ÍĞÊ±¼ä
-    double      fill_price;       // ³É½»¼Û¸ñ
-    int64_t     fill_size;        // ³É½»ÊıÁ¿
-    const char* status;           // ¶©µ¥×´Ì¬£ºÈ¡Öµ: OrderStatus
-    const char* status_msg;       // ×´Ì¬ÏûÏ¢
-    int32_t     order_id;         // ×Ô¶¨Òå¶©µ¥±àºÅ
+    const char* account_id;       // å¸å·ç¼–å·
+    const char* code;             // è¯åˆ¸ä»£ç 
+    const char* name;             // è¯åˆ¸åç§°
+    const char* entrust_no;       // å§”æ‰˜ç¼–å·
+    const char* entrust_action;   // å§”æ‰˜åŠ¨ä½œ
+    double      entrust_price;    // å§”æ‰˜ä»·æ ¼
+    int64_t     entrust_size;     // å§”æ‰˜æ•°é‡ï¼Œå•ä½ï¼šè‚¡
+    int32_t     entrust_date;     // å§”æ‰˜æ—¥æœŸ
+    int32_t     entrust_time;     // å§”æ‰˜æ—¶é—´
+    double      fill_price;       // æˆäº¤ä»·æ ¼
+    int64_t     fill_size;        // æˆäº¤æ•°é‡
+    const char* status;           // è®¢å•çŠ¶æ€ï¼šå–å€¼: OrderStatus
+    const char* status_msg;       // çŠ¶æ€æ¶ˆæ¯
+    int32_t     order_id;         // è‡ªå®šä¹‰è®¢å•ç¼–å·
 
 	string _account_id    ;
 	string _code          ;
@@ -148,17 +148,17 @@ struct OrderWrap {
 };
 
 struct TradeWrap {
-    const char* account_id;       // ÕÊºÅ±àºÅ
-    const char* code;             // Ö¤È¯´úÂë
-    const char* name;             // Ö¤È¯Ãû³Æ
-    const char* entrust_no;       // Î¯ÍĞ±àºÅ
-    const char* entrust_action;   // Î¯ÍĞ¶¯×÷
-    const char* fill_no;          // ³É½»±àºÅ
-    int64_t     fill_size;        // ³É½»ÊıÁ¿
-    double      fill_price;       // ³É½»¼Û¸ñ
-    int32_t     fill_date;        // ³É½»ÈÕÆÚ
-    int32_t     fill_time;        // ³É½»Ê±¼ä
-    int32_t     order_id;         // ¶©µ¥±àºÅ
+    const char* account_id;       // å¸å·ç¼–å·
+    const char* code;             // è¯åˆ¸ä»£ç 
+    const char* name;             // è¯åˆ¸åç§°
+    const char* entrust_no;       // å§”æ‰˜ç¼–å·
+    const char* entrust_action;   // å§”æ‰˜åŠ¨ä½œ
+    const char* fill_no;          // æˆäº¤ç¼–å·
+    int64_t     fill_size;        // æˆäº¤æ•°é‡
+    double      fill_price;       // æˆäº¤ä»·æ ¼
+    int32_t     fill_date;        // æˆäº¤æ—¥æœŸ
+    int32_t     fill_time;        // æˆäº¤æ—¶é—´
+    int32_t     order_id;         // è®¢å•ç¼–å·
 
 	string _account_id     ;
 	string _code		   ;
@@ -207,22 +207,22 @@ struct TradeWrap {
 };
 
 struct PositionWrap {
-    const char*   account_id;       // ÕÊºÅ±àºÅ
-    const char*   code;             // Ö¤È¯´úÂë
-    const char*   name;             // Ö¤È¯Ãû³Æ
-    int64_t       current_size;     // µ±Ç°³Ö²Ö
-    int64_t       enable_size;      // ¿ÉÓÃ£¨¿É½»Ò×£©³Ö²Ö
-    int64_t       init_size;        // ³õÊ¼³Ö²Ö
-    int64_t       today_size;       // ½ñÈÕ³Ö²Ö
-    int64_t       frozen_size;      // ¶³½á³Ö²Ö
-    const char*   side;             // ³Ö²Ö·½Ïò£¬¹ÉÆ±µÄ³Ö²Ö·½ÏòÎª Long, ÆÚ»õ·Ö Long, Short
-    double        cost;             // ³É±¾
-    double        cost_price;       // ³É±¾¼Û¸ñ
-    double        last_price;       // ×îĞÂ¼Û¸ñ
-    double        float_pnl;        // ³Ö²ÖÓ¯¿÷
-    double        close_pnl;        // Æ½²ÖÓ¯¿÷
-    double        margin;           // ±£Ö¤½ğ
-    double        commission;       // ÊÖĞø·Ñ
+    const char*   account_id;       // å¸å·ç¼–å·
+    const char*   code;             // è¯åˆ¸ä»£ç 
+    const char*   name;             // è¯åˆ¸åç§°
+    int64_t       current_size;     // å½“å‰æŒä»“
+    int64_t       enable_size;      // å¯ç”¨ï¼ˆå¯äº¤æ˜“ï¼‰æŒä»“
+    int64_t       init_size;        // åˆå§‹æŒä»“
+    int64_t       today_size;       // ä»Šæ—¥æŒä»“
+    int64_t       frozen_size;      // å†»ç»“æŒä»“
+    const char*   side;             // æŒä»“æ–¹å‘ï¼Œè‚¡ç¥¨çš„æŒä»“æ–¹å‘ä¸º Long, æœŸè´§åˆ† Long, Short
+    double        cost;             // æˆæœ¬
+    double        cost_price;       // æˆæœ¬ä»·æ ¼
+    double        last_price;       // æœ€æ–°ä»·æ ¼
+    double        float_pnl;        // æŒä»“ç›ˆäº
+    double        close_pnl;        // å¹³ä»“ç›ˆäº
+    double        margin;           // ä¿è¯é‡‘
+    double        commission;       // æ‰‹ç»­è´¹
 
 	string _account_id;
 	string _code;
@@ -276,8 +276,8 @@ struct PositionWrap {
 };
 
 struct OrderIDWrap {
-    const char*  entrust_no;       // ¶©µ¥Î¯ÍĞºÅ
-    int32_t      order_id;         // ×Ô¶¨Òå±àºÅ
+    const char*  entrust_no;       // è®¢å•å§”æ‰˜å·
+    int32_t      order_id;         // è‡ªå®šä¹‰ç¼–å·
     
 	string _entrust_no;
 

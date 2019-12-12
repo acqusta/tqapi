@@ -1,4 +1,4 @@
-#include <assert.h>
+ï»¿#include <assert.h>
 #include <string.h>
 #include <algorithm>
 #include <iostream>
@@ -176,7 +176,7 @@ void SimDataApi::preload_daily_bar(const vector<string>& codes)
     for (auto& code : codes) {
         if (m_dailybar_caches.find(code) != m_dailybar_caches.end()) continue;
 
-        // ²»¸´È¨
+        // ä¸å¤æƒ
         auto r = m_dapi->daily_bar(code.c_str(), "", true);
         if (!r.value) {
             cerr << "no daily_bar data " << code << endl;

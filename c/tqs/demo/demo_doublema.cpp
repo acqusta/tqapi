@@ -1,4 +1,4 @@
-#include <iostream>
+ï»¿#include <iostream>
 #include <sstream>
 #include <string.h>
 #include <list>
@@ -6,7 +6,7 @@
 #include "stralet.h"
 
 
-// https://uqer.io/ R-Breaker²ßÂÔ
+// https://uqer.io/ R-Breakerç­–ç•¥
 //
 using namespace tquant::stralet;
 using namespace tquant::api;
@@ -102,11 +102,11 @@ void DoubleMAStralet::on_bar(const string& cycle, shared_ptr<const Bar> bar)
     auto tapi = ctx()->trade_api();
     auto dapi = ctx()->data_api();
 
-    //// Ö»½»Ò×ÈÕÅÌ, ÖÁÉÙÓÐm_slowma_len¸öbar
+    //// åªäº¤æ˜“æ—¥ç›˜, è‡³å°‘æœ‰m_slowma_lenä¸ªbar
     if (bar->time < HMS(9 + (m_slow_ma_len /60), m_slow_ma_len % 60, 0) || bar->time > HMS(15, 0))
         return;
 
-    // ¼òµ¥´¦Àí£¬Èç¹ûÓÐÔÚÍ¾¶©µ¥£¬Ö±½ÓÈ¡Ïû
+    // ç®€å•å¤„ç†ï¼Œå¦‚æžœæœ‰åœ¨é€”è®¢å•ï¼Œç›´æŽ¥å–æ¶ˆ
     if (cancel_unfinished_order() > 0) return;
 
     int64_t long_size = 0, short_size = 0;
@@ -156,7 +156,7 @@ void DoubleMAStralet::on_bar(const string& cycle, shared_ptr<const Bar> bar)
 
 //    ctx()->logger(ERROR) << "fast vs slow " << fast_ma << "," << slow_ma;
 
-    // ½»Ò×Âß¼­£ºµ±¿ìÏßÏòÉÏ´©Ô½ÂýÏßÇÒµ±Ç°Ã»ÓÐ³Ö²Ö£¬ÔòÂòÈë1ÊÖ£»µ±¿ìÏßÏòÏÂ´©Ô½ÂýÏßÇÒµ±Ç°ÓÐ³Ö²Ö£¬ÔòÆ½²Ö
+    // äº¤æ˜“é€»è¾‘ï¼šå½“å¿«çº¿å‘ä¸Šç©¿è¶Šæ…¢çº¿ä¸”å½“å‰æ²¡æœ‰æŒä»“ï¼Œåˆ™ä¹°å…¥1æ‰‹ï¼›å½“å¿«çº¿å‘ä¸‹ç©¿è¶Šæ…¢çº¿ä¸”å½“å‰æœ‰æŒä»“ï¼Œåˆ™å¹³ä»“
     if (fast_ma > slow_ma ) {
         if (short_size != 0)
             place_order(m_contract, quote->ask1, short_size, EA_Cover);

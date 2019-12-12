@@ -93,7 +93,7 @@ module = Extension('tquant._tqapi',
                    sources       = sources)
 
 if OSNAME == "Windows":
-    module.extra_compile_args = ['/MT', '/DNOMINMAX']
+    module.extra_compile_args = ['/MT', '/DNOMINMAX', '/source-charset:utf-8']
     msgpack[1]['cflags'] = ['/MT']
 else:
     module.extra_compile_args = ['--std=c++11' ]

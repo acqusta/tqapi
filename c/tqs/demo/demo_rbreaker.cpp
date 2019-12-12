@@ -1,50 +1,50 @@
-#include <iostream>
+ï»¿#include <iostream>
 #include <sstream>
 #include <string.h>
 #include "stralet.h"
 
 
-// https://uqer.io/ R-Breaker²ßÂÔ
+// https://uqer.io/ R-Breakerç­–ç•¥
 //
-// R-Breaker ÊÇÒ»ÖÖ¶ÌÏßÈÕÄÚ½»Ò×²ßÂÔ£¬Ëü½áºÏÁËÇ÷ÊÆºÍ·´×ªÁ½ÖÖ½»Ò×·½Ê½¡£¸Ã²ßÂÔÒ²³¤ÆÚ±»Future Thruth ÔÓÖ¾ÆÀÎª×î×¬Ç®µÄ²ßÂÔÖ®Ò»£¬ÓÈÆäÔÚ±êÆÕ
-// 500 ¹ÉÖ¸ÆÚ»õÉÏĞ§¹û×î¼Ñ¡£¸Ã²ßÂÔµÄÖ÷ÒªÌØµãÈçÏÂ£º
+// R-Breaker æ˜¯ä¸€ç§çŸ­çº¿æ—¥å†…äº¤æ˜“ç­–ç•¥ï¼Œå®ƒç»“åˆäº†è¶‹åŠ¿å’Œåè½¬ä¸¤ç§äº¤æ˜“æ–¹å¼ã€‚è¯¥ç­–ç•¥ä¹Ÿé•¿æœŸè¢«Future Thruth æ‚å¿—è¯„ä¸ºæœ€èµšé’±çš„ç­–ç•¥ä¹‹ä¸€ï¼Œå°¤å…¶åœ¨æ ‡æ™®
+// 500 è‚¡æŒ‡æœŸè´§ä¸Šæ•ˆæœæœ€ä½³ã€‚è¯¥ç­–ç•¥çš„ä¸»è¦ç‰¹ç‚¹å¦‚ä¸‹ï¼š
 //
-// µÚÒ»¡¢¸ù¾İÇ°Ò»¸ö½»Ò×ÈÕµÄÊÕÅÌ¼Û¡¢×î¸ß¼ÛºÍ×îµÍ¼ÛÊı¾İÍ¨¹ıÒ»¶¨·½Ê½¼ÆËã³öÁù¸ö¼ÛÎ»£¬´Ó´óµ½Ğ¡ÒÀ´ÎÎªÍ»ÆÆÂòÈë¼Û¡¢¹Û²ìÂô³ö¼Û¡¢·´×ªÂô³ö¼Û¡¢·´×ªÂò
-// Èë¼Û¡¢¹Û²ìÂòÈë¼ÛºÍÍ»ÆÆÂô³ö¼Û£¬ÒÔ´ËÀ´ĞÎ³Éµ±Ç°½»Ò×ÈÕÅÌÖĞ½»Ò×µÄ´¥·¢Ìõ¼ş¡£Í¨¹ı¶Ô¼ÆËã·½Ê½µÄµ÷Õû£¬¿ÉÒÔµ÷½ÚÁù¸ö¼Û¸ñ¼äµÄ¾àÀë£¬½øÒ»²½¸Ä±ä´¥·¢Ìõ
-// ¼ş¡£
+// ç¬¬ä¸€ã€æ ¹æ®å‰ä¸€ä¸ªäº¤æ˜“æ—¥çš„æ”¶ç›˜ä»·ã€æœ€é«˜ä»·å’Œæœ€ä½ä»·æ•°æ®é€šè¿‡ä¸€å®šæ–¹å¼è®¡ç®—å‡ºå…­ä¸ªä»·ä½ï¼Œä»å¤§åˆ°å°ä¾æ¬¡ä¸ºçªç ´ä¹°å…¥ä»·ã€è§‚å¯Ÿå–å‡ºä»·ã€åè½¬å–å‡ºä»·ã€åè½¬ä¹°
+// å…¥ä»·ã€è§‚å¯Ÿä¹°å…¥ä»·å’Œçªç ´å–å‡ºä»·ï¼Œä»¥æ­¤æ¥å½¢æˆå½“å‰äº¤æ˜“æ—¥ç›˜ä¸­äº¤æ˜“çš„è§¦å‘æ¡ä»¶ã€‚é€šè¿‡å¯¹è®¡ç®—æ–¹å¼çš„è°ƒæ•´ï¼Œå¯ä»¥è°ƒèŠ‚å…­ä¸ªä»·æ ¼é—´çš„è·ç¦»ï¼Œè¿›ä¸€æ­¥æ”¹å˜è§¦å‘æ¡
+// ä»¶ã€‚
 //
-// µÚ¶ş¡¢¸ù¾İÅÌÖĞ¼Û¸ñ×ßÊÆ£¬ÊµÊ±ÅĞ¶Ï´¥·¢Ìõ¼ş£¬¾ßÌåÌõ¼şÈçÏÂ£º
-// 1) µ±ÈÕÄÚ×î¸ß¼Û³¬¹ı¹Û²ìÂô³ö¼Ûºó£¬ÅÌÖĞ¼Û¸ñ³öÏÖ»ØÂä£¬ÇÒ½øÒ»²½µøÆÆ·´×ªÂô³ö¼Û¹¹³ÉµÄÖ§³ÅÏßÊ±£¬²ÉÈ¡·´×ª²ßÂÔ£¬¼´ÔÚ¸ÃµãÎ»£¨·´ÊÖ¡¢¿ª²Ö£©×ö¿Õ£»
-// 2) µ±ÈÕÄÚ×îµÍ¼ÛµÍÓÚ¹Û²ìÂòÈë¼Ûºó£¬ÅÌÖĞ¼Û¸ñ³öÏÖ·´µ¯£¬ÇÒ½øÒ»²½³¬¹ı·´×ªÂòÈë¼Û¹¹³ÉµÄ×èÁ¦ÏßÊ±£¬²ÉÈ¡·´×ª²ßÂÔ£¬¼´ÔÚ¸ÃµãÎ»£¨·´ÊÖ¡¢¿ª²Ö£©×ö¶à£»
-// 3) ÔÚ¿Õ²ÖµÄÇé¿öÏÂ£¬Èç¹ûÅÌÖĞ¼Û¸ñ³¬¹ıÍ»ÆÆÂòÈë¼Û£¬Ôò²ÉÈ¡Ç÷ÊÆ²ßÂÔ£¬¼´ÔÚ¸ÃµãÎ»¿ª²Ö×ö¶à£»
-// 4) ÔÚ¿Õ²ÖµÄÇé¿öÏÂ£¬Èç¹ûÅÌÖĞ¼Û¸ñµøÆÆÍ»ÆÆÂô³ö¼Û£¬Ôò²ÉÈ¡Ç÷ÊÆ²ßÂÔ£¬¼´ÔÚ¸ÃµãÎ»¿ª²Ö×ö¿Õ¡£
+// ç¬¬äºŒã€æ ¹æ®ç›˜ä¸­ä»·æ ¼èµ°åŠ¿ï¼Œå®æ—¶åˆ¤æ–­è§¦å‘æ¡ä»¶ï¼Œå…·ä½“æ¡ä»¶å¦‚ä¸‹ï¼š
+// 1) å½“æ—¥å†…æœ€é«˜ä»·è¶…è¿‡è§‚å¯Ÿå–å‡ºä»·åï¼Œç›˜ä¸­ä»·æ ¼å‡ºç°å›è½ï¼Œä¸”è¿›ä¸€æ­¥è·Œç ´åè½¬å–å‡ºä»·æ„æˆçš„æ”¯æ’‘çº¿æ—¶ï¼Œé‡‡å–åè½¬ç­–ç•¥ï¼Œå³åœ¨è¯¥ç‚¹ä½ï¼ˆåæ‰‹ã€å¼€ä»“ï¼‰åšç©ºï¼›
+// 2) å½“æ—¥å†…æœ€ä½ä»·ä½äºè§‚å¯Ÿä¹°å…¥ä»·åï¼Œç›˜ä¸­ä»·æ ¼å‡ºç°åå¼¹ï¼Œä¸”è¿›ä¸€æ­¥è¶…è¿‡åè½¬ä¹°å…¥ä»·æ„æˆçš„é˜»åŠ›çº¿æ—¶ï¼Œé‡‡å–åè½¬ç­–ç•¥ï¼Œå³åœ¨è¯¥ç‚¹ä½ï¼ˆåæ‰‹ã€å¼€ä»“ï¼‰åšå¤šï¼›
+// 3) åœ¨ç©ºä»“çš„æƒ…å†µä¸‹ï¼Œå¦‚æœç›˜ä¸­ä»·æ ¼è¶…è¿‡çªç ´ä¹°å…¥ä»·ï¼Œåˆ™é‡‡å–è¶‹åŠ¿ç­–ç•¥ï¼Œå³åœ¨è¯¥ç‚¹ä½å¼€ä»“åšå¤šï¼›
+// 4) åœ¨ç©ºä»“çš„æƒ…å†µä¸‹ï¼Œå¦‚æœç›˜ä¸­ä»·æ ¼è·Œç ´çªç ´å–å‡ºä»·ï¼Œåˆ™é‡‡å–è¶‹åŠ¿ç­–ç•¥ï¼Œå³åœ¨è¯¥ç‚¹ä½å¼€ä»“åšç©ºã€‚
 //
-// µÚÈı¡¢Éè¶¨Ö¹ËğÒÔ¼°Ö¹Ó¯Ìõ¼ş£»
+// ç¬¬ä¸‰ã€è®¾å®šæ­¢æŸä»¥åŠæ­¢ç›ˆæ¡ä»¶ï¼›
 //
-// µÚËÄ¡¢Éè¶¨¹ıÂËÌõ¼ş£»
+// ç¬¬å››ã€è®¾å®šè¿‡æ»¤æ¡ä»¶ï¼›
 //
-// µÚÎå¡¢ÔÚÃ¿ÈÕÊÕÅÌÇ°£¬¶ÔËù³ÖºÏÔ¼½øĞĞÆ½²Ö¡£
+// ç¬¬äº”ã€åœ¨æ¯æ—¥æ”¶ç›˜å‰ï¼Œå¯¹æ‰€æŒåˆçº¦è¿›è¡Œå¹³ä»“ã€‚
 //
-// ¾ßÌåÀ´¿´£¬ÕâÁù¸ö¼ÛÎ»ĞÎ³ÉµÄ×èÁ¦ºÍÖ§³ÅÎ»¼ÆËã¹ı³ÌÈçÏÂ£º
+// å…·ä½“æ¥çœ‹ï¼Œè¿™å…­ä¸ªä»·ä½å½¢æˆçš„é˜»åŠ›å’Œæ”¯æ’‘ä½è®¡ç®—è¿‡ç¨‹å¦‚ä¸‹ï¼š
 //
-// ¹Û²ìÂô³ö¼Û = High + 0.35 * (Close ¨C Low)
-// ¹Û²ìÂòÈë¼Û = Low ¨C 0.35 * (High ¨C Close)
-// ·´×ªÂô³ö¼Û = 1.07 / 2 * (High + Low) ¨C 0.07 * Low
-// ·´×ªÂòÈë¼Û = 1.07 / 2 * (High + Low) ¨C 0.07 * High
-// Í»ÆÆÂòÈë¼Û = ¹Û²ìÂô³ö¼Û + 0.25 * (¹Û²ìÂô³ö¼Û ¨C ¹Û²ìÂòÈë¼Û)
-// Í»ÆÆÂô³ö¼Û = ¹Û²ìÂòÈë¼Û ¨C 0.25 * (¹Û²ìÂô³ö¼Û ¨C ¹Û²ìÂòÈë¼Û)
-// ÆäÖĞ£¬High¡¢Close¡¢Low ·Ö±ğÎª×òÈÕ×î¸ß¼Û¡¢×òÈÕÊÕÅÌ¼ÛºÍ×òÈÕ×îµÍ¼Û¡£ÕâÁù¸ö¼ÛÎ»´Ó´óµ½Ğ¡Ò»´ÎÊÇ£¬
-// Í»ÆÆÂòÈë¼Û¡¢¹Û²ì°®³ö¼Û¡¢·´×ªÂô³ö¼Û¡¢·´×ªÂòÈë¼Û¡¢¹Û²ìÂòÈë¼ÛºÍÍ»ÆÆÂô³ö¼Û¡£
+// è§‚å¯Ÿå–å‡ºä»· = High + 0.35 * (Close â€“ Low)
+// è§‚å¯Ÿä¹°å…¥ä»· = Low â€“ 0.35 * (High â€“ Close)
+// åè½¬å–å‡ºä»· = 1.07 / 2 * (High + Low) â€“ 0.07 * Low
+// åè½¬ä¹°å…¥ä»· = 1.07 / 2 * (High + Low) â€“ 0.07 * High
+// çªç ´ä¹°å…¥ä»· = è§‚å¯Ÿå–å‡ºä»· + 0.25 * (è§‚å¯Ÿå–å‡ºä»· â€“ è§‚å¯Ÿä¹°å…¥ä»·)
+// çªç ´å–å‡ºä»· = è§‚å¯Ÿä¹°å…¥ä»· â€“ 0.25 * (è§‚å¯Ÿå–å‡ºä»· â€“ è§‚å¯Ÿä¹°å…¥ä»·)
+// å…¶ä¸­ï¼ŒHighã€Closeã€Low åˆ†åˆ«ä¸ºæ˜¨æ—¥æœ€é«˜ä»·ã€æ˜¨æ—¥æ”¶ç›˜ä»·å’Œæ˜¨æ—¥æœ€ä½ä»·ã€‚è¿™å…­ä¸ªä»·ä½ä»å¤§åˆ°å°ä¸€æ¬¡æ˜¯ï¼Œ
+// çªç ´ä¹°å…¥ä»·ã€è§‚å¯Ÿçˆ±å‡ºä»·ã€åè½¬å–å‡ºä»·ã€åè½¬ä¹°å…¥ä»·ã€è§‚å¯Ÿä¹°å…¥ä»·å’Œçªç ´å–å‡ºä»·ã€‚
 
 using namespace tquant::stralet;
 using namespace tquant::api;
 
 struct PriceRange {
-    double sell_setup;  // ¹Û²ì¼Û
+    double sell_setup;  // è§‚å¯Ÿä»·
     double buy_setup;   
-    double sell_enter;  // ·´×ª¼Û
+    double sell_enter;  // åè½¬ä»·
     double buy_enter;
-    double sell_break;  // Í»ÆÆ¼Û
+    double sell_break;  // çªç ´ä»·
     double buy_break;
 };
 
@@ -71,11 +71,11 @@ public:
 void RBreakerStralet::on_init()
 {
     ctx()->logger() << "on_init: " << ctx()->trading_day() << endl;
-    // TODO: ´ÓÅäÖÃÖĞµÃµ½Òª½»Ò×µÄÉÌÆ·ÆÚ»õ£¬È»ºó´ÓÖ÷Á¦ºÏÔ¼Ó³Éä±íÖĞµÃµ½½ñÈÕ½»Ò×µÄºÏÔ¼
+    // TODO: ä»é…ç½®ä¸­å¾—åˆ°è¦äº¤æ˜“çš„å•†å“æœŸè´§ï¼Œç„¶åä»ä¸»åŠ›åˆçº¦æ˜ å°„è¡¨ä¸­å¾—åˆ°ä»Šæ—¥äº¤æ˜“çš„åˆçº¦
     ctx()->data_api()->subscribe(vector<string>{contract});
     //ctx()->data_api()->subscribe(vector<string>{"000001.SH"});
 
-    // TODO: ´ÓÉÏ¸ö½»Ò×ÈÕ¼Û¸ñ¼ÆËã³ö½ñÌìµÄ¼Û¸ñÇø¼ä
+    // TODO: ä»ä¸Šä¸ªäº¤æ˜“æ—¥ä»·æ ¼è®¡ç®—å‡ºä»Šå¤©çš„ä»·æ ¼åŒºé—´
 }
 
 void RBreakerStralet::on_fini() 
@@ -93,12 +93,12 @@ static PriceRange calc_price_range(double high, double low, double close )
     double low_beta = 0.25;
     double enter_beta = 0.07;
 
-    double sell_setup = high + high_beta * (close - low); // ¹Û²ìÂô³ö¼Û
-    double buy_setup  = low - high_beta * (high - close); // ¹Û²ìÂòÈë¼Û
-    double sell_enter = (1 + enter_beta) / 2 * (high + low) - enter_beta * low;  // ·´×ªÂô³ö¼Û
-    double buy_enter  = (1 + enter_beta) / 2 * (high + low) - enter_beta * high; // ·´×ªÂòÈë¼Û
-    double sell_break = buy_setup - low_beta * (sell_setup - buy_setup); // Í»ÆÆÂô³ö¼Û
-    double buy_break  = sell_setup + low_beta * (sell_setup - buy_setup); //Í»ÆÆÂòÈë¼Û
+    double sell_setup = high + high_beta * (close - low); // è§‚å¯Ÿå–å‡ºä»·
+    double buy_setup  = low - high_beta * (high - close); // è§‚å¯Ÿä¹°å…¥ä»·
+    double sell_enter = (1 + enter_beta) / 2 * (high + low) - enter_beta * low;  // åè½¬å–å‡ºä»·
+    double buy_enter  = (1 + enter_beta) / 2 * (high + low) - enter_beta * high; // åè½¬ä¹°å…¥ä»·
+    double sell_break = buy_setup - low_beta * (sell_setup - buy_setup); // çªç ´å–å‡ºä»·
+    double buy_break  = sell_setup + low_beta * (sell_setup - buy_setup); //çªç ´ä¹°å…¥ä»·
 
     PriceRange range;
     range.sell_setup = sell_setup  ;
@@ -157,7 +157,7 @@ void RBreakerStralet::on_bar(const string& cycle, shared_ptr<const Bar> bar)
     auto dapi = ctx()->data_api();
 
     if (bar->time == HMS(9, 31)) {
-        // ²»½»Ò×Ò¹ÅÌ£¬Òò´Ë´ÓÒ¹ÅÌĞĞÇéÖĞÈ¡ high, low, close¼ÆËã
+        // ä¸äº¤æ˜“å¤œç›˜ï¼Œå› æ­¤ä»å¤œç›˜è¡Œæƒ…ä¸­å– high, low, closeè®¡ç®—
         double high = 0.0;
         double low = 100000000.0;
         double close = 0.0;
@@ -173,11 +173,11 @@ void RBreakerStralet::on_bar(const string& cycle, shared_ptr<const Bar> bar)
         return;
     }
 
-    // Ö»½»Ò×ÈÕÅÌ, ÖÁÉÙÁ½¸öbar
+    // åªäº¤æ˜“æ—¥ç›˜, è‡³å°‘ä¸¤ä¸ªbar
     if (bar->time < HMS(9, 32, 0) || bar->time > HMS(15, 0))
         return;
 
-    // ¼òµ¥´¦Àí£¬Èç¹ûÓĞÔÚÍ¾¶©µ¥£¬Ö±½ÓÈ¡Ïû
+    // ç®€å•å¤„ç†ï¼Œå¦‚æœæœ‰åœ¨é€”è®¢å•ï¼Œç›´æ¥å–æ¶ˆ
     if (cancel_unfinished_order() > 0) return;
 
     auto r = dapi->bar(contract.c_str(), "1m", 0, true);
@@ -218,7 +218,7 @@ void RBreakerStralet::on_bar(const string& cycle, shared_ptr<const Bar> bar)
             place_order(contract, quote->bid1, short_size, EA_Cover);
         return;
     }
-    // ÏòÉÏÍ»ÆÆ
+    // å‘ä¸Šçªç ´
     if (bar_2->close <= price_range.buy_break && bar_1->close > price_range.buy_break) {
         if (long_size == 0)
             place_order(contract, quote->ask1, 1, EA_Buy);
@@ -227,7 +227,7 @@ void RBreakerStralet::on_bar(const string& cycle, shared_ptr<const Bar> bar)
             place_order(contract, quote->ask1, short_size, EA_Cover);
     }
 
-    // ÏòÏÂÍ»ÆÆ
+    // å‘ä¸‹çªç ´
     if (bar_2->close >= price_range.sell_break && bar_1->close < price_range.sell_break) {
         if (short_size == 0)
             place_order(contract, quote->bid1, 1, EA_Short);
@@ -236,7 +236,7 @@ void RBreakerStralet::on_bar(const string& cycle, shared_ptr<const Bar> bar)
             place_order(contract, quote->bid1, long_size, EA_Sell);
     }
 
-    // ¶àµ¥·´×ª
+    // å¤šå•åè½¬
     if (bar_1->high > price_range.sell_setup && bar_1->close > price_range.sell_enter)
         count_1 = 1;
 
@@ -246,7 +246,7 @@ void RBreakerStralet::on_bar(const string& cycle, shared_ptr<const Bar> bar)
             place_order(contract, quote->bid1, 1, EA_Short);
         }
     }
-    // ¿Õµ¥·´×ª
+    // ç©ºå•åè½¬
     if (bar_1->low < price_range.buy_setup) 
         count_2 = 1;
 

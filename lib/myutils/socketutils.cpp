@@ -1,4 +1,4 @@
-#include "socketutils.h"
+ï»¿#include "socketutils.h"
 
 #include <assert.h>
 #include <chrono>
@@ -178,7 +178,7 @@ namespace myutils {
         }
     }
 
-    // ¼àÌı cmd_sock_server, ½¨Á¢Á¬½Óºó£¬¹Ø±Õ cmd_sock£¬±£Áô cmd_sock_client, cmd_sock_server
+    // ç›‘å¬ cmd_sock_server, å»ºç«‹è¿æ¥åï¼Œå…³é—­ cmd_sockï¼Œä¿ç•™ cmd_sock_client, cmd_sock_server
     bool create_cmd_sock_pair(SOCKET* server, SOCKET* client)
     {
         SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);

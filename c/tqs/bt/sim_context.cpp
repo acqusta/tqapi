@@ -1,4 +1,4 @@
-#include <iostream>
+ï»¿#include <iostream>
 
 #include "sim_context.h"
 #include "sim_data.h"
@@ -191,8 +191,8 @@ bool SimStraletContext::is_trading_day(int date)
 }
 
 /*
- * ÉèÖÃÃ¿¸ö½»Ò×ÈÕµÄ¿ªÊ¼Ê±¼ä
- * Èç¹ûÆÚ»õÓÐÒ¹ÅÌ£¬´ÓÉÏÒ»¸ö½»Ò×ÈÕµÄ20£º00¿ªÊ¼£¬·ñÔò´Óµ±ÈÕµÄ 8:50¿ªÊ¼¡£
+ * è®¾ç½®æ¯ä¸ªäº¤æ˜“æ—¥çš„å¼€å§‹æ—¶é—´
+ * å¦‚æžœæœŸè´§æœ‰å¤œç›˜ï¼Œä»Žä¸Šä¸€ä¸ªäº¤æ˜“æ—¥çš„20ï¼š00å¼€å§‹ï¼Œå¦åˆ™ä»Žå½“æ—¥çš„ 8:50å¼€å§‹ã€‚
  */
 void SimStraletContext::init_sim_time()
 {
@@ -311,7 +311,7 @@ void SimStraletContext::run_one_day(Stralet* stralet)
             m_dapi->next_bar(code);
         }
 
-        // ×¢ÒâÊÂ¼þË³Ðò: try_match -> order -> trade -> event -> quote -> bar
+        // æ³¨æ„äº‹ä»¶é¡ºåº: try_match -> order -> trade -> event -> quote -> bar
 
         if (!m_should_exit) execute_trade();
         if (!m_should_exit) execute_event();
