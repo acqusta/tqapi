@@ -4,7 +4,7 @@ project(tquant_api)
 
 option(BUILD_WIN64  "Build Win64"     ON)
 option(BUILD_JAVA   "Build Java"      OFF)
-option(BUILD_PYTHON "Build Python"    OFF)
+option(BUILD_PYTHON "Build Python"    ON)
 option(BUILD_DOTNET "Build .Net Core" OFF)
 
 set(CMAKE_INSTALL_PREFIX dist)

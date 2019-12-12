@@ -51,6 +51,10 @@ namespace tquant { namespace api { namespace impl {
         }
 
         bool init(MpRpc_Connection* conn, const unordered_map<string, string>& properties) {
+
+            // XXX should always have a value!
+            m_source = "local";
+
             auto it = properties.find("source");
             if (it != properties.end())
                 m_source = it->second;
@@ -333,14 +337,18 @@ namespace tquant { namespace api { namespace impl {
                             uint64_t sub_hash = 0;
                             mp_map_get(*tmp, "source",   &source);
                             mp_map_get(*tmp, "sub_hash", &sub_hash);
+                            // std::cout<<".sys.heartbeat " << source << "," << sub_hash << endl;
                             if (source.size())
                                 new_sub_info[source] = sub_hash;
                         }
                     }
 
                     bool mismatch = false;
+
                     for (auto & e : m_sub_info_map) {
-                        if (new_sub_info[e.first] != e.second.hash_code) {
+                        if (new_sub_info.find(e.first)==new_sub_info.end() ||
+                           new_sub_info[e.first] != e.second.hash_code)
+                        {
                             mismatch = true;
                             break;
                         }
