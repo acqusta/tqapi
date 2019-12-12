@@ -18,8 +18,8 @@ pub fn fin_time_diff( t1 : u32, t2 : u32) -> i32 {
     let ms1 = fin_time_to_ms(t1);
     let ms2 = fin_time_to_ms(t2);
     if ms1 > ms2 {
-        return (ms1 - ms2) as i32;
+        return (ms1 - ms2) as i32
     } else {
-        return -1 * ((ms2 - ms1) as i32);
+        return -1 * ((ms2 - ms1) as i32)
     }
 }

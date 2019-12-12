@@ -242,12 +242,12 @@ pub struct OrderID {
     pub order_id     : i32        // 自定义编号
 }
 
-pub struct NewOrder<'a> {
+pub struct NewOrder {
     pub action     : EntrustAction,
-    pub code       : &'a str,
+    pub code       : String,
     pub size       : i64,
     pub price      : f64,
-    pub price_type : &'a str,
+    pub price_type : String,
     pub order_id   : i32
 }
 
@@ -365,7 +365,7 @@ impl TradeApi {
 
             tqapi_tapi_free_query_orders_result(self.tapi, r);
         }
-        return result;
+        return result
     }
 
     pub fn query_trades(&mut self, account_id : &str, codes : &str) -> Result<Vec<Trade>, String> {
@@ -386,7 +386,7 @@ impl TradeApi {
 
             tqapi_tapi_free_query_trades_result(self.tapi, r);
         }
-        return result;
+        return result
     }
 
     pub fn query_positions(&mut self, account_id : &str, codes : &str) -> Result<Vec<Position>, String> {
@@ -407,14 +407,14 @@ impl TradeApi {
 
             tqapi_tapi_free_query_positions_result(self.tapi, r);
         }
-        return result;
+        return result
     }
 
     pub fn place_order(&mut self, account_id : &str, order: &NewOrder) -> Result<OrderID, String> {
         let c_account = CString::new(account_id).unwrap();
-        let c_code = CString::new(order.code).unwrap();
+        let c_code = CString::new(order.code.as_str()).unwrap();
         let c_action = CString::new(order.action.to_str()).unwrap();
-        let c_price_type = CString::new(order.price_type).unwrap();
+        let c_price_type = CString::new(order.price_type.as_str()).unwrap();
 
         let c_order = CNewOrder {
                 action     : c_action.as_ptr(),
@@ -439,7 +439,7 @@ impl TradeApi {
 
             tqapi_tapi_free_place_order_result(self.tapi, r);
         }
-        return result;
+        return result
     }
 
     pub fn cancel_order(&mut self, account_id: &str, code : &str, entrust_no: &str, order_id: i32) -> Result<bool, String> {
@@ -464,7 +464,7 @@ impl TradeApi {
 
             tqapi_tapi_free_cancel_order_result(self.tapi, r);
         }
-        return result;
+        return result
     }
 
     pub fn query(&mut self, account_id : &str, command : &str, params: &str) -> Result<String, String> {
@@ -483,7 +483,7 @@ impl TradeApi {
 
             tqapi_tapi_free_query_result(self.tapi, r);
         }
-        return result;
+        return result
     }
 
     extern "C" fn on_order(obj : *mut libc::c_void, c_order: *mut COrder) {

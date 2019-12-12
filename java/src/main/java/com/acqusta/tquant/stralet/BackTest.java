@@ -8,14 +8,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class BackTest {
 
     public static class Config {
-        public class Holding {
+        public static class Holding {
             public String code;
             public String side;
             public long   size;
             public double cost_price;
         }
 
-        public class AccountConfig {
+        public static class AccountConfig {
             public String    account_id;
             public double    init_balance;
             public Holding[] init_holdings;

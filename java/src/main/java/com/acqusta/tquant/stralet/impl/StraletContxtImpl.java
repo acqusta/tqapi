@@ -46,7 +46,7 @@ public class StraletContxtImpl implements StraletContext {
 
         this.properties = mapper.readValue(txt, HashMap.class);
         if (this.properties == null)
-            this.properties = new HashMap<String, Object>();
+            this.properties = new HashMap<>();
     }
 
     @Override
