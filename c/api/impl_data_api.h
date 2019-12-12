@@ -42,23 +42,30 @@ namespace tquant { namespace api { namespace impl {
         DataApi_Callback*     m_callback;
         mutex                 m_mtx;
         string                m_source;
+        bool                  m_want_last_tick;
         unordered_map<string, SubInfo> m_sub_info_map;
     public:
         MpRpcDataApiImpl()
             : m_conn(nullptr)
             , m_callback(nullptr)
+            , m_source("local") // XXX should always have a value!
+            , m_want_last_tick(true)
         {
         }
 
         bool init(MpRpc_Connection* conn, const unordered_map<string, string>& properties) {
+            
+            {
+                auto it = properties.find("source");
+                if (it != properties.end())
+                    m_source = it->second;
+            }
 
-            // XXX should always have a value!
-            m_source = "local";
-
-            auto it = properties.find("source");
-            if (it != properties.end())
-                m_source = it->second;
-
+            {
+                auto it = properties.find("want_last_tick");
+                if (it != properties.end())
+                    m_want_last_tick = it->second == "1";
+            }
             conn->set_callback(this);
             m_conn = conn;
             return true;
@@ -224,10 +231,11 @@ namespace tquant { namespace api { namespace impl {
                 }
 
                 MsgPackPacker pk;
-                pk.pack_map(3);
+                pk.pack_map(4);
                 pk.pack_map_item("codes",        ss.str());
                 pk.pack_map_item("want_bin_fmt", true);
                 pk.pack_map_item("source",       e.first);
+                pk.pack_map_item("want_last_tick", false);
 
                 m_conn->m_client->call("dapi.tsq_sub", pk.sb.data, pk.sb.size, 0);
             }
@@ -244,10 +252,11 @@ namespace tquant { namespace api { namespace impl {
             }
 
             MsgPackPacker pk;
-            pk.pack_map(3);
-            pk.pack_map_item ("codes",        ss.str());
-            pk.pack_map_item ("want_bin_fmt", true);
-            pk.pack_map_item("source",        m_source);
+            pk.pack_map(4);
+            pk.pack_map_item ("codes",         ss.str());
+            pk.pack_map_item ("want_bin_fmt",  true);
+            pk.pack_map_item ("source",        m_source);
+            pk.pack_map_item ("want_last_tick",m_want_last_tick);
 
             auto rsp = m_conn->m_client->call("dapi.tsq_sub", pk.sb.data, pk.sb.size);
             if (is_nil(rsp->result))
