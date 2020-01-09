@@ -42,7 +42,7 @@ fn test_dapi() {
     api.subscribe( &vec!["RB.SHF", "000001.SH"].join(",")).expect("subscribed error");
     print!("call get_ticks\n");
 
-    match api.get_ticks(code, 0) {
+    match api.get_ticks(code, 0, 0) {
         Ok(quotes) => for q in quotes { println!("{}", q);}
         Err(msg) => println!("error: {}", msg)
     }

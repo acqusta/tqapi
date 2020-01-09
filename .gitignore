@@ -38,3 +38,4 @@ rs/result
 rs/*.dll
 rs/*.so
 rs/*.dylib
+cmake-build-*

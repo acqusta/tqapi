@@ -204,12 +204,12 @@ extern "C" {
     pub fn tqapi_create_data_api(addr : *const c_char) -> *mut CDataApi;
     pub fn tqapi_free_data_api  (dapi : *mut CDataApi);
 
-    pub fn tqapi_dapi_get_ticks                (dapi : *mut CDataApi, code : *const c_char, trading_day : u32) -> *mut GetTicksResult;
+    pub fn tqapi_dapi_get_ticks                (dapi : *mut CDataApi, code : *const c_char, trading_day : u32, number: i32) -> *mut GetTicksResult;
     pub fn tqapi_dapi_free_get_ticks_result    (dapi : *mut CDataApi, result : *mut GetTicksResult);
-    pub fn tqapi_dapi_get_bars                 (dapi : *mut CDataApi, code : *const c_char, cycle : *const c_char, trading_day : u32, align : i32) -> *mut GetBarsResult;
+    pub fn tqapi_dapi_get_bars                 (dapi : *mut CDataApi, code : *const c_char, cycle : *const c_char, trading_day : u32, align : i32, number: i32) -> *mut GetBarsResult;
     pub fn tqapi_dapi_free_get_bars_result     (dapi : *mut CDataApi, result : *mut GetBarsResult);
 
-    pub fn tqapi_dapi_get_dailybars            (dapi : *mut CDataApi, code : *const c_char, price_type : *const c_char, align : i32) -> *mut GetDailyBarResult;
+    pub fn tqapi_dapi_get_dailybars            (dapi : *mut CDataApi, code : *const c_char, price_type : *const c_char, align : i32, number: i32) -> *mut GetDailyBarResult;
     pub fn tqapi_dapi_free_get_dailybars_result(dapi : *mut CDataApi, result : *mut GetDailyBarResult);
 
     pub fn tqapi_dapi_get_quote                (dapi : *mut CDataApi, code : *const c_char) -> *mut GetQuoteResult;

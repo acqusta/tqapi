@@ -254,12 +254,12 @@ impl DataApi {
         return result;
     }
 
-    pub fn get_ticks(&mut self, code : &str, trading_day : u32) -> Result<Vec<MarketQuote>, String> {
+    pub fn get_ticks(&mut self, code : &str, trading_day : u32, number: i32) -> Result<Vec<MarketQuote>, String> {
         let c_code = CString::new(code).unwrap();
         let mut result : Result<Vec<MarketQuote>, String>;
 
         unsafe {
-            let r = tqapi_dapi_get_ticks(self.dapi, c_code.as_ptr() as *const c_char, trading_day);
+            let r = tqapi_dapi_get_ticks(self.dapi, c_code.as_ptr() as *const c_char, trading_day, number);
             if !(*r).ticks.is_null() {
                 let mut quotes : Vec<MarketQuote> = Vec::new();
                 quotes.reserve_exact( (*r).ticks_length as usize);
@@ -277,7 +277,7 @@ impl DataApi {
         return result;
     }
 
-    pub fn get_bars(&mut self, code : &str, cycle : &str, trading_day : u32, align : bool) -> Result<Vec<Bar>, String> {
+    pub fn get_bars(&mut self, code : &str, cycle : &str, trading_day : u32, align : bool, number: i32) -> Result<Vec<Bar>, String> {
         let c_code = CString::new(code).unwrap();
         let c_cycle = CString::new(cycle).unwrap();
 
@@ -287,7 +287,8 @@ impl DataApi {
                                         c_code.as_ptr() as *const c_char,
                                         c_cycle.as_ptr() as *const c_char,
                                         trading_day,
-                                        if align { 1 } else { 0 } );
+                                        if align { 1 } else { 0 },
+                                        number );
             if !(*r).ticks.is_null() {
                 let mut bars : Vec<Bar> = Vec::new();
                 bars.reserve_exact( (*r).ticks_length as usize);
@@ -305,7 +306,7 @@ impl DataApi {
         return result;
     }
 
-    pub fn get_dailybars(&mut self, code : &str, price_type : &str, align : bool) -> Result<Vec<DailyBar>, String> {
+    pub fn get_dailybars(&mut self, code : &str, price_type : &str, align : bool, number: i32) -> Result<Vec<DailyBar>, String> {
         let c_code       = CString::new(code).unwrap();
         let c_price_type = CString::new(price_type).unwrap();
 
@@ -315,7 +316,8 @@ impl DataApi {
             let r = tqapi_dapi_get_dailybars(self.dapi,
                                              c_code.as_ptr() as *const c_char,
                                              c_price_type.as_ptr() as *const c_char,
-                                             if align { 1} else {0});
+                                             if align { 1} else {0},
+                                             number);
             if !(*r).ticks.is_null() {
                 let mut bars : Vec<DailyBar> = Vec::new();
                 bars.reserve_exact( (*r).ticks_length as usize);
