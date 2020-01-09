@@ -127,7 +127,7 @@ namespace TQuant
             * @param trading_day
             * @return
             */
-            CallResult<MarketQuote[]> GetTick(String code, int trading_day = 0);
+            CallResult<MarketQuote[]> GetTick(String code, int trading_day = 0, int number = 0);
 
             /**
             * 取某个代码的Bar
@@ -141,7 +141,7 @@ namespace TQuant
             * @param align         是否对齐
             * @return
             */
-            CallResult<Bar[]> GetBar(String code, String cycle, int trading_day = 0, bool align=true);
+            CallResult<Bar[]> GetBar(String code, String cycle, int trading_day = 0, bool align=true, int number = 0);
 
             /**
             * 取某个代码的日线
@@ -154,7 +154,7 @@ namespace TQuant
             * @param align         是否对齐
             * @return
             */
-            CallResult<DailyBar[]> GetDailyBar(String code, String price_adj = "", bool align=true);
+            CallResult<DailyBar[]> GetDailyBar(String code, String price_adj = "", bool align=true, int number = 0);
 
             /**
             * 取当前的行情快照

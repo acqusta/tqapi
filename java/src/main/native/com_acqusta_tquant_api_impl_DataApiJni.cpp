@@ -133,10 +133,10 @@ JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_destroy
 /*
  * Class:     com_acqusta_tquant_api_impl_DataApiJni
  * Method:    getTick
- * Signature: (JLjava/lang/String;I)[Lcom/acqusta/tquant/api/DataApi/MarketQuote;
+ * Signature:  (JLjava/lang/String;II)[Lcom/acqusta/tquant/api/DataApi/MarketQuote;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getTick
-    (JNIEnv * env, jclass cls, jlong h, jstring code, jint trading_day)
+    (JNIEnv * env, jclass cls, jlong h, jstring code, jint trading_day, jint number)
 {
     auto wrap = reinterpret_cast<DataApiWrap*>(h);
     if (!wrap) {
@@ -146,7 +146,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getTi
 
     try {
         string s_code = get_string(env, code);
-        auto r = wrap->m_dapi->tick(s_code, trading_day);
+        auto r = wrap->m_dapi->tick(s_code, trading_day, number);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -174,10 +174,10 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getTi
 /*
  * Class:     com_acqusta_tquant_api_impl_DataApiJni
  * Method:    getBar
- * Signature: (JLjava/lang/String;Ljava/lang/String;IZ)[Lcom/acqusta/tquant/api/DataApi/Bar;
+ * Signature: (JLjava/lang/String;Ljava/lang/String;IZI)[Lcom/acqusta/tquant/api/DataApi/Bar;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getBar
-  (JNIEnv *env, jclass cls, jlong h, jstring code, jstring cycle, jint trading_day, jboolean align)
+  (JNIEnv *env, jclass cls, jlong h, jstring code, jstring cycle, jint trading_day, jboolean align, jint number)
 {
     auto wrap = reinterpret_cast<DataApiWrap*>(h);
     if (!wrap) {
@@ -189,7 +189,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getBa
         std::string s_code = get_string(env, code);
         std::string s_cycle = get_string(env, cycle);
 
-        auto r = wrap->m_dapi->bar(s_code, s_cycle.c_str(), trading_day, align!=0);
+        auto r = wrap->m_dapi->bar(s_code, s_cycle.c_str(), trading_day, align!=0, number);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;
@@ -218,10 +218,10 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getBa
 /*
  * Class:     com_acqusta_tquant_api_impl_DataApiJni
  * Method:    getDailyBar
- * Signature: (JLjava/lang/String;Ljava/lang/String;Ljava/lang/Boolean;)[Lcom/acqusta/tquant/api/DataApi/DailyBar;
+ * Signature: (JLjava/lang/String;Ljava/lang/String;ZI)[Lcom/acqusta/tquant/api/DataApi/DailyBar
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getDailyBar
-  (JNIEnv *env, jclass cls, jlong h, jstring code, jstring price_adj, jboolean align)
+  (JNIEnv *env, jclass cls, jlong h, jstring code, jstring price_adj, jboolean align, jint number)
 {
     auto wrap = reinterpret_cast<DataApiWrap*>(h);
     if (!wrap) {
@@ -233,7 +233,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getDa
         std::string s_code      = get_string(env, code);
         std::string s_price_adj = get_string(env, price_adj);
 
-        auto r = wrap->m_dapi->daily_bar(s_code, s_price_adj.c_str(), align != 0);
+        auto r = wrap->m_dapi->daily_bar(s_code, s_price_adj.c_str(), align != 0, number);
         if (!r.value) {
             throwJavaException(env, "%s", r.msg.c_str());
             return 0;

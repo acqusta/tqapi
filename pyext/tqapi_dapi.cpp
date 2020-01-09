@@ -151,9 +151,10 @@ PyObject* _wrap_dapi_bar(PyObject* self, PyObject *args, PyObject* kwargs)
     PyObject*    align;
     const char*  cycle = nullptr;
     PyObject*    df_value;
+    int32_t      number = 0;
 
-    if (!PyArg_ParseTuple(args, "LssiOO",
-        &h, &code, &cycle, &trading_day, &align, &df_value))
+    if (!PyArg_ParseTuple(args, "LssiOOi",
+        &h, &code, &cycle, &trading_day, &align, &df_value, &number))
     {
         return NULL;
     }
@@ -163,7 +164,7 @@ PyObject* _wrap_dapi_bar(PyObject* self, PyObject *args, PyObject* kwargs)
     if (!cycle || !strlen(cycle)) return Py_BuildValue("Os", Py_None, "empty cycle");
 
     auto wrap = reinterpret_cast<DataApiWrap*>(h);
-    auto r = wrap->m_dapi->bar(code, cycle, trading_day, PyObject_IsTrue(align)!=0);
+    auto r = wrap->m_dapi->bar(code, cycle, trading_day, PyObject_IsTrue(align)!=0, number);
 
     if (r.value) {
         if (PyObject_IsTrue(df_value))
@@ -183,9 +184,10 @@ PyObject* _wrap_dapi_dailybar(PyObject* self, PyObject *args, PyObject* kwargs)
     PyObject* align = nullptr;
     const char* price_adj = nullptr;
     PyObject*    df_value;
+    int32_t number = 0;
 
-    if (!PyArg_ParseTuple(args, "LssOO",
-        &h, &code, &price_adj, &align, &df_value))
+    if (!PyArg_ParseTuple(args, "LssOOi",
+        &h, &code, &price_adj, &align, &df_value, &number))
     {
         return NULL;
     }
@@ -195,7 +197,7 @@ PyObject* _wrap_dapi_dailybar(PyObject* self, PyObject *args, PyObject* kwargs)
     if (!price_adj) return Py_BuildValue("Os", Py_None, "null price_adj");
 
     auto wrap = reinterpret_cast<DataApiWrap*>(h);
-    auto r = wrap->m_dapi->daily_bar(code, price_adj, PyObject_IsTrue(align)!=0);
+    auto r = wrap->m_dapi->daily_bar(code, price_adj, PyObject_IsTrue(align)!=0, number);
 
     if (r.value) {
         if (PyObject_IsTrue(df_value))
@@ -212,11 +214,12 @@ PyObject* _wrap_dapi_tick(PyObject* self, PyObject *args, PyObject* kwargs)
 {
     int64_t h = 0;
     const char* code;
-    int trading_day;
+    int32_t trading_day = 0;
     PyObject*    df_value;
+    int32_t number = 0;
 
-    if (!PyArg_ParseTuple(args, "LsiO",
-        &h, &code, &trading_day, &df_value))
+    if (!PyArg_ParseTuple(args, "LsiOi",
+        &h, &code, &trading_day, &df_value, &number))
     {
         return NULL;
     }
@@ -225,7 +228,7 @@ PyObject* _wrap_dapi_tick(PyObject* self, PyObject *args, PyObject* kwargs)
     if (!code || strlen(code)==0) return Py_BuildValue("Os", Py_None, "empty code");
 
     auto wrap = reinterpret_cast<DataApiWrap*>(h);
-    auto r = wrap->m_dapi->tick(code, trading_day);
+    auto r = wrap->m_dapi->tick(code, trading_day, number);
 
     if (r.value) {
 

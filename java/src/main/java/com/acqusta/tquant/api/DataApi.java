@@ -124,7 +124,7 @@ public interface DataApi {
      * @param trading_day
      * @return
      */
-    CallResult<MarketQuote[]> getTick(String code, int trading_day);
+    CallResult<MarketQuote[]> getTick(String code, int trading_day, int number);
 
     /**
      * 取某个代码的Bar
@@ -138,7 +138,7 @@ public interface DataApi {
      * @param align         是否对齐
      * @return
      */
-    CallResult<Bar[]> getBar (String code, String cycle, int trading_day, Boolean align);
+    CallResult<Bar[]> getBar (String code, String cycle, int trading_day, Boolean align, int number);
 
     /**
      * 取某个代码的DailyBar
@@ -150,7 +150,7 @@ public interface DataApi {
      * @param align         是否对齐
      * @return
      */
-    CallResult<DailyBar[]> getDailyBar (String code, String price_adj, Boolean align);
+    CallResult<DailyBar[]> getDailyBar (String code, String price_adj, Boolean align, int number);
 
     /**
      * 取当前的行情快照

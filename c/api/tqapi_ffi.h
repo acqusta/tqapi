@@ -360,9 +360,9 @@ extern "C" {
 
     _TQAPI_EXPORT DataApiCallback*   tqapi_dapi_set_callback    (DataApi* dapi, DataApiCallback* callback);
 
-    _TQAPI_EXPORT GetTickResult*     tqapi_dapi_get_ticks       (DataApi* dapi, const char* code, int trade_date);
-    _TQAPI_EXPORT GetBarResult*      tqapi_dapi_get_bars        (DataApi* dapi, const char* code, const char* cycle, int trade_date, int align);
-    _TQAPI_EXPORT GetDailyBarResult* tqapi_dapi_get_dailybars   (DataApi* dapi, const char* code, const char* price_type, int align);
+    _TQAPI_EXPORT GetTickResult*     tqapi_dapi_get_ticks       (DataApi* dapi, const char* code, int trade_date, int number);
+    _TQAPI_EXPORT GetBarResult*      tqapi_dapi_get_bars        (DataApi* dapi, const char* code, const char* cycle, int trade_date, int align, int number);
+    _TQAPI_EXPORT GetDailyBarResult* tqapi_dapi_get_dailybars   (DataApi* dapi, const char* code, const char* price_type, int align, int number);
     _TQAPI_EXPORT GetQuoteResult*    tqapi_dapi_get_quote       (DataApi* dapi, const char* code);
     _TQAPI_EXPORT SubscribeResult*   tqapi_dapi_subscribe       (DataApi* dapi, const char*codes);
     _TQAPI_EXPORT UnSubscribeResult* tqapi_dapi_unsubscribe     (DataApi* dapi, const char*codes);

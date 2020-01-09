@@ -18,7 +18,7 @@ static vector<int> get_calendar(DataApi* dapi)
 
     unordered_set<int> date_set;
     for (auto& code : codes) {
-        auto r = dapi->daily_bar(code, "", true);
+        auto r = dapi->daily_bar(code, "", true, 0);
         if (!r.value) {
             //cerr << "Can't get daily_bar 000001.SH:" << r.msg;
             //throw std::runtime_error("Can't get calendar");

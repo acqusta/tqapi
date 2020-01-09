@@ -26,26 +26,26 @@ JNIEXPORT void JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_destroy
 /*
  * Class:     com_acqusta_tquant_api_impl_DataApiJni
  * Method:    getTick
- * Signature: (JLjava/lang/String;I)[Lcom/acqusta/tquant/api/DataApi/MarketQuote;
+ * Signature: (JLjava/lang/String;II)[Lcom/acqusta/tquant/api/DataApi/MarketQuote;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getTick
-  (JNIEnv *, jclass, jlong, jstring, jint);
+  (JNIEnv *, jclass, jlong, jstring, jint, jint);
 
 /*
  * Class:     com_acqusta_tquant_api_impl_DataApiJni
  * Method:    getBar
- * Signature: (JLjava/lang/String;Ljava/lang/String;IZ)[Lcom/acqusta/tquant/api/DataApi/Bar;
+ * Signature: (JLjava/lang/String;Ljava/lang/String;IZI)[Lcom/acqusta/tquant/api/DataApi/Bar;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getBar
-  (JNIEnv *, jclass, jlong, jstring, jstring, jint, jboolean);
+  (JNIEnv *, jclass, jlong, jstring, jstring, jint, jboolean, jint);
 
 /*
  * Class:     com_acqusta_tquant_api_impl_DataApiJni
  * Method:    getDailyBar
- * Signature: (JLjava/lang/String;Ljava/lang/String;Z)[Lcom/acqusta/tquant/api/DataApi/DailyBar;
+ * Signature: (JLjava/lang/String;Ljava/lang/String;ZI)[Lcom/acqusta/tquant/api/DataApi/DailyBar;
  */
 JNIEXPORT jobjectArray JNICALL Java_com_acqusta_tquant_api_impl_DataApiJni_getDailyBar
-  (JNIEnv *, jclass, jlong, jstring, jstring, jboolean);
+  (JNIEnv *, jclass, jlong, jstring, jstring, jboolean, jint);
 
 /*
  * Class:     com_acqusta_tquant_api_impl_DataApiJni

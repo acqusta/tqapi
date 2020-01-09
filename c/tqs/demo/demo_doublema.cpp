@@ -51,7 +51,7 @@ void DoubleMAStralet::on_init()
 
 void DoubleMAStralet::on_fini() 
 {
-    auto r = ctx()->data_api()->bar(m_contract.c_str(), "1m", 0, true);
+    auto r = ctx()->data_api()->bar(m_contract.c_str(), "1m", 0, true, 0);
     if (r.value)
         ctx()->logger(INFO) <<  "on_fini: " << ctx()->trading_day() << ", bar count " << r.value->size() << endl;
     else
@@ -134,7 +134,7 @@ void DoubleMAStralet::on_bar(const string& cycle, shared_ptr<const Bar> bar)
         return;
     }
 
-    auto r = dapi->bar(m_contract.c_str(), "1m", 0, true);
+    auto r = dapi->bar(m_contract.c_str(), "1m", 0, true, 0);
     if (!r.value) return;
     auto bars = r.value;
 

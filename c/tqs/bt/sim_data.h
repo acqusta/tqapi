@@ -44,9 +44,9 @@ namespace tquant { namespace stralet { namespace backtest {
         {
         }
 
-        virtual CallResult<const MarketQuoteArray> tick       (const string& code, int trading_day) override;
-        virtual CallResult<const BarArray>         bar        (const string& code, const string& cycle, int trading_day, bool align) override;
-        virtual CallResult<const DailyBarArray>    daily_bar  (const string& code, const string& price_adj, bool align) override;
+        virtual CallResult<const MarketQuoteArray> tick       (const string& code, int trading_day, int number) override;
+        virtual CallResult<const BarArray>         bar        (const string& code, const string& cycle, int trading_day, bool align, int number) override;
+        virtual CallResult<const DailyBarArray>    daily_bar  (const string& code, const string& price_adj, bool align, int number) override;
         virtual CallResult<const MarketQuote>      quote      (const string& code) override;
         virtual CallResult<const vector<string>>   subscribe  (const vector<string>& codes) override;
         virtual CallResult<const vector<string>>   unsubscribe(const vector<string>& codes) override;

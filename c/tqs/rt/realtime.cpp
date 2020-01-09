@@ -25,19 +25,19 @@ namespace tquant { namespace stralet { namespace realtime {
             : m_dapi(dapi)
         {}
 
-        virtual CallResult<const MarketQuoteArray> tick(const string& code, int trading_day) override
+        virtual CallResult<const MarketQuoteArray> tick(const string& code, int trading_day, int number) override
         {
-            return m_dapi->tick(code, trading_day);
+            return m_dapi->tick(code, trading_day, number);
         }
 
-        virtual CallResult<const BarArray> bar(const string& code, const string& cycle, int trading_day, bool align) override
+        virtual CallResult<const BarArray> bar(const string& code, const string& cycle, int trading_day, bool align, int number) override
         {
-            return m_dapi->bar(code, cycle, trading_day, align);
+            return m_dapi->bar(code, cycle, trading_day, align, number);
         }
 
-        virtual CallResult<const DailyBarArray> daily_bar(const string& code, const string& price_adj, bool align) override
+        virtual CallResult<const DailyBarArray> daily_bar(const string& code, const string& price_adj, bool align, int number) override
         {
-            return m_dapi->daily_bar(code, price_adj, align);
+            return m_dapi->daily_bar(code, price_adj, align, number);
         }
 
         virtual CallResult<const MarketQuote> quote(const string& code) override

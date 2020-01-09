@@ -38,17 +38,17 @@ namespace TQuant
 
                 [DllImport("tqapi", EntryPoint = "dapi_get_bar", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr dapi_get_bar(IntPtr h, String code, String cycle,
-                                                         Int32 trading_day, Boolean align);
+                                                         Int32 trading_day, Boolean align, Int32 number);
 
                 [DllImport("tqapi", EntryPoint = "dapi_get_daily_bar", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr dapi_get_daily_bar(IntPtr h, String code, String cycle,
-                                                               Boolean align);
+                                                               Boolean align, Int32 number);
 
                 [DllImport("tqapi", EntryPoint = "dapi_get_quote", CallingConvention = CallingConvention.Cdecl)]
                 public static extern IntPtr dapi_get_quote(IntPtr h, String code);
 
                 [DllImport("tqapi", EntryPoint = "dapi_get_tick", CallingConvention = CallingConvention.Cdecl)]
-                public static extern IntPtr dapi_get_tick(IntPtr h, String code, Int32 trading_day);
+                public static extern IntPtr dapi_get_tick(IntPtr h, String code, Int32 trading_day, Int32 number);
 
                 [DllImport("tqapi", EntryPoint = "destroy_callresult", CallingConvention = CallingConvention.Cdecl)]
                 public static extern void destroy_callresult(IntPtr h);
@@ -176,9 +176,9 @@ namespace TQuant
                     }
                 }
 
-                public CallResult<Bar[]> GetBar(string code, string cycle, int trading_day, bool align)
+                public CallResult<Bar[]> GetBar(string code, string cycle, int trading_day, bool align, int number)
                 {
-                    IntPtr r = TqapiDll.dapi_get_bar(handle, code, cycle, trading_day, align);
+                    IntPtr r = TqapiDll.dapi_get_bar(handle, code, cycle, trading_day, align, number);
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
 
                     CallResult<Bar[]> ret;
@@ -191,9 +191,9 @@ namespace TQuant
                     return ret;
                 }
 
-                public CallResult<DailyBar[]> GetDailyBar(string code, string price_adj, bool align)
+                public CallResult<DailyBar[]> GetDailyBar(string code, string price_adj, bool align, int number)
                 {
-                    IntPtr r = TqapiDll.dapi_get_daily_bar(handle, code, price_adj, align);
+                    IntPtr r = TqapiDll.dapi_get_daily_bar(handle, code, price_adj, align, number);
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
 
                     CallResult<DailyBar[]> ret;
@@ -221,9 +221,9 @@ namespace TQuant
                     return ret;
                 }
 
-                public CallResult<MarketQuote[]> GetTick(string code, int trading_day)
+                public CallResult<MarketQuote[]> GetTick(string code, int trading_day, int number)
                 {
-                    IntPtr r = TqapiDll.dapi_get_tick(handle, code, trading_day);
+                    IntPtr r = TqapiDll.dapi_get_tick(handle, code, trading_day, number);
                     var cr = Marshal.PtrToStructure<TqapiDll.CallResultWrap>(r);
 
                     CallResult<MarketQuote[]> ret;

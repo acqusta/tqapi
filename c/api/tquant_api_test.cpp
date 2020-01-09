@@ -81,7 +81,7 @@ void test_dapi(DataApi* dapi)
     }
 
     if (0) {
-        auto  r = dapi->bar(code, "1m", 0, true);
+        auto  r = dapi->bar(code, "1m", 0, true, 0);
         if (r.value) {
             for (size_t i = 0; i < r.value->size(); i++) {
                 auto& b = r.value->at(i);
@@ -96,7 +96,7 @@ void test_dapi(DataApi* dapi)
     }
 
     if (1) {
-        auto  r = dapi->daily_bar(code, "forward", true);
+        auto  r = dapi->daily_bar(code, "forward", true, 0);
         if (r.value) {
             for (size_t i = 0; i < r.value->size(); i++) {
                 auto& b = r.value->at(i);
@@ -111,7 +111,7 @@ void test_dapi(DataApi* dapi)
     }
 
     if (1) {
-        auto r = dapi->tick(code, 0);
+        auto r = dapi->tick(code, 0, 0);
         if (r.value) {
             //for (auto& t : *r.value)
             for (size_t i = 0; i < r.value->size(); i++) {
@@ -145,7 +145,7 @@ void test_dapi(DataApi* dapi)
             20171113, 20171114, 20171115, 20171116, 20171117,
             20171120, 20171121, 20171122, 20171123, 20171124 };
         for (int i = 0; i < 15; i++) {
-            auto ticks = dapi->tick(code, dates[i]);
+            auto ticks = dapi->tick(code, dates[i], 0);
             if (ticks.value) {
                 total_count += ticks.value->size();
                 //for (auto& t : *ticks.value)
@@ -341,7 +341,7 @@ void perf_test2(DataApi* dapi)
 
         string real_code = get_code(code, date);
         //auto ticks = dapi->bar(real_code, "1m", bar.date, false);
-        auto ticks = dapi->tick(real_code, date);
+        auto ticks = dapi->tick(real_code, date, 0);
 
         if (ticks.value) {
             date_count++;
@@ -402,7 +402,7 @@ void perf_test3(DataApi* dapi)
     size_t total_count = 0;
     int loop = 1000;
     for (int i = 0; i < loop; i++) {
-        auto ticks = dapi->tick(code, 20190426);
+        auto ticks = dapi->tick(code, 20190426, 0);
         //auto ticks = dapi->bar(code, "1m", 0, true);
         if (ticks.value) {
             total_count += ticks.value->size();

@@ -70,9 +70,9 @@ extern "C" {
         tquant::api::CallResult<const tquant::api::MarketQuoteArray> result;
     };
 
-    GetTickResult* tqapi_dapi_get_ticks(DataApi* dapi, const char* code, int trade_date)
+    GetTickResult* tqapi_dapi_get_ticks(DataApi* dapi, const char* code, int trade_date, int number)
     {
-        auto r = dapi->instance->tick(code, trade_date);
+        auto r = dapi->instance->tick(code, trade_date, number);
 
         //dapi->cb->on_quote(nullptr, dapi->cb->user_data);
         // for (int i = 0; i < r.value->size(); i++) {
@@ -109,9 +109,9 @@ extern "C" {
         tquant::api::CallResult<const tquant::api::BarArray> result;
     };
 
-    GetBarResult* tqapi_dapi_get_bars(DataApi* dapi, const char* code, const char* cycle, int trade_date, int align)
+    GetBarResult* tqapi_dapi_get_bars(DataApi* dapi, const char* code, const char* cycle, int trade_date, int align, int number)
     {
-        auto r = dapi->instance->bar(code, cycle, trade_date, align);
+        auto r = dapi->instance->bar(code, cycle, trade_date, align, number);
         auto gbr = new GetBarResult;
         gbr->data =  new GetBarResultData;
         gbr->data->result = r;
@@ -143,9 +143,9 @@ extern "C" {
         tquant::api::CallResult<const tquant::api::DailyBarArray> result;
     };
 
-    GetDailyBarResult* tqapi_dapi_get_dailybars(DataApi* dapi, const char* code, const char* price_type, int align)
+    GetDailyBarResult* tqapi_dapi_get_dailybars(DataApi* dapi, const char* code, const char* price_type, int align, int number)
     {
-        auto r = dapi->instance->daily_bar(code, price_type, align);
+        auto r = dapi->instance->daily_bar(code, price_type, align, number);
         auto gbr  = new GetDailyBarResult;
         gbr->data = new GetDailyBarResultData;
         gbr->data->result = r;

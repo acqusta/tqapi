@@ -80,7 +80,7 @@ void RBreakerStralet::on_init()
 
 void RBreakerStralet::on_fini() 
 {
-    auto r = ctx()->data_api()->bar(this->contract.c_str(), "1m", 0, true);
+    auto r = ctx()->data_api()->bar(this->contract.c_str(), "1m", 0, true, 0);
     if (r.value)
         ctx()->logger(INFO) <<  "on_fini: " << ctx()->trading_day() << ", bar count " << r.value->size() << endl;
     else
@@ -161,7 +161,7 @@ void RBreakerStralet::on_bar(const string& cycle, shared_ptr<const Bar> bar)
         double high = 0.0;
         double low = 100000000.0;
         double close = 0.0;
-        auto r = ctx()->data_api()->bar(contract.c_str(), "1m", 0, true);
+        auto r = ctx()->data_api()->bar(contract.c_str(), "1m", 0, true, 0);
         //for (auto & b : *r.value) {
         for (int i =0; i < r.value->size(); i++) {
             auto b = &r.value->at(i);
@@ -180,7 +180,7 @@ void RBreakerStralet::on_bar(const string& cycle, shared_ptr<const Bar> bar)
     // 简单处理，如果有在途订单，直接取消
     if (cancel_unfinished_order() > 0) return;
 
-    auto r = dapi->bar(contract.c_str(), "1m", 0, true);
+    auto r = dapi->bar(contract.c_str(), "1m", 0, true, 0);
     if (!r.value && r.value->size() < 2) {
         ctx()->logger() << "error: dapi.bar: " << r.msg << endl;
         return;

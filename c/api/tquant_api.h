@@ -283,7 +283,7 @@ namespace tquant {
 			* @param trading_day
 			* @return
 			*/
-			virtual CallResult<const MarketQuoteArray> tick(const string& code, int trading_day) = 0;
+			virtual CallResult<const MarketQuoteArray> tick(const string& code, int trading_day, int number) = 0;
 
 			/**
 			* 取某个代码的Bar
@@ -297,7 +297,7 @@ namespace tquant {
 			* @param align         是否对齐
 			* @return
 			*/
-			virtual CallResult<const BarArray> bar(const string& code, const string& cycle, int trading_day, bool align) = 0;
+			virtual CallResult<const BarArray> bar(const string& code, const string& cycle, int trading_day, bool align, int number) = 0;
 
 			/**
 			* 取某个代码的日线
@@ -310,7 +310,7 @@ namespace tquant {
 			* @param align         是否对齐
 			* @return
 			*/
-			virtual CallResult<const DailyBarArray> daily_bar(const string& code, const string& price_adj, bool align) = 0;
+			virtual CallResult<const DailyBarArray> daily_bar(const string& code, const string& price_adj, bool align, int number) = 0;
 
 			/**
 			* 取当前的行情快照

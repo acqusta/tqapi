@@ -21,27 +21,27 @@ public class DataApiImpl implements DataApi {
     }
 
     @Override
-    public CallResult<MarketQuote[]> getTick(String code, int trading_day) {
+    public CallResult<MarketQuote[]> getTick(String code, int trading_day, int number) {
         try {
-            return new CallResult(DataApiJni.getTick(this.handle, code, trading_day), "");
+            return new CallResult(DataApiJni.getTick(this.handle, code, trading_day, number), "");
         }catch (Exception e) {
             return new CallResult(null, e.getMessage());
         }
     }
 
     @Override
-    public CallResult<DailyBar[]> getDailyBar (String code, String price_adj, Boolean align) {
+    public CallResult<DailyBar[]> getDailyBar (String code, String price_adj, Boolean align, int number) {
         try {
-            return new CallResult(DataApiJni.getDailyBar(this.handle, code, price_adj, align), "");
+            return new CallResult(DataApiJni.getDailyBar(this.handle, code, price_adj, align, number), "");
         }catch (Exception e) {
             return new CallResult(null, e.getMessage());
         }
     }
 
     @Override
-    public CallResult<Bar[]> getBar(String code, String cycle, int trading_day, Boolean align) {
+    public CallResult<Bar[]> getBar(String code, String cycle, int trading_day, Boolean align, int number) {
         try {
-            return new CallResult(DataApiJni.getBar(this.handle, code,  cycle, trading_day, align), "");
+            return new CallResult(DataApiJni.getBar(this.handle, code,  cycle, trading_day, align, number), "");
         }catch (Exception e) {
             return new CallResult(null, e.getMessage());
         }

@@ -76,14 +76,15 @@ namespace tquant { namespace api { namespace impl {
             if (m_conn) delete m_conn;
         }
 
-        virtual CallResult<const MarketQuoteArray> tick(const string& code, int trading_day) override
+        virtual CallResult<const MarketQuoteArray> tick(const string& code, int trading_day, int number) override
         {
             mprpc::MsgPackPacker pk;
-            pk.pack_map(4);
+            pk.pack_map(5);
             pk.pack_map_item("code",        code);
             pk.pack_map_item("trading_day", trading_day);
             pk.pack_map_item("_format",     "bin");
             pk.pack_map_item("source",      m_source);
+            pk.pack_map_item("number",      number);
 
             auto rsp = m_conn->m_client->call("dapi.tst", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
@@ -103,16 +104,17 @@ namespace tquant { namespace api { namespace impl {
             return CallResult<const MarketQuoteArray>(ticks);
         }
 
-        virtual CallResult<const BarArray> bar(const string& code, const string& cycle, int trading_day, bool align) override
+        virtual CallResult<const BarArray> bar(const string& code, const string& cycle, int trading_day, bool align, int number) override
         {
             MsgPackPacker pk;
-            pk.pack_map(6);
+            pk.pack_map(7);
             pk.pack_map_item("code",        code);
             pk.pack_map_item("cycle",       cycle);
             pk.pack_map_item("trading_day", trading_day);
             pk.pack_map_item("align",       align);
             pk.pack_map_item("_format",     "bin");
             pk.pack_map_item("source",      m_source);
+            pk.pack_map_item("number",      number);
 
             auto rsp = m_conn->m_client->call("dapi.tsi", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))
@@ -133,16 +135,17 @@ namespace tquant { namespace api { namespace impl {
             return CallResult<const BarArray>(bars);
         }
 
-        virtual CallResult<const DailyBarArray> daily_bar(const string& code, const string& price_adj, bool align) override
+        virtual CallResult<const DailyBarArray> daily_bar(const string& code, const string& price_adj, bool align, int number) override
         {
             MsgPackPacker pk;
-            pk.pack_map(6);
+            pk.pack_map(7);
             pk.pack_map_item("code",        code);
             pk.pack_map_item("cycle",       "1d");
             pk.pack_map_item("price_adj",   price_adj);
             pk.pack_map_item("align",       align);
             pk.pack_map_item("_format",     "bin");
             pk.pack_map_item("source",       m_source);
+            pk.pack_map_item("number",       number);
 
             auto rsp = m_conn->m_client->call("dapi.tsi", pk.sb.data, pk.sb.size);
             if (!is_bin(rsp->result))

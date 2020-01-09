@@ -56,11 +56,11 @@ class DataApiJni extends TQuantApi {
 
     static native void destroy(long handle);
 
-    static native DataApi.MarketQuote[] getTick(long handle, String code, int trading_day);
+    static native DataApi.MarketQuote[] getTick(long handle, String code, int trading_day, int number);
 
-    static native DataApi.Bar[] getBar (long handle, String code, String cycle, int trading_day, boolean align);
+    static native DataApi.Bar[] getBar (long handle, String code, String cycle, int trading_day, boolean align, int number);
 
-    static native DataApi.DailyBar[] getDailyBar (long handle, String code, String price_adj, boolean align);
+    static native DataApi.DailyBar[] getDailyBar (long handle, String code, String price_adj, boolean align, int number);
 
     static native DataApi.MarketQuote getQuote (long handle, String code);
 
@@ -69,7 +69,6 @@ class DataApiJni extends TQuantApi {
     static native String[] unsubscribe(long handle, String[] codes);
 
     static native void setCallback(long handle, DataApi.Callback callback);
-
 }
 
 class JniHelper {

@@ -227,8 +227,8 @@ class DataApi:
     def quote(self, code):
         return _tqapi.dapi_quote(self._handle, str(code))
 
-    def bar(self, code, cycle="1m", trading_day=0, align=True, index=False, df_value=True):
-        v, msg = _tqapi.dapi_bar(self._handle, str(code), str(cycle), int(trading_day), bool(align), bool(df_value))
+    def bar(self, code, cycle="1m", trading_day=0, align=True, index=False, df_value=True, number=0):
+        v, msg = _tqapi.dapi_bar(self._handle, str(code), str(cycle), int(trading_day), bool(align), bool(df_value), int(number))
         if not df_value:
             return (v, msg)
 
@@ -240,8 +240,8 @@ class DataApi:
         else:
             return (v, msg)
 
-    def daily_bar(self, code, price_adj="", align=True, index=False, df_value=True):
-        v, msg = _tqapi.dapi_dailybar(self._handle, str(code), str(price_adj), bool(align), bool(df_value))
+    def daily_bar(self, code, price_adj="", align=True, index=False, df_value=True, number=0):
+        v, msg = _tqapi.dapi_dailybar(self._handle, str(code), str(price_adj), bool(align), bool(df_value), int(number))
         if not df_value:
             return (v, msg)
 
@@ -253,8 +253,8 @@ class DataApi:
         else:
             return (v, msg)
 
-    def tick(self, code, trading_day=0, index=False, df_value=True):
-        v, msg = _tqapi.dapi_tick(self._handle, str(code), int(trading_day), bool (df_value))
+    def tick(self, code, trading_day=0, index=False, df_value=True, number=0):
+        v, msg = _tqapi.dapi_tick(self._handle, str(code), int(trading_day), bool (df_value), int(number))
         if not df_value:
             return (v, msg)
 

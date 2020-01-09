@@ -53,7 +53,7 @@ public class DataApiDemo {
     void testBar() {
 
         try {
-            DataApi.CallResult<DataApi.Bar[]> result = dapi.getBar("000001.SH", "1m", 0, false);
+            DataApi.CallResult<DataApi.Bar[]> result = dapi.getBar("000001.SH", "1m", 0, false, 0);
 
             if ( result.value !=null) {
                 for ( DataApi.Bar bar : result.value) {
@@ -73,7 +73,7 @@ public class DataApiDemo {
     void testTick() {
 
         try {
-            DataApi.CallResult<DataApi.MarketQuote[]> result = dapi.getTick("000001.SH", 0);
+            DataApi.CallResult<DataApi.MarketQuote[]> result = dapi.getTick("000001.SH", 0, 0);
 
             if (result.value != null) {
                 for ( DataApi.MarketQuote q : result.value) {
@@ -92,7 +92,7 @@ public class DataApiDemo {
         long t = System.currentTimeMillis();
 
         for ( int i = 0; i < 100; i++)
-            dapi.getTick("000001.SH", 0);
+            dapi.getTick("000001.SH", 0, 0);
 
         System.out.println("tick time:" + (System.currentTimeMillis() -t ) / 100);
     }
@@ -136,14 +136,14 @@ public class DataApiDemo {
     void testPerf() {
         try {
             dapi.subscribe(new String[]{"IF.CFE"});
-            CallResult<DailyBar[]> r = dapi.getDailyBar("IF.CFE", "", true);
+            CallResult<DailyBar[]> r = dapi.getDailyBar("IF.CFE", "", true, 0);
             long begin_time = System.currentTimeMillis();
             int count  = 0;
             int dates = 0;
             for (DailyBar bar : r.value) {
                 if (bar.date > 20171001) {
                     dates += 1;
-                    DataApi.CallResult<DataApi.MarketQuote[]> result = dapi.getTick("IF.CFE", bar.date);
+                    DataApi.CallResult<DataApi.MarketQuote[]> result = dapi.getTick("IF.CFE", bar.date, 0);
                     if (result.value != null) {
                         count += result.value.length;
                     } else {

@@ -28,7 +28,7 @@ static int cmp_time(int date_1, int time_1, int date_2, int time_2)
     return 1;
 }
 
-CallResult<const MarketQuoteArray> SimDataApi::tick(const string& code, int trading_day)
+CallResult<const MarketQuoteArray> SimDataApi::tick(const string& code, int trading_day, int number)
 {
     if (trading_day == 0 || trading_day == m_ctx->trading_day()) {
         auto it = m_tick_caches.find(code);
@@ -39,11 +39,11 @@ CallResult<const MarketQuoteArray> SimDataApi::tick(const string& code, int trad
         return CallResult<const MarketQuoteArray>(it->second->ticks);
     }
     else {
-        return m_dapi->tick(code, trading_day);
+        return m_dapi->tick(code, trading_day, number);
     }
 }
 
-CallResult<const BarArray> SimDataApi::bar(const string& code, const string& cycle, int trading_day, bool align)
+CallResult<const BarArray> SimDataApi::bar(const string& code, const string& cycle, int trading_day, bool align, int number)
 {
     if (cycle != "1m")
         return CallResult<const BarArray>("-1,unsupported cycle");
@@ -60,15 +60,15 @@ CallResult<const BarArray> SimDataApi::bar(const string& code, const string& cyc
         return CallResult<const BarArray>(it->second->bars);
     }
     else if (trading_day < m_ctx->trading_day())
-        return m_dapi->bar(code, cycle, trading_day, align);
+        return m_dapi->bar(code, cycle, trading_day, align, number);
     else
         return CallResult<const BarArray>("-1,try to get data after current trading_day");
 }
 
-CallResult<const DailyBarArray> SimDataApi::daily_bar(const string& code, const string& price_adj, bool align)
+CallResult<const DailyBarArray> SimDataApi::daily_bar(const string& code, const string& price_adj, bool align, int number)
 {
     // TODO: get it from cache.
-    auto r = m_dapi->daily_bar(code, price_adj, align);
+    auto r = m_dapi->daily_bar(code, price_adj, align, 0);
     if (r.value) {
         auto today = m_ctx->trading_day();
         auto bars = r.value;
@@ -137,7 +137,7 @@ void SimDataApi::preload_bar(const vector<string>& codes)
 
     for (auto& code : codes) {
         if (m_bar_caches.find(code) != m_bar_caches.end()) continue;
-        auto r = m_dapi->bar(code.c_str(), "1m", m_ctx->trading_day(), true);
+        auto r = m_dapi->bar(code.c_str(), "1m", m_ctx->trading_day(), true, 0);
         if (!r.value) {
             cerr << "no bar data " << m_ctx->trading_day() << "," << code << endl;
             continue;
@@ -177,7 +177,7 @@ void SimDataApi::preload_daily_bar(const vector<string>& codes)
         if (m_dailybar_caches.find(code) != m_dailybar_caches.end()) continue;
 
         // 不复权
-        auto r = m_dapi->daily_bar(code.c_str(), "", true);
+        auto r = m_dapi->daily_bar(code.c_str(), "", true, 0);
         if (!r.value) {
             cerr << "no daily_bar data " << code << endl;
             continue;
@@ -209,7 +209,7 @@ void SimDataApi::preload_tick(const vector<string>& codes)
 
     for (auto& code : codes) {
         if (m_tick_caches.find(code) != m_tick_caches.end()) continue;
-        auto r = m_dapi->tick(code.c_str(), m_ctx->trading_day());
+        auto r = m_dapi->tick(code.c_str(), m_ctx->trading_day(), 0);
         if (!r.value) continue;
 
         auto ticks = r.value;

@@ -52,13 +52,13 @@ void destroy_callresult(void* h)
 }
 
 extern "C" _TQAPI_EXPORT
-CallResultWrap* dapi_get_bar(void* h, const char* code, const char* cycle, int trading_day, bool align)
+CallResultWrap* dapi_get_bar(void* h, const char* code, const char* cycle, int trading_day, bool align, int number)
 {
     auto dapi = reinterpret_cast<DataApi*>(h);
     assert(dapi);
 
     CallResultWrap* cr = new CallResultWrap();
-    auto r = dapi->bar(code, cycle, trading_day, align);
+    auto r = dapi->bar(code, cycle, trading_day, align, number);
     if (r.value) {
         cr->bars = r.value;
         cr->value = reinterpret_cast<const void*>(cr->bars->data());
@@ -73,13 +73,13 @@ CallResultWrap* dapi_get_bar(void* h, const char* code, const char* cycle, int t
 }
 
 extern "C" _TQAPI_EXPORT
-CallResultWrap* dapi_get_daily_bar(void* h, const char* code, const char* price_adj, bool align)
+CallResultWrap* dapi_get_daily_bar(void* h, const char* code, const char* price_adj, bool align, int number)
 {
     auto dapi = reinterpret_cast<DataApi*>(h);
     assert(dapi);
 
     CallResultWrap* cr = new CallResultWrap();
-    auto r = dapi->daily_bar(code, price_adj, align);
+    auto r = dapi->daily_bar(code, price_adj, align, number);
     if (r.value) {
         cr->daily_bars = r.value;
         cr->value = reinterpret_cast<const void*>(cr->daily_bars->data());
@@ -94,13 +94,13 @@ CallResultWrap* dapi_get_daily_bar(void* h, const char* code, const char* price_
 }
 
 extern "C" _TQAPI_EXPORT
-CallResultWrap* dapi_get_tick(void* h, const char* code, int trading_day)
+CallResultWrap* dapi_get_tick(void* h, const char* code, int trading_day, int number)
 {
     auto dapi = reinterpret_cast<DataApi*>(h);
     assert(dapi);
 
     CallResultWrap* cr = new CallResultWrap();
-    auto r = dapi->tick(code, trading_day);
+    auto r = dapi->tick(code, trading_day, number);
     if (r.value) {
         cr->quotes = r.value;
         cr->value = reinterpret_cast<const void*>(cr->quotes->data());
