@@ -13,7 +13,7 @@ namespace Test
         static void TestDataApi(DataApi dapi)
         {
             {
-                var r = dapi.GetBar("000001.SH", "1m", 0, true);
+                var r = dapi.GetBar("000001.SH", "1m", 0, true, number:10);
                 if (r.Value != null)
                 {
                     foreach (var bar in r.Value)
@@ -30,7 +30,7 @@ namespace Test
                 }
             }
             {
-                var r = dapi.GetTick("600000.SH");
+                var r = dapi.GetTick("600000.SH", number:10);
                 if (r.Value != null)
                 {
                     foreach (var tick in r.Value)
@@ -43,7 +43,7 @@ namespace Test
                 }
             }
             {
-                var r = dapi.GetDailyBar("000001.SH", "", true);
+                var r = dapi.GetDailyBar("000001.SH", "", true, number:10);
                 if (r.Value != null)
                 {
                     foreach (var bar in r.Value)
@@ -420,9 +420,9 @@ namespace Test
         {
             if (true)
             {
-                var dapi = TQuantApi.CreateDataApi("ipc://tqc_10001");
+                var dapi = TQuantApi.CreateDataApi("tcp://192.168.2.231:10002");
                 //var tapi = TQuantApi.CreateTradeApi("ipc://tqc_10001");
-                //TestDataApi(dapi);
+                TestDataApi(dapi);
                 //TestDataApi2(dapi);
                 //TestTradeApi(tapi);
                 PerfTest(dapi);

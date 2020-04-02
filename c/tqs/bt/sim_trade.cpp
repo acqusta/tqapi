@@ -282,15 +282,15 @@ SimAccount::SimAccount(SimStraletContext* ctx, const string& account_id,
                        const vector<Holding> & holdings)
 {
     m_ctx = ctx;
-    auto tdata = make_shared<TradeData>();
-    tdata->account_id     = account_id;
-    tdata->init_balance   = init_balance;
-    tdata->avail_balance = init_balance;
+    m_tdata = make_shared<TradeData>();
+    m_tdata->account_id     = account_id;
+    m_tdata->init_balance   = init_balance;
+    m_tdata->avail_balance = init_balance;
 
-    tdata->frozen_balance = 0.0;
-    tdata->trading_day    = 0;
-    tdata->frozen_margin  = 0.0;
-    tdata->margin         = 0.0;
+    m_tdata->frozen_balance = 0.0;
+    m_tdata->trading_day    = 0;
+    m_tdata->frozen_margin  = 0.0;
+    m_tdata->margin         = 0.0;
 
     for (auto& h : holdings) {
         auto pos = get_position(h.code, h.side)->position;
@@ -300,7 +300,6 @@ SimAccount::SimAccount(SimStraletContext* ctx, const string& account_id,
         pos->side        = h.side;
     }
 
-    m_tdata = tdata;
     m_his_tdata.push_back(m_tdata);
 }
 

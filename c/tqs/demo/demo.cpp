@@ -38,7 +38,7 @@ public:
 };
 
 int test1()
-{	getchar();
+{
 
     backtest::BackTestConfig cfg;
     //cfg.dapi_addr = "tcp://127.0.0.1:10001";
@@ -49,7 +49,30 @@ int test1()
 
     auto begin_time = system_clock::now();
 
-    backtest::run(cfg, []() { return new MyStralet(); });
+    const char* txt = "{ \
+        \"dapi_addr\": \"tcp://192.168.2.231:10002\",\
+        \"data_level\" : \"tk\",\
+        \"begin_date\" : 20191030,\
+        \"end_date\" : 20191030,\
+        \"result_dir\" : null,\
+        \"accounts\" : [{\
+        \"account_id\": \"sim\",\
+            \"init_balance\" : 1.0E10,\
+            \"init_holdings\" : [{\
+            \"code\": \"600000.SH\",\
+                \"side\" : \"Long\",\
+                \"size\" : 100000,\
+                \"cost_price\" : 10.0\
+        }, {\
+            \"code\": \"000001.SZ\",\
+            \"side\" : \"Long\",\
+            \"size\" : 100000,\
+            \"cost_price\" : 10.0\
+        }]\
+    }],\
+        \"properties\": null\
+}";
+    backtest::run(txt, []() { return new MyStralet(); });
 
     auto end_time = system_clock::now();
     cout << "used time: " << duration_cast<milliseconds>(end_time - begin_time).count() << "ms\n";
@@ -113,7 +136,7 @@ int test_realtime()
 
 int main()
 {
-    test3();
+    test1();
 	//test_realtime();
     return 0;
 }
