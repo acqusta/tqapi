@@ -285,12 +285,22 @@ void SimStraletContext::run_one_day(Stralet* stralet)
 
     const DateTime end_dt(m_trading_day, HMS(16, 01, 0));
 
-    while (m_now.cmp(end_dt) < 0 && !m_should_exit) {
-        DateTime dt1, dt2;
+    DateTime last_time;
 
-        m_dapi->calc_nex_time(&dt1);
-        calc_next_timer_time(&dt2);
-        set_sim_time(dt1.cmp(dt2) < 0 ? dt1 : dt2);
+    while (m_now.cmp(end_dt) < 0 && !m_should_exit) {
+        DateTime dt_quote, dt_timer;
+
+        m_dapi->calc_nex_time(&dt_quote);
+        calc_next_timer_time(&dt_timer);
+
+        auto now = dt_quote.cmp(dt_timer) < 0 ? dt_quote : dt_timer;
+        if (last_time.cmp(now) == 0) {
+            now = dt_timer;
+        }
+        last_time = now;
+        set_sim_time(now);
+
+        // If time is not forward, it means no date
 
         // Set latest quotes before try_match
         vector<shared_ptr<MarketQuote>> quotes;
