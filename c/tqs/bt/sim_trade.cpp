@@ -1634,15 +1634,17 @@ void SimAccount::save_data(const string& dir)
         }
         out << "account_id,trading_day,code,name,entrust_no,order_id,"
             << "entrust_date,entrust_time,entrust_size,entrust_price,"
-            << "entrust_action,fill_size,fill_price,status,status_msg,\n";
+            << "entrust_action,fill_size,fill_price,status,status_msg,price_type\n";
         for (auto& tdata : m_his_tdata) {
-            vector<shared_ptr<Order>> orders;
-            for (auto& e : tdata->orders) orders.push_back(e.second->order);
-            sort(orders.begin(), orders.end(), [](shared_ptr<Order> a, shared_ptr<Order> b) {
-                return a->entrust_no < b->entrust_no;
+            vector<shared_ptr<OrderData>> orders;
+            for (auto& e : tdata->orders) orders.push_back(e.second);
+            sort(orders.begin(), orders.end(), [](shared_ptr<OrderData> a, shared_ptr<OrderData> b) {
+                return a->order->entrust_no < b->order->entrust_no;
             });
 
-            for (auto& ord : orders)
+            for (auto& od : orders) {
+
+                auto ord = od->order;
                 out << setprecision(4) << fixed
                     << tdata->account_id << ","
                     << tdata->trading_day << ","
@@ -1651,7 +1653,9 @@ void SimAccount::save_data(const string& dir)
                     << ord->entrust_date << "," << ord->entrust_time << ","
                     << ord->entrust_size << "," << ord->entrust_price << "," << ord->entrust_action << ","
                     << ord->fill_size << "," << ord->fill_price << ","
-                    << ord->status << ",\"" << ord->status_msg << "\"" << endl;
+                    << ord->status << ",\"" << ord->status_msg << "\","
+                    << "\"" << od->price_type <<"\"" << endl;
+            }
         }
         out.close();
     }
