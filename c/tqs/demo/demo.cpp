@@ -10,7 +10,8 @@ public:
     virtual void on_init() override {
         ctx()->logger() << "on_init: " << ctx()->trading_day() << endl;
         vector<string> codes = {
-			"000001.SH", "399001.SH", "000001.SZ", "600000.SH", "RB1905.SHF", "T1906.CFE", "IF1904.CFE" };
+			//"000001.SH", "399001.SH", "000001.SZ", "600000.SH", "RB1905.SHF", "T1906.CFE", "IF1904.CFE",
+            "600513.SH" };
 			//"000001.SH", "600000.SH", "000001.SZ", "399001.SZ" };
         ctx()->data_api()->subscribe(codes);
     }
@@ -39,13 +40,6 @@ public:
 
 int test1()
 {
-
-    backtest::BackTestConfig cfg;
-    //cfg.dapi_addr = "tcp://127.0.0.1:10001";
-    cfg.begin_date = 20170101;
-    cfg.end_date = 20171231;
-    cfg.data_level = "tk";
-    cfg.accounts.push_back(backtest::AccountConfig("sim", 1e8));
 
     auto begin_time = system_clock::now();
 
@@ -86,15 +80,15 @@ Stralet* create_rbreaker();
 int test2() 
 {
     backtest::BackTestConfig cfg;
-    cfg.dapi_addr = "tcp://127.0.0.1:10001";
-    cfg.begin_date = 20170101;
-    cfg.end_date = 20180321;
+    cfg.dapi_addr = "tcp://192.168.2.231:10002";
+    cfg.begin_date = 20200710;
+    cfg.end_date = 20200710;
     cfg.data_level = "tk";
     cfg.accounts.push_back(backtest::AccountConfig("sim", 1e8));
 
     auto begin_time = system_clock::now();
 
-    backtest::run(cfg, create_rbreaker);
+    backtest::run(cfg, []() { return new MyStralet(); });
 
     auto end_time = system_clock::now();
     cout << "used time: " << duration_cast<milliseconds>(end_time - begin_time).count() << "ms\n";
@@ -136,7 +130,7 @@ int test_realtime()
 
 int main()
 {
-    test1();
+    test2();
 	//test_realtime();
     return 0;
 }

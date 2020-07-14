@@ -294,7 +294,7 @@ void SimStraletContext::run_one_day(Stralet* stralet)
         calc_next_timer_time(&dt_timer);
 
         auto now = dt_quote.cmp(dt_timer) < 0 ? dt_quote : dt_timer;
-        if (last_time.cmp(now) == 0) {
+        if (last_time.cmp(now) == 0 && dt_timer.date != 99999999) {
             now = dt_timer;
         }
         last_time = now;

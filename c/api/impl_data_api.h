@@ -48,7 +48,7 @@ namespace tquant { namespace api { namespace impl {
         MpRpcDataApiImpl()
             : m_conn(nullptr)
             , m_callback(nullptr)
-            , m_source("local") // XXX should always have a value!
+            , m_source("") // XXX should always have a value!
             , m_want_last_tick(true)
         {
         }
