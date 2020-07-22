@@ -25,3 +25,4 @@ set(SRC
 include_directories( inc src)
 
 add_library(jsoncpp STATIC ${SRC})
+install(TARGETS jsoncpp DESTINATION cpp)

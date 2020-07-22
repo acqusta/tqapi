@@ -199,7 +199,7 @@ pub struct CDataApiCallback {
 
 pub enum CDataApi {  }
 
-#[link(name = "tqapi")]//, kind = "static")]
+#[link(name = "tqapi-static", kind = "static")]
 extern "C" {
     pub fn tqapi_create_data_api(addr : *const c_char) -> *mut CDataApi;
     pub fn tqapi_free_data_api  (dapi : *mut CDataApi);

@@ -175,3 +175,4 @@ set(SRC
 include_directories( include )
 
 add_library(msgpack STATIC ${SRC})
+install(TARGETS msgpack DESTINATION cpp)

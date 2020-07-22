@@ -9,3 +9,4 @@ set(SRC
 )
 
 add_library(snappy STATIC ${SRC})
+install(TARGETS snappy DESTINATION cpp)

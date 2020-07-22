@@ -43,3 +43,5 @@ if (UNIX)
     target_link_libraries(myutils iconv)
   endif()
 endif()
+
+install(TARGETS myutils DESTINATION cpp)
