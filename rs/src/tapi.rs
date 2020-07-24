@@ -297,8 +297,9 @@ impl Drop for TradeApi {
 
 impl TradeApi {
     pub fn new(addr: &str) -> TradeApi {
+        let c_addr = CString::new(addr).unwrap();        
         unsafe {
-            let tapi = tqapi_create_trade_api(addr.as_ptr() as *const c_char);
+            let tapi = tqapi_create_trade_api(c_addr.as_ptr() as *const c_char);
             let null_cb = Box::into_raw(Box::new(NullTradeApiCallback{}));
             let hook = Box::into_raw(Box::new(TradeApiHook{ cb : null_cb}));
             TradeApi{ null_cb : null_cb, hook : hook, tapi : tapi, is_owner: true}
@@ -313,7 +314,7 @@ impl TradeApi {
     }
 
     pub fn query_accounts(&mut self) -> Result<Vec<AccountInfo>, String> {
-        let mut result;
+        let result;
         unsafe {
             let r = tqapi_tapi_query_accounts(self.tapi);
             if !(*r).array.is_null() {
@@ -332,7 +333,7 @@ impl TradeApi {
     }
     pub fn query_balance(&mut self, account_id : &str) -> Result<Balance, String> {
         let c_account = CString::new(account_id).unwrap();
-        let mut result;
+        let result;
         unsafe {
             let r = tqapi_tapi_query_balance(self.tapi, c_account.as_ptr());
             if !(*r).balance.is_null() {
@@ -349,7 +350,7 @@ impl TradeApi {
     pub fn query_orders(&mut self, account_id : &str, codes : &str) -> Result<Vec<Order>, String> {
         let c_account = CString::new(account_id).unwrap();
         let c_codes   = CString::new(codes).unwrap();
-        let mut result;
+        let result;
         unsafe {
             let r = tqapi_tapi_query_orders(self.tapi, c_account.as_ptr(), c_codes.as_ptr());
             //println!("query_orders result {:?}", *r);
@@ -371,7 +372,7 @@ impl TradeApi {
     pub fn query_trades(&mut self, account_id : &str, codes : &str) -> Result<Vec<Trade>, String> {
         let c_account = CString::new(account_id).unwrap();
         let c_codes   = CString::new(codes).unwrap();
-        let mut result;
+        let result;
         unsafe {
             let r = tqapi_tapi_query_trades(self.tapi, c_account.as_ptr(), c_codes.as_ptr());
             if !(*r).array.is_null() {
@@ -392,7 +393,7 @@ impl TradeApi {
     pub fn query_positions(&mut self, account_id : &str, codes : &str) -> Result<Vec<Position>, String> {
         let c_account = CString::new(account_id).unwrap();
         let c_codes   = CString::new(codes).unwrap();
-        let mut result;
+        let result;
         unsafe {
             let r = tqapi_tapi_query_positions(self.tapi, c_account.as_ptr(), c_codes.as_ptr());
             if !(*r).array.is_null() {
@@ -425,7 +426,7 @@ impl TradeApi {
                 order_id   : order.order_id
             };
 
-        let mut result;
+        let result;
         unsafe {
             let raw_c_order = Box::into_raw( Box::new(c_order));
             let r = tqapi_tapi_place_order(self.tapi, c_account.as_ptr(), raw_c_order);
@@ -452,7 +453,7 @@ impl TradeApi {
             order_id   : order_id
             };
 
-        let mut result;
+        let result;
         unsafe {
             let raw_c_oid = Box::into_raw( Box::new(c_oid));
             let r = tqapi_tapi_cancel_order(self.tapi, c_account.as_ptr(), c_code.as_ptr(), raw_c_oid);
@@ -472,7 +473,7 @@ impl TradeApi {
         let c_command = CString::new(command).unwrap();
         let c_params  = CString::new(params).unwrap();
 
-        let mut result;
+        let result;
         unsafe {
             let r = tqapi_tapi_query(self.tapi, c_account.as_ptr(), c_command.as_ptr(), c_params.as_ptr());
             if !(*r).text.is_null() {

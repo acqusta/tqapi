@@ -242,12 +242,16 @@ namespace tquant { namespace api {
     {
         init_socket();
 
+        // std::cout<<"create_data_api " << addr<<std::endl;
+
         if (strncmp(addr.c_str(), "tcp://", 6) == 0 ||
             strncmp(addr.c_str(), "ipc://", 6) == 0) 
-        {
+        {            
             string url;
             unordered_map<string, string> properties;
-            if (!myutils:: parse_addr(addr, &url, &properties)) return nullptr;
+            if (!myutils::parse_addr(addr, &url, &properties)){
+                return nullptr;
+            } 
 
             auto conn = new impl::MpRpc_Connection();
             auto dapi = new impl::MpRpcDataApiImpl();

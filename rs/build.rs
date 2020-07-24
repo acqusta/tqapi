@@ -1,10 +1,10 @@
 use std::env::var;
 use std::process::Command;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 
 fn main() {
     let manifest_dir = var("CARGO_MANIFEST_DIR").unwrap();
-    let tqapi_build_dir = Path::new(&manifest_dir).join("../build/dist");
+    // let tqapi_build_dir = Path::new(&manifest_dir).join("../build/dist");
 
     if true {
         Command::new("bash")

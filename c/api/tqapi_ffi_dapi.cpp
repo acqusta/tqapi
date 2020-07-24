@@ -18,12 +18,12 @@ struct DataApi : public tquant::api::DataApi_Callback {
 
     virtual void on_market_quote(shared_ptr<const tquant::api::MarketQuote> quote) override {
         if (cb)
-            cb->on_quote((const MarketQuote*)quote.get(), cb->user_data);
+            cb->on_quote(cb->obj, (const MarketQuote*)quote.get());
     }
 
     virtual void on_bar(const string& cycle, shared_ptr<const tquant::api::Bar> bar) override {
         if (cb)
-            cb->on_bar(cycle.c_str(), (const Bar*)bar.get(), cb->user_data);
+            cb->on_bar(cb->obj, cycle.c_str(), (const Bar*)bar.get());
     }
 };
 
@@ -32,6 +32,9 @@ extern "C" {
     DataApi* tqapi_create_data_api(const char* addr)
     {
         auto inst = tquant::api::create_data_api(addr);
+        if (inst == nullptr) {
+            return nullptr;
+        }
         auto dapi = new DataApi();
         dapi->instance = inst;
         dapi->cb = nullptr;

@@ -148,8 +148,11 @@ impl Drop for DataApi {
 
 impl DataApi {
     pub fn new(addr: &str) -> DataApi {
+        let c_addr = CString::new(addr).unwrap();
         unsafe {
-            let dapi = tqapi_create_data_api(addr.as_ptr() as *const c_char);
+            let dapi = tqapi_create_data_api(c_addr.as_ptr() as *const c_char);
+            assert!( !dapi.is_null());
+
             let null_cb = Box::into_raw(Box::new(DefaultDataApiCallback{}));
             let hook = Box::into_raw(Box::new(DataApiHook{ cb : null_cb}));
 
@@ -212,7 +215,7 @@ impl DataApi {
 
     pub fn subscribe(&mut self, codes: & str) -> Result<Vec<String>, String> {
         let c_codes = CString::new(codes).unwrap();
-        let mut result : Result<Vec<String>, String>;
+        let result : Result<Vec<String>, String>;
         unsafe {
             let r = tqapi_dapi_subscribe(self.dapi, c_codes.as_ptr() as *const c_char);
             if !(*r).codes.is_null() {
@@ -224,7 +227,11 @@ impl DataApi {
 
                 result = Ok(v);
             } else {
-                result = Err(CStr::from_ptr( (*r).msg).to_string_lossy().to_string());
+                if (*r).msg.is_null() {
+                    result = Err("<null msg>".to_owned());
+                } else {
+                    result = Err(CStr::from_ptr( (*r).msg).to_string_lossy().to_string());
+                }
             }
 
             tqapi_dapi_free_subscribe_result(self.dapi, r);
@@ -234,7 +241,7 @@ impl DataApi {
 
     pub fn unsubscribe(&mut self, codes: & str) -> Result<Vec<String>, String> {
         let c_codes = CString::new(codes).unwrap();
-        let mut result : Result<Vec<String>, String>;
+        let result : Result<Vec<String>, String>;
         unsafe {
             let r = tqapi_dapi_unsubscribe(self.dapi, c_codes.as_ptr() as *const c_char);
             if !(*r).codes.is_null() {
@@ -256,7 +263,7 @@ impl DataApi {
 
     pub fn get_ticks(&mut self, code : &str, trading_day : u32, number: i32) -> Result<Vec<MarketQuote>, String> {
         let c_code = CString::new(code).unwrap();
-        let mut result : Result<Vec<MarketQuote>, String>;
+        let result : Result<Vec<MarketQuote>, String>;
 
         unsafe {
             let r = tqapi_dapi_get_ticks(self.dapi, c_code.as_ptr() as *const c_char, trading_day, number);
@@ -281,7 +288,7 @@ impl DataApi {
         let c_code = CString::new(code).unwrap();
         let c_cycle = CString::new(cycle).unwrap();
 
-        let mut result : Result<Vec<Bar>, String>;
+        let result : Result<Vec<Bar>, String>;
         unsafe {
             let r = tqapi_dapi_get_bars(self.dapi,
                                         c_code.as_ptr() as *const c_char,
@@ -310,7 +317,7 @@ impl DataApi {
         let c_code       = CString::new(code).unwrap();
         let c_price_type = CString::new(price_type).unwrap();
 
-        let mut result : Result<Vec<DailyBar>, String>;
+        let result : Result<Vec<DailyBar>, String>;
 
         unsafe {
             let r = tqapi_dapi_get_dailybars(self.dapi,
@@ -337,7 +344,7 @@ impl DataApi {
 
     pub fn get_quote(&mut self, code : &str) -> Result<MarketQuote, String> {
         let c_code = CString::new(code).unwrap();
-        let mut result : Result<MarketQuote, String>;
+        let result : Result<MarketQuote, String>;
 
         unsafe {
             let r = tqapi_dapi_get_quote(self.dapi, c_code.as_ptr() as *const c_char);

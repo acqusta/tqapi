@@ -148,9 +148,9 @@ struct GetQuoteResult {
 };
 
 struct DataApiCallback {
-    void* user_data;
-    void  (*on_quote ) (const MarketQuote* quote, void* userdata);
-    void  (*on_bar   ) (const char* cycle, const Bar* bar, void* userdata);
+    void* obj;
+    void  (*on_quote ) (void* obj, const MarketQuote* quote);
+    void  (*on_bar   ) (void* obj, const char* cycle, const Bar* bar);
 };
 
 
