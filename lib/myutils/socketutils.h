@@ -1,13 +1,14 @@
 #ifndef _MYUTILS_SOCKUTILS_H
 #define _MYUTILS_SOCKUTILS_H
 
-#define _WINSOCKAPI_
+//#define _WINSOCKAPI_
 
 #include <stdint.h>
 #include <string>
 
 #ifdef _WIN32
-# include <WinSock2.h>
+# include <winsock2.h>
+# include <windows.h>
 typedef int socklen_t;
 #else
 # include <sys/socket.h>

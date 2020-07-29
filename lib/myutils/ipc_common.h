@@ -5,8 +5,8 @@
 # include <semaphore.h>
 # include <pthread.h>
 #else
-# include <WinSock2.h>
-# include <Windows.h>
+# include <winsock2.h>
+# include <windows.h>
 #endif
 
 #ifndef _WIN32

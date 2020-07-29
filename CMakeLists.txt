@@ -6,6 +6,9 @@ option(BUILD_WIN64  "Build Win64"     ON)
 option(BUILD_JAVA   "Build Java"      OFF)
 option(BUILD_PYTHON "Build Python"    ON)
 option(BUILD_DOTNET "Build .Net Core" OFF)
+option(BUILD_WIN_ON_LINUX "Build Win64 on Linux" OFF)
+
+
 
 set(CMAKE_INSTALL_PREFIX dist)
 
@@ -21,7 +24,7 @@ add_definitions(
   -DZMQ_STATIC
   )
 
-if (WIN32)
+if (MSVC)
   add_definitions(
     -D_CRT_SECURE_NO_WARNINGS
     -D_WINSOCK_DEPRECATED_NO_WARNINGS
@@ -30,11 +33,6 @@ if (WIN32)
     -DMSGPACK_DLLEXPORT=
 #	/MT
   )
-
-  set(COMMON_LIB
-    ws2_32
-    Iphlpapi
-    )
 
   set(BIN_PATH bin)
   set(LIB_PATH bin)
@@ -49,27 +47,19 @@ else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
   set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -std=c99")
 
-#  set(FRAMEWORK_DIR ${CMAKE_SOURCE_DIR}/../../tq-framework/build/dist)
-#
-#  include_directories(
-#    lib
-#    lib/msgpack/include
-#    lib/jsoncpp/inc
-#    c
-#    ${FRAMEWORK_DIR}/include
-#    )
-#
-#  link_directories(${FRAMEWORK_DIR}/lib)
-
-  if (APPLE)
-    set(COMMON_LIB pthread )
-  else()
-    set(COMMON_LIB pthread rt)
-  endif()
-
   set(BIN_PATH bin)
   set(LIB_PATH lib)
 
+endif()
+
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libstdc++ -Wl,-Bstatic -lstdc++ -lwinpthread -Wl,-Bdynamic")
+
+if (WIN32)
+  set(COMMON_LIB ws2_32 iphlpapi)
+elseif (APPLE)
+  set(COMMON_LIB pthread )
+else()
+  set(COMMON_LIB pthread rt)
 endif()
 
 

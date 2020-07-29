@@ -6,12 +6,12 @@
 #include <chrono>
 #include <string>
 
-#ifdef _WIN32
-static inline struct tm *localtime_r(const time_t *timep, struct tm *result)
-{
-    localtime_s(result, timep);
-    return result;
+#if defined(_WIN32)
+static inline struct tm*  _localtime_r(const time_t *_Time, struct tm *_Tm) {
+  return localtime_s(_Tm, _Time) ? NULL : _Tm;
 }
+#else
+#define _localtime_r localtime_r
 #endif
 
 static inline int fin_hms(int h, int m = 0, int s = 0) 
@@ -22,7 +22,7 @@ static inline int fin_hms(int h, int m = 0, int s = 0)
 static inline int fin_date(time_t t)
 {
     struct tm tm;
-    localtime_r(&t, &tm);
+    _localtime_r(&t, &tm);
 
     return (tm.tm_year + 1900) * 10000 + (tm.tm_mon + 1) * 100 + tm.tm_mday;
 }
@@ -39,7 +39,7 @@ static void fin_datetime(int* date, int* time_ms)
     time(&t);
 
     struct tm tm;
-    localtime_r(&t, &tm);
+    _localtime_r(&t, &tm);
 
     *date = (tm.tm_year + 1900) * 10000 + (tm.tm_mon + 1) * 100 + tm.tm_mday;
     *time_ms = (tm.tm_hour * 10000 + tm.tm_min * 100 + tm.tm_sec)*1000;
@@ -88,7 +88,7 @@ static inline std::string today_str()
     char buf[64];
     time_t t = time(NULL);
     struct tm tm; 
-    localtime_r(&t, &tm);
+    _localtime_r(&t, &tm);
 
     strftime(buf, 64, "%Y-%m-%d", &tm);
 
@@ -100,7 +100,7 @@ static inline std::string now_str()
     char buf[64];
     time_t t = time(NULL);
     struct tm tm;
-    localtime_r(&t, &tm);
+    _localtime_r(&t, &tm);
 
     strftime(buf, 64, "%Y-%m-%d %H:%M:%S", &tm);
 

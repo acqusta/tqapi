@@ -9,7 +9,7 @@
 
 #ifdef _WIN32
 # include <process.h>
-# include "Windows.h"
+# include "windows.h"
 # undef ERROR
 #else
 # include <unistd.h>

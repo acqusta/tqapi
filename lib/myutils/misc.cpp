@@ -5,7 +5,7 @@
 #ifdef _WIN32
 // # include <filesystem>
 // namespace fs = std::tr2::sys;
-# include <Windows.h>
+# include <windows.h>
 #else
 # include <sys/stat.h>
 # include <unistd.h>

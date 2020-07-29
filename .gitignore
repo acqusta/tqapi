@@ -4,6 +4,8 @@ build
 build_x64
 build_x86
 build_msvc
+build-linux
+build-win32
 *~
 MANIFEST
 dist

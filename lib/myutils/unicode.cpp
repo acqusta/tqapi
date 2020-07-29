@@ -6,7 +6,7 @@
 using namespace std;
 
 #ifdef _WIN32
-#include <Windows.h>
+#include <windows.h>
 #include "unicode.h"
 
 int GBKToUTF8(const unsigned char * lpGBKStr, unsigned char * lpUTF8Str, int nUTF8StrLen)
@@ -17,13 +17,13 @@ int GBKToUTF8(const unsigned char * lpGBKStr, unsigned char * lpUTF8Str, int nUT
     if (!lpGBKStr)
         return 0;
 
-    nRetLen = ::MultiByteToWideChar(CP_ACP, 0, (char *)lpGBKStr, -1, NULL, NULL);
+    nRetLen = ::MultiByteToWideChar(CP_ACP, 0, (char *)lpGBKStr, -1, NULL, 0);
     lpUnicodeStr = new WCHAR[nRetLen + 1]; 
     nRetLen = ::MultiByteToWideChar(CP_ACP, 0, (char *)lpGBKStr, -1, lpUnicodeStr, nRetLen * sizeof(WCHAR) );
     if (!nRetLen)
         return 0;
 
-    nRetLen = ::WideCharToMultiByte(CP_UTF8, 0, lpUnicodeStr, -1, NULL, 0, NULL, NULL);
+    nRetLen = ::WideCharToMultiByte(CP_UTF8, 0, lpUnicodeStr, -1, NULL, 0, NULL, 0);
 
     if (!lpUTF8Str)
     {
@@ -55,13 +55,13 @@ int UTF8ToGBK(const unsigned char * lpUTF8Str, unsigned char * lpGBKStr, int nGB
     if (!lpUTF8Str)
         return 0;
 
-    nRetLen = ::MultiByteToWideChar(CP_UTF8, 0, (char *)lpUTF8Str, -1, NULL, NULL);
+    nRetLen = ::MultiByteToWideChar(CP_UTF8, 0, (char *)lpUTF8Str, -1, NULL, 0);
     lpUnicodeStr = new WCHAR[nRetLen + 1];
     nRetLen = ::MultiByteToWideChar(CP_UTF8, 0, (char *)lpUTF8Str, -1, lpUnicodeStr, nRetLen * sizeof(WCHAR));
     if (!nRetLen)
         return 0;
 
-    nRetLen = ::WideCharToMultiByte(CP_ACP, 0, lpUnicodeStr, -1, NULL, NULL, NULL, NULL);
+    nRetLen = ::WideCharToMultiByte(CP_ACP, 0, lpUnicodeStr, -1, NULL, 0, NULL, 0);
 
     if (!lpGBKStr)
     {
@@ -92,7 +92,7 @@ int UTF8ToUTF16(const unsigned char * lpUTF8Str, unsigned char * lpUTF16Str, int
     if (!lpUTF8Str)
         return 0;
 
-    nRetLen = ::MultiByteToWideChar(CP_UTF8, 0, (char *)lpUTF8Str, -1, NULL, NULL);
+    nRetLen = ::MultiByteToWideChar(CP_UTF8, 0, (char *)lpUTF8Str, -1, NULL, 0);
     if (!lpUTF16Str) return nRetLen;
 
 
