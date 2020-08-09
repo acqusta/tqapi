@@ -1,5 +1,5 @@
 use std::env::var;
-use std::process::Command;
+// use std::process::Command;
 //use std::path::{Path};
 
 fn main() {
@@ -39,4 +39,10 @@ fn setup(manifest_dir: &str) {
     println!("cargo:rustc-link-search={}/../build-linux/dist/bin", manifest_dir);
 
     println!("cargo:rustc-link-lib={}", "stdc++");
+}
+
+#[cfg(target_os = "windows")]
+fn setup(manifest_dir: &str) {
+    println!("cargo:rustc-link-search={}/../build-win32/dist/cpp", manifest_dir);
+    println!("cargo:rustc-link-search={}/../build-win32/dist/bin", manifest_dir);
 }

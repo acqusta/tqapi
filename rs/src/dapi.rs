@@ -128,6 +128,8 @@ pub struct DataApi {
     is_owner : bool
 }
 
+unsafe impl Send for DataApi {}
+
 impl Drop for DataApi {
     fn drop(&mut self) {
         unsafe {
