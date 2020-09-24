@@ -4,8 +4,9 @@ using System.Runtime.InteropServices;
 using TQuant.Api;
 using TQuant.Api.Impl;
 using TQuant.Stralet.Impl;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
+//using Newtonsoft.Json.Linq;
+//using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace TQuant.Stralet
 {
@@ -121,7 +122,8 @@ namespace TQuant.Stralet
 
             IntPtr str = TqsDll.tqs_sc_get_properties(h);
             string properties = Marshal.PtrToStringAnsi(str);
-            Props = JsonConvert.DeserializeObject<Dictionary<string, object>>(properties);
+            //Props = JsonConvert.DeserializeObject<Dictionary<string, object>>(properties);
+            Props = JsonSerializer.Deserialize<Dictionary<string, object>>(properties);
         }
 
         public Dictionary<string, object> Props { get; }

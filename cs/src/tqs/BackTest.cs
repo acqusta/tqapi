@@ -1,5 +1,6 @@
-using Newtonsoft.Json;
+//using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Text.Json;
 
 namespace TQuant.Stralet
 {
@@ -37,7 +38,8 @@ namespace TQuant.Stralet
 
         static public void Run(Config cfg, StraletCreator create_stralet)
         {
-            var json = JsonConvert.SerializeObject(cfg);
+            //var json = JsonConvert.SerializeObject(cfg);
+            var json = JsonSerializer.Serialize(cfg);
 
             // Keep a reference while testing each instance of Stralet
             StraletWrap wrap = null;
