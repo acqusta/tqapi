@@ -57,6 +57,7 @@ impl fmt::Display for MarketQuote {
     }
 }
 
+#[derive(Clone)]
 pub struct Bar {
     pub code       : String,
     pub date       : u32,
