@@ -83,7 +83,7 @@ impl fmt::Display for OrderStatus {
 }
 
 
-#[derive(Debug,Clone)]
+#[derive(Debug,Clone, PartialEq)]
 pub enum EntrustAction {
     Buy,
     Short,
@@ -201,6 +201,7 @@ impl fmt::Display for Trade {
     }
 }
 
+#[derive(Debug)]
 pub enum Side {
     Long,
     Short,

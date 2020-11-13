@@ -330,13 +330,29 @@ pub struct BackTest {
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
+pub struct SimHolding {
+    pub code: String,
+    pub side: String,
+    pub size: i64,
+    pub cost_price: f64,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct SimAccount {
+    pub account_id: String,
+    pub init_balance: f64,
+    pub init_holdings: Vec<SimHolding>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct BackTestConfig<'a> {
     pub dapi_addr  : Option<&'a str>,
     pub data_level : Option<&'a str>,
     pub begin_date : i32,
     pub end_date   : i32,
     pub result_dir : Option<&'a str>,
-    pub properties : Option<&'a str>
+    pub properties : Option<&'a str>,
+    pub accounts   : Option<Vec<SimAccount>>
 }
 
 impl <'a> BackTest {
