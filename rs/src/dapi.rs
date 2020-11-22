@@ -130,6 +130,7 @@ pub struct DataApi {
 }
 
 unsafe impl Send for DataApi {}
+unsafe impl Sync for DataApi {}
 
 impl Drop for DataApi {
     fn drop(&mut self) {
