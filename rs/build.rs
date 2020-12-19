@@ -41,6 +41,25 @@ fn setup(manifest_dir: &str) {
     println!("cargo:rustc-link-lib={}", "stdc++");
 }
 
+#[cfg(target_os = "macos")]
+fn setup(manifest_dir: &str) {
+    use std::process::Command;
+    //use std::path::{Path};
+    Command::new("bash")
+    .args(&["./build.sh"])
+    .current_dir(&manifest_dir)
+    .status()
+    .unwrap_or_else(|e| {
+        panic!("Failed to build tqapi: {}", e);
+    });
+
+    println!("cargo:rustc-link-search={}/../build-linux/dist/cpp", manifest_dir);
+    println!("cargo:rustc-link-search={}/../build-linux/dist/bin", manifest_dir);
+
+    println!("cargo:rustc-link-lib={}", "c++");
+    println!("cargo:rustc-link-lib={}", "iconv");
+}
+
 #[cfg(target_os = "windows")]
 fn setup(manifest_dir: &str) {
     println!("cargo:rustc-link-search={}/../build-win32/dist/cpp", manifest_dir);

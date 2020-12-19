@@ -123,7 +123,8 @@ impl StraletContext for StraletContextImpl {
 
     fn post_event(&self, evt: &str, data: usize ) {
         unsafe {
-            tqapi_sc_post_event(self.ctx, CString::new(evt).unwrap().as_ptr(), data);
+            let c_evt = CString::new(evt).unwrap();
+            tqapi_sc_post_event(self.ctx, c_evt.as_ptr(), data);
         }
     }
 
@@ -160,7 +161,8 @@ impl StraletContext for StraletContextImpl {
                 LogSeverity::FATAL   => 3
             };
 
-            tqapi_sc_log(self.ctx, i, CString::new(txt).unwrap().as_ptr());
+            let c_txt = CString::new(txt).unwrap();
+            tqapi_sc_log(self.ctx, i, c_txt.as_ptr());
         }
     }
 
