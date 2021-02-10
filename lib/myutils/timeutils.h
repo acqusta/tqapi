@@ -62,6 +62,7 @@ static inline int fin_nextday(int day, int offset = 1)
     tm.tm_mday = day % 100;
     tm.tm_mon = (day/100)%100 - 1;
     tm.tm_year = (day/10000) - 1900;
+    tm.tm_isdst = 0;
     time_t t = mktime(&tm) + 3600 * 24 * offset;
     return fin_date(t);
 }
@@ -73,6 +74,7 @@ static inline int fin_preday(int day, int offset = 1)
     tm.tm_mday = day % 100;
     tm.tm_mon = (day/100)%100 - 1;
     tm.tm_year = (day/10000) - 1900;
+    tm.tm_isdst = 0;
     time_t t = mktime(&tm) - 3600 * 24 * offset;
     return fin_date(t);
 }

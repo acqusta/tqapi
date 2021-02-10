@@ -13,23 +13,25 @@ namespace tquant {
             int y = date / 10000;
             int m = (date / 100) % 100;
             int d = date % 100;
-            int H = time / 10000000;
+            int H =  time / 10000000;
             int M = (time / 100000) % 100;
             int S = (time / 1000) % 100;
             int MS = time % 1000;
 
             struct tm t;
+            memset(&t, 0, sizeof(t));
             t.tm_year = y - 1900;
             t.tm_mon = m - 1;
             t.tm_mday = d;
             t.tm_hour = H;
             t.tm_min = M;
             t.tm_sec = S;
+            t.tm_isdst = 0;
 
             return system_clock::from_time_t(mktime(&t)) + milliseconds(MS);
         }
 
-        DateTime DateTime::from_timepoint(system_clock::time_point tp)
+        DateTime DateTime::from_timepoint(const system_clock::time_point& tp)
         {
             // localtime or gmtime?
             time_t tmp = system_clock::to_time_t(tp);

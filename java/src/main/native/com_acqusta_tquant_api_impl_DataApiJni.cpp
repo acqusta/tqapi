@@ -498,7 +498,7 @@ void DataApiWrap::on_bar(const string& cycle, shared_ptr<const Bar> bar)
                     m_obj_creator->help_cls,
                     m_obj_creator->createBar,
                     bar.get());
-                m_callback->jenv->CallVoidMethod(m_dapi_callback, m_callback->dapi_onBar, cycle, py_bar);
+                m_callback->jenv->CallVoidMethod(m_dapi_callback, m_callback->dapi_onBar, cycle.c_str(), py_bar);
                 m_callback->jenv->DeleteLocalRef(py_bar);
             }
         }

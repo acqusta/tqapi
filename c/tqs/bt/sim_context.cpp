@@ -1,4 +1,6 @@
 ﻿#include <iostream>
+#include <chrono>
+#include <sstream>
 
 #include "sim_context.h"
 #include "sim_data.h"
@@ -68,8 +70,17 @@ void SimStraletContext::post_event(const char* name, void* data)
     m_events.push_back(evt);
 }
 
+string to_str(system_clock::time_point& tp)
+{
+    auto dt = DateTime::from_timepoint(tp);
+    stringstream ss;
+    ss << dt.date << "-"<<dt.time;
+    return ss.str();   
+}
+
 void SimStraletContext::set_timer(int64_t id, int64_t delay, void* data)
 {
+    if (delay <= 0) delay = 1;
     auto triger_time = m_now_tp + milliseconds(delay);
     auto timer = make_shared<TimerInfo>();
     timer->id      = id;
@@ -158,7 +169,8 @@ void SimStraletContext::execute_timer()
 
     for (auto & m_timer : m_timers) {
         auto& timer = m_timer.second;
-        if ( timer->trigger_time <= m_now_tp) {            
+
+        if ( timer->trigger_time <= m_now_tp) {        
             timers.push_back(timer);
             timer->trigger_time = m_now_tp + milliseconds(timer->delay);
         }
@@ -169,7 +181,6 @@ void SimStraletContext::execute_timer()
             m_stralet->on_timer(t->id, t->data);
             if (m_should_exit) break;
         }
-
     }
 }
 
@@ -293,10 +304,16 @@ void SimStraletContext::run_one_day(Stralet* stralet)
         m_dapi->calc_nex_time(&dt_quote);
         calc_next_timer_time(&dt_timer);
 
-        auto now = dt_quote.cmp(dt_timer) < 0 ? dt_quote : dt_timer;
-        if (last_time.cmp(now) == 0 && dt_timer.date != 99999999) {
-            now = dt_timer;
+        DateTime now = dt_timer.date == 99999999 ? dt_quote:
+            ( dt_quote.cmp(dt_timer) < 0 ? dt_quote : dt_timer);
+
+        if (now.cmp(last_time) == 0)
+            break;
+        if (now.cmp(last_time) < 0) {
+            logger(FATAL) << "wrong now time: " << now.time << " should > " << last_time.time;
+            break;
         }
+
         last_time = now;
         set_sim_time(now);
 

@@ -32,7 +32,7 @@ namespace tquant { namespace stralet {
 
         milliseconds sub(const DateTime& dt) const;
 
-        static DateTime from_timepoint(system_clock::time_point  tp);
+        static DateTime from_timepoint(const system_clock::time_point&  tp);
 
         system_clock::time_point to_timepoint() const;
     };

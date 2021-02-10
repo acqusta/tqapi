@@ -5,13 +5,13 @@ add_subdirectory(src/main/native)
 
 if (WIN32)
   add_custom_command(
-    OUTPUT target/tqapi.jar
+    OUTPUT target/tquant-api-0.0.1-SNAPSHOT.jar
     COMMAND .\\build.bat
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
 else()
   add_custom_command(
-    OUTPUT target/tqapi.jar
+    OUTPUT target/tquant-api-0.0.1-SNAPSHOT.jar
     COMMAND sh ./build.sh
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
