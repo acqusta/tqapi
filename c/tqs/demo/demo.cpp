@@ -11,7 +11,7 @@ public:
         ctx()->logger() << "on_init: " << ctx()->trading_day() << endl;
         vector<string> codes = {
 			//"000001.SH", "399001.SH", "000001.SZ", "600000.SH", "RB1905.SHF", "T1906.CFE", "IF1904.CFE",
-            "600513.SH" };
+            "000001.SH" };
 			//"000001.SH", "600000.SH", "000001.SZ", "399001.SZ" };
         ctx()->data_api()->subscribe(codes);
     }
@@ -21,12 +21,21 @@ public:
     }
 
     virtual void on_quote(shared_ptr<const MarketQuote> quote) override {
-        auto q = quote.get();
-        ctx()->logger() << "on_quote: " << q->code << "," << q->date << "," << q->time << "," << q->last;
+        // auto q = quote.get();
+        // ctx()->logger() << "on_quote: " << q->code << "," << q->date << "," << q->time << "," << q->last;
     }
 
     virtual void on_bar(const string& cycle, shared_ptr<const Bar> bar) override {
         ctx()->logger() << "on_bar: " << bar->code << "," << bar->date << "," << bar->time << "," << bar->close;
+        if (bar->code == string("000001.SH") && bar->time == 93100000) {
+            ctx()->set_timer(1, 30000, 0);
+            ctx()->set_timer(2, 30000, 0);
+            ctx()->set_timer(3, 30000, 0);
+            ctx()->set_timer(4, 30000, 0);
+            ctx()->set_timer(5, 0, 0);
+            ctx()->set_timer(6, 0, 0);
+            ctx()->set_timer(7, 0, 0);
+        }
     }
     
     virtual void on_order(shared_ptr<const Order> order) override {
@@ -36,6 +45,15 @@ public:
     virtual void on_trade(shared_ptr<const Trade> trade) override {
         ctx()->logger() << "on_trade: " << trade->code << "," << trade->entrust_action << "," << trade->fill_price;
     }
+    virtual void on_timer(int64_t id, void* data) override {
+        ctx()->logger() << "on_timer: " << id;
+        ctx()->kill_timer(id);
+
+        if (id>=5) {
+            ctx()->set_timer(id, 30000, 0);
+        }
+        
+    }
 };
 
 int test1()
@@ -44,7 +62,7 @@ int test1()
     auto begin_time = system_clock::now();
 
     const char* txt = "{ \
-        \"dapi_addr\": \"tcp://192.168.2.231:10002\",\
+        \"dapi_addr\": \"tcp://192.168.50.132:10002\",\
         \"data_level\" : \"tk\",\
         \"begin_date\" : 20191030,\
         \"end_date\" : 20191030,\
@@ -80,9 +98,9 @@ Stralet* create_rbreaker();
 int test2() 
 {
     backtest::BackTestConfig cfg;
-    cfg.dapi_addr = "tcp://192.168.2.231:10002";
+    cfg.dapi_addr = "tcp://192.168.50.132:10002";
     cfg.begin_date = 20200710;
-    cfg.end_date = 20200710;
+    cfg.end_date = 20200810;
     cfg.data_level = "tk";
     cfg.accounts.push_back(backtest::AccountConfig("sim", 1e8));
 
@@ -92,9 +110,7 @@ int test2()
 
     auto end_time = system_clock::now();
     cout << "used time: " << duration_cast<milliseconds>(end_time - begin_time).count() << "ms\n";
-
-    getchar();
-    return 0;
+   return 0;
 }
 
 Stralet *create_doublema();
@@ -102,10 +118,10 @@ Stralet *create_doublema();
 int test3()
 {
     backtest::BackTestConfig cfg;
-    cfg.dapi_addr  = "tcp://192.168.2.231:10002";
-    cfg.begin_date = 20190101;
-    cfg.end_date   = 20191031;
-    cfg.data_level = "1m";
+    cfg.dapi_addr  = "tcp://192.168.50.132:10003";
+    cfg.begin_date = 20201030;
+    cfg.end_date   = 20201030;
+    cfg.data_level = "tk";
     cfg.accounts.push_back(backtest::AccountConfig("sim", 1e8));
 
     auto begin_time = system_clock::now();

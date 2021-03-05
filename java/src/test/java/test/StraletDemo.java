@@ -36,10 +36,11 @@ public class StraletDemo extends Stralet {
 
     static void runBackTest() throws Exception {
         BackTest.Config cfg = new BackTest.Config();
-        cfg.dapi_addr  = "ipc://tqc_10001";
+        //cfg.dapi_addr  = "ipc://tqc_10001";
+        cfg.dapi_addr = "tcp://192.168.50.132:10002";
         cfg.data_level = "tk";
-        cfg.begin_date = 20190103;
-        cfg.end_date   = 20190331;
+        cfg.begin_date = 20201029;
+        cfg.end_date   = 20201029;
 
         BackTest.run(cfg, new StraletCreator() {
             @Override
@@ -51,7 +52,7 @@ public class StraletDemo extends Stralet {
     static void runRealTime() throws Exception {
         RealTime.Config cfg = new RealTime.Config();
         //cfg.dapi_addr = "ipc://10002";
-        cfg.dapi_addr = "tcp://127.0.0.1:10001";
+        cfg.dapi_addr = "tcp://192.168.50.132:10002";
 //        cfg.dapi_addr = "ipc://10002";
 //        cfg.tapi_addr = "ipc://10202";
 
@@ -64,7 +65,7 @@ public class StraletDemo extends Stralet {
 
     public static void main(String[] args) throws Exception {
 
-        //runBackTest();
-        runRealTime();
+        runBackTest();
+        //runRealTime();
     }
 }
