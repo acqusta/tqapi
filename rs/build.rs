@@ -1,5 +1,6 @@
 use std::env::var;
-//use std::process::Command;
+#[cfg(target_os = "linux")]
+use std::process::Command;
 //use std::path::{Path};
 
 fn main() {
