@@ -2,6 +2,7 @@ from . import _tqapi
 import pandas as pd
 import traceback
 import weakref
+import datetime as dt
 
 try:
     from future.builtins import int
@@ -26,12 +27,12 @@ def to_datetime(int_date, int_time):
     int_time = int(int_time)
     ms   = int_time % 1000
     time = int_time // 1000
-    return pd.datetime(year=int_date // 10000, month=int_date // 100 % 100, day=int_date % 100,
+    return dt.datetime(year=int_date // 10000, month=int_date // 100 % 100, day=int_date % 100,
                        hour=time // 10000, minute=time // 100 % 100, second=time % 100, microsecond=ms*1000)
 
 
 def to_date(int_date):    
-    return pd.datetime(year=int_date // 10000, month=int_date // 100 % 100, day=int_date % 100)
+    return dt.datetime(year=int_date // 10000, month=int_date // 100 % 100, day=int_date % 100)
 
 def _add_index(df):
     if 'time' in df.columns:
