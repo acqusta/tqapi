@@ -322,6 +322,44 @@ DataApi_Callback* SimDataApi::set_callback(DataApi_Callback* callback)
     return nullptr;
 }
 
+static inline bool equal(int64_t f1, int64_t f2) {
+    return f1 == f2;
+}
+
+static inline bool equal(double f1, double f2, double precise=1e-8) {
+    return fabs(f1-f2) < precise;
+}
+
+
+static inline bool is_duplicated_quote(const RawMarketQuote* q1, const RawMarketQuote* q2) 
+{
+    return q1->time == q2->time &&
+        equal(q1->turnover, q2->turnover) && 
+        equal(q1->volume, q2->volume) && 
+        equal(q1->ask1, q2->ask1) && 
+        equal(q1->ask2, q2->ask2) && 
+        equal(q1->ask3, q2->ask3) && 
+        equal(q1->ask4, q2->ask4) && 
+        equal(q1->ask5, q2->ask5) && 
+        equal(q1->ask1, q2->ask1) && 
+        equal(q1->bid1, q2->bid1) && 
+        equal(q1->bid2, q2->bid2) && 
+        equal(q1->bid3, q2->bid3) && 
+        equal(q1->bid4, q2->bid4) && 
+        equal(q1->bid5, q2->bid5) && 
+        equal(q1->ask_vol1, q2->ask_vol1) && 
+        equal(q1->ask_vol2, q2->ask_vol2) && 
+        equal(q1->ask_vol3, q2->ask_vol3) && 
+        equal(q1->ask_vol4, q2->ask_vol4) && 
+        equal(q1->ask_vol5, q2->ask_vol5) && 
+        equal(q1->bid_vol1, q2->bid_vol1) && 
+        equal(q1->bid_vol2, q2->bid_vol2) && 
+        equal(q1->bid_vol3, q2->bid_vol3) && 
+        equal(q1->bid_vol4, q2->bid_vol4) && 
+        equal(q1->bid_vol5, q2->bid_vol5) && 
+        equal(q1->last, q2->last);
+}
+
 void SimDataApi::calc_nex_time(DateTime* dt)
 {
     int32_t date = m_ctx->trading_day();
@@ -344,6 +382,22 @@ void SimDataApi::calc_nex_time(DateTime* dt)
 
     for (auto& e : m_tick_caches) {
         auto cache = e.second;
+        while (cache->pos >= 0 && cache->pos + 1 < cache->size) {
+            auto q1 = &cache->ticks->at(cache->pos);
+            auto q2 = &cache->ticks->at(cache->pos + 1);
+            if (is_duplicated_quote(q1, q2)) {
+                cache->pos += 1;
+                continue;
+            } 
+            else if (cmp_time(q2->date, q2->time, q1->date, q1->time) <= 0) {
+                // XXXX shouldn't ignore bad quote only by timestamp!
+                cache->pos += 1;
+                continue;
+            }
+            else {
+                break;
+            }
+        }
         if (cache->pos + 1 < cache->size) {
             auto q = &cache->ticks->at(cache->pos + 1);
 
@@ -356,6 +410,24 @@ void SimDataApi::calc_nex_time(DateTime* dt)
 
     dt->date = date;
     dt->time = time;
+}
+
+shared_ptr<MarketQuote> SimDataApi::prev_quote(const string& code)
+{
+    auto it = m_tick_caches.find(code);
+    if (it == m_tick_caches.end())
+        return nullptr;
+
+    auto cache = it->second;
+    DateTime dt = m_ctx->cur_time();
+
+    if (cache->pos >= 1) {
+        auto q = &cache->ticks->at(cache->pos - 1);
+        return make_shared<MarketQuote>(*q);
+    }
+    else {
+        return nullptr;
+    }
 }
 
 shared_ptr<MarketQuote> SimDataApi::next_quote(const string& code)

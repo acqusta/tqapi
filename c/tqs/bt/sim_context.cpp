@@ -307,8 +307,10 @@ void SimStraletContext::run_one_day(Stralet* stralet)
         DateTime now = dt_timer.date == 99999999 ? dt_quote:
             ( dt_quote.cmp(dt_timer) < 0 ? dt_quote : dt_timer);
 
-        if (now.cmp(last_time) == 0)
+        if (now.cmp(last_time) == 0) {
+            logger(WARNING) << "break because of now == last_time " << now.time << "," << last_time.time;
             break;
+        }
         if (now.cmp(last_time) < 0) {
             logger(FATAL) << "wrong now time: " << now.time << " should > " << last_time.time;
             break;
@@ -346,7 +348,10 @@ void SimStraletContext::run_one_day(Stralet* stralet)
         if (!m_should_exit) execute_timer();
 
         // No more event, break
-        if (quotes.empty() && bars.empty() && m_timers.empty() && m_events.empty()) break;
+        if (quotes.empty() && bars.empty() && m_timers.empty() && m_events.empty()) {
+            //logger(WARNING) << "break because of no data, times and events any more";
+            break;
+        }
     }
 
     set_sim_time(end_dt);

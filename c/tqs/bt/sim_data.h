@@ -55,10 +55,11 @@ namespace tquant { namespace stralet { namespace backtest {
 
         void calc_nex_time(DateTime* dt);
 
-        shared_ptr<MarketQuote> next_quote(const string& code);
-        shared_ptr<Bar>         next_bar(const string & code);
-        const RawBar*           last_bar(const string & code);
-        const RawDailyBar*      cur_daily_bar(const string & code);
+        shared_ptr<MarketQuote> prev_quote    (const string& code);
+        shared_ptr<MarketQuote> next_quote    (const string& code);
+        shared_ptr<Bar>         next_bar      (const string & code);
+        const RawBar*           last_bar      (const string & code);
+        const RawDailyBar*      cur_daily_bar (const string & code);
 
         void set_data_to_curtime();
         void set_end_of_day();
@@ -66,6 +67,7 @@ namespace tquant { namespace stralet { namespace backtest {
         DataApi* dapi() { return m_dapi; }
 
         void move_to(int trading_day);
+
 
         const unordered_set<string>& sub_codes() { return m_codes; }
         void preload_bar        (const vector<string>& codes);

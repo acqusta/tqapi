@@ -59,24 +59,6 @@ static bool get_action_effect(const string& action, string* pos_side, int* size_
 }
 
 
-enum TradeRule {
-    TR_T0,
-    TR_T1
-};
-struct CodeInfo {
-    string code;
-    string name;
-    string mkt;
-    string product_id;
-    string product_class; // "Futurs", "Options" ???
-    double price_multiple;
-    double price_tick;
-    double margin_ratio;
-    TradeRule trade_rule;
-};
-
-shared_ptr<CodeInfo> get_code_info(const string& code);
-
 static bool is_T0(const char* code)
 {
     auto code_info = get_code_info(code);
@@ -802,7 +784,7 @@ static void get_commission_rate(const char* code, double* open_rate, double* clo
 }
 
 
-void SimAccount::make_trade(Order* order, double fill_price)
+void SimAccount::make_trade(Order* order, double fill_price, string status_msg)
 {
     //cout << "make_trade: " << m_tdata->account_id << "," << order->code << "," << order->entrust_size << ","
     //    << order->entrust_action << "," << fill_price << endl;
@@ -897,6 +879,7 @@ void SimAccount::make_trade(Order* order, double fill_price)
     order->fill_price = fill_price;
     order->fill_size  = fill_size;
     order->status     = OS_Filled;
+    order->status_msg = status_msg;
 
     // Must make a copy!
     m_ord_status_ind_list.push_back(make_shared<Order>(*order));
@@ -1111,6 +1094,30 @@ void SimAccount::try_buy(OrderData* od)
                      q->ask1 <= od->order->entrust_price && od->volume_in_queue == 0){
                 make_trade(od->order.get(), q->ask1);
             }
+            else if (strcmp(od->price_type.c_str(), "Limit:hft")==0) {
+                do {
+                    auto &code = od->order->code;
+                    // auto code_info = get_code_info(code);
+                    // if (code_info == nullptr)  break;
+
+                    auto prev_q = m_ctx->sim_dapi()->prev_quote(code);
+                    if (prev_q == nullptr || prev_q->volume >= q->volume) break;
+
+                    double avg_px = (q->turnover - prev_q->turnover) / (q->volume - prev_q->volume) / od->volume_multiple;
+                    double px_distance = od->order->entrust_price - avg_px;
+                    if (px_distance <= -0.5 * od->price_tick) break;
+                    if (px_distance < 0.0) {
+                        // FIXME: -0.5 ~ 0.0 uniform_int_distribution! FIXME
+                        double prob_px = -1.0 * myutils::random() / INT32_MAX * 0.5 * od->price_tick;
+                        //m_ctx->logger(LogSeverity::ERROR) << "try_buy " << px_distance << "," << prob_px;
+
+                        if (px_distance < prob_px) break;
+                    }
+                    char msg[100];
+                    sprintf(msg,"avg_px:%.1f, diff %.1f", avg_px, px_distance);
+                    make_trade(od->order.get(), od->order->entrust_price, msg);
+                } while (false);
+            }
             else if (od->price_type == "fak" || od->price_type == "fok") {
                 reject_order(od->order.get(), od->price_type.c_str());
             }
@@ -1184,6 +1191,27 @@ void SimAccount::try_sell(OrderData* od)
                      q->bid1 >= od->order->entrust_price && od->volume_in_queue == 0){
 				make_trade(od->order.get(), q->bid1);
             }
+            else if (strcmp(od->price_type.c_str(), "Limit:hft")==0) {
+                do {
+                    auto& code = od->order->code;
+            
+                    auto prev_q = m_ctx->sim_dapi()->prev_quote(code);
+                    if (prev_q == nullptr || prev_q->volume >= q->volume) break;
+
+                    double avg_px = (q->turnover - prev_q->turnover) / (q->volume - prev_q->volume) / od->volume_multiple;
+                    double px_distance = od->order->entrust_price - avg_px;
+                    if (px_distance >= 0.5 * od->price_tick) break;
+                    if (px_distance > 0.0) {
+                        // FIXME: 0.0 ~ 0.5 uniform_int_distribution! FIXME
+                        double prob_px = 1.0 * myutils::random() / INT32_MAX * 0.5 * od->price_tick;
+                        //m_ctx->logger(LogSeverity::ERROR) << "try_sell " << px_distance << "," << prob_px;
+                        if (px_distance > prob_px) break;
+                    }
+                    char msg[100];
+                    sprintf(msg,"avg_px:%.1f, diff %.1f", avg_px, px_distance);
+                    make_trade(od->order.get(), od->order->entrust_price, msg);
+                } while (false);
+            }
             else if (od->price_type == "fak" || od->price_type == "fok") {
                 reject_order(od->order.get(), od->price_type.c_str());
             }
@@ -1225,151 +1253,153 @@ void SimAccount::try_sell(OrderData* od)
 
 void SimAccount::try_short(OrderData* od)
 {
-    // fixme
-    if (m_ctx->data_level() == BT_TICK) {
-        auto q = m_ctx->data_api()->quote(od->order->code.c_str()).value;
-        if (!q) return;
+    try_sell(od);
+    // // fixme
+    // if (m_ctx->data_level() == BT_TICK) {
+    //     auto q = m_ctx->data_api()->quote(od->order->code.c_str()).value;
+    //     if (!q) return;
 
-        if (double_equal(q->bid1, 0.0) && od->price_type == "any") {
-            reject_order(od->order.get(), "reach low limit");
-            return;
-        }
+    //     if (double_equal(q->bid1, 0.0) && od->price_type == "any") {
+    //         reject_order(od->order.get(), "reach low limit");
+    //         return;
+    //     }
 
-        estimate_vol_in_queue(od, q.get());
+    //     estimate_vol_in_queue(od, q.get());
 
-        if (check_quote_time(q.get(), od->order.get())) {
-            if (od->price_type == "any" && q->bid_vol1 > 0 && q->bid1 > 0.0) {
-                make_trade(od->order.get(), q->bid1);
-            }
-            else if (strncmp(od->price_type.c_str(), "any_test", 8) == 0) {
-                const char* p = od->price_type.c_str() + 8;
-                if (*p && *p == ':') {
-                    p++;
-                    uint32_t rate = atof(p) * 1000;
-                    uint32_t t = ((uint32_t)myutils::random()) % 1000;
-                    if (t > rate) {
-                        reject_order(od->order.get(), "reject any_test:xxx");
-                        return;
-                    }
-                }
-                make_trade(od->order.get(), od->order->entrust_price);
-            }
-            else if (q->bid1 > 0.0 && q->bid_vol1 > 0 &&
-                     q->bid1 >= od->order->entrust_price && od->volume_in_queue == 0)
-            {
-				make_trade(od->order.get(), q->bid1);
-            }
-            else if (od->price_type == "fak" || od->price_type == "fok") {
-                reject_order(od->order.get(), od->price_type.c_str());
-            }
-        }
-    }
-    else if (m_ctx->data_level() == BT_BAR1M) {
-        auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
-        if (!bar || !bar->high || !bar->low || !bar->volume) return;
+    //     if (check_quote_time(q.get(), od->order.get())) {
+    //         if (od->price_type == "any" && q->bid_vol1 > 0 && q->bid1 > 0.0) {
+    //             make_trade(od->order.get(), q->bid1);
+    //         }
+    //         else if (strncmp(od->price_type.c_str(), "any_test", 8) == 0) {
+    //             const char* p = od->price_type.c_str() + 8;
+    //             if (*p && *p == ':') {
+    //                 p++;
+    //                 uint32_t rate = atof(p) * 1000;
+    //                 uint32_t t = ((uint32_t)myutils::random()) % 1000;
+    //                 if (t > rate) {
+    //                     reject_order(od->order.get(), "reject any_test:xxx");
+    //                     return;
+    //                 }
+    //             }
+    //             make_trade(od->order.get(), od->order->entrust_price);
+    //         }
+    //         else if (q->bid1 > 0.0 && q->bid_vol1 > 0 &&
+    //                  q->bid1 >= od->order->entrust_price && od->volume_in_queue == 0)
+    //         {
+	// 			make_trade(od->order.get(), q->bid1);
+    //         }
+    //         else if (od->price_type == "fak" || od->price_type == "fok") {
+    //             reject_order(od->order.get(), od->price_type.c_str());
+    //         }
+    //     }
+    // }
+    // else if (m_ctx->data_level() == BT_BAR1M) {
+    //     auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
+    //     if (!bar || !bar->high || !bar->low || !bar->volume) return;
 
-        if (bar && od->price_type == "any") {
-            double fill_price = (bar->high + bar->low) / 2;
-            make_trade(od->order.get(), fill_price);
-        }
-        else if (strncmp(od->price_type.c_str(), "any_test", 8) == 0) {
-            const char* p = od->price_type.c_str() + 8;
-            if (*p && *p == ':') {
-                p++;
-                uint32_t rate = atof(p) * 1000;
-                uint32_t t = ((uint32_t)myutils::random()) % 1000;
-                if (t > rate) {
-                    reject_order(od->order.get(), "reject any_test:xxx");
-                    return;
-                }
-            }
-            make_trade(od->order.get(), od->order->entrust_price);
-        }
-        else if (bar && bar->high > od->order->entrust_price) {
-            double fill_price = max(od->order->entrust_price, bar->low);
-            make_trade(od->order.get(), fill_price);
-        }
-        else if (od->price_type == "fak" || od->price_type == "fok") {
-            reject_order(od->order.get(), od->price_type.c_str());
-        }
-    }
-    else {
-        assert(false);
-    }
+    //     if (bar && od->price_type == "any") {
+    //         double fill_price = (bar->high + bar->low) / 2;
+    //         make_trade(od->order.get(), fill_price);
+    //     }
+    //     else if (strncmp(od->price_type.c_str(), "any_test", 8) == 0) {
+    //         const char* p = od->price_type.c_str() + 8;
+    //         if (*p && *p == ':') {
+    //             p++;
+    //             uint32_t rate = atof(p) * 1000;
+    //             uint32_t t = ((uint32_t)myutils::random()) % 1000;
+    //             if (t > rate) {
+    //                 reject_order(od->order.get(), "reject any_test:xxx");
+    //                 return;
+    //             }
+    //         }
+    //         make_trade(od->order.get(), od->order->entrust_price);
+    //     }
+    //     else if (bar && bar->high > od->order->entrust_price) {
+    //         double fill_price = max(od->order->entrust_price, bar->low);
+    //         make_trade(od->order.get(), fill_price);
+    //     }
+    //     else if (od->price_type == "fak" || od->price_type == "fok") {
+    //         reject_order(od->order.get(), od->price_type.c_str());
+    //     }
+    // }
+    // else {
+    //     assert(false);
+    // }
 }
 
 void SimAccount::try_cover(OrderData* od)
 {
-    if (m_ctx->data_level() == BT_TICK) {
-        auto q = m_ctx->data_api()->quote(od->order->code.c_str()).value;
-        if (!q) return;
+    try_buy(od);
+    // if (m_ctx->data_level() == BT_TICK) {
+    //     auto q = m_ctx->data_api()->quote(od->order->code.c_str()).value;
+    //     if (!q) return;
 
-        if (double_equal(q->ask1, 0.0) && od->price_type == "any") {
-            reject_order(od->order.get(), "reach low limit");
-            return;
-        }
+    //     if (double_equal(q->ask1, 0.0) && od->price_type == "any") {
+    //         reject_order(od->order.get(), "reach low limit");
+    //         return;
+    //     }
 
-        estimate_vol_in_queue(od, q.get());
+    //     estimate_vol_in_queue(od, q.get());
 
-        if (check_quote_time(q.get(), od->order.get())) {
-            if (od->price_type == "any" && q->ask_vol1 > 0 && q->ask1 > 0.0) {
-                make_trade(od->order.get(), q->ask1);
-            }
-            else if (strncmp(od->price_type.c_str(), "any_test", 8) == 0) {
-                const char* p = od->price_type.c_str() + 8;
-                if (*p && *p == ':') {
-                    p++;
-                    uint32_t rate = atof(p) * 1000;
-                    uint32_t t = ((uint32_t)myutils::random()) % 1000;
-                    if (t > rate) {
-                        reject_order(od->order.get(), "reject any_test:xxx");
-                        return;
-                    }
-                }
-                make_trade(od->order.get(), od->order->entrust_price);
-            }
-            else if (q->ask1 > 0.0 && q->ask_vol1 > 0 &&
-                     q->ask1 <= od->order->entrust_price && od->volume_in_queue == 0) 
-            {
-				make_trade(od->order.get(), q->ask1);
-            }
-            else if (od->price_type == "fak" || od->price_type == "fok") {
-                reject_order(od->order.get(), od->price_type.c_str());
-            }
-        }
-    }
-    else if (m_ctx->data_level() == BT_BAR1M) {
-        auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
-        if (!bar || !bar->high || !bar->low || !bar->volume) return;
+    //     if (check_quote_time(q.get(), od->order.get())) {
+    //         if (od->price_type == "any" && q->ask_vol1 > 0 && q->ask1 > 0.0) {
+    //             make_trade(od->order.get(), q->ask1);
+    //         }
+    //         else if (strncmp(od->price_type.c_str(), "any_test", 8) == 0) {
+    //             const char* p = od->price_type.c_str() + 8;
+    //             if (*p && *p == ':') {
+    //                 p++;
+    //                 uint32_t rate = atof(p) * 1000;
+    //                 uint32_t t = ((uint32_t)myutils::random()) % 1000;
+    //                 if (t > rate) {
+    //                     reject_order(od->order.get(), "reject any_test:xxx");
+    //                     return;
+    //                 }
+    //             }
+    //             make_trade(od->order.get(), od->order->entrust_price);
+    //         }
+    //         else if (q->ask1 > 0.0 && q->ask_vol1 > 0 &&
+    //                  q->ask1 <= od->order->entrust_price && od->volume_in_queue == 0) 
+    //         {
+	// 			make_trade(od->order.get(), q->ask1);
+    //         }
+    //         else if (od->price_type == "fak" || od->price_type == "fok") {
+    //             reject_order(od->order.get(), od->price_type.c_str());
+    //         }
+    //     }
+    // }
+    // else if (m_ctx->data_level() == BT_BAR1M) {
+    //     auto bar = m_ctx->sim_dapi()->last_bar(od->order->code.c_str());
+    //     if (!bar || !bar->high || !bar->low || !bar->volume) return;
 
-        if (bar && od->price_type == "any") {
-            double fill_price = (bar->high + bar->low) / 2;
-            make_trade(od->order.get(), fill_price);
-        }
-        else if (strncmp(od->price_type.c_str(), "any_test", 8) == 0) {
-            const char* p = od->price_type.c_str() + 8;
-            if (*p && *p == ':') {
-                p++;
-                uint32_t rate = atof(p) * 1000;
-                uint32_t t = ((uint32_t)myutils::random()) % 1000;
-                if (t > rate) {
-                    reject_order(od->order.get(), "reject any_test:xxx");
-                    return;
-                }
-            }
-            make_trade(od->order.get(), od->order->entrust_price);
-        }
-        else if (bar && bar->low < od->order->entrust_price) {
-            double fill_price = min(od->order->entrust_price, bar->high);
-            make_trade(od->order.get(), fill_price);
-        }
-        else if (od->price_type == "fak" || od->price_type == "fok") {
-            reject_order(od->order.get(), od->price_type.c_str());
-        }
-    }
-    else {
-        assert(false);
-    }
+    //     if (bar && od->price_type == "any") {
+    //         double fill_price = (bar->high + bar->low) / 2;
+    //         make_trade(od->order.get(), fill_price);
+    //     }
+    //     else if (strncmp(od->price_type.c_str(), "any_test", 8) == 0) {
+    //         const char* p = od->price_type.c_str() + 8;
+    //         if (*p && *p == ':') {
+    //             p++;
+    //             uint32_t rate = atof(p) * 1000;
+    //             uint32_t t = ((uint32_t)myutils::random()) % 1000;
+    //             if (t > rate) {
+    //                 reject_order(od->order.get(), "reject any_test:xxx");
+    //                 return;
+    //             }
+    //         }
+    //         make_trade(od->order.get(), od->order->entrust_price);
+    //     }
+    //     else if (bar && bar->low < od->order->entrust_price) {
+    //         double fill_price = min(od->order->entrust_price, bar->high);
+    //         make_trade(od->order.get(), fill_price);
+    //     }
+    //     else if (od->price_type == "fak" || od->price_type == "fok") {
+    //         reject_order(od->order.get(), od->price_type.c_str());
+    //     }
+    // }
+    // else {
+    //     assert(false);
+    // }
 }
 
 void SimAccount::update_last_prices()
@@ -1698,7 +1728,7 @@ void SimAccount::save_data(const string& dir)
 }
 
 
-shared_ptr<CodeInfo> get_code_info(const string& code)
+shared_ptr<CodeInfo> tquant::stralet::backtest::get_code_info(const string& code)
 {
    static vector<CodeInfo> g_contracts {
         { "A.DCE",  "A.DCE", "DCE", "A.DCE", "Futures", 10, 1.0, 0.1, TR_T0 },

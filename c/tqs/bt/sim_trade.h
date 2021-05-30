@@ -19,6 +19,25 @@ namespace tquant { namespace stralet { namespace backtest {
         CASH_TRADE
     };
 
+    enum TradeRule {
+        TR_T0,
+        TR_T1
+    };
+    struct CodeInfo {
+        string code;
+        string name;
+        string mkt;
+        string product_id;
+        string product_class; // "Futurs", "Options" ???
+        double price_multiple;
+        double price_tick;
+        double margin_ratio;
+        TradeRule trade_rule;
+    };
+
+    shared_ptr<CodeInfo> get_code_info(const string& code);
+
+
     struct OrderData {
         shared_ptr<Order> order;
         string            price_type;
@@ -86,7 +105,7 @@ namespace tquant { namespace stralet { namespace backtest {
         inline bool check_quote_time(const MarketQuote* quote, const Order* order);
 
         bool reject_order   (Order* order, const char* msg);
-        void make_trade     (Order* order, double price);
+        void make_trade     (Order* order, double price, string status_msg="");
         shared_ptr<PositionData> get_position(const string& code, const string& side);
 
         void update_last_prices();
